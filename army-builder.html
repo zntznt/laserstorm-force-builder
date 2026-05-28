@@ -123,7 +123,7 @@ hr{border:none;border-top:1px solid #21262d;margin:12px 0}
 .class-profile{background:#0d1117;border:1px solid #21262d;border-radius:6px;padding:8px 10px;margin-top:8px;font-size:11px;color:#8b949e;line-height:1.5}
 .class-profile strong{color:#c9d1d9}
 .cp-tags{display:flex;flex-wrap:nowrap;overflow-x:auto;gap:4px;margin-top:5px}
-.cp-tag{background:#161b22;border:1px solid #30363d;border-radius:4px;padding:1px 6px;font-size:10px;color:#8b949e}
+.cp-tag{background:#161b22;border:1px solid #30363d;border-radius:4px;padding:3px 7px;font-size:10px;color:#8b949e;display:inline-flex;flex-direction:column;align-items:flex-start;white-space:nowrap;line-height:1.4}
 .stat-block{background:#161b22;border:1px solid #21262d;border-radius:6px;padding:7px 8px;display:flex;flex-direction:column;gap:5px}
 .trait-edit-btn{display:inline-flex;align-items:center;gap:3px;background:#0d1e36;border:1px solid #1f6feb66;color:#58a6ff;border-radius:10px;padding:1px 8px;font-size:10px;font-weight:600;cursor:pointer;vertical-align:middle;user-select:none;transition:background .12s,border-color .12s;line-height:1.6}
 .trait-edit-btn:hover{background:#16263f;border-color:#1f6feb}
@@ -830,12 +830,12 @@ function renderClassProfile() {
   if(!el || !cp) { if(el) el.innerHTML=""; return; }
   el.innerHTML = `
     <div class="cp-tags">
-      <span class="cp-tag"><b>Save</b> ${cp.save}</span>
-      <span class="cp-tag"><b>Double-Time</b> ${cp.dtime}</span>
-      <span class="cp-tag"><b>Assault</b> ${cp.assault}</span>
-      <span class="cp-tag"><b>Vulnerable</b> ${cp.vuln}</span>
-      <span class="cp-tag"><b>Snap</b> ${cp.snap}</span>
-      <span class="cp-tag"><b>Transport</b> ${cp.transport}</span>
+      <span class="cp-tag"><b>Save</b><span>${cp.save}</span></span>
+      <span class="cp-tag"><b>Double-Time</b><span>${cp.dtime}</span></span>
+      <span class="cp-tag"><b>Assault</b><span>${cp.assault}</span></span>
+      <span class="cp-tag"><b>Vulnerable</b><span>${cp.vuln}</span></span>
+      <span class="cp-tag"><b>Snap</b><span>${cp.snap}</span></span>
+      <span class="cp-tag"><b>Transport</b><span>${cp.transport}</span></span>
     </div>`;
 }
 
