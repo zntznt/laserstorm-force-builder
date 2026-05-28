@@ -342,6 +342,8 @@ hr{border:none;border-top:1px solid #21262d;margin:12px 0}
         <option value="save-desc">Save: Worst → Best</option>
         <option value="morale-asc">Morale: Best → Worst</option>
         <option value="morale-desc">Morale: Worst → Best</option>
+        <option value="assault-desc">Assault: High → Low</option>
+        <option value="assault-asc">Assault: Low → High</option>
       </select>
     </div>
     <div id="lib-list"></div>
@@ -1317,9 +1319,11 @@ function renderLibrary() {
       case "aim-desc":   return (b.aim - a.aim) || a.name.localeCompare(b.name);
       case "save-asc":   return (a.saveNumber - b.saveNumber) || a.name.localeCompare(b.name);
       case "save-desc":  return (b.saveNumber - a.saveNumber) || a.name.localeCompare(b.name);
-      case "morale-asc": return (a.morale - b.morale) || a.name.localeCompare(b.name);
-      case "morale-desc":return (b.morale - a.morale) || a.name.localeCompare(b.name);
-      default:           return a.name.localeCompare(b.name);
+      case "morale-asc":   return (a.morale - b.morale) || a.name.localeCompare(b.name);
+      case "morale-desc":  return (b.morale - a.morale) || a.name.localeCompare(b.name);
+      case "assault-desc": return (b.assault - a.assault) || a.name.localeCompare(b.name);
+      case "assault-asc":  return (a.assault - b.assault) || a.name.localeCompare(b.name);
+      default:             return a.name.localeCompare(b.name);
     }
   });
   const list = document.getElementById("lib-list");
