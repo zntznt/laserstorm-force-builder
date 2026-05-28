@@ -96,6 +96,7 @@ input:focus,select:focus,textarea:focus{border-color:#007eff;outline:none}
 .weapon-builder-row{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end}
 .trait-chip{display:inline-block;background:#21262d;border:1px solid #30363d;border-radius:12px;padding:2px 8px;font-size:11px;margin:2px;cursor:pointer}
 .trait-chip.selected{background:#007eff;color:#fff;border-color:#007eff}
+.trait-badge{display:inline-block;padding:1px 7px;border-radius:10px;font-size:10px;font-weight:600;margin:1px 2px;border:1px solid transparent;white-space:nowrap}
 hr{border:none;border-top:1px solid #21262d;margin:12px 0}
 .ref-table{width:100%;border-collapse:collapse;margin:6px 0 10px}
 .ref-table th{background:#21262d;color:#007eff;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.5px;padding:4px 8px;border:1px solid #30363d}
@@ -808,6 +809,7 @@ let state = {
 };
 
 let currentBuilderTraits = [];
+let builderFactionPrev = "";
 let currentWeaponTraits = {};
 let traitPickerTarget = null;
 let traitPickerWeaponIdx = null;
@@ -989,15 +991,28 @@ function factionBadge(unit) {
   return "";
 }
 
+const TRAIT_FACTION_NAMES = new Set(["soulless","precursor","swarm","warrior","standard"]);
+function traitFactionKey(traitEntry) {
+  const m = (traitEntry?.[2]||"").match(/^\[(\w+)\]/);
+  if(!m) return null;
+  const tag = m[1].toLowerCase();
+  return TRAIT_FACTION_NAMES.has(tag) ? tag : null;
+}
+
 function traitTipHTML(traitArr, allTraits) {
+  if(!traitArr||!traitArr.length) return `<span style="color:#444;font-size:11px">None</span>`;
   return traitArr.map(t => {
     const name = t[0];
     const entry = Object.values(allTraits).find(v=>v[0]===name);
     const desc = entry?.[2] || "";
-    return desc
-      ? `<span class="tip" data-tip="${desc.replace(/"/g,"&quot;")}">${name}</span>`
-      : `<span>${name}</span>`;
-  }).join(", ") || "None";
+    const fac = traitFactionKey(entry);
+    const color = fac ? (FACTION_COLORS[fac]||"#888") : "#555";
+    const bg = fac ? `${color}22` : "#21262d";
+    const border = fac ? `${color}55` : "#30363d";
+    const textColor = fac ? color : "#8b949e";
+    const tipAttr = desc ? ` class="trait-badge tip" data-tip="${desc.replace(/"/g,"&quot;")}"` : ` class="trait-badge"`;
+    return `<span${tipAttr} style="background:${bg};color:${textColor};border-color:${border}">${name}</span>`;
+  }).join("");
 }
 
 function unitCardHTML(unit, actions) {
@@ -1035,7 +1050,7 @@ function unitCardHTML(unit, actions) {
         <div class="stat"><span class="stat-name">Morale</span><span class="stat-val">${unit.morale}+</span></div>
       </div>
       ${weaponsHTML}
-      <div style="font-size:11px;color:#8b949e;margin-top:6px">Traits: ${traitsHTML}</div>
+      <div style="margin-top:6px;display:flex;align-items:baseline;gap:4px;flex-wrap:wrap"><span style="font-size:10px;color:#555;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap">Traits</span>${traitsHTML}</div>
       <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:8px;padding-top:6px;border-top:1px solid #21262d">
         ${[
           {label:"Unit",    val:pts.unitPts},
@@ -1097,6 +1112,7 @@ function resetBuilder() {
   document.getElementById("b-name").value = "";
   document.getElementById("b-class").value = "inf";
   document.getElementById("b-faction").value = "";
+  builderFactionPrev = "";
   currentBuilderTraits = [];
   builderWeapons = [];
   setEditMode(null);
@@ -1213,21 +1229,30 @@ function openTraitPicker(target, wIdx) {
     : (builderWeapons[wIdx]?.traits||[]).map(t=>t[0]);
   document.getElementById("trait-modal-title").textContent = target==="stand" ? "Stand Traits" : `Weapon ${wIdx+1} Traits`;
   list.style.columnCount = "1";
+  const currentFaction = document.getElementById("b-faction")?.value || "";
   Object.entries(traits).forEach(([key,val]) => {
+    const fac = traitFactionKey(val);
+    const facLocked = fac && fac !== currentFaction;
     const row = document.createElement("div");
     row.className = "trait-row";
+    if(facLocked) row.style.cssText = "opacity:0.4;pointer-events:none";
     const cb = document.createElement("input");
     cb.type = "checkbox";
     cb.value = key;
     cb.checked = selected.includes(val[0]);
+    cb.disabled = facLocked;
     cb.id = "trait_cb_"+key;
     const info = document.createElement("label");
     info.htmlFor = "trait_cb_"+key;
     info.className = "trait-row-info";
-    info.style.cursor = "pointer";
+    info.style.cursor = facLocked ? "default" : "pointer";
     const nameEl = document.createElement("div");
     nameEl.className = "trait-row-name";
     nameEl.textContent = val[0];
+    if(fac) {
+      const facColor = FACTION_COLORS[fac]||"#888";
+      nameEl.innerHTML += ` <span style="font-size:9px;padding:0 5px;border-radius:8px;background:${facColor}22;color:${facColor};border:1px solid ${facColor}55;font-weight:600">${fac}</span>`;
+    }
     info.appendChild(nameEl);
     if(val[2]) {
       const descEl = document.createElement("div");
@@ -1342,10 +1367,42 @@ function rebuildFactionSelect(selectValue) {
 }
 
 function onFactionSelectChange() {
-  if(document.getElementById("b-faction").value === "__new__") {
-    document.getElementById("b-faction").value = "";
+  const sel = document.getElementById("b-faction");
+  const newFaction = sel.value;
+  if(newFaction === "__new__") {
+    sel.value = builderFactionPrev;
     openFactionModal(true);
+    return;
   }
+  // Collect traits that are locked to a faction incompatible with newFaction
+  const locked = [];
+  currentBuilderTraits.forEach(t => {
+    const entry = Object.values(STAND_TRAITS).find(v=>v[0]===t[0]);
+    const fac = traitFactionKey(entry);
+    if(fac && fac !== newFaction) locked.push({label:`Stand trait: ${t[0]}`, src:"stand", name:t[0]});
+  });
+  builderWeapons.forEach((w, wi) => {
+    (w.traits||[]).forEach(t => {
+      const entry = Object.values(WEAPON_TRAITS).find(v=>v[0]===t[0]);
+      const fac = traitFactionKey(entry);
+      if(fac && fac !== newFaction) locked.push({label:`Weapon ${wi+1} (${w.name||"unnamed"}): ${t[0]}`, src:"weapon", wi, name:t[0]});
+    });
+  });
+  if(!locked.length) { builderFactionPrev = newFaction; return; }
+  const traitList = locked.map(l=>`• ${l.label}`).join("\n");
+  const proceed = confirm(`Changing faction will remove these faction-locked traits:\n\n${traitList}\n\nRemove them and change faction?`);
+  if(!proceed) { sel.value = builderFactionPrev; return; }
+  // Remove locked traits
+  const lockedStandNames = locked.filter(l=>l.src==="stand").map(l=>l.name);
+  currentBuilderTraits = currentBuilderTraits.filter(t=>!lockedStandNames.includes(t[0]));
+  document.getElementById("b-traits-display").innerHTML = traitTipHTML(currentBuilderTraits, STAND_TRAITS)||"None";
+  builderWeapons.forEach(w => {
+    const lockedWNames = locked.filter(l=>l.src==="weapon").map(l=>l.name);
+    w.traits = (w.traits||[]).filter(t=>!lockedWNames.includes(t[0]));
+  });
+  renderWeaponRows();
+  builderFactionPrev = newFaction;
+  calculateBuilder();
 }
 
 function openFactionModal(fromBuilder) {
@@ -1507,6 +1564,7 @@ function editUnit(id) {
   document.getElementById("b-name").value = unit.name;
   document.getElementById("b-class").value = unit.class;
   document.getElementById("b-faction").value = unit.faction||"";
+  builderFactionPrev = unit.faction||"";
   onClassChange();
   document.getElementById("b-speed").value = unit.speed;
   document.getElementById("b-mobility").value = unit.mobility;
