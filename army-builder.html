@@ -2076,6 +2076,36 @@ function rebuildFactionSelect(selectValue) {
   if(selectValue !== undefined) sel.value = selectValue;
 }
 
+// Removes traits from traitArr that fail faction/class/mobility/traitr requirements.
+// traitPool is allStandTraits() or allWeaponTraits().
+function pruneTraits(traitArr, traitPool, faction, cls, mobility) {
+  const keyOf = t => Object.entries(traitPool).find(([,v])=>v[0]===t[0])?.[0];
+  const activeKeys = new Set(traitArr.map(keyOf).filter(Boolean));
+  const drop = new Set();
+  traitArr.forEach(t => {
+    const key = keyOf(t);
+    if(!key) return;
+    const reqs = allTraitReqs(key, traitPool[key]);
+    const facReq    = reqs.find(r=>r.type==="faction");
+    const clsReq    = reqs.find(r=>r.type==="class");
+    const mobReq    = reqs.find(r=>r.type==="mobility");
+    const traitrReq = reqs.find(r=>r.type==="traitr");
+    if(facReq    && faction  !== undefined && !facReq.vals.includes(faction))     drop.add(t[0]);
+    if(clsReq    && cls      !== undefined && !clsReq.vals.includes(cls))         drop.add(t[0]);
+    if(mobReq    && mobility !== undefined && !mobReq.vals.includes(mobility))    drop.add(t[0]);
+    if(traitrReq && !activeKeys.has(traitrReq.vals[0]))                          drop.add(t[0]);
+  });
+  if(!drop.size) return traitArr;
+  const pruned = traitArr.filter(t=>!drop.has(t[0]));
+  // Cascade: a traitr-dependent trait may now lose its prerequisite
+  const prunedKeys = new Set(pruned.map(keyOf).filter(Boolean));
+  return pruned.filter(t => {
+    const key = keyOf(t);
+    const traitrReq = key ? allTraitReqs(key, traitPool[key]).find(r=>r.type==="traitr") : null;
+    return !traitrReq || prunedKeys.has(traitrReq.vals[0]);
+  });
+}
+
 function onFactionSelectChange() {
   const sel = document.getElementById("b-faction");
   const newFaction = sel.value;
@@ -2084,64 +2114,26 @@ function onFactionSelectChange() {
     openFactionModal(true);
     return;
   }
-  // Collect traits that are locked to a faction incompatible with newFaction
-  const locked = [];
-  currentBuilderTraits.forEach(t => {
-    const [key, entry] = Object.entries(allStandTraits()).find(([,v])=>v[0]===t[0]) || [null,null];
-    const facReq = allTraitReqs(key, entry).find(r=>r.type==="faction");
-    if(facReq && !facReq.vals.includes(newFaction)) locked.push({label:`Stand trait: ${t[0]}`, src:"stand", name:t[0]});
-  });
-  builderWeapons.forEach((w, wi) => {
-    (w.traits||[]).forEach(t => {
-      const [key, entry] = Object.entries(allWeaponTraits()).find(([,v])=>v[0]===t[0]) || [null,null];
-      const facReq = allTraitReqs(key, entry).find(r=>r.type==="faction");
-      if(facReq && !facReq.vals.includes(newFaction)) locked.push({label:`Weapon ${wi+1} (${w.name||"unnamed"}): ${t[0]}`, src:"weapon", wi, name:t[0]});
-    });
-  });
-  if(!locked.length) { builderFactionPrev = newFaction; return; }
-  const traitList = locked.map(l=>`• ${l.label}`).join("\n");
-  const proceed = confirm(`Changing faction will remove these faction-locked traits:\n\n${traitList}\n\nRemove them and change faction?`);
-  if(!proceed) { sel.value = builderFactionPrev; return; }
-  // Remove locked traits
-  const lockedStandNames = locked.filter(l=>l.src==="stand").map(l=>l.name);
-  currentBuilderTraits = currentBuilderTraits.filter(t=>!lockedStandNames.includes(t[0]));
-  document.getElementById("b-traits-display").innerHTML = traitTipHTML(currentBuilderTraits, allStandTraits())||"None";
-  builderWeapons.forEach(w => {
-    const lockedWNames = locked.filter(l=>l.src==="weapon").map(l=>l.name);
-    w.traits = (w.traits||[]).filter(t=>!lockedWNames.includes(t[0]));
-  });
-  renderWeaponRows();
   builderFactionPrev = newFaction;
+  const cls      = document.getElementById("b-class")?.value || "";
+  const mobility = document.getElementById("b-mobility")?.value || "";
+  currentBuilderTraits = pruneTraits(currentBuilderTraits, allStandTraits(), newFaction, cls, mobility);
+  document.getElementById("b-traits-display").innerHTML = traitTipHTML(currentBuilderTraits, allStandTraits())||"None";
+  builderWeapons.forEach(w => { w.traits = pruneTraits(w.traits||[], allWeaponTraits(), newFaction, cls, mobility); });
+  renderWeaponRows();
   calculateBuilder();
 }
 
 function onMobilityChange() {
   const sel = document.getElementById("b-mobility");
   const newMobility = sel.value;
-  const locked = [];
-  currentBuilderTraits.forEach(t => {
-    const [key, entry] = Object.entries(allStandTraits()).find(([,v])=>v[0]===t[0]) || [null,null];
-    const mobReq = allTraitReqs(key, entry).find(r=>r.type==="mobility");
-    if(mobReq && !mobReq.vals.includes(newMobility)) locked.push({label:`Stand trait: ${t[0]}`, src:"stand", name:t[0]});
-  });
-  builderWeapons.forEach((w, wi) => {
-    (w.traits||[]).forEach(t => {
-      const [key, entry] = Object.entries(allWeaponTraits()).find(([,v])=>v[0]===t[0]) || [null,null];
-      const mobReq = allTraitReqs(key, entry).find(r=>r.type==="mobility");
-      if(mobReq && !mobReq.vals.includes(newMobility)) locked.push({label:`Weapon ${wi+1} (${w.name||"unnamed"}): ${t[0]}`, src:"weapon", wi, name:t[0]});
-    });
-  });
-  if(!locked.length) { builderMobilityPrev = newMobility; calculateBuilder(); return; }
-  const traitList = locked.map(l=>`• ${l.label}`).join("\n");
-  const proceed = confirm(`Changing mobility will remove these mobility-locked traits:\n\n${traitList}\n\nRemove them and change mobility?`);
-  if(!proceed) { sel.value = builderMobilityPrev; return; }
-  const lockedStandNames = locked.filter(l=>l.src==="stand").map(l=>l.name);
-  currentBuilderTraits = currentBuilderTraits.filter(t=>!lockedStandNames.includes(t[0]));
-  document.getElementById("b-traits-display").innerHTML = traitTipHTML(currentBuilderTraits, allStandTraits())||"None";
-  const lockedWNames = locked.filter(l=>l.src==="weapon").map(l=>l.name);
-  builderWeapons.forEach(w => { w.traits = (w.traits||[]).filter(t=>!lockedWNames.includes(t[0])); });
-  renderWeaponRows();
   builderMobilityPrev = newMobility;
+  const faction2 = document.getElementById("b-faction")?.value || "";
+  const cls2     = document.getElementById("b-class")?.value   || "";
+  currentBuilderTraits = pruneTraits(currentBuilderTraits, allStandTraits(), faction2, cls2, newMobility);
+  document.getElementById("b-traits-display").innerHTML = traitTipHTML(currentBuilderTraits, allStandTraits())||"None";
+  builderWeapons.forEach(w => { w.traits = pruneTraits(w.traits||[], allWeaponTraits(), faction2, cls2, newMobility); });
+  renderWeaponRows();
   calculateBuilder();
 }
 
