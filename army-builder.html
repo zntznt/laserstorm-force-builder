@@ -65,7 +65,7 @@ nav{background:var(--surface-nav);border-bottom:2px solid var(--accent);display:
 .page.active{display:block}
 .card{background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:8px;padding:16px;margin-bottom:16px}
 .card-title{font-family:var(--font-display);color:var(--accent);font-size:18px;letter-spacing:1.5px;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border-subtle);display:flex;justify-content:space-between;align-items:center}
-.btn{display:inline-block;padding:7px 14px;border:none;border-radius:20px;cursor:pointer;font-weight:bold;font-size:12px;text-transform:uppercase;letter-spacing:.5px;transition:all .2s;line-height:1.2}
+.btn{display:inline-block;padding:7px 14px;border:none;border-radius:20px;cursor:pointer;font-family:var(--font-display);font-size:14px;text-transform:uppercase;letter-spacing:1px;transition:all .2s;line-height:1.2}
 .btn-primary{background:var(--accent);color:var(--text-bright)}.btn-primary:hover{background:var(--accent-hover)}
 .btn-danger{background:var(--danger);color:var(--text-bright)}.btn-danger:hover{background:var(--danger-hover)}
 .btn-success{background:var(--success);color:var(--text-bright)}.btn-success:hover{background:var(--success-hover)}
@@ -172,7 +172,7 @@ hr{border:none;border-top:1px solid var(--border-subtle);margin:12px 0}
 .cp-tags{display:flex;flex-wrap:nowrap;overflow-x:auto;gap:4px;margin-top:0}
 .cp-tag{background:var(--surface-card);border:1px solid var(--border-default);border-radius:4px;padding:3px 7px;font-size:10px;color:var(--text-muted);display:inline-flex;flex-direction:column;align-items:flex-start;white-space:nowrap;line-height:1.4;flex:1}
 .stat-block{background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:6px;padding:7px 8px;display:flex;flex-direction:column;gap:5px}
-.trait-edit-btn{display:inline-flex;align-items:center;gap:3px;background:var(--accent-tint);border:1px solid #1f6feb66;color:var(--accent-light);border-radius:10px;padding:1px 8px;font-size:10px;font-weight:600;cursor:pointer;vertical-align:middle;user-select:none;transition:background .12s,border-color .12s;line-height:1.6;text-transform:uppercase}
+.trait-edit-btn{display:inline-flex;align-items:center;gap:3px;background:var(--accent-tint);border:1px solid #1f6feb66;color:var(--accent-light);border-radius:10px;padding:1px 8px;font-family:var(--font-display);font-size:11px;letter-spacing:.5px;cursor:pointer;vertical-align:middle;user-select:none;transition:background .12s,border-color .12s;line-height:1.6;text-transform:uppercase}
 .trait-edit-btn:hover{background:#16263f;border-color:#1f6feb}
 label .trait-edit-btn{margin-left:6px}
 .stat-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--text-dim);display:flex;align-items:center;gap:3px;white-space:nowrap}
@@ -560,7 +560,7 @@ label .trait-edit-btn{margin-left:6px}
     <div class="modal-header">
       <span id="trait-modal-title">Select Traits</span>
       <div style="display:flex;gap:8px;align-items:center">
-        <span class="trait-edit-btn" onclick="openCustomTraitModal()">+ Custom</span>
+        <button class="trait-edit-btn" onclick="openCustomTraitModal()">Custom</button>
         <button class="modal-close" onclick="closeTraitModal()">&#215;</button>
       </div>
     </div>
@@ -718,17 +718,17 @@ label .trait-edit-btn{margin-left:6px}
     <div id="custom-trait-list"></div>
     <div>
       <div id="ct-form-header" class="modal-sub-header">New Trait</div>
-      <div class="form-row" style="gap:8px">
+      <div class="form-row" style="gap:8px;margin-bottom:12px">
         <div class="form-group" style="flex:2">
           <label>Name</label>
           <input type="text" id="ct-name" placeholder="e.g. Battle Hardened" style="width:100%">
         </div>
         <div class="form-group" style="flex:0 0 80px">
-          <label>Cost</label>
+          <label>Cost (pts)</label>
           <input type="number" id="ct-cost" value="1" min="-5" max="20" step="0.5" style="width:100%">
         </div>
       </div>
-      <div class="form-group">
+      <div class="form-group" style="margin-bottom:12px">
         <label>Applies to</label>
         <select id="ct-type" style="width:auto">
           <option value="stand">Stand trait</option>
@@ -736,23 +736,24 @@ label .trait-edit-btn{margin-left:6px}
           <option value="both">Both</option>
         </select>
       </div>
-      <div class="form-group">
-        <label>Requirements <span style="color:var(--text-faint);font-size:10px">(optional — multiple in a row = OR)</span></label>
-        <div id="ct-reqs-container" style="display:flex;flex-direction:column;gap:7px;margin-top:4px"></div>
+      <div class="form-group" style="margin-bottom:12px">
+        <label>Requirements <span style="color:var(--text-faint);font-size:10px">(optional — multiple selections in a row = OR)</span></label>
+        <div id="ct-reqs-container" style="display:flex;flex-direction:column;gap:7px;margin-top:6px"></div>
       </div>
-      <div class="form-group" style="margin-bottom:14px">
+      <div class="form-group" style="margin-bottom:12px">
         <label>Description <span style="color:var(--text-faint);font-size:10px">(optional — shown as tooltip)</span></label>
         <textarea id="ct-description" rows="2" placeholder="What does this trait do?" style="width:100%;resize:vertical"></textarea>
       </div>
-      <div class="form-group" style="margin-bottom:14px">
-        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;text-transform:none;font-weight:normal">
-          <input type="checkbox" id="ct-stackable" style="width:auto;margin:0">
-          Can be taken multiple times (stackable)
-        </label>
+      <div style="background:var(--surface-raised);border:1px solid var(--border-default);border-radius:6px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;cursor:pointer" onclick="document.getElementById('ct-stackable').click()">
+        <div>
+          <div style="font-size:12px;font-weight:bold;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em">Stackable</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:3px">This trait can be taken multiple times. Each stack counts independently toward cost.</div>
+        </div>
+        <input type="checkbox" id="ct-stackable" style="width:16px;height:16px;flex-shrink:0;margin:0;cursor:pointer" onclick="event.stopPropagation()">
       </div>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
         <button id="ct-save-btn" class="btn btn-primary" onclick="saveCustomTrait()">Create</button>
-        <button id="ct-cancel-edit-btn" class="btn btn-secondary btn-xs" onclick="cancelEditCustomTrait()" style="display:none">Cancel edit</button>
+        <button id="ct-cancel-edit-btn" class="btn btn-secondary btn-xs" onclick="cancelEditCustomTrait()" style="display:none">Cancel</button>
         <button class="btn btn-secondary" onclick="closeModal('modal-custom-trait')">Close</button>
       </div>
     </div>
@@ -2193,7 +2194,7 @@ function renderCustomTraitReqPills() {
   container.innerHTML = _ctReqSections().map(sec => {
     const secColor = sec.color || "";
     return `<div>
-      <div style="font-size:10px;color:#666;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px">${sec.label}</div>
+      <div style="font-size:10px;color:var(--text-inactive);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px">${sec.label}</div>
       <div style="display:flex;flex-wrap:wrap;gap:3px">${sec.opts.map(o=>{
         const c = o.color || secColor;
         return `<button type="button" class="req-pill" data-type="${sec.type}" data-val="${o.val}"
@@ -2288,8 +2289,8 @@ function renderCustomTraitList() {
           <div style="margin-top:2px">${reqBadges}</div>
           <div style="font-size:10px;color:var(--text-faint);margin-top:1px">${typeLabel[t.type]||t.type}${t.description ? ` — ${esc(t.description)}` : ""}</div>
         </div>
-        <button class="btn btn-secondary btn-xs" onclick="editCustomTrait('${t.id}')">Edit</button>
-        <button class="btn btn-danger btn-xs" onclick="deleteCustomTrait('${t.id}')">Delete</button>
+        <button class="trait-edit-btn" onclick="editCustomTrait('${t.id}')">Edit</button>
+        <button class="trait-edit-btn" onclick="confirmBtn(this,()=>deleteCustomTrait('${t.id}'))">Delete</button>
       </div>`;
     }).join("")
     + `</div>`;
