@@ -1,0 +1,1867 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LaserSTORM Army Builder</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;background:#0d1117;color:#e0e0e0;min-height:100vh}
+a{color:#007eff}
+nav{background:#010409;border-bottom:2px solid #007eff;display:flex;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:50}
+.nav-brand{color:#007eff;font-size:18px;font-weight:900;padding:10px 18px;letter-spacing:3px;white-space:nowrap}
+.nav-tabs{display:flex;flex-wrap:wrap}
+.nav-tab{padding:10px 16px;cursor:pointer;color:#666;border-bottom:3px solid transparent;font-weight:bold;font-size:12px;text-transform:uppercase;letter-spacing:1px;transition:all .2s}
+.nav-tab:hover{color:#007eff}
+.nav-tab.active{color:#007eff;border-bottom-color:#007eff}
+.page{display:none;padding:20px;max-width:1200px;margin:0 auto}
+.page.active{display:block}
+.card{background:#161b22;border:1px solid #21262d;border-radius:8px;padding:16px;margin-bottom:16px}
+.card-title{color:#007eff;font-size:14px;font-weight:bold;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid #21262d;display:flex;justify-content:space-between;align-items:center}
+.btn{display:inline-block;padding:7px 14px;border:none;border-radius:20px;cursor:pointer;font-weight:bold;font-size:12px;text-transform:uppercase;letter-spacing:.5px;transition:all .2s;line-height:1.2}
+.btn-primary{background:#007eff;color:#fff}.btn-primary:hover{background:#0066cc}
+.btn-danger{background:#8b0000;color:#fff}.btn-danger:hover{background:#cc0000}
+.btn-success{background:#006622;color:#fff}.btn-success:hover{background:#008833}
+.btn-warning{background:#7a4000;color:#fff}.btn-warning:hover{background:#cc6600}
+.btn-secondary{background:#21262d;color:#aaa}.btn-secondary:hover{background:#30363d;color:#fff}
+.btn-sm{padding:4px 10px;font-size:11px}
+.btn-xs{padding:2px 7px;font-size:10px}
+label{display:block;font-size:11px;font-weight:bold;text-transform:uppercase;color:#8b949e;margin-bottom:3px}
+input[type=text],input[type=number],select,textarea{background:#0d1117;border:1px solid #30363d;color:#e0e0e0;padding:6px 10px;border-radius:6px;font-size:13px;width:100%}
+input[type=number]{width:70px}
+input:focus,select:focus,textarea:focus{border-color:#007eff;outline:none}
+.form-row{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;margin-bottom:12px}
+.form-group{display:flex;flex-direction:column;gap:3px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+@media(max-width:768px){.grid-2,.grid-3{grid-template-columns:1fr}}
+.stat-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.stat{background:#0d1117;border:1px solid #21262d;border-radius:4px;padding:3px 8px;font-size:11px;text-align:center;min-width:44px}
+.stat-name{color:#8b949e;font-size:9px;text-transform:uppercase;display:block}
+.stat-val{color:#fff;font-weight:bold;font-size:13px}
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:bold;text-transform:uppercase}
+.badge-inf{background:#1a3a1a;color:#4caf50}
+.badge-cav{background:#1a2a4a;color:#64b5f6}
+.badge-fg{background:#2a1a3a;color:#ba68c8}
+.badge-scout{background:#1a3a3a;color:#4db6ac}
+.badge-afv{background:#3a2a0a;color:#ffb74d}
+.badge-ac{background:#1a3a3a;color:#26c6da}
+.badge-sh{background:#3a1a0a;color:#ff7043}
+.badge-beh{background:#3a0a0a;color:#ef5350}
+.badge-core{background:#0a2a0a;color:#4caf50}
+.badge-specialist{background:#0a0a3a;color:#64b5f6}
+.badge-command{background:#2a1a0a;color:#ffb74d}
+.badge-support{background:#1a0a2a;color:#ba68c8}
+.badge-commander{background:#3a0a0a;color:#ef5350}
+.unit-card{background:#161b22;border:1px solid #21262d;border-radius:6px;padding:12px;margin-bottom:8px;transition:border-color .2s}
+.unit-card:hover{border-color:#007eff}
+.unit-card-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;gap:8px}
+.unit-name{font-weight:bold;color:#fff;font-size:14px}
+.unit-pts{color:#ffd700;font-weight:bold;font-size:13px}
+.weapon-row{background:#0d1117;border-radius:4px;padding:5px 8px;margin-top:4px;font-size:11px;color:#8b949e}
+.weapon-row span{color:#fff;font-weight:bold}
+.points-big{font-size:28px;font-weight:900;color:#ffd700;text-align:center}
+.points-label{font-size:11px;color:#8b949e;text-align:center;text-transform:uppercase}
+.section-header{font-size:12px;font-weight:bold;text-transform:uppercase;letter-spacing:1px;padding:4px 10px;border-radius:4px;margin-bottom:8px;display:inline-block}
+.sh-core{background:#0a2a0a;color:#4caf50}
+.sh-specialist{background:#0a0a3a;color:#64b5f6}
+.sh-command{background:#2a1a0a;color:#ffb74d}
+.sh-support{background:#1a0a2a;color:#ba68c8}
+.sh-commander{background:#3a0a0a;color:#ef5350}
+.modal-bg{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.8);z-index:200;justify-content:center;align-items:flex-start;padding:40px 10px}
+.modal-bg.open{display:flex}
+.modal{background:#161b22;border:1px solid #007eff;border-radius:10px;padding:20px;width:100%;max-width:640px;max-height:85vh;overflow-y:auto}
+.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;color:#007eff;font-size:16px;font-weight:bold}
+.modal-close{cursor:pointer;background:#21262d;border:none;color:#aaa;width:26px;height:26px;border-radius:50%;font-size:16px;line-height:26px;text-align:center}
+.modal-close:hover{color:#fff;background:#444}
+.bg-card{background:#161b22;border:2px solid #21262d;border-radius:8px;padding:14px;margin-bottom:14px}
+.bg-card.valid{border-color:#2ea043}
+.bg-card.invalid{border-color:#8b0000}
+.bg-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.bg-title{font-size:16px;font-weight:bold;color:#007eff}
+.validation-ok{background:#0a2a0a;border:1px solid #2ea043;color:#4caf50;padding:6px 10px;border-radius:4px;font-size:12px;margin-top:8px}
+.validation-warn{background:#2a1a0a;border:1px solid #ff8800;color:#ffb74d;padding:6px 10px;border-radius:4px;font-size:12px;margin-top:8px}
+.validation-err{background:#2a0a0a;border:1px solid #8b0000;color:#ef5350;padding:6px 10px;border-radius:4px;font-size:12px;margin-top:8px}
+.empty{text-align:center;padding:40px;color:#444;font-size:14px}
+.empty-icon{font-size:40px;margin-bottom:8px}
+.list-row{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#0d1117;border:1px solid #21262d;border-radius:4px;margin-bottom:6px;gap:8px}
+.list-row:hover{border-color:#007eff}
+.pill-nav{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+.pill{padding:5px 12px;border-radius:20px;cursor:pointer;font-size:11px;font-weight:bold;text-transform:uppercase;background:#21262d;color:#666;border:1px solid transparent;transition:all .2s}
+.pill:hover{color:#007eff;border-color:#007eff}
+.pill.active{background:#007eff;color:#fff;border-color:#007eff}
+.search-bar{width:100%;padding:7px 14px;background:#0d1117;border:1px solid #30363d;border-radius:20px;color:#e0e0e0;font-size:13px;margin-bottom:12px}
+.scrolllist{max-height:360px;overflow-y:auto;border:1px solid #21262d;border-radius:6px;padding:8px}
+.weapon-builder{background:#0d1117;border:1px solid #21262d;border-radius:6px;padding:10px;margin-top:8px}
+.weapon-builder-row{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end}
+.trait-chip{display:inline-block;background:#21262d;border:1px solid #30363d;border-radius:12px;padding:2px 8px;font-size:11px;margin:2px;cursor:pointer}
+.trait-chip.selected{background:#007eff;color:#fff;border-color:#007eff}
+hr{border:none;border-top:1px solid #21262d;margin:12px 0}
+.tf-unit-row{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:#0d1117;border:1px solid #21262d;border-radius:4px;margin-bottom:5px;gap:8px}
+.tf-unit-row:hover{border-color:#30363d}
+.qty-ctrl{display:flex;align-items:center;gap:4px}
+.qty-btn{background:#21262d;border:none;color:#fff;width:22px;height:22px;border-radius:50%;cursor:pointer;font-size:14px;line-height:22px;text-align:center}
+.qty-btn:hover{background:#007eff}
+.qty-val{width:30px;text-align:center;font-weight:bold;font-size:14px}
+.summary-row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #21262d;font-size:13px}
+.summary-row:last-child{border-bottom:none;font-weight:bold;color:#ffd700}
+@media print{
+  nav,.no-print,.btn{display:none!important}
+  .page{display:block!important;max-width:100%;padding:10px}
+  body{background:#fff;color:#000}
+  .card{background:#fff;border:1px solid #ccc}
+  .unit-card{background:#f9f9f9;border:1px solid #999}
+  .stat{background:#f0f0f0;border:1px solid #ccc}
+  .stat-name{color:#666}
+  .stat-val,.unit-name,.unit-pts{color:#000}
+  .points-big{color:#333}
+  .weapon-row{background:#f0f0f0}
+  .weapon-row span{color:#000}
+  .bg-card{border:2px solid #333!important;background:#fff}
+  .print-break{page-break-after:always}
+  .print-section{margin-bottom:20px}
+  #page-print{display:block!important}
+}
+</style>
+</head>
+<body>
+<nav>
+  <div class="nav-brand">&#9889; LASERSTORM</div>
+  <div class="nav-tabs">
+    <div class="nav-tab" id="tab-builder" onclick="showPage('builder')">Unit Builder</div>
+    <div class="nav-tab" id="tab-library" onclick="showPage('library')">Library</div>
+    <div class="nav-tab" id="tab-taskforces" onclick="showPage('taskforces')">Task Forces</div>
+    <div class="nav-tab" id="tab-armies" onclick="showPage('armies')">Armies</div>
+    <div class="nav-tab" id="tab-deploy" onclick="showPage('deploy')">Deploy</div>
+    <div class="nav-tab" id="tab-print" onclick="showPage('print')">&#128438; Print</div>
+  </div>
+</nav>
+
+<!-- ===== UNIT BUILDER PAGE ===== -->
+<div id="page-builder" class="page">
+  <div class="grid-2">
+    <div>
+      <div class="card">
+        <div class="card-title">Unit Builder
+          <button class="btn btn-secondary btn-sm" onclick="resetBuilder()">Reset</button>
+        </div>
+        <div class="form-row">
+          <div class="form-group" style="flex:2">
+            <label>Unit Name</label>
+            <input type="text" id="b-name" placeholder="e.g. Line Infantry" style="width:100%">
+          </div>
+          <div class="form-group">
+            <label>Class</label>
+            <select id="b-class" onchange="onClassChange()" style="width:auto">
+              <option value="inf">Infantry</option>
+              <option value="cav">Cavalry</option>
+              <option value="fg">Fighter Group</option>
+              <option value="scout">Scout</option>
+              <option value="afv">AFV (Tank)</option>
+              <option value="ac">Armored Car / Aircraft</option>
+              <option value="sh">Super Heavy</option>
+              <option value="beh">Behemoth</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Role</label>
+            <select id="b-role" style="width:auto">
+              <option value="core">Core</option>
+              <option value="specialist">Specialist</option>
+              <option value="command">Command</option>
+              <option value="support">Support</option>
+              <option value="commander">Commander</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Speed</label>
+            <input type="number" id="b-speed" value="4" min="1" max="20">
+          </div>
+          <div class="form-group">
+            <label>Mobility</label>
+            <select id="b-mobility" style="width:auto">
+              <option value="troop">Troop</option>
+              <option value="wheel">Wheeled</option>
+              <option value="track">Tracked</option>
+              <option value="walk">Walker</option>
+              <option value="grav">Grav</option>
+              <option value="air">Air</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Aim</label>
+            <input type="number" id="b-aim" value="5" min="2" max="6">
+            <span style="font-size:10px;color:#666">+</span>
+          </div>
+          <div class="form-group">
+            <label>Assault</label>
+            <input type="number" id="b-assault" value="0" min="0" max="10">
+            <span style="font-size:10px;color:#666">+</span>
+          </div>
+          <div class="form-group">
+            <label>Save</label>
+            <span id="b-savedice" style="color:#fff;font-weight:bold">1</span>D6/
+            <input type="number" id="b-savenumber" value="6" min="1" max="24">
+            <span style="font-size:10px;color:#666">+</span>
+          </div>
+          <div class="form-group">
+            <label>Morale</label>
+            <input type="number" id="b-morale" value="6" min="2" max="6">
+            <span style="font-size:10px;color:#666">+</span>
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom:10px">
+          <label>Stand Traits <span style="color:#007eff;cursor:pointer;font-size:11px" onclick="openTraitPicker('stand')">[+ Edit]</span></label>
+          <div id="b-traits-display" style="font-size:12px;color:#8b949e">None</div>
+        </div>
+        <div id="b-weapons-container"></div>
+        <button class="btn btn-secondary btn-sm" onclick="addWeaponRow()" style="margin-top:8px">+ Add Weapon</button>
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <div class="card-title">Calculated Points</div>
+        <div id="b-result">
+          <div class="empty"><div class="empty-icon">&#128202;</div>Fill in stats and click Calculate</div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+          <button class="btn btn-primary" onclick="calculateBuilder()">Calculate</button>
+          <button class="btn btn-success" onclick="saveToLibrary()">Save to Library</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Quick Reference</div>
+        <div style="font-size:11px;color:#8b949e;line-height:1.8">
+          <div><strong style="color:#fff">Classes:</strong> Infantry=6 stands | Cavalry/Scout=4 | FG/AFV=3 | AC=2 | SH/Beh=1</div>
+          <div><strong style="color:#fff">Weapon Modes:</strong> AI=Anti-Infantry | AT=Anti-Tank | GP=General Purpose (×1.5)</div>
+          <div><strong style="color:#fff">Weapon Types:</strong> P=Primary | S=Selective (×0.8)</div>
+          <div><strong style="color:#fff">Ranges:</strong> 10" | 20" | 30" | 40" | 50"</div>
+          <div><strong style="color:#fff">Impact:</strong> Bonus dice added on hit</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== LIBRARY PAGE ===== -->
+<div id="page-library" class="page">
+  <div class="card">
+    <div class="card-title">Unit Library
+      <button class="btn btn-primary btn-sm" onclick="showPage('builder')">+ Create Unit</button>
+    </div>
+    <input class="search-bar" id="lib-search" placeholder="&#128269; Search units..." oninput="renderLibrary()">
+    <div class="pill-nav" id="lib-filters">
+      <div class="pill active" data-filter="all" onclick="setLibFilter(this,'all')">All</div>
+      <div class="pill" data-filter="inf" onclick="setLibFilter(this,'inf')">Infantry</div>
+      <div class="pill" data-filter="cav" onclick="setLibFilter(this,'cav')">Cavalry</div>
+      <div class="pill" data-filter="fg" onclick="setLibFilter(this,'fg')">Fighter</div>
+      <div class="pill" data-filter="scout" onclick="setLibFilter(this,'scout')">Scout</div>
+      <div class="pill" data-filter="afv" onclick="setLibFilter(this,'afv')">AFV</div>
+      <div class="pill" data-filter="ac" onclick="setLibFilter(this,'ac')">AC/Air</div>
+      <div class="pill" data-filter="sh" onclick="setLibFilter(this,'sh')">Super Heavy</div>
+      <div class="pill" data-filter="beh" onclick="setLibFilter(this,'beh')">Behemoth</div>
+      <div class="pill" data-filter="custom" onclick="setLibFilter(this,'custom')">&#9733; Custom</div>
+    </div>
+    <div id="lib-list"></div>
+  </div>
+</div>
+
+<!-- ===== TASK FORCES PAGE ===== -->
+<div id="page-taskforces" class="page">
+  <div class="grid-2">
+    <div>
+      <div class="card">
+        <div class="card-title">Task Forces
+          <button class="btn btn-primary btn-sm" onclick="openNewTFModal()">+ New Task Force</button>
+        </div>
+        <div id="tf-list"></div>
+      </div>
+    </div>
+    <div id="tf-detail-panel">
+      <div class="card">
+        <div class="empty"><div class="empty-icon">&#128101;</div>Select a Task Force to edit</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ARMIES PAGE ===== -->
+<div id="page-armies" class="page">
+  <div class="grid-2">
+    <div>
+      <div class="card">
+        <div class="card-title">My Armies
+          <button class="btn btn-primary btn-sm" onclick="openNewArmyModal()">+ New Army</button>
+        </div>
+        <div id="army-list"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">&#128190; Save / Load</div>
+        <div class="form-row">
+          <button class="btn btn-warning" onclick="exportData()">Export JSON</button>
+          <button class="btn btn-secondary" onclick="document.getElementById('import-file').click()">Import JSON</button>
+          <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(event)">
+        </div>
+        <div style="font-size:11px;color:#8b949e;margin-top:8px">All data is also auto-saved in browser localStorage.</div>
+      </div>
+    </div>
+    <div id="army-detail-panel">
+      <div class="card">
+        <div class="empty"><div class="empty-icon">&#9876;</div>Select an army to view</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== DEPLOY PAGE ===== -->
+<div id="page-deploy" class="page">
+  <div class="card">
+    <div class="card-title">Deployments
+      <button class="btn btn-primary btn-sm" onclick="openNewDeployModal()">+ New Deployment</button>
+    </div>
+    <div id="deploy-list"></div>
+  </div>
+  <div id="deploy-editor" style="display:none">
+    <div class="card">
+      <div class="card-title">
+        <span id="deploy-editor-title">Edit Deployment</span>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-success btn-sm" onclick="saveDeployment()">Save</button>
+          <button class="btn btn-secondary btn-sm" onclick="closeDeployEditor()">Close</button>
+        </div>
+      </div>
+      <div class="form-row" style="margin-bottom:16px">
+        <div class="form-group" style="flex:2">
+          <label>Deployment Name</label>
+          <input type="text" id="dep-name" style="width:100%">
+        </div>
+        <div class="form-group">
+          <label>Battle Groups</label>
+          <select id="dep-bg-count" onchange="rebuildBGEditor()">
+            <option value="3">3 Battle Groups</option>
+            <option value="4">4 Battle Groups</option>
+            <option value="5">5 Battle Groups</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Army (Optional)</label>
+          <select id="dep-army" style="width:auto" onchange="rebuildBGEditor()">
+            <option value="">-- All Task Forces --</option>
+          </select>
+        </div>
+      </div>
+      <div id="dep-validation" style="margin-bottom:12px"></div>
+      <div id="dep-bgs"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PRINT PAGE ===== -->
+<div id="page-print" class="page">
+  <div class="no-print card">
+    <div class="card-title">&#128438; Print / Export</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Print Content</label>
+        <select id="print-select" style="width:auto" onchange="renderPrint()">
+          <option value="army">Army Roster</option>
+          <option value="deploy">Deployment Sheet</option>
+          <option value="units">Unit Cards</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Select</label>
+        <select id="print-which" style="width:auto" onchange="renderPrint()"></select>
+      </div>
+      <button class="btn btn-primary" onclick="window.print()">&#128438; Print</button>
+    </div>
+  </div>
+  <div id="print-content"></div>
+</div>
+
+<!-- ===== TRAIT PICKER MODAL ===== -->
+<div id="modal-traits" class="modal-bg">
+  <div class="modal">
+    <div class="modal-header">
+      <span id="trait-modal-title">Select Traits</span>
+      <button class="modal-close" onclick="closeTraitModal()">&#215;</button>
+    </div>
+    <div id="trait-modal-list" style="column-count:2;column-gap:10px"></div>
+    <div style="margin-top:12px;display:flex;justify-content:flex-end">
+      <button class="btn btn-primary" onclick="applyTraits()">Apply</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== NEW TF MODAL ===== -->
+<div id="modal-tf" class="modal-bg">
+  <div class="modal">
+    <div class="modal-header">New Task Force <button class="modal-close" onclick="closeModal('modal-tf')">&#215;</button></div>
+    <div class="form-group" style="margin-bottom:12px">
+      <label>Task Force Name</label>
+      <input type="text" id="tf-new-name" placeholder="e.g. Alpha Strike Force" style="width:100%">
+    </div>
+    <div class="form-group" style="margin-bottom:16px">
+      <label>Template (optional)</label>
+      <select id="tf-template" style="width:100%">
+        <option value="">Custom (no template)</option>
+        <option value="infantry">Infantry Task Force</option>
+        <option value="armor">Armored Task Force</option>
+        <option value="air">Air Assault Task Force</option>
+        <option value="mixed">Mixed Arms Task Force</option>
+      </select>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px">
+      <button class="btn btn-secondary" onclick="closeModal('modal-tf')">Cancel</button>
+      <button class="btn btn-primary" onclick="createTaskForce()">Create</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ADD UNIT TO TF MODAL ===== -->
+<div id="modal-add-unit" class="modal-bg">
+  <div class="modal">
+    <div class="modal-header">Add Unit to Task Force <button class="modal-close" onclick="closeModal('modal-add-unit')">&#215;</button></div>
+    <input class="search-bar" id="addunit-search" placeholder="&#128269; Search..." oninput="renderAddUnitList()">
+    <div class="form-row" style="margin-bottom:8px">
+      <div class="form-group">
+        <label>Role</label>
+        <select id="addunit-role" style="width:auto">
+          <option value="core">Core</option>
+          <option value="specialist">Specialist</option>
+          <option value="command">Command</option>
+          <option value="support">Support</option>
+          <option value="commander">Commander</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Quantity</label>
+        <input type="number" id="addunit-qty" value="1" min="1" max="20">
+      </div>
+    </div>
+    <div class="scrolllist" id="addunit-list"></div>
+    <div style="margin-top:12px;display:flex;justify-content:flex-end;gap:8px">
+      <button class="btn btn-secondary" onclick="closeModal('modal-add-unit')">Cancel</button>
+      <button class="btn btn-primary" onclick="confirmAddUnit()">Add Selected</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== NEW ARMY MODAL ===== -->
+<div id="modal-army" class="modal-bg">
+  <div class="modal">
+    <div class="modal-header">New Army <button class="modal-close" onclick="closeModal('modal-army')">&#215;</button></div>
+    <div class="form-group" style="margin-bottom:12px">
+      <label>Army Name</label>
+      <input type="text" id="army-new-name" placeholder="e.g. Iron Legion" style="width:100%">
+    </div>
+    <div class="form-group" style="margin-bottom:16px">
+      <label>Points Limit (optional)</label>
+      <input type="number" id="army-points-limit" value="1500" min="0" style="width:100px">
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px">
+      <button class="btn btn-secondary" onclick="closeModal('modal-army')">Cancel</button>
+      <button class="btn btn-primary" onclick="createArmy()">Create</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ADD TF TO ARMY MODAL ===== -->
+<div id="modal-add-tf" class="modal-bg">
+  <div class="modal">
+    <div class="modal-header">Add Task Force to Army <button class="modal-close" onclick="closeModal('modal-add-tf')">&#215;</button></div>
+    <div class="scrolllist" id="add-tf-list"></div>
+    <div style="margin-top:12px;display:flex;justify-content:flex-end;gap:8px">
+      <button class="btn btn-secondary" onclick="closeModal('modal-add-tf')">Cancel</button>
+      <button class="btn btn-primary" onclick="confirmAddTF()">Add Selected</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== NEW DEPLOY MODAL ===== -->
+<div id="modal-deploy" class="modal-bg">
+  <div class="modal">
+    <div class="modal-header">New Deployment <button class="modal-close" onclick="closeModal('modal-deploy')">&#215;</button></div>
+    <div class="form-group" style="margin-bottom:12px">
+      <label>Deployment Name</label>
+      <input type="text" id="dep-new-name" placeholder="e.g. Operation Thunder" style="width:100%">
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px">
+      <button class="btn btn-secondary" onclick="closeModal('modal-deploy')">Cancel</button>
+      <button class="btn btn-primary" onclick="createDeployment()">Create</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ADD UNIT TO BG MODAL ===== -->
+<div id="modal-bg-unit" class="modal-bg">
+  <div class="modal">
+    <div class="modal-header">Add Units to Battle Group <button class="modal-close" onclick="closeModal('modal-bg-unit')">&#215;</button></div>
+    <input class="search-bar" id="bgunit-search" placeholder="&#128269; Search..." oninput="renderBGUnitList()">
+    <div class="scrolllist" id="bgunit-list"></div>
+    <div style="margin-top:12px;display:flex;justify-content:flex-end;gap:8px">
+      <button class="btn btn-secondary" onclick="closeModal('modal-bg-unit')">Cancel</button>
+      <button class="btn btn-primary" onclick="confirmBGUnit()">Add</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// DATA: TRAITS
+// ============================================================
+const STAND_TRAITS = {
+  ad:["Active Defenses",3], aggLoop:["Aggression Loop",1], av:["Assault Vehicle",1],
+  bCry:["Battle Cry",2], bTide:["BattleTide",1], bNet:["Bot-Net",1],
+  charge:["Charge",0.5], dFighter:["Dogfighter",1], feroc:["Ferocious",1],
+  frenzy:["Frenzy",1], glory:["Glory",1], guard:["Guard",1],
+  horde:["Horde",0], hover:["Hover",1], inWalls:["In the Walls",2],
+  infest:["Infest",1], infil:["Infiltrate",1], inspir:["Inspiration",3],
+  jTroop:["Jump Troops",0.5], mWeap:["Melee Weapons",0.5], minSpeed:["Minimum Speed",-1],
+  moveOut:["Move Out",1], oClock:["Overclocked",1], pFire:["Precise Fire",1],
+  relic:["Relic Bearer",1], spawn:["Spawn",2], stealth:["Stealth",2],
+  stub:["Stubborn",1], tDep:["Tactical Deployment",1], tHunt:["Tank Hunter",1],
+  terror2:["Terror +2",1], terror4:["Terror +4",2], terror6:["Terror +6",3],
+  tFate:["Third Fate",3], trans1:["Transport 1",1.5], trans2:["Transport 2",3],
+  trans3:["Transport 3",4.5], vSworn:["Vowsworn",1], vtol:["VTOL",1]
+};
+
+const WEAPON_TRAITS = {
+  aiGuide:["A.I. Guided",0], aa:["Anti-Aircraft",1], burst:["Burst",0],
+  flame:["Flame",0], frag:["Frag",0], heavy:["Heavy",-1],
+  indir:["Indirect",3], rFire:["Rapid Fire",0], repFire:["Repeating Fire",0],
+  tgt:["Targeting",0]
+};
+
+const CLASS_INFO = {
+  inf:  {label:"Infantry",    size:6, mult:1, baseSave:6,  saveDice:1, baseSpeed:4},
+  cav:  {label:"Cavalry",     size:4, mult:1, baseSave:6,  saveDice:1, baseSpeed:8},
+  fg:   {label:"Fighter Grp", size:3, mult:1, baseSave:6,  saveDice:1, baseSpeed:4},
+  scout:{label:"Scout",       size:4, mult:1, baseSave:6,  saveDice:1, baseSpeed:4},
+  afv:  {label:"AFV",         size:3, mult:2, baseSave:10, saveDice:2, baseSpeed:4},
+  ac:   {label:"AC/Aircraft", size:2, mult:2, baseSave:10, saveDice:2, baseSpeed:8},
+  sh:   {label:"Super Heavy", size:1, mult:3, baseSave:18, saveDice:3, baseSpeed:4},
+  beh:  {label:"Behemoth",    size:1, mult:4, baseSave:24, saveDice:4, baseSpeed:4}
+};
+
+const RANGE_OPTS = [
+  {label:"10\"", val:0}, {label:"20\"", val:2}, {label:"30\"", val:5},
+  {label:"40\"", val:10}, {label:"50\"", val:20}
+];
+
+// ============================================================
+// DATA: BUILT-IN UNITS (representative Laserstorm units)
+// ============================================================
+const BUILTIN_UNITS = [
+  // --- INFANTRY ---
+  {id:"bi_line_inf", name:"Line Infantry", class:"inf", speed:4, mobility:"troop", aim:5, assault:0, saveNumber:6, morale:6, standTraits:[], weapons:[{mode:"gp",type:"p",range:0,shots:1,impact:0,traits:[]}], role:"core", builtIn:true},
+  {id:"bi_heavy_inf", name:"Heavy Infantry", class:"inf", speed:4, mobility:"troop", aim:4, assault:2, saveNumber:5, morale:5, standTraits:[["Stubborn",1]], weapons:[{mode:"gp",type:"p",range:2,shots:1,impact:0,traits:[]}], role:"core", builtIn:true},
+  {id:"bi_assault_inf", name:"Assault Infantry", class:"inf", speed:4, mobility:"troop", aim:5, assault:3, saveNumber:6, morale:5, standTraits:[["Charge",0.5],["Melee Weapons",0.5]], weapons:[{mode:"gp",type:"p",range:0,shots:2,impact:0,traits:[]}], role:"core", builtIn:true},
+  {id:"bi_recon_inf", name:"Recon Infantry", class:"inf", speed:4, mobility:"troop", aim:4, assault:0, saveNumber:6, morale:6, standTraits:[["Infiltrate",1],["Stealth",2]], weapons:[{mode:"gp",type:"p",range:2,shots:1,impact:0,traits:[]}], role:"specialist", builtIn:true},
+  {id:"bi_hwt_inf", name:"Heavy Weapons Team", class:"inf", speed:4, mobility:"troop", aim:4, assault:0, saveNumber:6, morale:6, standTraits:[], weapons:[{mode:"at",type:"p",range:5,shots:1,impact:4,traits:[]}], role:"specialist", builtIn:true},
+  {id:"bi_mortars", name:"Mortar Section", class:"inf", speed:4, mobility:"troop", aim:4, assault:0, saveNumber:6, morale:6, standTraits:[], weapons:[{mode:"ai",type:"p",range:5,shots:2,impact:0,traits:[["Indirect",3]]}], role:"support", builtIn:true},
+  {id:"bi_cmd_inf", name:"Command Infantry", class:"inf", speed:4, mobility:"troop", aim:4, assault:1, saveNumber:6, morale:5, standTraits:[["Inspiration",3]], weapons:[{mode:"gp",type:"p",range:2,shots:1,impact:0,traits:[]}], role:"command", builtIn:true},
+  // --- CAVALRY ---
+  {id:"bi_recon_cav", name:"Recon Cavalry", class:"cav", speed:8, mobility:"troop", aim:5, assault:1, saveNumber:6, morale:6, standTraits:[], weapons:[{mode:"gp",type:"p",range:2,shots:1,impact:0,traits:[]}], role:"core", builtIn:true},
+  {id:"bi_assault_cav", name:"Assault Cavalry", class:"cav", speed:8, mobility:"troop", aim:5, assault:3, saveNumber:5, morale:5, standTraits:[["Charge",0.5],["Ferocious",1]], weapons:[{mode:"gp",type:"p",range:0,shots:2,impact:0,traits:[]}], role:"core", builtIn:true},
+  {id:"bi_jump_cav", name:"Jump Cavalry", class:"cav", speed:8, mobility:"troop", aim:5, assault:1, saveNumber:6, morale:6, standTraits:[["Jump Troops",0.5]], weapons:[{mode:"gp",type:"p",range:2,shots:1,impact:0,traits:[]}], role:"specialist", builtIn:true},
+  // --- SCOUT ---
+  {id:"bi_light_scout", name:"Light Scout Vehicle", class:"scout", speed:6, mobility:"wheel", aim:5, assault:0, saveNumber:6, morale:6, standTraits:[], weapons:[{mode:"at",type:"p",range:2,shots:1,impact:2,traits:[]}], role:"specialist", builtIn:true},
+  // --- AFV ---
+  {id:"bi_light_tank", name:"Light Tank", class:"afv", speed:4, mobility:"track", aim:5, assault:0, saveNumber:10, morale:6, standTraits:[], weapons:[{mode:"at",type:"p",range:5,shots:1,impact:4,traits:[]}], role:"core", builtIn:true},
+  {id:"bi_battle_tank", name:"Battle Tank", class:"afv", speed:4, mobility:"track", aim:4, assault:0, saveNumber:8, morale:5, standTraits:[], weapons:[{mode:"at",type:"p",range:10,shots:1,impact:6,traits:[]}], role:"core", builtIn:true},
+  {id:"bi_heavy_tank", name:"Heavy Tank", class:"afv", speed:4, mobility:"track", aim:4, assault:0, saveNumber:6, morale:5, standTraits:[["Tank Hunter",1]], weapons:[{mode:"at",type:"p",range:10,shots:1,impact:8,traits:[]}], role:"core", builtIn:true},
+  {id:"bi_aa_tank", name:"AA Tank", class:"afv", speed:4, mobility:"track", aim:5, assault:0, saveNumber:10, morale:6, standTraits:[], weapons:[{mode:"ai",type:"p",range:5,shots:2,impact:0,traits:[["Anti-Aircraft",1]]}], role:"support", builtIn:true},
+  {id:"bi_artillery", name:"Self-Propelled Artillery", class:"afv", speed:4, mobility:"track", aim:4, assault:0, saveNumber:10, morale:6, standTraits:[], weapons:[{mode:"ai",type:"p",range:20,shots:2,impact:2,traits:[["Indirect",3]]}], role:"support", builtIn:true},
+  {id:"bi_cmd_tank", name:"Command Tank", class:"afv", speed:4, mobility:"track", aim:4, assault:0, saveNumber:8, morale:5, standTraits:[["Inspiration",3]], weapons:[{mode:"at",type:"p",range:10,shots:1,impact:4,traits:[]}], role:"command", builtIn:true},
+  // --- AC / AIRCRAFT ---
+  {id:"bi_armored_car", name:"Armored Car", class:"ac", speed:8, mobility:"wheel", aim:5, assault:0, saveNumber:10, morale:6, standTraits:[], weapons:[{mode:"gp",type:"p",range:5,shots:1,impact:2,traits:[]}], role:"core", builtIn:true},
+  {id:"bi_gnd_attack", name:"Ground Attack Aircraft", class:"ac", speed:8, mobility:"air", aim:4, assault:0, saveNumber:10, morale:5, standTraits:[["VTOL",1]], weapons:[{mode:"at",type:"p",range:5,shots:2,impact:4,traits:[]}], role:"support", builtIn:true},
+  {id:"bi_interceptor", name:"Interceptor", class:"ac", speed:8, mobility:"air", aim:4, assault:0, saveNumber:10, morale:5, standTraits:[["Dogfighter",1]], weapons:[{mode:"ai",type:"p",range:5,shots:2,impact:0,traits:[["Anti-Aircraft",1]]}], role:"support", builtIn:true},
+  // --- SUPER HEAVY ---
+  {id:"bi_sh_tank", name:"Super Heavy Tank", class:"sh", speed:4, mobility:"track", aim:4, assault:0, saveNumber:14, morale:5, standTraits:[], weapons:[{mode:"at",type:"p",range:20,shots:1,impact:12,traits:[]}], role:"core", builtIn:true},
+  {id:"bi_sh_walker", name:"Super Heavy Walker", class:"sh", speed:4, mobility:"walk", aim:4, assault:2, saveNumber:14, morale:5, standTraits:[["Terror +2",1]], weapons:[{mode:"at",type:"p",range:10,shots:1,impact:12,traits:[]},{mode:"ai",type:"p",range:5,shots:3,impact:0,traits:[]}], role:"core", builtIn:true},
+  // --- BEHEMOTH ---
+  {id:"bi_titan", name:"Titan Behemoth", class:"beh", speed:4, mobility:"walk", aim:3, assault:4, saveNumber:20, morale:4, standTraits:[["Terror +4",2]], weapons:[{mode:"at",type:"p",range:20,shots:1,impact:14,traits:[]},{mode:"ai",type:"p",range:10,shots:4,impact:0,traits:[["Burst",0]]}], role:"core", builtIn:true},
+  {id:"bi_colossus", name:"Colossus", class:"beh", speed:4, mobility:"walk", aim:3, assault:6, saveNumber:18, morale:3, standTraits:[["Terror +6",3],["Ferocious",1]], weapons:[{mode:"gp",type:"p",range:20,shots:2,impact:10,traits:[]},{mode:"ai",type:"p",range:5,shots:6,impact:0,traits:[["Burst",0]]}], role:"core", builtIn:true},
+  // --- FIGHTER GROUP ---
+  {id:"bi_fighters", name:"Fighter Group", class:"fg", speed:4, mobility:"troop", aim:4, assault:2, saveNumber:6, morale:5, standTraits:[["Ferocious",1]], weapons:[{mode:"gp",type:"p",range:0,shots:2,impact:0,traits:[]}], role:"core", builtIn:true},
+  {id:"bi_power_armor", name:"Power Armor", class:"fg", speed:4, mobility:"troop", aim:4, assault:2, saveNumber:4, morale:5, standTraits:[["Assault Vehicle",1]], weapons:[{mode:"gp",type:"p",range:2,shots:1,impact:2,traits:[]}], role:"specialist", builtIn:true},
+];
+
+// ============================================================
+// STATE
+// ============================================================
+let state = {
+  customUnits: [],
+  taskForces: [],
+  armies: [],
+  deployments: []
+};
+
+let currentBuilderTraits = [];
+let currentWeaponTraits = {};
+let traitPickerTarget = null;
+let traitPickerWeaponIdx = null;
+let currentTFId = null;
+let addUnitTargetTFId = null;
+let addUnitSelectedId = null;
+let currentArmyId = null;
+let addTFTargetArmyId = null;
+let addTFSelectedId = null;
+let currentDeployId = null;
+let bgUnitTargetBGId = null;
+let bgUnitSelectedId = null;
+let libFilterClass = "all";
+let weaponRowCount = 0;
+
+// ============================================================
+// PERSISTENCE
+// ============================================================
+function saveState() {
+  localStorage.setItem("ls_army_builder", JSON.stringify(state));
+}
+function loadState() {
+  const raw = localStorage.getItem("ls_army_builder");
+  if (raw) {
+    try {
+      const saved = JSON.parse(raw);
+      state.customUnits = saved.customUnits || [];
+      state.taskForces = saved.taskForces || [];
+      state.armies = saved.armies || [];
+      state.deployments = saved.deployments || [];
+    } catch(e) {}
+  }
+}
+function exportData() {
+  const blob = new Blob([JSON.stringify(state, null, 2)], {type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "laserstorm-army.json";
+  a.click();
+}
+function importData(evt) {
+  const file = evt.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const imported = JSON.parse(e.target.result);
+      if (imported.customUnits) state.customUnits = imported.customUnits;
+      if (imported.taskForces) state.taskForces = imported.taskForces;
+      if (imported.armies) state.armies = imported.armies;
+      if (imported.deployments) state.deployments = imported.deployments;
+      saveState();
+      renderAll();
+      alert("Import successful!");
+    } catch(e) { alert("Invalid file."); }
+  };
+  reader.readAsText(file);
+}
+
+// ============================================================
+// UTILITY
+// ============================================================
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+function roundToFive(v) { v = Math.ceil(v); return v + (v%5===0 ? 0 : 5-(v%5)); }
+
+function allUnits() {
+  return [...BUILTIN_UNITS, ...state.customUnits];
+}
+function unitById(id) {
+  return allUnits().find(u => u.id === id);
+}
+
+function calcPoints(unit) {
+  const ci = CLASS_INFO[unit.class] || CLASS_INFO.inf;
+  let ptsSpeed = (unit.speed - ci.baseSpeed) * 0.25;
+  if (unit.class==="scout"||unit.class==="afv") {
+    if (unit.mobility==="walk") ptsSpeed += 2;
+    if (unit.mobility==="grav") ptsSpeed += 4;
+  }
+  const aimFactor = unit.class==="inf" ? 1 : 2;
+  const wSlots = unit.weapons.length;
+  const ptsAim = (5 - unit.aim) * aimFactor * wSlots;
+  let ptsAssault = unit.assault * 0.5;
+  if (unit.assault > 3) ptsAssault += 1;
+  const ptsSave = ci.baseSave - unit.saveNumber;
+  let ptsMorale = 6 - unit.morale;
+  if (unit.morale < 4) ptsMorale += 1;
+  let ptsTraits = 0;
+  (unit.standTraits||[]).forEach(t => {
+    if (t[1]===0) { if(t[0]==="Horde") ptsTraits += (unit.morale<=3?3:1); }
+    else ptsTraits += t[1];
+  });
+  let standPts = Math.max(1, Math.ceil(ptsSpeed+ptsAim+ptsAssault+ptsSave+ptsMorale+ptsTraits));
+  let weaponPts = 0;
+  (unit.weapons||[]).forEach((w,i) => {
+    let wCost = 0;
+    let impCost = w.impact * 2;
+    if (w.impact>6) impCost+=2;
+    if (w.impact>10) impCost+=5;
+    wCost += w.range + impCost;
+    let tCost=0, impTCost=0;
+    (w.traits||[]).forEach(t => {
+      if (t[1]===0) {
+        if(t[0]==="Burst"){tCost+=(impCost+w.range+7);impTCost+=(impCost+w.range+7);}
+        if(t[0]==="Frag"&&w.impact>1){tCost-=(impCost*0.25);impTCost-=(impCost*0.25);}
+        if(t[0]==="A.I. Guided") tCost+=(w.shots*0.5);
+        if(t[0]==="Repeating Fire") tCost+=(w.shots*0.5);
+        if(t[0]==="Rapid Fire") tCost+=((w.range+impCost+impTCost)/4);
+        if(t[0]==="Targeting"&&wSlots>1) tCost+=0.5;
+        if(t[0]==="Flame"){tCost+=(impCost+w.range+5);impTCost+=(impCost+w.range+5);}
+      } else { tCost+=t[1]; }
+    });
+    wCost += tCost + (w.shots-1)*((w.range+impCost+impTCost)/2);
+    if(w.mode==="gp") wCost*=1.5;
+    if(w.type==="s") wCost*=0.8;
+    wCost = Math.ceil(wCost);
+    if(unit.class==="fg"&&wSlots===1) wCost-=1;
+    if(wCost<1) wCost=w.shots;
+    weaponPts += wCost;
+  });
+  let total = Math.ceil((standPts+weaponPts)*ci.mult);
+  return {
+    perStand: total,
+    unitSize: ci.size,
+    unitPts: roundToFive(total*ci.size),
+    indPts: roundToFive(total*1.3),
+    cmdPts: roundToFive(total*1.5),
+    heroPts: roundToFive(total*1.55),
+    cmdHeroPts: roundToFive(total*1.75),
+    saveDice: ci.saveDice
+  };
+}
+
+function rangeLabel(rv) {
+  return {0:"10\"",2:"20\"",5:"30\"",10:"40\"",20:"50\""}[rv] || rv+"\"";
+}
+function classLabel(c) { return (CLASS_INFO[c]||{}).label||c; }
+function classBadge(c) { return `<span class="badge badge-${c}">${classLabel(c)}</span>`; }
+function roleBadge(r) { return `<span class="badge badge-${r}">${r}</span>`; }
+
+function unitCardHTML(unit, actions) {
+  const pts = calcPoints(unit);
+  const traits = (unit.standTraits||[]).map(t=>t[0]).join(", ")||"None";
+  const weaponsHTML = (unit.weapons||[]).map(w => {
+    const wt = (w.traits||[]).map(t=>t[0]).join(", ");
+    return `<div class="weapon-row">${w.mode.toUpperCase()}/${w.type.toUpperCase()} | Range <span>${rangeLabel(w.range)}</span> | Shots <span>${w.shots}</span> | Impact <span>+${w.impact}</span>${wt?` | ${wt}`:""}</div>`;
+  }).join("");
+  return `
+    <div class="unit-card">
+      <div class="unit-card-header">
+        <div>
+          ${classBadge(unit.class)}
+          ${unit.builtIn?"":`<span class="badge" style="background:#333;color:#aaa">Custom</span>`}
+          <span class="unit-name" style="display:block;margin-top:4px">${unit.name}</span>
+        </div>
+        <div style="text-align:right">
+          <div class="unit-pts">${pts.unitPts} pts</div>
+          <div style="font-size:10px;color:#8b949e">${pts.unitSize} stands</div>
+        </div>
+      </div>
+      <div class="stat-row">
+        <div class="stat"><span class="stat-name">Spd</span><span class="stat-val">${unit.speed}"</span></div>
+        <div class="stat"><span class="stat-name">Mob</span><span class="stat-val">${unit.mobility}</span></div>
+        <div class="stat"><span class="stat-name">Aim</span><span class="stat-val">${unit.aim}+</span></div>
+        <div class="stat"><span class="stat-name">Assault</span><span class="stat-val">+${unit.assault}</span></div>
+        <div class="stat"><span class="stat-name">Save</span><span class="stat-val">${pts.saveDice}D6/${unit.saveNumber}+</span></div>
+        <div class="stat"><span class="stat-name">Morale</span><span class="stat-val">${unit.morale}+</span></div>
+      </div>
+      ${weaponsHTML}
+      <div style="font-size:11px;color:#8b949e;margin-top:6px">Traits: ${traits}</div>
+      ${actions||""}
+    </div>`;
+}
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+function showPage(p) {
+  document.querySelectorAll(".page").forEach(el=>el.classList.remove("active"));
+  document.querySelectorAll(".nav-tab").forEach(el=>el.classList.remove("active"));
+  document.getElementById("page-"+p).classList.add("active");
+  document.getElementById("tab-"+p).classList.add("active");
+  if(p==="library") renderLibrary();
+  if(p==="taskforces") renderTFList();
+  if(p==="armies") renderArmyList();
+  if(p==="deploy") renderDeployList();
+  if(p==="print") renderPrintOptions();
+}
+
+function closeModal(id) { document.getElementById(id).classList.remove("open"); }
+function openModal(id) { document.getElementById(id).classList.add("open"); }
+
+// ============================================================
+// UNIT BUILDER
+// ============================================================
+let builderWeapons = [];
+
+function resetBuilder() {
+  document.getElementById("b-name").value = "";
+  document.getElementById("b-class").value = "inf";
+  document.getElementById("b-role").value = "core";
+  currentBuilderTraits = [];
+  builderWeapons = [];
+  onClassChange();
+  document.getElementById("b-result").innerHTML = `<div class="empty"><div class="empty-icon">&#128202;</div>Fill in stats and click Calculate</div>`;
+}
+
+function onClassChange() {
+  const cls = document.getElementById("b-class").value;
+  const ci = CLASS_INFO[cls];
+  document.getElementById("b-speed").value = ci.baseSpeed;
+  document.getElementById("b-savedice").textContent = ci.saveDice;
+  document.getElementById("b-savenumber").value = ci.baseSave;
+  document.getElementById("b-savenumber").min = Math.max(1, ci.baseSave - 12);
+  document.getElementById("b-aim").value = 5;
+  document.getElementById("b-assault").value = 0;
+  document.getElementById("b-morale").value = 6;
+  const mobSel = document.getElementById("b-mobility");
+  if(cls==="inf"||cls==="cav"||cls==="fg") { mobSel.value="troop"; mobSel.disabled=true; }
+  else if(cls==="ac") { mobSel.value="air"; mobSel.disabled=true; }
+  else { mobSel.disabled=false; mobSel.value=cls==="sh"||cls==="beh"?"track":"track"; }
+  currentBuilderTraits = [];
+  document.getElementById("b-traits-display").textContent = "None";
+  builderWeapons = [{mode:"gp",type:"p",range:0,shots:1,impact:0,traits:[]}];
+  renderWeaponRows();
+}
+
+function renderWeaponRows() {
+  const container = document.getElementById("b-weapons-container");
+  container.innerHTML = "";
+  builderWeapons.forEach((w,i) => {
+    const div = document.createElement("div");
+    div.className = "weapon-builder";
+    div.style.marginBottom = "8px";
+    div.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <span style="font-size:11px;font-weight:bold;color:#8b949e;text-transform:uppercase">Weapon ${i+1}</span>
+        ${builderWeapons.length>1?`<button class="btn btn-danger btn-xs" onclick="removeWeapon(${i})">Remove</button>`:""}
+      </div>
+      <div class="weapon-builder-row">
+        <div class="form-group">
+          <label>Mode</label>
+          <select onchange="builderWeapons[${i}].mode=this.value" style="width:auto">
+            <option value="ai" ${w.mode==="ai"?"selected":""}>AI</option>
+            <option value="at" ${w.mode==="at"?"selected":""}>AT</option>
+            <option value="gp" ${w.mode==="gp"?"selected":""}>GP</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Type</label>
+          <select onchange="builderWeapons[${i}].type=this.value" style="width:auto">
+            <option value="p" ${w.type==="p"?"selected":""}>Primary</option>
+            <option value="s" ${w.type==="s"?"selected":""}>Selective</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Range</label>
+          <select onchange="builderWeapons[${i}].range=parseInt(this.value)" style="width:auto">
+            ${RANGE_OPTS.map(r=>`<option value="${r.val}" ${w.range===r.val?"selected":""}>${r.label}</option>`).join("")}
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Shots</label>
+          <input type="number" value="${w.shots}" min="1" max="20" style="width:55px" onchange="builderWeapons[${i}].shots=parseInt(this.value)||1">
+        </div>
+        <div class="form-group">
+          <label>Impact</label>
+          <input type="number" value="${w.impact}" min="0" max="20" style="width:55px" onchange="builderWeapons[${i}].impact=parseInt(this.value)||0">
+        </div>
+        <div class="form-group">
+          <label>Traits <span style="color:#007eff;cursor:pointer" onclick="openTraitPicker('weapon',${i})">[+]</span></label>
+          <div id="wtrait-display-${i}" style="font-size:11px;color:#8b949e">${(w.traits||[]).map(t=>t[0]).join(", ")||"None"}</div>
+        </div>
+      </div>`;
+    container.appendChild(div);
+  });
+}
+
+function addWeaponRow() {
+  builderWeapons.push({mode:"at",type:"p",range:0,shots:1,impact:0,traits:[]});
+  renderWeaponRows();
+}
+function removeWeapon(i) {
+  if(builderWeapons.length<=1){alert("Need at least one weapon.");return;}
+  builderWeapons.splice(i,1);
+  renderWeaponRows();
+}
+
+function openTraitPicker(target, wIdx) {
+  traitPickerTarget = target;
+  traitPickerWeaponIdx = wIdx;
+  const list = document.getElementById("trait-modal-list");
+  list.innerHTML = "";
+  const traits = target==="stand" ? STAND_TRAITS : WEAPON_TRAITS;
+  const selected = target==="stand"
+    ? currentBuilderTraits.map(t=>t[0])
+    : (builderWeapons[wIdx]?.traits||[]).map(t=>t[0]);
+  document.getElementById("trait-modal-title").textContent = target==="stand" ? "Stand Traits" : `Weapon ${wIdx+1} Traits`;
+  Object.entries(traits).forEach(([key,val]) => {
+    const label = document.createElement("label");
+    label.style.cssText = "display:flex;align-items:center;gap:6px;padding:3px 0;font-size:12px;text-transform:none;color:#e0e0e0;cursor:pointer";
+    const cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.value = key;
+    cb.checked = selected.includes(val[0]);
+    label.appendChild(cb);
+    label.appendChild(document.createTextNode(val[0]));
+    list.appendChild(label);
+  });
+  openModal("modal-traits");
+}
+
+function applyTraits() {
+  const traits = traitPickerTarget==="stand" ? STAND_TRAITS : WEAPON_TRAITS;
+  const checkboxes = document.querySelectorAll("#trait-modal-list input[type=checkbox]");
+  const selected = [];
+  checkboxes.forEach(cb => { if(cb.checked) selected.push(traits[cb.value]); });
+  if(traitPickerTarget==="stand") {
+    currentBuilderTraits = selected;
+    document.getElementById("b-traits-display").textContent = selected.map(t=>t[0]).join(", ")||"None";
+  } else {
+    builderWeapons[traitPickerWeaponIdx].traits = selected;
+    const el = document.getElementById(`wtrait-display-${traitPickerWeaponIdx}`);
+    if(el) el.textContent = selected.map(t=>t[0]).join(", ")||"None";
+  }
+  closeModal("modal-traits");
+}
+
+function closeTraitModal() { closeModal("modal-traits"); }
+
+function gatherBuilderUnit() {
+  return {
+    name: document.getElementById("b-name").value || "Unnamed Unit",
+    class: document.getElementById("b-class").value,
+    role: document.getElementById("b-role").value,
+    speed: parseInt(document.getElementById("b-speed").value)||4,
+    mobility: document.getElementById("b-mobility").value,
+    aim: parseInt(document.getElementById("b-aim").value)||5,
+    assault: parseInt(document.getElementById("b-assault").value)||0,
+    saveNumber: parseInt(document.getElementById("b-savenumber").value)||6,
+    morale: parseInt(document.getElementById("b-morale").value)||6,
+    standTraits: currentBuilderTraits.slice(),
+    weapons: builderWeapons.map(w => ({...w, traits:(w.traits||[]).slice()}))
+  };
+}
+
+function calculateBuilder() {
+  const unit = gatherBuilderUnit();
+  const pts = calcPoints(unit);
+  const ci = CLASS_INFO[unit.class];
+  const hasCmd = unit.class !== "fg" && unit.class !== "beh";
+  document.getElementById("b-result").innerHTML = `
+    <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-bottom:12px">
+      <div><div class="points-big">${pts.unitPts}</div><div class="points-label">Unit (${ci.size} stands)</div></div>
+      <div><div class="points-big" style="font-size:20px">${pts.indPts}</div><div class="points-label">Independent Stand</div></div>
+      ${hasCmd?`<div><div class="points-big" style="font-size:20px">${pts.cmdPts}</div><div class="points-label">Command Stand</div></div>`:""}
+      ${hasCmd?`<div><div class="points-big" style="font-size:20px">${pts.cmdHeroPts}</div><div class="points-label">Cmd Hero Stand</div></div>`:""}
+    </div>
+    <div class="summary-row"><span>Points per stand</span><span>${pts.perStand} pts</span></div>
+    <div class="summary-row"><span>Hero stand</span><span>${pts.heroPts} pts</span></div>`;
+}
+
+function saveToLibrary() {
+  const unit = gatherBuilderUnit();
+  if(!unit.name || unit.name==="Unnamed Unit") { alert("Give your unit a name first."); return; }
+  calculateBuilder();
+  unit.id = "custom_"+uid();
+  unit.builtIn = false;
+  state.customUnits.push(unit);
+  saveState();
+  alert(`"${unit.name}" saved to library!`);
+}
+
+// ============================================================
+// LIBRARY
+// ============================================================
+function setLibFilter(el, cls) {
+  document.querySelectorAll("#lib-filters .pill").forEach(p=>p.classList.remove("active"));
+  el.classList.add("active");
+  libFilterClass = cls;
+  renderLibrary();
+}
+
+function renderLibrary() {
+  const search = (document.getElementById("lib-search")?.value||"").toLowerCase();
+  let units = allUnits();
+  if(libFilterClass==="custom") units = units.filter(u=>!u.builtIn);
+  else if(libFilterClass!=="all") units = units.filter(u=>u.class===libFilterClass);
+  if(search) units = units.filter(u=>u.name.toLowerCase().includes(search));
+  const list = document.getElementById("lib-list");
+  if(!units.length) { list.innerHTML=`<div class="empty"><div class="empty-icon">&#128269;</div>No units found</div>`; return; }
+  list.innerHTML = units.map(u => {
+    const pts = calcPoints(u);
+    const actions = `<div style="display:flex;gap:6px;margin-top:8px">
+      ${u.builtIn?"":`<button class="btn btn-danger btn-xs" onclick="deleteCustomUnit('${u.id}')">Delete</button>`}
+      ${u.builtIn?"":`<button class="btn btn-secondary btn-xs" onclick="editUnit('${u.id}')">Edit</button>`}
+      <button class="btn btn-primary btn-xs" onclick="quickAddToTF('${u.id}')">+ Add to Task Force</button>
+    </div>`;
+    return unitCardHTML(u, actions);
+  }).join("");
+}
+
+function deleteCustomUnit(id) {
+  if(!confirm("Delete this unit?")) return;
+  state.customUnits = state.customUnits.filter(u=>u.id!==id);
+  // remove from task forces too
+  state.taskForces.forEach(tf => { tf.units = tf.units.filter(u=>u.unitId!==id); });
+  saveState();
+  renderLibrary();
+}
+
+function editUnit(id) {
+  const unit = state.customUnits.find(u=>u.id===id);
+  if(!unit) return;
+  document.getElementById("b-name").value = unit.name;
+  document.getElementById("b-class").value = unit.class;
+  document.getElementById("b-role").value = unit.role||"core";
+  onClassChange();
+  document.getElementById("b-speed").value = unit.speed;
+  document.getElementById("b-mobility").value = unit.mobility;
+  document.getElementById("b-aim").value = unit.aim;
+  document.getElementById("b-assault").value = unit.assault;
+  document.getElementById("b-savenumber").value = unit.saveNumber;
+  document.getElementById("b-morale").value = unit.morale;
+  currentBuilderTraits = (unit.standTraits||[]).slice();
+  document.getElementById("b-traits-display").textContent = currentBuilderTraits.map(t=>t[0]).join(", ")||"None";
+  builderWeapons = (unit.weapons||[]).map(w=>({...w, traits:(w.traits||[]).slice()}));
+  renderWeaponRows();
+  // Override save to update
+  state.customUnits = state.customUnits.filter(u=>u.id!==id);
+  saveState();
+  showPage("builder");
+}
+
+function quickAddToTF(unitId) {
+  if(!state.taskForces.length) { alert("Create a Task Force first on the Task Forces tab."); return; }
+  addUnitTargetTFId = state.taskForces[0].id;
+  addUnitSelectedId = unitId;
+  if(state.taskForces.length===1) {
+    const tf = state.taskForces[0];
+    const u = unitById(unitId);
+    tf.units.push({unitId, role: u?.role||"core", quantity:1});
+    saveState();
+    alert(`Added to "${tf.name}"`);
+  } else {
+    // show picker
+    openAddUnitModal(null);
+  }
+}
+
+// ============================================================
+// TASK FORCES
+// ============================================================
+function renderTFList() {
+  const list = document.getElementById("tf-list");
+  if(!state.taskForces.length) {
+    list.innerHTML = `<div class="empty"><div class="empty-icon">&#128101;</div>No task forces yet</div>`;
+    return;
+  }
+  list.innerHTML = state.taskForces.map(tf => {
+    const pts = tfPoints(tf);
+    const unitCount = tf.units.reduce((s,u)=>s+u.quantity,0);
+    const isCurrent = tf.id === currentTFId;
+    return `<div class="list-row" style="${isCurrent?"border-color:#007eff":""}" onclick="selectTF('${tf.id}')">
+      <div>
+        <div style="font-weight:bold;color:${isCurrent?"#007eff":"#fff"}">${tf.name}</div>
+        <div style="font-size:11px;color:#8b949e">${unitCount} unit slot${unitCount!==1?"s":""} &bull; ${pts} pts</div>
+      </div>
+      <div style="display:flex;gap:4px">
+        <button class="btn btn-danger btn-xs" onclick="event.stopPropagation();deleteTF('${tf.id}')">Del</button>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function tfPoints(tf) {
+  return (tf.units||[]).reduce((sum, slot) => {
+    const u = unitById(slot.unitId);
+    if(!u) return sum;
+    const pts = calcPoints(u);
+    const roleMultiplier = slot.role==="commander"?1.75 : slot.role==="command"?1.5 : slot.role==="specialist"?1.3 : 1;
+    return sum + Math.round(pts.perStand * pts.unitSize * roleMultiplier) * slot.quantity;
+  }, 0);
+}
+
+function selectTF(id) {
+  currentTFId = id;
+  renderTFList();
+  renderTFDetail();
+}
+
+function renderTFDetail() {
+  const panel = document.getElementById("tf-detail-panel");
+  const tf = state.taskForces.find(t=>t.id===currentTFId);
+  if(!tf) { panel.innerHTML = `<div class="card"><div class="empty">Select a Task Force</div></div>`; return; }
+  const pts = tfPoints(tf);
+  const roles = ["commander","core","specialist","command","support"];
+  const roleLabels = {commander:"Commander",core:"Core Units",specialist:"Specialist Stands",command:"Command Units",support:"Support Units"};
+  let slotsHTML = "";
+  roles.forEach(role => {
+    const slots = tf.units.filter(u=>u.role===role);
+    slotsHTML += `<div style="margin-bottom:12px">
+      <div class="section-header sh-${role}">${roleLabels[role]}</div>
+      ${slots.length===0?`<div style="font-size:12px;color:#444;padding:4px 0">None</div>`:""}
+      ${slots.map(slot => {
+        const u = unitById(slot.unitId);
+        if(!u) return `<div class="tf-unit-row"><span style="color:#666">[Deleted Unit]</span><button class="btn btn-danger btn-xs" onclick="removeTFSlot('${tf.id}','${slot.id}')">Remove</button></div>`;
+        const pts = calcPoints(u);
+        const unitPts = Math.round(pts.unitPts * (role==="commander"?1.75:role==="command"?1.5:1) * slot.quantity);
+        return `<div class="tf-unit-row">
+          <div style="flex:1">
+            <span style="font-weight:bold;color:#fff">${u.name}</span>
+            <span style="font-size:11px;color:#8b949e;margin-left:6px">${classBadge(u.class)}</span>
+            <div style="font-size:11px;color:#8b949e">${pts.unitPts}pts/unit &bull; ${unitPts}pts total</div>
+          </div>
+          <div class="qty-ctrl">
+            <button class="qty-btn" onclick="changeTFSlotQty('${tf.id}','${slot.id}',-1)">-</button>
+            <span class="qty-val">${slot.quantity}</span>
+            <button class="qty-btn" onclick="changeTFSlotQty('${tf.id}','${slot.id}',1)">+</button>
+          </div>
+          <select style="width:auto;font-size:11px;background:#0d1117;border:1px solid #30363d;color:#e0e0e0;border-radius:4px;padding:3px" onchange="changeTFSlotRole('${tf.id}','${slot.id}',this.value)">
+            ${roles.map(r=>`<option value="${r}" ${r===slot.role?"selected":""}>${roleLabels[r]}</option>`).join("")}
+          </select>
+          <button class="btn btn-danger btn-xs" onclick="removeTFSlot('${tf.id}','${slot.id}')">X</button>
+        </div>`;
+      }).join("")}
+    </div>`;
+  });
+  panel.innerHTML = `<div class="card">
+    <div class="card-title">
+      ${tf.name}
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-primary btn-sm" onclick="openAddUnitModal('${tf.id}')">+ Add Unit</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteTF('${tf.id}')">Delete TF</button>
+      </div>
+    </div>
+    <div style="margin-bottom:12px">
+      <div class="points-big" style="font-size:22px">${pts}</div>
+      <div class="points-label">Task Force Points</div>
+    </div>
+    ${slotsHTML}
+    <hr>
+    <div style="font-size:11px;color:#8b949e">
+      <strong style="color:#fff">Tip:</strong> Task Forces are organizational units.
+      Assign them to Battle Groups during deployment.
+    </div>
+  </div>`;
+}
+
+function openNewTFModal() { document.getElementById("tf-new-name").value=""; openModal("modal-tf"); }
+
+function createTaskForce() {
+  const name = document.getElementById("tf-new-name").value.trim();
+  if(!name) { alert("Enter a name."); return; }
+  const tf = { id:"tf_"+uid(), name, units:[] };
+  state.taskForces.push(tf);
+  saveState();
+  closeModal("modal-tf");
+  currentTFId = tf.id;
+  renderTFList();
+  renderTFDetail();
+}
+
+function deleteTF(id) {
+  if(!confirm("Delete this task force?")) return;
+  state.taskForces = state.taskForces.filter(t=>t.id!==id);
+  state.armies.forEach(a => { a.taskForceIds = a.taskForceIds.filter(tid=>tid!==id); });
+  if(currentTFId===id) currentTFId=null;
+  saveState();
+  renderTFList();
+  renderTFDetail();
+}
+
+function openAddUnitModal(tfId) {
+  if(tfId) addUnitTargetTFId = tfId;
+  addUnitSelectedId = null;
+  renderAddUnitList();
+  openModal("modal-add-unit");
+}
+
+function renderAddUnitList() {
+  const search = (document.getElementById("addunit-search")?.value||"").toLowerCase();
+  let units = allUnits();
+  if(search) units = units.filter(u=>u.name.toLowerCase().includes(search));
+  const list = document.getElementById("addunit-list");
+  list.innerHTML = units.map(u => {
+    const pts = calcPoints(u);
+    const sel = addUnitSelectedId===u.id;
+    return `<div class="list-row" style="${sel?"border-color:#007eff;background:#1a2a4a":""}" onclick="addUnitSelectedId='${u.id}';renderAddUnitList()">
+      <div>
+        ${classBadge(u.class)}
+        <span style="font-weight:bold;margin-left:6px;color:${sel?"#007eff":"#fff"}">${u.name}</span>
+        <div style="font-size:11px;color:#8b949e">${pts.unitPts} pts | ${pts.unitSize} stands</div>
+      </div>
+    </div>`;
+  }).join("") || `<div class="empty">No units found</div>`;
+}
+
+function confirmAddUnit() {
+  if(!addUnitSelectedId) { alert("Select a unit."); return; }
+  const tf = state.taskForces.find(t=>t.id===addUnitTargetTFId);
+  if(!tf) { alert("No task force selected."); return; }
+  const u = unitById(addUnitSelectedId);
+  const role = document.getElementById("addunit-role").value;
+  const qty = parseInt(document.getElementById("addunit-qty").value)||1;
+  tf.units.push({id:"slot_"+uid(), unitId:addUnitSelectedId, role, quantity:qty});
+  saveState();
+  closeModal("modal-add-unit");
+  if(currentTFId===addUnitTargetTFId) renderTFDetail();
+  renderTFList();
+}
+
+function removeTFSlot(tfId, slotId) {
+  const tf = state.taskForces.find(t=>t.id===tfId);
+  if(!tf) return;
+  tf.units = tf.units.filter(u=>u.id!==slotId);
+  saveState();
+  renderTFList();
+  renderTFDetail();
+}
+
+function changeTFSlotQty(tfId, slotId, delta) {
+  const tf = state.taskForces.find(t=>t.id===tfId);
+  if(!tf) return;
+  const slot = tf.units.find(u=>u.id===slotId);
+  if(!slot) return;
+  slot.quantity = Math.max(1, slot.quantity+delta);
+  saveState();
+  renderTFList();
+  renderTFDetail();
+}
+
+function changeTFSlotRole(tfId, slotId, role) {
+  const tf = state.taskForces.find(t=>t.id===tfId);
+  if(!tf) return;
+  const slot = tf.units.find(u=>u.id===slotId);
+  if(!slot) return;
+  slot.role = role;
+  saveState();
+  renderTFList();
+  renderTFDetail();
+}
+
+// ============================================================
+// ARMIES
+// ============================================================
+function renderArmyList() {
+  const list = document.getElementById("army-list");
+  if(!state.armies.length) { list.innerHTML=`<div class="empty"><div class="empty-icon">&#9876;</div>No armies yet</div>`; return; }
+  list.innerHTML = state.armies.map(a => {
+    const pts = armyPoints(a);
+    const tfCount = a.taskForceIds.length;
+    const isCurrent = a.id===currentArmyId;
+    return `<div class="list-row" style="${isCurrent?"border-color:#007eff":""}" onclick="selectArmy('${a.id}')">
+      <div>
+        <div style="font-weight:bold;color:${isCurrent?"#007eff":"#fff"}">${a.name}</div>
+        <div style="font-size:11px;color:#8b949e">${tfCount} Task Force${tfCount!==1?"s":""} &bull; ${pts}${a.pointsLimit?` / ${a.pointsLimit}`:""} pts</div>
+      </div>
+      <div style="display:flex;gap:4px">
+        <button class="btn btn-danger btn-xs" onclick="event.stopPropagation();deleteArmy('${a.id}')">Del</button>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function armyPoints(a) {
+  return (a.taskForceIds||[]).reduce((sum,tfId) => {
+    const tf = state.taskForces.find(t=>t.id===tfId);
+    return sum + (tf?tfPoints(tf):0);
+  },0);
+}
+
+function selectArmy(id) {
+  currentArmyId = id;
+  renderArmyList();
+  renderArmyDetail();
+}
+
+function renderArmyDetail() {
+  const panel = document.getElementById("army-detail-panel");
+  const army = state.armies.find(a=>a.id===currentArmyId);
+  if(!army) { panel.innerHTML=`<div class="card"><div class="empty">Select an army to view</div></div>`; return; }
+  const pts = armyPoints(army);
+  const tfs = army.taskForceIds.map(id=>state.taskForces.find(t=>t.id===id)).filter(Boolean);
+  panel.innerHTML = `<div class="card">
+    <div class="card-title">
+      ${army.name}
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-primary btn-sm" onclick="openAddTFModal('${army.id}')">+ Add TF</button>
+        <button class="btn btn-warning btn-sm" onclick="openDeployFromArmy('${army.id}')">&#9876; Deploy</button>
+      </div>
+    </div>
+    <div style="margin-bottom:12px;display:flex;gap:20px;flex-wrap:wrap">
+      <div><div class="points-big" style="font-size:22px">${pts}</div><div class="points-label">Total Points</div></div>
+      ${army.pointsLimit?`<div><div class="points-big" style="font-size:22px;color:${pts>army.pointsLimit?"#ef5350":"#4caf50"}">${army.pointsLimit-pts}</div><div class="points-label">Remaining</div></div>`:""}
+    </div>
+    ${tfs.length===0?`<div class="empty">No task forces added</div>`:""}
+    ${tfs.map(tf => {
+      const tp = tfPoints(tf);
+      const unitCount = tf.units.reduce((s,u)=>s+u.quantity,0);
+      return `<div class="list-row">
+        <div>
+          <div style="font-weight:bold">${tf.name}</div>
+          <div style="font-size:11px;color:#8b949e">${unitCount} units &bull; ${tp} pts</div>
+        </div>
+        <button class="btn btn-danger btn-xs" onclick="removeTFFromArmy('${army.id}','${tf.id}')">X</button>
+      </div>`;
+    }).join("")}
+  </div>`;
+}
+
+function openNewArmyModal() { document.getElementById("army-new-name").value=""; document.getElementById("army-points-limit").value="1500"; openModal("modal-army"); }
+
+function createArmy() {
+  const name = document.getElementById("army-new-name").value.trim();
+  if(!name) { alert("Enter a name."); return; }
+  const limit = parseInt(document.getElementById("army-points-limit").value)||0;
+  const army = {id:"army_"+uid(), name, pointsLimit:limit, taskForceIds:[]};
+  state.armies.push(army);
+  saveState();
+  closeModal("modal-army");
+  currentArmyId = army.id;
+  renderArmyList();
+  renderArmyDetail();
+}
+
+function deleteArmy(id) {
+  if(!confirm("Delete this army?")) return;
+  state.armies = state.armies.filter(a=>a.id!==id);
+  if(currentArmyId===id) currentArmyId=null;
+  saveState();
+  renderArmyList();
+  renderArmyDetail();
+}
+
+function openAddTFModal(armyId) {
+  addTFTargetArmyId = armyId;
+  addTFSelectedId = null;
+  const army = state.armies.find(a=>a.id===armyId);
+  const list = document.getElementById("add-tf-list");
+  const available = state.taskForces.filter(tf=>!army?.taskForceIds.includes(tf.id));
+  if(!available.length) { list.innerHTML=`<div class="empty">All task forces already added, or none exist</div>`; }
+  else list.innerHTML = available.map(tf => {
+    const pts = tfPoints(tf);
+    const sel = addTFSelectedId===tf.id;
+    return `<div class="list-row" style="${sel?"border-color:#007eff;background:#1a2a4a":""}" onclick="addTFSelectedId='${tf.id}';openAddTFModal('${armyId}')">
+      <div>
+        <span style="font-weight:bold;color:${sel?"#007eff":"#fff"}">${tf.name}</span>
+        <div style="font-size:11px;color:#8b949e">${tf.units.reduce((s,u)=>s+u.quantity,0)} units &bull; ${pts} pts</div>
+      </div>
+    </div>`;
+  }).join("");
+  openModal("modal-add-tf");
+}
+
+function confirmAddTF() {
+  if(!addTFSelectedId) { alert("Select a task force."); return; }
+  const army = state.armies.find(a=>a.id===addTFTargetArmyId);
+  if(!army) return;
+  if(!army.taskForceIds.includes(addTFSelectedId)) army.taskForceIds.push(addTFSelectedId);
+  saveState();
+  closeModal("modal-add-tf");
+  renderArmyList();
+  renderArmyDetail();
+}
+
+function removeTFFromArmy(armyId, tfId) {
+  const army = state.armies.find(a=>a.id===armyId);
+  if(!army) return;
+  army.taskForceIds = army.taskForceIds.filter(id=>id!==tfId);
+  saveState();
+  renderArmyDetail();
+  renderArmyList();
+}
+
+function openDeployFromArmy(armyId) {
+  showPage("deploy");
+  setTimeout(()=>openNewDeployModal(armyId),100);
+}
+
+// ============================================================
+// DEPLOYMENTS
+// ============================================================
+let currentDeployment = null;
+
+function renderDeployList() {
+  const list = document.getElementById("deploy-list");
+  if(!state.deployments.length) {
+    list.innerHTML=`<div class="empty"><div class="empty-icon">&#9876;</div>No deployments yet. Create one to assign units to Battle Groups.</div>`;
+    return;
+  }
+  list.innerHTML = state.deployments.map(d => {
+    const bgCount = d.battleGroups.length;
+    return `<div class="list-row">
+      <div>
+        <div style="font-weight:bold;color:#fff">${d.name}</div>
+        <div style="font-size:11px;color:#8b949e">${bgCount} Battle Group${bgCount!==1?"s":""}</div>
+      </div>
+      <div style="display:flex;gap:4px">
+        <button class="btn btn-primary btn-xs" onclick="editDeployment('${d.id}')">Edit</button>
+        <button class="btn btn-secondary btn-xs" onclick="printDeployment('${d.id}')">Print</button>
+        <button class="btn btn-danger btn-xs" onclick="deleteDeployment('${d.id}')">Del</button>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function openNewDeployModal(armyId) {
+  document.getElementById("dep-new-name").value = "";
+  openModal("modal-deploy");
+  if(armyId) setTimeout(()=>{ closeModal("modal-deploy"); createDeploymentForArmy(armyId); },0);
+}
+
+function createDeployment(armyId) {
+  const name = document.getElementById("dep-new-name").value.trim();
+  if(!name) { alert("Enter a name."); return; }
+  const dep = {
+    id:"dep_"+uid(),
+    name,
+    armyId: armyId||"",
+    battleGroups:[
+      {id:"bg_"+uid(),name:"Battle Group Alpha",taskForceIds:[],units:[]},
+      {id:"bg_"+uid(),name:"Battle Group Bravo",taskForceIds:[],units:[]},
+      {id:"bg_"+uid(),name:"Battle Group Charlie",taskForceIds:[],units:[]}
+    ]
+  };
+  state.deployments.push(dep);
+  saveState();
+  closeModal("modal-deploy");
+  editDeployment(dep.id);
+  renderDeployList();
+}
+
+function createDeploymentForArmy(armyId) {
+  const army = state.armies.find(a=>a.id===armyId);
+  const name = army ? `${army.name} - Deployment` : "New Deployment";
+  const dep = {
+    id:"dep_"+uid(), name, armyId,
+    battleGroups:[
+      {id:"bg_"+uid(),name:"Battle Group Alpha",taskForceIds:[],units:[]},
+      {id:"bg_"+uid(),name:"Battle Group Bravo",taskForceIds:[],units:[]},
+      {id:"bg_"+uid(),name:"Battle Group Charlie",taskForceIds:[],units:[]}
+    ]
+  };
+  state.deployments.push(dep);
+  saveState();
+  editDeployment(dep.id);
+  renderDeployList();
+}
+
+function editDeployment(id) {
+  currentDeployment = state.deployments.find(d=>d.id===id);
+  if(!currentDeployment) return;
+  document.getElementById("dep-name").value = currentDeployment.name;
+  document.getElementById("dep-bg-count").value = currentDeployment.battleGroups.length;
+  // Populate army dropdown
+  const armySel = document.getElementById("dep-army");
+  armySel.innerHTML = `<option value="">-- All Task Forces --</option>` +
+    state.armies.map(a=>`<option value="${a.id}" ${currentDeployment.armyId===a.id?"selected":""}>${a.name}</option>`).join("");
+  document.getElementById("deploy-editor-title").textContent = currentDeployment.name;
+  document.getElementById("deploy-editor").style.display="block";
+  rebuildBGEditor();
+}
+
+function closeDeployEditor() {
+  document.getElementById("deploy-editor").style.display="none";
+  currentDeployment = null;
+}
+
+function saveDeployment() {
+  if(!currentDeployment) return;
+  currentDeployment.name = document.getElementById("dep-name").value || currentDeployment.name;
+  currentDeployment.armyId = document.getElementById("dep-army").value;
+  document.getElementById("deploy-editor-title").textContent = currentDeployment.name;
+  saveState();
+  renderDeployList();
+  alert("Deployment saved!");
+}
+
+function deleteDeployment(id) {
+  if(!confirm("Delete this deployment?")) return;
+  state.deployments = state.deployments.filter(d=>d.id!==id);
+  if(currentDeployment?.id===id) { closeDeployEditor(); }
+  saveState();
+  renderDeployList();
+}
+
+function rebuildBGEditor() {
+  if(!currentDeployment) return;
+  const count = parseInt(document.getElementById("dep-bg-count").value)||3;
+  // Sync BG count
+  while(currentDeployment.battleGroups.length < count) {
+    const names = ["Alpha","Bravo","Charlie","Delta","Echo"];
+    currentDeployment.battleGroups.push({id:"bg_"+uid(),name:"Battle Group "+names[currentDeployment.battleGroups.length],taskForceIds:[],units:[]});
+  }
+  while(currentDeployment.battleGroups.length > count) {
+    currentDeployment.battleGroups.pop();
+  }
+  currentDeployment.armyId = document.getElementById("dep-army").value;
+  saveState();
+  renderBGEditor();
+}
+
+function getAvailableTFs() {
+  const armyId = currentDeployment?.armyId;
+  if(armyId) {
+    const army = state.armies.find(a=>a.id===armyId);
+    if(army) return army.taskForceIds.map(id=>state.taskForces.find(t=>t.id===id)).filter(Boolean);
+  }
+  return state.taskForces;
+}
+
+function validateDeployment(dep) {
+  const msgs = [];
+  // Count units per BG
+  const bgSizes = dep.battleGroups.map(bg => bg.units.reduce((s,u)=>s+u.quantity,0));
+  const maxSize = Math.max(...bgSizes, 0);
+  const minAllowed = Math.ceil(maxSize/2);
+  let hasCommandIssue = false;
+  dep.battleGroups.forEach((bg,i)=>{
+    const sz = bgSizes[i];
+    if(sz < minAllowed && maxSize>0) msgs.push(`${bg.name} has ${sz} unit${sz!==1?"s":""} (min: ${minAllowed})`);
+    const hasCmd = bg.units.some(u=>{
+      const unit = unitById(u.unitId);
+      return unit && (u.isCommand || (unit.standTraits||[]).some(t=>t[0]==="Inspiration")||unit.role==="command"||unit.role==="commander");
+    });
+    if(!hasCmd && sz>0) { msgs.push(`${bg.name} has no Command Stand`); hasCommandIssue=true; }
+  });
+  return msgs;
+}
+
+function renderBGEditor() {
+  if(!currentDeployment) return;
+  const availTFs = getAvailableTFs();
+  const validMsgs = validateDeployment(currentDeployment);
+  const valEl = document.getElementById("dep-validation");
+  if(validMsgs.length) {
+    valEl.innerHTML = validMsgs.map(m=>`<div class="validation-warn">&#9888; ${m}</div>`).join("");
+  } else if(currentDeployment.battleGroups.some(bg=>bg.units.length>0)) {
+    valEl.innerHTML = `<div class="validation-ok">&#10003; Deployment valid — all Battle Groups meet requirements</div>`;
+  } else {
+    valEl.innerHTML = "";
+  }
+  document.getElementById("dep-bgs").innerHTML = currentDeployment.battleGroups.map(bg => {
+    const bgSize = bg.units.reduce((s,u)=>s+u.quantity,0);
+    const allBGSizes = currentDeployment.battleGroups.map(b=>b.units.reduce((s,u)=>s+u.quantity,0));
+    const maxSize = Math.max(...allBGSizes,0);
+    const minAllowed = Math.ceil(maxSize/2);
+    const hasCmd = bg.units.some(u=>{
+      const unit = unitById(u.unitId);
+      return unit && (u.isCommand||(unit.standTraits||[]).some(t=>t[0]==="Inspiration")||unit.role==="command"||unit.role==="commander");
+    });
+    const isValid = bgSize>=minAllowed && (hasCmd||bgSize===0);
+    const bgPts = bg.units.reduce((s,u)=>{
+      const unit=unitById(u.unitId);
+      return s+(unit?calcPoints(unit).unitPts*u.quantity:0);
+    },0);
+    const tfOptions = availTFs.map(tf=>`<option value="${tf.id}" ${bg.taskForceIds.includes(tf.id)?"selected":""}>${tf.name}</option>`).join("");
+    return `<div class="bg-card ${bgSize>0?(isValid?"valid":"invalid"):""}">
+      <div class="bg-header">
+        <div>
+          <input type="text" value="${bg.name}" style="background:transparent;border:none;color:#007eff;font-size:16px;font-weight:bold;width:220px;padding:0" onchange="bg_rename('${bg.id}',this.value)">
+          <div style="font-size:11px;color:#8b949e">${bgSize} unit${bgSize!==1?"s":""} &bull; ${bgPts} pts ${isValid&&bgSize>0?"&#10003;":""}${!hasCmd&&bgSize>0?"| &#9888; No Command":""}${bgSize<minAllowed&&maxSize>0?"| &#9888; Too small":""}</div>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center">
+          <button class="btn btn-primary btn-xs" onclick="openBGUnitModal('${bg.id}')">+ Add Unit</button>
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:10px">
+        <label>Assigned Task Forces</label>
+        <select multiple style="height:60px;background:#0d1117;border:1px solid #30363d;color:#e0e0e0;border-radius:4px;width:100%" onchange="bg_setTFs('${bg.id}',this)">
+          ${availTFs.length?tfOptions:`<option disabled>No task forces available</option>`}
+        </select>
+        <div style="font-size:10px;color:#666;margin-top:2px">Hold Ctrl/Cmd to select multiple</div>
+      </div>
+      ${bg.units.length?`<div>${bg.units.map(slot=>{
+        const u=unitById(slot.unitId);
+        if(!u) return "";
+        const pts=calcPoints(u);
+        return `<div class="tf-unit-row" style="margin-bottom:4px">
+          <div style="flex:1">
+            <span style="font-weight:bold;color:#fff">${u.name}</span>
+            ${classBadge(u.class)}
+            <div style="font-size:11px;color:#8b949e">${pts.unitPts}pts/unit</div>
+          </div>
+          <div class="qty-ctrl">
+            <button class="qty-btn" onclick="bg_changeQty('${bg.id}','${slot.id}',-1)">-</button>
+            <span class="qty-val">${slot.quantity}</span>
+            <button class="qty-btn" onclick="bg_changeQty('${bg.id}','${slot.id}',1)">+</button>
+          </div>
+          <label style="display:flex;align-items:center;gap:4px;font-size:11px;cursor:pointer;text-transform:none">
+            <input type="checkbox" ${slot.isCommand?"checked":""} onchange="bg_setCmd('${bg.id}','${slot.id}',this.checked)"> Cmd Stand
+          </label>
+          <button class="btn btn-danger btn-xs" onclick="bg_removeUnit('${bg.id}','${slot.id}')">X</button>
+        </div>`;
+      }).join("")}</div>`:`<div style="font-size:12px;color:#444;text-align:center;padding:8px">No units assigned yet</div>`}
+    </div>`;
+  }).join("");
+}
+
+function bg_rename(bgId,name) {
+  if(!currentDeployment) return;
+  const bg=currentDeployment.battleGroups.find(b=>b.id===bgId);
+  if(bg) { bg.name=name; saveState(); }
+}
+
+function bg_setTFs(bgId, sel) {
+  if(!currentDeployment) return;
+  const bg=currentDeployment.battleGroups.find(b=>b.id===bgId);
+  if(!bg) return;
+  bg.taskForceIds = Array.from(sel.selectedOptions).map(o=>o.value);
+  saveState();
+}
+
+function bg_changeQty(bgId,slotId,delta) {
+  if(!currentDeployment) return;
+  const bg=currentDeployment.battleGroups.find(b=>b.id===bgId);
+  if(!bg) return;
+  const slot=bg.units.find(u=>u.id===slotId);
+  if(slot) { slot.quantity=Math.max(1,slot.quantity+delta); saveState(); renderBGEditor(); }
+}
+
+function bg_setCmd(bgId,slotId,val) {
+  if(!currentDeployment) return;
+  const bg=currentDeployment.battleGroups.find(b=>b.id===bgId);
+  if(!bg) return;
+  const slot=bg.units.find(u=>u.id===slotId);
+  if(slot) { slot.isCommand=val; saveState(); renderBGEditor(); }
+}
+
+function bg_removeUnit(bgId,slotId) {
+  if(!currentDeployment) return;
+  const bg=currentDeployment.battleGroups.find(b=>b.id===bgId);
+  if(!bg) return;
+  bg.units=bg.units.filter(u=>u.id!==slotId);
+  saveState();
+  renderBGEditor();
+}
+
+function openBGUnitModal(bgId) {
+  bgUnitTargetBGId = bgId;
+  bgUnitSelectedId = null;
+  // Determine available units from TF assignment
+  const bg = currentDeployment?.battleGroups.find(b=>b.id===bgId);
+  renderBGUnitList();
+  openModal("modal-bg-unit");
+}
+
+function renderBGUnitList() {
+  const search=(document.getElementById("bgunit-search")?.value||"").toLowerCase();
+  const bg = currentDeployment?.battleGroups.find(b=>b.id===bgUnitTargetBGId);
+  let units;
+  // If BG has assigned TFs, show units from those TFs first, then all
+  if(bg?.taskForceIds?.length) {
+    const tfUnits = [];
+    bg.taskForceIds.forEach(tfId=>{
+      const tf=state.taskForces.find(t=>t.id===tfId);
+      if(tf) tf.units.forEach(slot=>{
+        const u=unitById(slot.unitId);
+        if(u&&!tfUnits.find(x=>x.id===u.id)) tfUnits.push(u);
+      });
+    });
+    const otherUnits = allUnits().filter(u=>!tfUnits.find(x=>x.id===u.id));
+    units = [...tfUnits, ...otherUnits];
+  } else {
+    units = allUnits();
+  }
+  if(search) units=units.filter(u=>u.name.toLowerCase().includes(search));
+  const list=document.getElementById("bgunit-list");
+  list.innerHTML=units.map(u=>{
+    const pts=calcPoints(u);
+    const sel=bgUnitSelectedId===u.id;
+    const inTF = bg?.taskForceIds?.length && (() => {
+      return bg.taskForceIds.some(tfId=>{
+        const tf=state.taskForces.find(t=>t.id===tfId);
+        return tf?.units.some(slot=>slot.unitId===u.id);
+      });
+    })();
+    return `<div class="list-row" style="${sel?"border-color:#007eff;background:#1a2a4a":""}" onclick="bgUnitSelectedId='${u.id}';renderBGUnitList()">
+      <div>
+        ${inTF?`<span style="font-size:10px;color:#4caf50;margin-right:4px">&#9733; In TF</span>`:""}
+        ${classBadge(u.class)}
+        <span style="font-weight:bold;margin-left:6px;color:${sel?"#007eff":"#fff"}">${u.name}</span>
+        <div style="font-size:11px;color:#8b949e">${pts.unitPts}pts | ${pts.unitSize} stands</div>
+      </div>
+    </div>`;
+  }).join("")||`<div class="empty">No units found</div>`;
+}
+
+function confirmBGUnit() {
+  if(!bgUnitSelectedId) { alert("Select a unit."); return; }
+  if(!currentDeployment) return;
+  const bg=currentDeployment.battleGroups.find(b=>b.id===bgUnitTargetBGId);
+  if(!bg) return;
+  bg.units.push({id:"bgu_"+uid(), unitId:bgUnitSelectedId, quantity:1, isCommand:false});
+  saveState();
+  closeModal("modal-bg-unit");
+  renderBGEditor();
+}
+
+// ============================================================
+// PRINT
+// ============================================================
+function renderPrintOptions() {
+  const typeSel = document.getElementById("print-select");
+  const whichSel = document.getElementById("print-which");
+  const type = typeSel.value;
+  whichSel.innerHTML = "";
+  if(type==="army") {
+    state.armies.forEach(a=>whichSel.innerHTML+=`<option value="${a.id}">${a.name}</option>`);
+    if(!state.armies.length) whichSel.innerHTML=`<option>No armies</option>`;
+  } else if(type==="deploy") {
+    state.deployments.forEach(d=>whichSel.innerHTML+=`<option value="${d.id}">${d.name}</option>`);
+    if(!state.deployments.length) whichSel.innerHTML=`<option>No deployments</option>`;
+  } else {
+    whichSel.innerHTML=`<option value="all">All Units</option>`;
+    state.taskForces.forEach(tf=>whichSel.innerHTML+=`<option value="tf_${tf.id}">TF: ${tf.name}</option>`);
+  }
+  renderPrint();
+}
+
+function printDeployment(id) {
+  showPage("print");
+  setTimeout(()=>{
+    document.getElementById("print-select").value="deploy";
+    renderPrintOptions();
+    document.getElementById("print-which").value=id;
+    renderPrint();
+  },100);
+}
+
+function renderPrint() {
+  const type = document.getElementById("print-select").value;
+  const which = document.getElementById("print-which").value;
+  const content = document.getElementById("print-content");
+  if(type==="army") {
+    const army = state.armies.find(a=>a.id===which);
+    if(!army) { content.innerHTML=""; return; }
+    content.innerHTML = printArmyHTML(army);
+  } else if(type==="deploy") {
+    const dep = state.deployments.find(d=>d.id===which);
+    if(!dep) { content.innerHTML=""; return; }
+    content.innerHTML = printDeployHTML(dep);
+  } else {
+    let units = allUnits();
+    if(which&&which.startsWith("tf_")) {
+      const tfId=which.slice(3);
+      const tf=state.taskForces.find(t=>t.id===tfId);
+      if(tf) units=tf.units.map(s=>unitById(s.unitId)).filter(Boolean);
+    }
+    content.innerHTML = `<div class="print-section">${units.map(u=>unitCardHTML(u)).join("")}</div>`;
+  }
+}
+
+function printArmyHTML(army) {
+  const pts = armyPoints(army);
+  const tfs = army.taskForceIds.map(id=>state.taskForces.find(t=>t.id===id)).filter(Boolean);
+  return `<div class="print-section">
+    <h1 style="font-size:24px;margin-bottom:4px">${army.name}</h1>
+    <div style="color:#8b949e;margin-bottom:16px">Total: ${pts}pts${army.pointsLimit?" / "+army.pointsLimit+"pts":""}</div>
+    ${tfs.map(tf=>{
+      const tp=tfPoints(tf);
+      return `<div class="card print-section">
+        <div class="card-title">${tf.name} — ${tp}pts</div>
+        ${["commander","core","specialist","command","support"].map(role=>{
+          const slots=tf.units.filter(u=>u.role===role);
+          if(!slots.length) return "";
+          return `<div style="margin-bottom:8px"><div class="section-header sh-${role}" style="margin-bottom:6px">${role}</div>
+            ${slots.map(slot=>{
+              const u=unitById(slot.unitId);
+              if(!u) return "";
+              const p=calcPoints(u);
+              return unitCardHTML(u);
+            }).join("")}</div>`;
+        }).join("")}
+      </div>`;
+    }).join("")}
+  </div>`;
+}
+
+function printDeployHTML(dep) {
+  const bgCount = dep.battleGroups.length;
+  const allSizes = dep.battleGroups.map(bg=>bg.units.reduce((s,u)=>s+u.quantity,0));
+  const maxSize = Math.max(...allSizes,0);
+  const minSize = Math.ceil(maxSize/2);
+  return `<div class="print-section">
+    <h1 style="font-size:24px;margin-bottom:4px">${dep.name}</h1>
+    <div style="color:#8b949e;margin-bottom:4px">
+      ${bgCount} Battle Groups &bull; Min BG size: ${minSize} units
+      (${bgCount===3?"20%":bgCount===4?"14.28%":"11.11%"} of total)
+    </div>
+    <hr style="margin-bottom:16px">
+    ${dep.battleGroups.map((bg,i)=>{
+      const bgSize=bg.units.reduce((s,u)=>s+u.quantity,0);
+      const bgPts=bg.units.reduce((s,u)=>{
+        const unit=unitById(u.unitId);
+        return s+(unit?calcPoints(unit).unitPts*u.quantity:0);
+      },0);
+      const tfs=bg.taskForceIds.map(id=>state.taskForces.find(t=>t.id===id)).filter(Boolean);
+      return `<div class="bg-card print-section" style="margin-bottom:16px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <div>
+            <div style="font-size:18px;font-weight:bold">${bg.name}</div>
+            <div style="font-size:12px;color:#8b949e">
+              ${bgSize} units &bull; ${bgPts}pts
+              ${tfs.length?` &bull; TF: ${tfs.map(t=>t.name).join(", ")}`:""}
+            </div>
+          </div>
+          <div style="text-align:right;font-size:12px;color:${bgSize>=minSize||maxSize===0?"#4caf50":"#ef5350"}">
+            ${bgSize>=minSize||maxSize===0?"&#10003; Valid size":"&#9888; Below minimum"}
+          </div>
+        </div>
+        ${bg.units.map(slot=>{
+          const u=unitById(slot.unitId);
+          if(!u) return "";
+          return unitCardHTML(u)+`<div style="font-size:11px;color:#8b949e;margin-top:-6px;margin-bottom:6px;padding:0 12px">
+            Qty: ${slot.quantity} &bull; ${slot.isCommand?"Command Stand":""} &bull; Total: ${calcPoints(u).unitPts*slot.quantity}pts
+          </div>`;
+        }).join("")}
+      </div>`;
+    }).join("")}
+    <div style="font-size:11px;color:#8b949e;margin-top:8px;border-top:1px solid #ccc;padding-top:8px">
+      <strong>Min BG Size Rules:</strong>
+      3 BGs: 20% | 4 BGs: 14.28% | 5 BGs: 11.11% of total units.
+      No BG may have fewer than half the units of the largest BG (rounded up).
+      Each BG must have at least 1 Command Stand.
+    </div>
+  </div>`;
+}
+
+// ============================================================
+// INIT
+// ============================================================
+function renderAll() {
+  renderLibrary();
+  renderTFList();
+  if(currentTFId) renderTFDetail();
+  renderArmyList();
+  if(currentArmyId) renderArmyDetail();
+  renderDeployList();
+}
+
+loadState();
+onClassChange();
+builderWeapons = [{mode:"gp",type:"p",range:0,shots:1,impact:0,traits:[]}];
+renderWeaponRows();
+
+// Start on library page if no state, otherwise builder
+showPage(state.customUnits.length||state.taskForces.length||state.armies.length ? "library" : "builder");
+// Always activate builder tab as default
+document.getElementById("tab-builder").classList.add("active");
+document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+document.querySelectorAll(".nav-tab").forEach(t=>t.classList.remove("active"));
+document.getElementById("page-builder").classList.add("active");
+document.getElementById("tab-builder").classList.add("active");
+
+// Close modals on background click
+document.querySelectorAll(".modal-bg").forEach(mb=>{
+  mb.addEventListener("click",function(e){ if(e.target===mb) mb.classList.remove("open"); });
+});
+</script>
+</body>
+</html>
