@@ -688,8 +688,8 @@ label .trait-edit-btn{margin-left:6px}
   <div class="modal" style="max-width:480px">
     <div class="modal-header">Custom Factions <button class="modal-close" onclick="closeModal('modal-faction')"><i class="fa-solid fa-xmark"></i></button></div>
     <div id="faction-modal-list"></div>
-    <div style="margin-top:16px;padding-top:14px;border-top:1px solid #30363d">
-      <div style="font-size:12px;font-weight:bold;color:#8b949e;margin-bottom:10px;text-transform:uppercase;letter-spacing:.05em">New Faction</div>
+    <div>
+      <div class="modal-sub-header">New Faction</div>
       <div class="form-group" style="margin-bottom:10px">
         <label>Name</label>
         <input type="text" id="faction-name" placeholder="e.g. Iron Brotherhood" style="width:100%">
@@ -701,7 +701,7 @@ label .trait-edit-btn{margin-left:6px}
       </div>
       <div class="form-group" style="margin-bottom:14px">
         <label>Color</label>
-        <input type="color" id="faction-color" value="#ff6600" style="width:54px;height:32px;padding:2px 4px;border-radius:6px;border:1px solid #30363d;background:#0d1117;cursor:pointer">
+        <input type="color" id="faction-color" value="#ff6600" style="width:54px;height:32px;padding:2px 4px;border-radius:6px;border:1px solid var(--border-default);background:var(--surface-page);cursor:pointer">
       </div>
       <div style="display:flex;gap:8px">
         <button class="btn btn-primary" onclick="saveCustomFaction()">Create</button>
@@ -2117,26 +2117,26 @@ function renderFactionModalContent() {
   list.innerHTML = facs.length
     ? `<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:4px">`
       + facs.map(f=>`
-        <div style="display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:6px;background:#0d1117;border:1px solid #30363d">
-          <span style="font-size:18px"><i class="fa-solid fa-${f.icon}"></i></span>
+        <div class="custom-trait-item">
+          <span style="font-size:18px;color:${f.color}"><i class="fa-solid fa-${f.icon}"></i></span>
           <span style="flex:1;font-weight:bold;color:${f.color}">${esc(f.name)}</span>
-          <button class="btn btn-danger btn-xs" onclick="deleteCustomFaction('${f.id}')">Delete</button>
+          <button class="trait-edit-btn" onclick="confirmBtn(this,()=>deleteCustomFaction('${f.id}'))">Delete</button>
         </div>`).join("")
       + `</div>`
-    : `<div style="color:#666;font-size:12px;margin-bottom:4px">No custom factions yet.</div>`;
+    : `<div style="color:var(--text-inactive);font-size:12px;margin-bottom:4px">No custom factions yet.</div>`;
 
   const selIcon = document.getElementById("faction-icon").value;
   document.getElementById("faction-icon-picker").innerHTML = FACTION_ICONS.map(ic=>{
-    const border = ic===selIcon ? "#007eff" : "#30363d";
+    const sel = ic===selIcon;
     return `<button type="button" onclick="selectFactionIcon(this,'${ic}')"
-      style="width:34px;height:34px;font-size:17px;border-radius:6px;cursor:pointer;border:2px solid ${border};background:#0d1117;color:#e0e0e0"><i class="fa-solid fa-${ic}"></i></button>`;
+      style="width:34px;height:34px;font-size:17px;border-radius:6px;cursor:pointer;border:2px solid ${sel?"var(--accent)":"var(--border-default)"};background:var(--surface-page);color:var(--text-primary);transition:border-color .12s"><i class="fa-solid fa-${ic}"></i></button>`;
   }).join("");
 }
 
 function selectFactionIcon(btn, icon) {
   document.getElementById("faction-icon").value = icon;
-  document.querySelectorAll("#faction-icon-picker button").forEach(b=>b.style.borderColor="#30363d");
-  btn.style.borderColor = "#007eff";
+  document.querySelectorAll("#faction-icon-picker button").forEach(b=>b.style.borderColor="var(--border-default)");
+  btn.style.borderColor = "var(--accent)";
 }
 
 function saveCustomFaction() {
