@@ -326,6 +326,16 @@ hr{border:none;border-top:1px solid #21262d;margin:12px 0}
       <div class="pill" data-filter="sh" onclick="setLibFilter(this,'sh')">Super Heavy</div>
       <div class="pill" data-filter="beh" onclick="setLibFilter(this,'beh')">Behemoth</div>
     </div>
+    <div style="display:flex;align-items:center;gap:8px;margin:6px 0 2px">
+      <label style="font-size:0.82em;color:var(--muted);white-space:nowrap">Sort by</label>
+      <select id="lib-sort" onchange="libSort=this.value;renderLibrary()" style="font-size:0.85em;padding:3px 6px;border-radius:6px;border:1px solid var(--border);background:var(--card);color:var(--fg);cursor:pointer">
+        <option value="name-asc">Name A → Z</option>
+        <option value="name-desc">Name Z → A</option>
+        <option value="pts-asc">Points: Low → High</option>
+        <option value="pts-desc">Points: High → Low</option>
+        <option value="class">Class</option>
+      </select>
+    </div>
     <div id="lib-list"></div>
   </div>
 </div>
@@ -777,6 +787,7 @@ let bgUnitTargetBGId = null;
 let bgUnitSelectedId = null;
 let libFilterClass = "all";
 let libFilterFaction = "all";
+let libSort = "name-asc";
 let editingUnitId = null;
 
 // ============================================================
@@ -1277,12 +1288,24 @@ function setLibFilter(el, cls) {
 }
 
 function renderLibrary() {
+  const sortEl = document.getElementById("lib-sort");
+  if(sortEl && sortEl.value !== libSort) sortEl.value = libSort;
   const search = (document.getElementById("lib-search")?.value||"").toLowerCase();
   let units = allUnits();
   if(libFilterFaction==="custom") { units = units.filter(u=>!u.builtIn); }
   else if(libFilterFaction!=="all") { units = units.filter(u=>u.faction===libFilterFaction); }
   if(libFilterClass!=="all") units = units.filter(u=>u.class===libFilterClass);
   if(search) units = units.filter(u=>u.name.toLowerCase().includes(search));
+  const classOrder = ["inf","cav","fg","scout","afv","ac","sh","beh"];
+  units.sort((a,b) => {
+    switch(libSort) {
+      case "name-desc": return b.name.localeCompare(a.name);
+      case "pts-asc":   return calcPoints(a).perStand - calcPoints(b).perStand;
+      case "pts-desc":  return calcPoints(b).perStand - calcPoints(a).perStand;
+      case "class":     return (classOrder.indexOf(a.class)-classOrder.indexOf(b.class)) || a.name.localeCompare(b.name);
+      default:          return a.name.localeCompare(b.name);
+    }
+  });
   const list = document.getElementById("lib-list");
   if(!units.length) { list.innerHTML=`<div class="empty"><div class="empty-icon">&#128269;</div>No units found</div>`; return; }
   list.innerHTML = units.map(u => {
