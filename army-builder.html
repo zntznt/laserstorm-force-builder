@@ -472,7 +472,10 @@ hr{border:none;border-top:1px solid #21262d;margin:12px 0}
   <div class="modal">
     <div class="modal-header">
       <span id="trait-modal-title">Select Traits</span>
-      <button class="modal-close" onclick="closeTraitModal()">&#215;</button>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button class="btn btn-secondary btn-xs" onclick="openCustomTraitModal()">&#65291; Custom</button>
+        <button class="modal-close" onclick="closeTraitModal()">&#215;</button>
+      </div>
     </div>
     <div id="trait-modal-list" style="column-count:2;column-gap:10px"></div>
     <div style="margin-top:12px;display:flex;justify-content:flex-end">
@@ -616,6 +619,55 @@ hr{border:none;border-top:1px solid #21262d;margin:12px 0}
       <div style="display:flex;gap:8px">
         <button class="btn btn-primary" onclick="saveCustomFaction()">Create</button>
         <button class="btn btn-secondary" onclick="closeModal('modal-faction')">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="modal-custom-trait" class="modal-bg">
+  <div class="modal" style="max-width:500px">
+    <div class="modal-header">Custom Traits <button class="modal-close" onclick="closeModal('modal-custom-trait')">&#215;</button></div>
+    <div id="custom-trait-list"></div>
+    <div style="margin-top:16px;padding-top:14px;border-top:1px solid #30363d">
+      <div style="font-size:12px;font-weight:bold;color:#8b949e;margin-bottom:10px;text-transform:uppercase;letter-spacing:.05em">New Trait</div>
+      <div class="form-row" style="gap:8px">
+        <div class="form-group" style="flex:2">
+          <label>Name</label>
+          <input type="text" id="ct-name" placeholder="e.g. Battle Hardened" style="width:100%">
+        </div>
+        <div class="form-group" style="flex:0 0 80px">
+          <label>Cost</label>
+          <input type="number" id="ct-cost" value="1" min="-5" max="20" step="0.5" style="width:100%">
+        </div>
+      </div>
+      <div class="form-row" style="gap:8px">
+        <div class="form-group">
+          <label>Applies to</label>
+          <select id="ct-type" style="width:auto">
+            <option value="stand">Stand trait</option>
+            <option value="weapon">Weapon trait</option>
+            <option value="both">Both</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Faction (optional)</label>
+          <select id="ct-faction" style="width:auto">
+            <option value="">Any faction</option>
+            <option value="standard">&#9651; Standard</option>
+            <option value="precursor">&#9670; Precursor</option>
+            <option value="soulless">&#9635; Soulless</option>
+            <option value="swarm">&#9632; Swarm</option>
+            <option value="warrior">&#9733; Warrior</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:14px">
+        <label>Description <span style="color:#555;font-size:10px">(optional — shown as tooltip)</span></label>
+        <textarea id="ct-description" rows="2" placeholder="What does this trait do?" style="width:100%;resize:vertical"></textarea>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-primary" onclick="saveCustomTrait()">Create</button>
+        <button class="btn btn-secondary" onclick="closeModal('modal-custom-trait')">Cancel</button>
       </div>
     </div>
   </div>
@@ -803,6 +855,7 @@ const BUILTIN_UNITS = [
 let state = {
   customUnits: [],
   customFactions: [],
+  customTraits: [],
   taskForces: [],
   armies: [],
   deployments: []
@@ -840,6 +893,7 @@ function loadState() {
       const saved = JSON.parse(raw);
       state.customUnits = saved.customUnits || [];
       state.customFactions = saved.customFactions || [];
+      state.customTraits = saved.customTraits || [];
       state.taskForces = saved.taskForces || [];
       state.armies = saved.armies || [];
       state.deployments = saved.deployments || [];
@@ -865,6 +919,7 @@ function importData(evt) {
       const imported = JSON.parse(e.target.result);
       if (imported.customUnits) state.customUnits = imported.customUnits;
       if (imported.customFactions) state.customFactions = imported.customFactions;
+      if (imported.customTraits) state.customTraits = imported.customTraits;
       if (imported.taskForces) state.taskForces = imported.taskForces;
       if (imported.armies) state.armies = imported.armies;
       if (imported.deployments) state.deployments = imported.deployments;
@@ -993,10 +1048,26 @@ function factionBadge(unit) {
 
 const TRAIT_FACTION_NAMES = new Set(["soulless","precursor","swarm","warrior","standard"]);
 function traitFactionKey(traitEntry) {
+  if(traitEntry && traitEntry.length >= 4) return traitEntry[3] || null;
   const m = (traitEntry?.[2]||"").match(/^\[(\w+)\]/);
   if(!m) return null;
   const tag = m[1].toLowerCase();
   return TRAIT_FACTION_NAMES.has(tag) ? tag : null;
+}
+
+function allStandTraits() {
+  const custom = {};
+  (state.customTraits||[]).filter(t=>t.type==="stand"||t.type==="both").forEach(t=>{
+    custom["custom_"+t.id] = [t.name, t.cost, t.description, t.faction||null];
+  });
+  return Object.assign({}, STAND_TRAITS, custom);
+}
+function allWeaponTraits() {
+  const custom = {};
+  (state.customTraits||[]).filter(t=>t.type==="weapon"||t.type==="both").forEach(t=>{
+    custom["custom_"+t.id] = [t.name, t.cost, t.description, t.faction||null];
+  });
+  return Object.assign({}, WEAPON_TRAITS, custom);
 }
 
 function traitTipHTML(traitArr, allTraits) {
@@ -1006,7 +1077,8 @@ function traitTipHTML(traitArr, allTraits) {
     const entry = Object.values(allTraits).find(v=>v[0]===name);
     const desc = entry?.[2] || "";
     const fac = traitFactionKey(entry);
-    const color = fac ? (FACTION_COLORS[fac]||"#888") : "#555";
+    const facObj = fac ? (state.customFactions||[]).find(f=>f.id===fac) : null;
+    const color = facObj ? facObj.color : (fac ? (FACTION_COLORS[fac]||"#888") : "#555");
     const bg = fac ? `${color}22` : "#21262d";
     const border = fac ? `${color}55` : "#30363d";
     const textColor = fac ? color : "#8b949e";
@@ -1017,12 +1089,12 @@ function traitTipHTML(traitArr, allTraits) {
 
 function unitCardHTML(unit, actions) {
   const pts = calcPoints(unit);
-  const traitsHTML = traitTipHTML(unit.standTraits||[], STAND_TRAITS);
+  const traitsHTML = traitTipHTML(unit.standTraits||[], allStandTraits());
   const weaponsHTML = (unit.weapons||[]).length===0
     ? `<div class="weapon-row" style="color:#8b949e;font-style:italic">No ranged weapons — assault only</div>`
     : (unit.weapons||[]).map(w => {
         const wtHTML = (w.traits||[]).length
-          ? " | " + traitTipHTML(w.traits, WEAPON_TRAITS)
+          ? " | " + traitTipHTML(w.traits, allWeaponTraits())
           : "";
         const wName = w.name ? `<strong>${esc(w.name)}</strong> ` : "";
         return `<div class="weapon-row">${wName}<span style="color:#555">${w.mode.toUpperCase()}/${w.type.toUpperCase()}</span> | Range <span>${rangeLabel(w.range)}</span> | Shots <span>${w.shots}</span> | Impact <span>+${w.impact}</span>${wtHTML}</div>`;
@@ -1200,7 +1272,7 @@ function renderWeaponRows() {
         </div>
         <div class="form-group">
           <label>Traits <span class="tip ttip tip-left" data-tip="Other special rules for this weapon. Hover any trait to read its effect.">&#9432;</span> <span style="color:#007eff;cursor:pointer" onclick="openTraitPicker('weapon',${i})">[+]</span></label>
-          <div id="wtrait-display-${i}" style="font-size:11px;color:#8b949e">${traitTipHTML(w.traits||[], WEAPON_TRAITS)||"None"}</div>
+          <div id="wtrait-display-${i}" style="font-size:11px;color:#8b949e">${traitTipHTML(w.traits||[], allWeaponTraits())||"None"}</div>
         </div>
       </div>`;
     container.appendChild(div);
@@ -1223,7 +1295,7 @@ function openTraitPicker(target, wIdx) {
   traitPickerWeaponIdx = wIdx;
   const list = document.getElementById("trait-modal-list");
   list.innerHTML = "";
-  const traits = target==="stand" ? STAND_TRAITS : WEAPON_TRAITS;
+  const traits = target==="stand" ? allStandTraits() : allWeaponTraits();
   const selected = target==="stand"
     ? currentBuilderTraits.map(t=>t[0])
     : (builderWeapons[wIdx]?.traits||[]).map(t=>t[0]);
@@ -1250,8 +1322,10 @@ function openTraitPicker(target, wIdx) {
     nameEl.className = "trait-row-name";
     nameEl.textContent = val[0];
     if(fac) {
-      const facColor = FACTION_COLORS[fac]||"#888";
-      nameEl.innerHTML += ` <span style="font-size:9px;padding:0 5px;border-radius:8px;background:${facColor}22;color:${facColor};border:1px solid ${facColor}55;font-weight:600">${fac}</span>`;
+      const facObj = (state.customFactions||[]).find(f=>f.id===fac);
+      const facColor = facObj ? facObj.color : (FACTION_COLORS[fac]||"#888");
+      const facName = facObj ? facObj.name : fac;
+      nameEl.innerHTML += ` <span style="font-size:9px;padding:0 5px;border-radius:8px;background:${facColor}22;color:${facColor};border:1px solid ${facColor}55;font-weight:600">${facName}</span>`;
     }
     info.appendChild(nameEl);
     if(val[2]) {
@@ -1268,17 +1342,17 @@ function openTraitPicker(target, wIdx) {
 }
 
 function applyTraits() {
-  const traits = traitPickerTarget==="stand" ? STAND_TRAITS : WEAPON_TRAITS;
+  const traits = traitPickerTarget==="stand" ? allStandTraits() : allWeaponTraits();
   const checkboxes = document.querySelectorAll("#trait-modal-list input[type=checkbox]");
   const selected = [];
   checkboxes.forEach(cb => { if(cb.checked) selected.push(traits[cb.value]); });
   if(traitPickerTarget==="stand") {
     currentBuilderTraits = selected;
-    document.getElementById("b-traits-display").innerHTML = traitTipHTML(selected, STAND_TRAITS)||"None";
+    document.getElementById("b-traits-display").innerHTML = traitTipHTML(selected, allStandTraits())||"None";
   } else {
     builderWeapons[traitPickerWeaponIdx].traits = selected;
     const el = document.getElementById(`wtrait-display-${traitPickerWeaponIdx}`);
-    if(el) el.innerHTML = traitTipHTML(selected, WEAPON_TRAITS)||"None";
+    if(el) el.innerHTML = traitTipHTML(selected, allWeaponTraits())||"None";
   }
   closeModal("modal-traits");
   calculateBuilder();
@@ -1377,13 +1451,13 @@ function onFactionSelectChange() {
   // Collect traits that are locked to a faction incompatible with newFaction
   const locked = [];
   currentBuilderTraits.forEach(t => {
-    const entry = Object.values(STAND_TRAITS).find(v=>v[0]===t[0]);
+    const entry = Object.values(allStandTraits()).find(v=>v[0]===t[0]);
     const fac = traitFactionKey(entry);
     if(fac && fac !== newFaction) locked.push({label:`Stand trait: ${t[0]}`, src:"stand", name:t[0]});
   });
   builderWeapons.forEach((w, wi) => {
     (w.traits||[]).forEach(t => {
-      const entry = Object.values(WEAPON_TRAITS).find(v=>v[0]===t[0]);
+      const entry = Object.values(allWeaponTraits()).find(v=>v[0]===t[0]);
       const fac = traitFactionKey(entry);
       if(fac && fac !== newFaction) locked.push({label:`Weapon ${wi+1} (${w.name||"unnamed"}): ${t[0]}`, src:"weapon", wi, name:t[0]});
     });
@@ -1395,7 +1469,7 @@ function onFactionSelectChange() {
   // Remove locked traits
   const lockedStandNames = locked.filter(l=>l.src==="stand").map(l=>l.name);
   currentBuilderTraits = currentBuilderTraits.filter(t=>!lockedStandNames.includes(t[0]));
-  document.getElementById("b-traits-display").innerHTML = traitTipHTML(currentBuilderTraits, STAND_TRAITS)||"None";
+  document.getElementById("b-traits-display").innerHTML = traitTipHTML(currentBuilderTraits, allStandTraits())||"None";
   builderWeapons.forEach(w => {
     const lockedWNames = locked.filter(l=>l.src==="weapon").map(l=>l.name);
     w.traits = (w.traits||[]).filter(t=>!lockedWNames.includes(t[0]));
@@ -1464,6 +1538,82 @@ function deleteCustomFaction(id) {
   renderLibFactionFilters();
   renderFactionModalContent();
   if(libFilterFaction===id) { libFilterFaction="all"; renderLibrary(); }
+}
+
+function openCustomTraitModal() {
+  document.getElementById("ct-name").value = "";
+  document.getElementById("ct-cost").value = "1";
+  document.getElementById("ct-type").value = "stand";
+  document.getElementById("ct-description").value = "";
+  renderCustomTraitFactionSelect();
+  renderCustomTraitList();
+  openModal("modal-custom-trait");
+}
+
+function renderCustomTraitFactionSelect() {
+  const sel = document.getElementById("ct-faction");
+  if(!sel) return;
+  const builtins = [
+    {v:"standard",l:"▲ Standard"},{v:"precursor",l:"◆ Precursor"},
+    {v:"soulless",l:"▪ Soulless"},{v:"swarm",l:"■ Swarm"},{v:"warrior",l:"★ Warrior"}
+  ];
+  sel.innerHTML = `<option value="">Any faction</option>`
+    + builtins.map(b=>`<option value="${b.v}">${b.l}</option>`).join("")
+    + (state.customFactions||[]).map(f=>`<option value="${f.id}">${f.icon} ${esc(f.name)}</option>`).join("");
+}
+
+function renderCustomTraitList() {
+  const list = document.getElementById("custom-trait-list");
+  const traits = state.customTraits||[];
+  if(!traits.length) {
+    list.innerHTML = `<div style="color:#666;font-size:12px;margin-bottom:4px">No custom traits yet.</div>`;
+    return;
+  }
+  const typeLabel = {stand:"Stand",weapon:"Weapon",both:"Stand+Weapon"};
+  list.innerHTML = `<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:4px">`
+    + traits.map(t => {
+      const fac = t.faction ? (state.customFactions||[]).find(f=>f.id===t.faction) : null;
+      const facLabel = fac ? `${fac.icon} ${esc(fac.name)}` : (t.faction ? t.faction : "");
+      const facColor = fac ? fac.color : (FACTION_COLORS[t.faction]||"#555");
+      const facBadge = t.faction ? `<span style="font-size:9px;padding:0 5px;border-radius:8px;background:${facColor}22;color:${facColor};border:1px solid ${facColor}55;font-weight:600">${facLabel}</span>` : "";
+      return `<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:6px;background:#0d1117;border:1px solid #30363d">
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:bold;color:#e0e0e0;font-size:13px">${esc(t.name)} <span style="font-size:10px;color:#555;font-weight:normal">(${t.cost >= 0 ? '+' : ''}${t.cost} pts)</span> ${facBadge}</div>
+          <div style="font-size:10px;color:#555">${typeLabel[t.type]||t.type}${t.description ? ` — ${esc(t.description)}` : ""}</div>
+        </div>
+        <button class="btn btn-danger btn-xs" onclick="deleteCustomTrait('${t.id}')">Delete</button>
+      </div>`;
+    }).join("")
+    + `</div>`;
+}
+
+function saveCustomTrait() {
+  const name = document.getElementById("ct-name").value.trim();
+  if(!name) { alert("Enter a trait name."); return; }
+  const cost = parseFloat(document.getElementById("ct-cost").value)||0;
+  const type = document.getElementById("ct-type").value;
+  const faction = document.getElementById("ct-faction").value;
+  const description = document.getElementById("ct-description").value.trim();
+  const id = uid();
+  state.customTraits.push({id, name, cost, description, faction, type});
+  saveState();
+  renderCustomTraitList();
+  document.getElementById("ct-name").value = "";
+  document.getElementById("ct-description").value = "";
+}
+
+function deleteCustomTrait(id) {
+  if(!confirm("Delete this custom trait? It will be removed from any units using it.")) return;
+  const trait = state.customTraits.find(t=>t.id===id);
+  state.customTraits = state.customTraits.filter(t=>t.id!==id);
+  if(trait) {
+    state.customUnits.forEach(u => {
+      u.standTraits = (u.standTraits||[]).filter(t=>t[0]!==trait.name);
+      (u.weapons||[]).forEach(w => { w.traits = (w.traits||[]).filter(t=>t[0]!==trait.name); });
+    });
+  }
+  saveState();
+  renderCustomTraitList();
 }
 
 // ============================================================
@@ -1573,7 +1723,7 @@ function editUnit(id) {
   document.getElementById("b-savenumber").value = unit.saveNumber;
   document.getElementById("b-morale").value = unit.morale;
   currentBuilderTraits = (unit.standTraits||[]).slice();
-  document.getElementById("b-traits-display").innerHTML = traitTipHTML(currentBuilderTraits, STAND_TRAITS)||"None";
+  document.getElementById("b-traits-display").innerHTML = traitTipHTML(currentBuilderTraits, allStandTraits())||"None";
   builderWeapons = (unit.weapons||[]).map(w=>({...w, traits:(w.traits||[]).slice()}));
   renderWeaponRows();
   setEditMode(unit);
