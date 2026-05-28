@@ -1031,9 +1031,8 @@ function unitCardHTML(unit, actions) {
           ${!unit.builtIn?`<span class="badge" style="background:#333;color:#aaa">Custom</span>`:""}
           <span class="unit-name" style="display:block;margin-top:4px">${esc(unit.name)}</span>
         </div>
-        <div style="text-align:right">
-          <div class="unit-pts">${pts.unitPts} pts</div>
-          <div style="font-size:10px;color:#8b949e">${pts.unitSize} stands</div>
+        <div style="text-align:right;font-size:11px;color:#8b949e">
+          ${pts.unitSize} stand${pts.unitSize>1?"s":""}
         </div>
       </div>
       <div class="stat-row">
@@ -1046,11 +1045,17 @@ function unitCardHTML(unit, actions) {
       </div>
       ${weaponsHTML}
       <div style="font-size:11px;color:#8b949e;margin-top:6px">Traits: ${traitsHTML}</div>
-      <div style="font-size:10px;color:#555;margin-top:4px">
-        Ind: <span style="color:#8b949e">${pts.indPts}</span> &bull;
-        Cmd: <span style="color:#8b949e">${cmdStr}</span> &bull;
-        Hero: <span style="color:#8b949e">${pts.heroPts}</span> &bull;
-        Cmd Hero: <span style="color:#8b949e">${heroCmdStr}</span>
+      <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:8px;padding-top:6px;border-top:1px solid #21262d">
+        ${[
+          {label:"Unit",    val:pts.unitPts},
+          {label:"Ind",     val:pts.indPts},
+          {label:"Cmd",     val:cmdStr},
+          {label:"I.Hero",  val:pts.heroPts},
+          {label:"C.Hero",  val:heroCmdStr}
+        ].map(c=>`<div style="flex:1;min-width:46px;text-align:center;background:#0d1117;border-radius:6px;padding:5px 2px">
+          <div style="font-size:13px;font-weight:bold;color:${c.val==="—"?"#444":"#e0e0e0"}">${c.val}</div>
+          <div style="font-size:9px;color:#555;text-transform:uppercase;letter-spacing:.04em">${c.label}</div>
+        </div>`).join("")}
       </div>
       ${actions||""}
     </div>`;
