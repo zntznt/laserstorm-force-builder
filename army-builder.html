@@ -199,6 +199,10 @@ label .trait-edit-btn{margin-left:6px}
 .trait-stepper-btn{background:var(--surface-raised);border:1px solid var(--border-default);color:var(--text-muted);border-radius:4px;padding:1px 8px;font-size:14px;font-weight:bold;cursor:pointer;line-height:1.4}
 .trait-stepper-btn:hover{background:var(--surface-hover);color:var(--text-primary)}
 .trait-stepper-count{font-size:13px;font-weight:bold;color:var(--accent);min-width:20px;text-align:center}
+.trait-group-header{font-family:var(--font-display);font-size:14px;letter-spacing:1px;color:var(--text-muted);padding:10px 0 4px;border-bottom:1px solid var(--border-subtle);margin:10px 0 2px}
+.trait-cost{font-size:10px;font-weight:600;color:var(--accent-light);background:var(--accent-tint);border:1px solid #1f6feb44;border-radius:8px;padding:0 5px;margin-left:5px;vertical-align:middle}
+.custom-trait-item{display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:6px;background:var(--surface-page);border:1px solid var(--border-default)}
+.modal-sub-header{font-family:var(--font-display);font-size:15px;letter-spacing:1px;color:var(--text-muted);margin-bottom:10px;padding-top:14px;margin-top:4px;border-top:1px solid var(--border-default)}
 @media print{
   nav,.no-print,.btn{display:none!important}
   .page{display:block!important;max-width:100%;padding:10px}
@@ -556,11 +560,12 @@ label .trait-edit-btn{margin-left:6px}
     <div class="modal-header">
       <span id="trait-modal-title">Select Traits</span>
       <div style="display:flex;gap:8px;align-items:center">
-        <button class="btn btn-secondary btn-xs" onclick="openCustomTraitModal()">&#65291; Custom</button>
+        <span class="trait-edit-btn" onclick="openCustomTraitModal()">+ Custom</span>
         <button class="modal-close" onclick="closeTraitModal()">&#215;</button>
       </div>
     </div>
-    <div id="trait-modal-list" style="column-count:2;column-gap:10px"></div>
+    <input class="search-bar" id="trait-picker-search" placeholder="Filter traits..." oninput="refreshTraitPickerList()" style="margin-bottom:4px">
+    <div id="trait-modal-list"></div>
     <div style="margin-top:12px;display:flex;justify-content:flex-end">
       <button class="btn btn-primary" onclick="applyTraits()">Apply</button>
     </div>
@@ -711,8 +716,8 @@ label .trait-edit-btn{margin-left:6px}
   <div class="modal" style="max-width:500px">
     <div class="modal-header">Custom Traits <button class="modal-close" onclick="closeModal('modal-custom-trait')">&#215;</button></div>
     <div id="custom-trait-list"></div>
-    <div style="margin-top:16px;padding-top:14px;border-top:1px solid #30363d">
-      <div id="ct-form-header" style="font-size:12px;font-weight:bold;color:#8b949e;margin-bottom:10px;text-transform:uppercase;letter-spacing:.05em">New Trait</div>
+    <div>
+      <div id="ct-form-header" class="modal-sub-header">New Trait</div>
       <div class="form-row" style="gap:8px">
         <div class="form-group" style="flex:2">
           <label>Name</label>
@@ -732,11 +737,11 @@ label .trait-edit-btn{margin-left:6px}
         </select>
       </div>
       <div class="form-group">
-        <label>Requirements <span style="color:#555;font-size:10px">(optional — multiple in a row = OR)</span></label>
+        <label>Requirements <span style="color:var(--text-faint);font-size:10px">(optional — multiple in a row = OR)</span></label>
         <div id="ct-reqs-container" style="display:flex;flex-direction:column;gap:7px;margin-top:4px"></div>
       </div>
       <div class="form-group" style="margin-bottom:14px">
-        <label>Description <span style="color:#555;font-size:10px">(optional — shown as tooltip)</span></label>
+        <label>Description <span style="color:var(--text-faint);font-size:10px">(optional — shown as tooltip)</span></label>
         <textarea id="ct-description" rows="2" placeholder="What does this trait do?" style="width:100%;resize:vertical"></textarea>
       </div>
       <div class="form-group" style="margin-bottom:14px">
@@ -1672,10 +1677,12 @@ function refreshTraitPickerList() {
   const selected = traitPickerTarget==="stand"
     ? currentBuilderTraits.map(t=>t[0])
     : (builderWeapons[traitPickerWeaponIdx]?.traits||[]).map(t=>t[0]);
-  const currentFaction = document.getElementById("b-faction")?.value || "";
-  const currentClass   = document.getElementById("b-class")?.value   || "";
-  const currentMobility= document.getElementById("b-mobility")?.value|| "";
-  Object.entries(traits).forEach(([key,val]) => {
+  const currentFaction  = document.getElementById("b-faction")?.value  || "";
+  const currentClass    = document.getElementById("b-class")?.value    || "";
+  const currentMobility = document.getElementById("b-mobility")?.value || "";
+  const search = (document.getElementById("trait-picker-search")?.value||"").toLowerCase();
+
+  const entries = Object.entries(traits).map(([key, val]) => {
     const reqs   = allTraitReqs(key, val);
     const facReq = reqs.find(r=>r.type==="faction");
     const clsReq = reqs.find(r=>r.type==="class");
@@ -1683,50 +1690,95 @@ function refreshTraitPickerList() {
     const locked = (facReq && !facReq.vals.includes(currentFaction))
                 || (clsReq && !clsReq.vals.includes(currentClass))
                 || (mobReq && !mobReq.vals.includes(currentMobility));
-    const stackable = traitIsStackable(val);
-    const row = document.createElement("div");
-    row.className = "trait-row";
-    if(locked) row.style.cssText = "opacity:0.4;pointer-events:none";
-    const info = document.createElement("label");
-    info.className = "trait-row-info";
-    info.style.cursor = locked ? "default" : "pointer";
-    const nameEl = document.createElement("div");
-    nameEl.className = "trait-row-name";
-    nameEl.textContent = val[0];
-    info.appendChild(nameEl);
-    if(reqs.length) {
-      const reqsEl = document.createElement("div");
-      reqsEl.style.cssText = "display:flex;flex-wrap:wrap;gap:2px;margin-top:3px";
-      reqsEl.innerHTML = reqs.map(traitReqBadgeHTML).join("");
-      info.appendChild(reqsEl);
-    }
-    const cleanDesc = cleanTraitDesc(val[2] || "");
-    if(cleanDesc) {
-      const descEl = document.createElement("div");
-      descEl.className = "trait-row-desc";
-      descEl.textContent = cleanDesc;
-      info.appendChild(descEl);
-    }
-    if(stackable) {
-      const count = traitPickerStepperCounts[key] || 0;
-      const max = traitStackMax(val);
-      const stepper = document.createElement("div");
-      stepper.className = "trait-stepper";
-      stepper.innerHTML = `<button class="trait-stepper-btn" onclick="stepperDecr('${key}')">−</button><span class="trait-stepper-count" id="step_${key}">${count}</span><button class="trait-stepper-btn" onclick="stepperIncr('${key}',${max})">+</button>`;
-      row.appendChild(stepper);
-      row.appendChild(info);
-    } else {
-      const cb = document.createElement("input");
-      cb.type = "checkbox";
-      cb.value = key;
-      cb.checked = selected.includes(val[0]);
-      cb.disabled = locked;
-      cb.id = "trait_cb_"+key;
-      info.htmlFor = "trait_cb_"+key;
-      row.appendChild(cb);
-      row.appendChild(info);
-    }
-    list.appendChild(row);
+    const group  = key.startsWith("custom_") ? "custom"
+                 : facReq ? "faction:"+facReq.vals[0]
+                 : "general";
+    return {key, val, reqs, locked, group};
+  });
+
+  const filtered = search
+    ? entries.filter(e => e.val[0].toLowerCase().includes(search) || (e.val[2]||"").toLowerCase().includes(search))
+    : entries;
+
+  const groups = {};
+  filtered.forEach(e => { (groups[e.group]||(groups[e.group]=[])).push(e); });
+
+  const factionGroupKeys = Object.keys(groups).filter(g=>g.startsWith("faction:"));
+  const groupOrder = ["general",...factionGroupKeys,"custom"].filter(g=>groups[g]?.length);
+
+  function groupLabel(g) {
+    if(g==="general") return "General";
+    if(g==="custom")  return "Custom";
+    const fid = g.slice(8);
+    const cf = (state.customFactions||[]).find(f=>f.id===fid);
+    return cf ? cf.name : (FACTION_LABEL_MAP[fid]||fid);
+  }
+
+  if(!groupOrder.length) {
+    const empty = document.createElement("div");
+    empty.style.cssText = "color:var(--text-faint);font-size:12px;padding:8px 4px";
+    empty.textContent = "No traits match.";
+    list.appendChild(empty);
+    return;
+  }
+
+  groupOrder.forEach((g, gi) => {
+    const hdr = document.createElement("div");
+    hdr.className = "trait-group-header";
+    if(gi===0) hdr.style.cssText = "margin-top:0;padding-top:0";
+    hdr.textContent = groupLabel(g);
+    list.appendChild(hdr);
+
+    groups[g].forEach(({key, val, reqs, locked}) => {
+      const stackable = traitIsStackable(val);
+      const row = document.createElement("div");
+      row.className = "trait-row";
+      if(locked) row.style.cssText = "opacity:0.4;pointer-events:none";
+
+      const info = document.createElement("label");
+      info.className = "trait-row-info";
+      info.style.cursor = locked ? "default" : "pointer";
+
+      const nameEl = document.createElement("div");
+      nameEl.className = "trait-row-name";
+      const costStr = val[1]===0 ? "free" : (val[1]>0?"+":"")+val[1]+" pts";
+      nameEl.innerHTML = esc(val[0]) + `<span class="trait-cost">${costStr}</span>`;
+      info.appendChild(nameEl);
+
+      if(reqs.length) {
+        const reqsEl = document.createElement("div");
+        reqsEl.style.cssText = "display:flex;flex-wrap:wrap;gap:2px;margin-top:3px";
+        reqsEl.innerHTML = reqs.map(traitReqBadgeHTML).join("");
+        info.appendChild(reqsEl);
+      }
+      const cleanDesc = cleanTraitDesc(val[2]||"");
+      if(cleanDesc) {
+        const descEl = document.createElement("div");
+        descEl.className = "trait-row-desc";
+        descEl.textContent = cleanDesc;
+        info.appendChild(descEl);
+      }
+      if(stackable) {
+        const count = traitPickerStepperCounts[key]||0;
+        const max = traitStackMax(val);
+        const stepper = document.createElement("div");
+        stepper.className = "trait-stepper";
+        stepper.innerHTML = `<button class="trait-stepper-btn" onclick="stepperDecr('${key}')">−</button><span class="trait-stepper-count" id="step_${key}">${count}</span><button class="trait-stepper-btn" onclick="stepperIncr('${key}',${max})">+</button>`;
+        row.appendChild(stepper);
+        row.appendChild(info);
+      } else {
+        const cb = document.createElement("input");
+        cb.type = "checkbox";
+        cb.value = key;
+        cb.checked = selected.includes(val[0]);
+        cb.disabled = locked;
+        cb.id = "trait_cb_"+key;
+        info.htmlFor = "trait_cb_"+key;
+        row.appendChild(cb);
+        row.appendChild(info);
+      }
+      list.appendChild(row);
+    });
   });
 }
 
@@ -1754,7 +1806,8 @@ function openTraitPicker(target, wIdx) {
     }
   });
   document.getElementById("trait-modal-title").textContent = target==="stand" ? "Stand Traits" : `Weapon ${wIdx+1} Traits`;
-  document.getElementById("trait-modal-list").style.columnCount = "1";
+  const searchEl = document.getElementById("trait-picker-search");
+  if(searchEl) searchEl.value = "";
   refreshTraitPickerList();
   openModal("modal-traits");
 }
@@ -2220,7 +2273,7 @@ function renderCustomTraitList() {
   const list = document.getElementById("custom-trait-list");
   const traits = state.customTraits||[];
   if(!traits.length) {
-    list.innerHTML = `<div style="color:#666;font-size:12px;margin-bottom:4px">No custom traits yet.</div>`;
+    list.innerHTML = `<div style="color:var(--text-inactive);font-size:12px;margin-bottom:4px">No custom traits yet.</div>`;
     return;
   }
   const typeLabel = {stand:"Stand",weapon:"Weapon",both:"Stand+Weapon"};
@@ -2229,11 +2282,11 @@ function renderCustomTraitList() {
       const reqBadges = (t.reqs && t.reqs.length)
         ? t.reqs.map(traitReqBadgeHTML).join("")
         : (t.faction ? traitReqBadgeHTML({type:"faction",vals:[t.faction]}) : "");
-      return `<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:6px;background:#0d1117;border:1px solid #30363d">
+      return `<div class="custom-trait-item">
         <div style="flex:1;min-width:0">
-          <div style="font-weight:bold;color:#e0e0e0;font-size:13px">${esc(t.name)} <span style="font-size:10px;color:#555;font-weight:normal">(${t.cost >= 0 ? '+' : ''}${t.cost} pts)</span></div>
+          <div style="font-weight:bold;color:var(--text-primary);font-size:13px">${esc(t.name)} <span style="font-size:10px;color:var(--text-faint);font-weight:normal">(${t.cost >= 0 ? '+' : ''}${t.cost} pts)</span></div>
           <div style="margin-top:2px">${reqBadges}</div>
-          <div style="font-size:10px;color:#555;margin-top:1px">${typeLabel[t.type]||t.type}${t.description ? ` — ${esc(t.description)}` : ""}</div>
+          <div style="font-size:10px;color:var(--text-faint);margin-top:1px">${typeLabel[t.type]||t.type}${t.description ? ` — ${esc(t.description)}` : ""}</div>
         </div>
         <button class="btn btn-secondary btn-xs" onclick="editCustomTrait('${t.id}')">Edit</button>
         <button class="btn btn-danger btn-xs" onclick="deleteCustomTrait('${t.id}')">Delete</button>
