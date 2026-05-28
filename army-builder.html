@@ -1706,8 +1706,8 @@ function refreshTraitPickerList() {
     const locked = (facReq && !facReq.vals.includes(currentFaction))
                 || (clsReq && !clsReq.vals.includes(currentClass))
                 || (mobReq && !mobReq.vals.includes(currentMobility));
-    const group  = key.startsWith("custom_") ? "custom"
-                 : facReq ? "faction:"+facReq.vals[0]
+    const group  = facReq ? "faction:"+facReq.vals[0]
+                 : key.startsWith("custom_") ? "custom"
                  : "general";
     return {key, val, reqs, locked, group};
   });
