@@ -1281,6 +1281,7 @@ function calcPoints(unit) {
     let tCost=0, impTCost=0;
     const traitComps = [];
     (w.traits||[]).forEach(t => {
+      const cnt = traitCount(t);
       let tc = 0;
       if (t[1]===0) {
         if(t[0]==="Burst"){tc=(impCost+w.range+7);impTCost+=tc;}
@@ -1290,11 +1291,12 @@ function calcPoints(unit) {
         else if(t[0]==="Rapid Fire"){tc=((w.range+impCost+impTCost)/4);}
         else if(t[0]==="Targeting"&&wSlots>1){tc=0.5;}
         else if(t[0]==="Flame"){tc=(impCost+w.range+5);impTCost+=tc;}
+        tc *= cnt;
         tCost+=tc;
       } else {
-        tc=t[1]; tCost+=tc;
+        tc=t[1]*cnt; tCost+=tc;
       }
-      if(tc!==0) traitComps.push({label:t[0], val:tc});
+      if(tc!==0) traitComps.push({label: cnt>1 ? `${t[0]} ×${cnt}` : t[0], val:tc});
     });
     const extraShotsCost = (w.shots-1)*((w.range+impCost+impTCost)/2);
     wCost += tCost + extraShotsCost;
