@@ -4,6 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>LaserSTORM Army Builder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 /* ── Design tokens ──────────────────────────────────────────────────────────
    Surfaces (darkest → lightest):
@@ -45,13 +48,15 @@
   --border-subtle:#21262d;--border-default:#30363d;
   --text-bright:#fff;--text-primary:#e0e0e0;--text-secondary:#c9d1d9;--text-muted:#8b949e;--text-dim:#6e7681;--text-faint:#555;--text-inactive:#666;--text-mid:#aaa;
   --accent:#007eff;--accent-hover:#0066cc;--accent-tint:#0d1e36;--accent-light:#58a6ff;
-  --gold:#ffd700;--danger:#8b0000;--danger-hover:#cc0000;--success:#006622;--success-hover:#008833;--warn:#7a4000;--warn-hover:#cc6600
+  --gold:#ffd700;--danger:#8b0000;--danger-hover:#cc0000;--success:#006622;--success-hover:#008833;--warn:#7a4000;--warn-hover:#cc6600;
+  --font-display:'Bebas Neue',sans-serif;
+  --font-body:'Barlow',Arial,sans-serif
 }
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:Arial,sans-serif;background:var(--surface-page);color:var(--text-primary);min-height:100vh}
+body{font-family:var(--font-body);background:var(--surface-page);color:var(--text-primary);min-height:100vh}
 a{color:var(--accent)}
 nav{background:var(--surface-nav);border-bottom:2px solid var(--accent);display:flex;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:50}
-.nav-brand{color:var(--accent);font-size:18px;font-weight:900;padding:10px 18px;letter-spacing:3px;white-space:nowrap}
+.nav-brand{font-family:var(--font-display);color:var(--accent);font-size:22px;padding:10px 18px;letter-spacing:4px;white-space:nowrap}
 .nav-tabs{display:flex;flex-wrap:wrap}
 .nav-tab{padding:10px 16px;cursor:pointer;color:var(--text-inactive);border-bottom:3px solid transparent;font-weight:bold;font-size:12px;text-transform:uppercase;letter-spacing:1px;transition:all .2s}
 .nav-tab:hover{color:var(--accent)}
@@ -59,7 +64,7 @@ nav{background:var(--surface-nav);border-bottom:2px solid var(--accent);display:
 .page{display:none;padding:20px;max-width:1200px;margin:0 auto}
 .page.active{display:block}
 .card{background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:8px;padding:16px;margin-bottom:16px}
-.card-title{color:var(--accent);font-size:14px;font-weight:bold;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border-subtle);display:flex;justify-content:space-between;align-items:center}
+.card-title{font-family:var(--font-display);color:var(--accent);font-size:18px;letter-spacing:1.5px;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border-subtle);display:flex;justify-content:space-between;align-items:center}
 .btn{display:inline-block;padding:7px 14px;border:none;border-radius:20px;cursor:pointer;font-weight:bold;font-size:12px;text-transform:uppercase;letter-spacing:.5px;transition:all .2s;line-height:1.2}
 .btn-primary{background:var(--accent);color:var(--text-bright)}.btn-primary:hover{background:var(--accent-hover)}
 .btn-danger{background:var(--danger);color:var(--text-bright)}.btn-danger:hover{background:var(--danger-hover)}
@@ -102,9 +107,9 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);outline:none}
 .unit-pts{color:var(--gold);font-weight:bold;font-size:13px}
 .weapon-row{background:var(--surface-page);border-radius:4px;padding:5px 8px;margin-top:4px;font-size:11px;color:var(--text-muted)}
 .weapon-row span{color:var(--text-bright);font-weight:bold}
-.points-big{font-size:28px;font-weight:900;color:var(--gold);text-align:center}
+.points-big{font-family:var(--font-display);font-size:42px;color:var(--gold);text-align:center;letter-spacing:2px}
 .points-label{font-size:11px;color:var(--text-muted);text-align:center;text-transform:uppercase}
-.section-header{font-size:12px;font-weight:bold;text-transform:uppercase;letter-spacing:1px;padding:4px 10px;border-radius:4px;margin-bottom:8px;display:inline-block}
+.section-header{font-family:var(--font-display);font-size:15px;letter-spacing:1.5px;padding:4px 10px;border-radius:4px;margin-bottom:8px;display:inline-block}
 .sh-core{background:#0a2a0a;color:#4caf50}
 .sh-specialist{background:#0a0a3a;color:#64b5f6}
 .sh-command{background:#2a1a0a;color:#ffb74d}
@@ -113,14 +118,14 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);outline:none}
 .modal-bg{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.8);z-index:200;justify-content:center;align-items:flex-start;padding:40px 10px}
 .modal-bg.open{display:flex}
 .modal{background:var(--surface-card);border:1px solid var(--accent);border-radius:10px;padding:20px;width:100%;max-width:640px;max-height:85vh;overflow-y:auto}
-.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;color:var(--accent);font-size:16px;font-weight:bold}
+.modal-header{font-family:var(--font-display);display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;color:var(--accent);font-size:20px;letter-spacing:1.5px}
 .modal-close{cursor:pointer;background:var(--surface-raised);border:none;color:var(--text-mid);width:26px;height:26px;border-radius:50%;font-size:16px;line-height:26px;text-align:center}
 .modal-close:hover{color:var(--text-bright);background:#444}
 .bg-card{background:var(--surface-card);border:2px solid var(--border-subtle);border-radius:8px;padding:14px;margin-bottom:14px}
 .bg-card.valid{border-color:#2ea043}
 .bg-card.invalid{border-color:var(--danger)}
 .bg-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
-.bg-title{font-size:16px;font-weight:bold;color:var(--accent)}
+.bg-title{font-family:var(--font-display);font-size:20px;letter-spacing:1px;color:var(--accent)}
 .validation-ok{background:#0a2a0a;border:1px solid #2ea043;color:#4caf50;padding:6px 10px;border-radius:4px;font-size:12px;margin-top:8px}
 .validation-warn{background:#2a1a0a;border:1px solid #ff8800;color:#ffb74d;padding:6px 10px;border-radius:4px;font-size:12px;margin-top:8px}
 .validation-err{background:#2a0a0a;border:1px solid #8b0000;color:#ef5350;padding:6px 10px;border-radius:4px;font-size:12px;margin-top:8px}
