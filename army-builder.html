@@ -236,9 +236,11 @@ hr{border:none;border-top:1px solid #21262d;margin:12px 0}
         <div id="b-result">
           <div class="empty"><div class="empty-icon">&#128202;</div>Fill in stats and click Calculate</div>
         </div>
+        <div id="b-edit-hint" style="display:none;font-size:11px;color:#ffb74d;margin-top:10px"></div>
         <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
           <button class="btn btn-primary" onclick="calculateBuilder()">Calculate</button>
-          <button class="btn btn-success" onclick="saveToLibrary()">Save to Library</button>
+          <button class="btn btn-success" id="b-save-btn" onclick="saveToLibrary()">Save to Library</button>
+          <button class="btn btn-secondary" id="b-new-btn" onclick="resetBuilder()" style="display:none">New Unit</button>
         </div>
       </div>
       <div class="card">
@@ -259,7 +261,7 @@ hr{border:none;border-top:1px solid #21262d;margin:12px 0}
 <div id="page-library" class="page">
   <div class="card">
     <div class="card-title">Unit Library
-      <button class="btn btn-primary btn-sm" onclick="showPage('builder')">+ Create Unit</button>
+      <button class="btn btn-primary btn-sm" onclick="resetBuilder();showPage('builder')">+ Create Unit</button>
     </div>
     <input class="search-bar" id="lib-search" placeholder="&#128269; Search units..." oninput="renderLibrary()">
     <div class="pill-nav" id="lib-faction-filters">
@@ -689,7 +691,7 @@ let bgUnitTargetBGId = null;
 let bgUnitSelectedId = null;
 let libFilterClass = "all";
 let libFilterFaction = "all";
-let weaponRowCount = 0;
+let editingUnitId = null;
 
 // ============================================================
 // PERSISTENCE
@@ -706,6 +708,9 @@ function loadState() {
       state.taskForces = saved.taskForces || [];
       state.armies = saved.armies || [];
       state.deployments = saved.deployments || [];
+      // Migration: ensure every slot has a stable id (older data may lack one)
+      state.taskForces.forEach(tf => (tf.units||[]).forEach(s=>{ if(!s.id) s.id="slot_"+uid(); }));
+      state.deployments.forEach(d => (d.battleGroups||[]).forEach(bg=>(bg.units||[]).forEach(s=>{ if(!s.id) s.id="bgu_"+uid(); })));
     } catch(e) {}
   }
 }
@@ -740,6 +745,11 @@ function importData(evt) {
 // ============================================================
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
 function roundToFive(v) { v = Math.ceil(v); return v + (v%5===0 ? 0 : 5-(v%5)); }
+function esc(s) {
+  return String(s==null?"":s)
+    .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;").replace(/'/g,"&#39;");
+}
 
 function allUnits() {
   return [...BUILTIN_UNITS, ...state.customUnits];
@@ -859,7 +869,7 @@ function unitCardHTML(unit, actions) {
         <div>
           ${classBadge(unit.class)}${factionBadge(unit.faction)}
           ${!unit.builtIn?`<span class="badge" style="background:#333;color:#aaa">Custom</span>`:""}
-          <span class="unit-name" style="display:block;margin-top:4px">${unit.name}</span>
+          <span class="unit-name" style="display:block;margin-top:4px">${esc(unit.name)}</span>
         </div>
         <div style="text-align:right">
           <div class="unit-pts">${pts.unitPts} pts</div>
@@ -909,12 +919,31 @@ function openModal(id) { document.getElementById(id).classList.add("open"); }
 // ============================================================
 let builderWeapons = [];
 
+function setEditMode(unit) {
+  const hint = document.getElementById("b-edit-hint");
+  const saveBtn = document.getElementById("b-save-btn");
+  const newBtn = document.getElementById("b-new-btn");
+  if(unit) {
+    editingUnitId = unit.id;
+    hint.style.display = "block";
+    hint.innerHTML = `&#9998; Editing <strong>${esc(unit.name)}</strong> — saving updates it in place.`;
+    saveBtn.textContent = "Update Unit";
+    newBtn.style.display = "inline-block";
+  } else {
+    editingUnitId = null;
+    hint.style.display = "none";
+    saveBtn.textContent = "Save to Library";
+    newBtn.style.display = "none";
+  }
+}
+
 function resetBuilder() {
   document.getElementById("b-name").value = "";
   document.getElementById("b-class").value = "inf";
   document.getElementById("b-role").value = "core";
   currentBuilderTraits = [];
   builderWeapons = [];
+  setEditMode(null);
   onClassChange();
   document.getElementById("b-result").innerHTML = `<div class="empty"><div class="empty-icon">&#128202;</div>Fill in stats and click Calculate</div>`;
 }
@@ -1093,9 +1122,21 @@ function saveToLibrary() {
   const unit = gatherBuilderUnit();
   if(!unit.name || unit.name==="Unnamed Unit") { alert("Give your unit a name first."); return; }
   calculateBuilder();
-  unit.id = "custom_"+uid();
   unit.builtIn = false;
+  if(editingUnitId) {
+    const idx = state.customUnits.findIndex(u=>u.id===editingUnitId);
+    if(idx>=0) {
+      unit.id = editingUnitId;
+      state.customUnits[idx] = unit;
+      saveState();
+      renderAll();
+      alert(`"${unit.name}" updated.`);
+      return;
+    }
+  }
+  unit.id = "custom_"+uid();
   state.customUnits.push(unit);
+  setEditMode(unit);
   saveState();
   alert(`"${unit.name}" saved to library!`);
 }
@@ -1165,9 +1206,8 @@ function editUnit(id) {
   document.getElementById("b-traits-display").innerHTML = traitTipHTML(currentBuilderTraits, STAND_TRAITS)||"None";
   builderWeapons = (unit.weapons||[]).map(w=>({...w, traits:(w.traits||[]).slice()}));
   renderWeaponRows();
-  // Override save to update
-  state.customUnits = state.customUnits.filter(u=>u.id!==id);
-  saveState();
+  setEditMode(unit);
+  calculateBuilder();
   showPage("builder");
 }
 
@@ -1178,9 +1218,11 @@ function quickAddToTF(unitId) {
   if(state.taskForces.length===1) {
     const tf = state.taskForces[0];
     const u = unitById(unitId);
-    tf.units.push({unitId, role: u?.role||"core", quantity:1});
+    tf.units.push({id:"slot_"+uid(), unitId, role: u?.role||"core", quantity:1});
     saveState();
-    alert(`Added to "${tf.name}"`);
+    renderTFList();
+    if(currentTFId===tf.id) renderTFDetail();
+    alert(`Added "${u?.name||"unit"}" to "${tf.name}"`);
   } else {
     // show picker
     openAddUnitModal(null);
@@ -1202,7 +1244,7 @@ function renderTFList() {
     const isCurrent = tf.id === currentTFId;
     return `<div class="list-row" style="${isCurrent?"border-color:#007eff":""}" onclick="selectTF('${tf.id}')">
       <div>
-        <div style="font-weight:bold;color:${isCurrent?"#007eff":"#fff"}">${tf.name}</div>
+        <div style="font-weight:bold;color:${isCurrent?"#007eff":"#fff"}">${esc(tf.name)}</div>
         <div style="font-size:11px;color:#8b949e">${unitCount} unit slot${unitCount!==1?"s":""} &bull; ${pts} pts</div>
       </div>
       <div style="display:flex;gap:4px">
@@ -1248,7 +1290,7 @@ function renderTFDetail() {
         const unitPts = Math.round(pts.unitPts * (role==="commander"?1.75:role==="command"?1.5:1) * slot.quantity);
         return `<div class="tf-unit-row">
           <div style="flex:1">
-            <span style="font-weight:bold;color:#fff">${u.name}</span>
+            <span style="font-weight:bold;color:#fff">${esc(u.name)}</span>
             <span style="font-size:11px;color:#8b949e;margin-left:6px">${classBadge(u.class)}</span>
             <div style="font-size:11px;color:#8b949e">${pts.unitPts}pts/unit &bull; ${unitPts}pts total</div>
           </div>
@@ -1267,7 +1309,7 @@ function renderTFDetail() {
   });
   panel.innerHTML = `<div class="card">
     <div class="card-title">
-      ${tf.name}
+      ${esc(tf.name)}
       <div style="display:flex;gap:6px">
         <button class="btn btn-primary btn-sm" onclick="openAddUnitModal('${tf.id}')">+ Add Unit</button>
         <button class="btn btn-danger btn-sm" onclick="deleteTF('${tf.id}')">Delete TF</button>
@@ -1328,7 +1370,7 @@ function renderAddUnitList() {
     return `<div class="list-row" style="${sel?"border-color:#007eff;background:#1a2a4a":""}" onclick="addUnitSelectedId='${u.id}';renderAddUnitList()">
       <div>
         ${classBadge(u.class)}
-        <span style="font-weight:bold;margin-left:6px;color:${sel?"#007eff":"#fff"}">${u.name}</span>
+        <span style="font-weight:bold;margin-left:6px;color:${sel?"#007eff":"#fff"}">${esc(u.name)}</span>
         <div style="font-size:11px;color:#8b949e">${pts.unitPts} pts | ${pts.unitSize} stands</div>
       </div>
     </div>`;
@@ -1392,7 +1434,7 @@ function renderArmyList() {
     const isCurrent = a.id===currentArmyId;
     return `<div class="list-row" style="${isCurrent?"border-color:#007eff":""}" onclick="selectArmy('${a.id}')">
       <div>
-        <div style="font-weight:bold;color:${isCurrent?"#007eff":"#fff"}">${a.name}</div>
+        <div style="font-weight:bold;color:${isCurrent?"#007eff":"#fff"}">${esc(a.name)}</div>
         <div style="font-size:11px;color:#8b949e">${tfCount} Task Force${tfCount!==1?"s":""} &bull; ${pts}${a.pointsLimit?` / ${a.pointsLimit}`:""} pts</div>
       </div>
       <div style="display:flex;gap:4px">
@@ -1423,7 +1465,7 @@ function renderArmyDetail() {
   const tfs = army.taskForceIds.map(id=>state.taskForces.find(t=>t.id===id)).filter(Boolean);
   panel.innerHTML = `<div class="card">
     <div class="card-title">
-      ${army.name}
+      ${esc(army.name)}
       <div style="display:flex;gap:6px">
         <button class="btn btn-primary btn-sm" onclick="openAddTFModal('${army.id}')">+ Add TF</button>
         <button class="btn btn-warning btn-sm" onclick="openDeployFromArmy('${army.id}')">&#9876; Deploy</button>
@@ -1439,7 +1481,7 @@ function renderArmyDetail() {
       const unitCount = tf.units.reduce((s,u)=>s+u.quantity,0);
       return `<div class="list-row">
         <div>
-          <div style="font-weight:bold">${tf.name}</div>
+          <div style="font-weight:bold">${esc(tf.name)}</div>
           <div style="font-size:11px;color:#8b949e">${unitCount} units &bull; ${tp} pts</div>
         </div>
         <button class="btn btn-danger btn-xs" onclick="removeTFFromArmy('${army.id}','${tf.id}')">X</button>
@@ -1484,7 +1526,7 @@ function openAddTFModal(armyId) {
     const sel = addTFSelectedId===tf.id;
     return `<div class="list-row" style="${sel?"border-color:#007eff;background:#1a2a4a":""}" onclick="addTFSelectedId='${tf.id}';openAddTFModal('${armyId}')">
       <div>
-        <span style="font-weight:bold;color:${sel?"#007eff":"#fff"}">${tf.name}</span>
+        <span style="font-weight:bold;color:${sel?"#007eff":"#fff"}">${esc(tf.name)}</span>
         <div style="font-size:11px;color:#8b949e">${tf.units.reduce((s,u)=>s+u.quantity,0)} units &bull; ${pts} pts</div>
       </div>
     </div>`;
@@ -1532,7 +1574,7 @@ function renderDeployList() {
     const bgCount = d.battleGroups.length;
     return `<div class="list-row">
       <div>
-        <div style="font-weight:bold;color:#fff">${d.name}</div>
+        <div style="font-weight:bold;color:#fff">${esc(d.name)}</div>
         <div style="font-size:11px;color:#8b949e">${bgCount} Battle Group${bgCount!==1?"s":""}</div>
       </div>
       <div style="display:flex;gap:4px">
@@ -1595,7 +1637,7 @@ function editDeployment(id) {
   // Populate army dropdown
   const armySel = document.getElementById("dep-army");
   armySel.innerHTML = `<option value="">-- All Task Forces --</option>` +
-    state.armies.map(a=>`<option value="${a.id}" ${currentDeployment.armyId===a.id?"selected":""}>${a.name}</option>`).join("");
+    state.armies.map(a=>`<option value="${a.id}" ${currentDeployment.armyId===a.id?"selected":""}>${esc(a.name)}</option>`).join("");
   document.getElementById("deploy-editor-title").textContent = currentDeployment.name;
   document.getElementById("deploy-editor").style.display="block";
   rebuildBGEditor();
@@ -1658,12 +1700,12 @@ function validateDeployment(dep) {
   let hasCommandIssue = false;
   dep.battleGroups.forEach((bg,i)=>{
     const sz = bgSizes[i];
-    if(sz < minAllowed && maxSize>0) msgs.push(`${bg.name} has ${sz} unit${sz!==1?"s":""} (min: ${minAllowed})`);
+    if(sz < minAllowed && maxSize>0) msgs.push(`${esc(bg.name)} has ${sz} unit${sz!==1?"s":""} (min: ${minAllowed})`);
     const hasCmd = bg.units.some(u=>{
       const unit = unitById(u.unitId);
       return unit && (u.isCommand || (unit.standTraits||[]).some(t=>t[0]==="Inspiration")||unit.role==="command"||unit.role==="commander");
     });
-    if(!hasCmd && sz>0) { msgs.push(`${bg.name} has no Command Stand`); hasCommandIssue=true; }
+    if(!hasCmd && sz>0) { msgs.push(`${esc(bg.name)} has no Command Stand`); hasCommandIssue=true; }
   });
   return msgs;
 }
@@ -1694,11 +1736,11 @@ function renderBGEditor() {
       const unit=unitById(u.unitId);
       return s+(unit?calcPoints(unit).unitPts*u.quantity:0);
     },0);
-    const tfOptions = availTFs.map(tf=>`<option value="${tf.id}" ${bg.taskForceIds.includes(tf.id)?"selected":""}>${tf.name}</option>`).join("");
+    const tfOptions = availTFs.map(tf=>`<option value="${tf.id}" ${bg.taskForceIds.includes(tf.id)?"selected":""}>${esc(tf.name)}</option>`).join("");
     return `<div class="bg-card ${bgSize>0?(isValid?"valid":"invalid"):""}">
       <div class="bg-header">
         <div>
-          <input type="text" value="${bg.name}" style="background:transparent;border:none;color:#007eff;font-size:16px;font-weight:bold;width:220px;padding:0" onchange="bg_rename('${bg.id}',this.value)">
+          <input type="text" value="${esc(bg.name)}" style="background:transparent;border:none;color:#007eff;font-size:16px;font-weight:bold;width:220px;padding:0" onchange="bg_rename('${bg.id}',this.value)">
           <div style="font-size:11px;color:#8b949e">${bgSize} unit${bgSize!==1?"s":""} &bull; ${bgPts} pts ${isValid&&bgSize>0?"&#10003;":""}${!hasCmd&&bgSize>0?"| &#9888; No Command":""}${bgSize<minAllowed&&maxSize>0?"| &#9888; Too small":""}</div>
         </div>
         <div style="display:flex;gap:6px;align-items:center">
@@ -1718,7 +1760,7 @@ function renderBGEditor() {
         const pts=calcPoints(u);
         return `<div class="tf-unit-row" style="margin-bottom:4px">
           <div style="flex:1">
-            <span style="font-weight:bold;color:#fff">${u.name}</span>
+            <span style="font-weight:bold;color:#fff">${esc(u.name)}</span>
             ${classBadge(u.class)}
             <div style="font-size:11px;color:#8b949e">${pts.unitPts}pts/unit</div>
           </div>
@@ -1819,7 +1861,7 @@ function renderBGUnitList() {
       <div>
         ${inTF?`<span style="font-size:10px;color:#4caf50;margin-right:4px">&#9733; In TF</span>`:""}
         ${classBadge(u.class)}
-        <span style="font-weight:bold;margin-left:6px;color:${sel?"#007eff":"#fff"}">${u.name}</span>
+        <span style="font-weight:bold;margin-left:6px;color:${sel?"#007eff":"#fff"}">${esc(u.name)}</span>
         <div style="font-size:11px;color:#8b949e">${pts.unitPts}pts | ${pts.unitSize} stands</div>
       </div>
     </div>`;
@@ -1846,14 +1888,14 @@ function renderPrintOptions() {
   const type = typeSel.value;
   whichSel.innerHTML = "";
   if(type==="army") {
-    state.armies.forEach(a=>whichSel.innerHTML+=`<option value="${a.id}">${a.name}</option>`);
+    state.armies.forEach(a=>whichSel.innerHTML+=`<option value="${a.id}">${esc(a.name)}</option>`);
     if(!state.armies.length) whichSel.innerHTML=`<option>No armies</option>`;
   } else if(type==="deploy") {
-    state.deployments.forEach(d=>whichSel.innerHTML+=`<option value="${d.id}">${d.name}</option>`);
+    state.deployments.forEach(d=>whichSel.innerHTML+=`<option value="${d.id}">${esc(d.name)}</option>`);
     if(!state.deployments.length) whichSel.innerHTML=`<option>No deployments</option>`;
   } else {
     whichSel.innerHTML=`<option value="all">All Units</option>`;
-    state.taskForces.forEach(tf=>whichSel.innerHTML+=`<option value="tf_${tf.id}">TF: ${tf.name}</option>`);
+    state.taskForces.forEach(tf=>whichSel.innerHTML+=`<option value="tf_${tf.id}">TF: ${esc(tf.name)}</option>`);
   }
   renderPrint();
 }
@@ -1895,12 +1937,12 @@ function printArmyHTML(army) {
   const pts = armyPoints(army);
   const tfs = army.taskForceIds.map(id=>state.taskForces.find(t=>t.id===id)).filter(Boolean);
   return `<div class="print-section">
-    <h1 style="font-size:24px;margin-bottom:4px">${army.name}</h1>
+    <h1 style="font-size:24px;margin-bottom:4px">${esc(army.name)}</h1>
     <div style="color:#8b949e;margin-bottom:16px">Total: ${pts}pts${army.pointsLimit?" / "+army.pointsLimit+"pts":""}</div>
     ${tfs.map(tf=>{
       const tp=tfPoints(tf);
       return `<div class="card print-section">
-        <div class="card-title">${tf.name} — ${tp}pts</div>
+        <div class="card-title">${esc(tf.name)} — ${tp}pts</div>
         ${["commander","core","specialist","command","support"].map(role=>{
           const slots=tf.units.filter(u=>u.role===role);
           if(!slots.length) return "";
@@ -1909,7 +1951,8 @@ function printArmyHTML(army) {
               const u=unitById(slot.unitId);
               if(!u) return "";
               const p=calcPoints(u);
-              return unitCardHTML(u);
+              const qtyNote = `<div style="font-size:11px;color:#8b949e;margin:-6px 0 6px;padding:0 12px">Qty: ${slot.quantity} &bull; Total: ${p.unitPts*slot.quantity}pts</div>`;
+              return unitCardHTML(u)+qtyNote;
             }).join("")}</div>`;
         }).join("")}
       </div>`;
@@ -1923,7 +1966,7 @@ function printDeployHTML(dep) {
   const maxSize = Math.max(...allSizes,0);
   const minSize = Math.ceil(maxSize/2);
   return `<div class="print-section">
-    <h1 style="font-size:24px;margin-bottom:4px">${dep.name}</h1>
+    <h1 style="font-size:24px;margin-bottom:4px">${esc(dep.name)}</h1>
     <div style="color:#8b949e;margin-bottom:4px">
       ${bgCount} Battle Groups &bull; Min BG size: ${minSize} units
       (${bgCount===3?"20%":bgCount===4?"14.28%":"11.11%"} of total)
@@ -1939,10 +1982,10 @@ function printDeployHTML(dep) {
       return `<div class="bg-card print-section" style="margin-bottom:16px">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
           <div>
-            <div style="font-size:18px;font-weight:bold">${bg.name}</div>
+            <div style="font-size:18px;font-weight:bold">${esc(bg.name)}</div>
             <div style="font-size:12px;color:#8b949e">
               ${bgSize} units &bull; ${bgPts}pts
-              ${tfs.length?` &bull; TF: ${tfs.map(t=>t.name).join(", ")}`:""}
+              ${tfs.length?` &bull; TF: ${tfs.map(t=>esc(t.name)).join(", ")}`:""}
             </div>
           </div>
           <div style="text-align:right;font-size:12px;color:${bgSize>=minSize||maxSize===0?"#4caf50":"#ef5350"}">
@@ -1984,14 +2027,7 @@ onClassChange();
 builderWeapons = [{mode:"gp",type:"p",range:0,shots:1,impact:0,traits:[]}];
 renderWeaponRows();
 
-// Start on library page if no state, otherwise builder
-showPage(state.customUnits.length||state.taskForces.length||state.armies.length ? "library" : "builder");
-// Always activate builder tab as default
-document.getElementById("tab-builder").classList.add("active");
-document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
-document.querySelectorAll(".nav-tab").forEach(t=>t.classList.remove("active"));
-document.getElementById("page-builder").classList.add("active");
-document.getElementById("tab-builder").classList.add("active");
+showPage("builder");
 
 // Close modals on background click
 document.querySelectorAll(".modal-bg").forEach(mb=>{
