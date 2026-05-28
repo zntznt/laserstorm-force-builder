@@ -1010,6 +1010,23 @@ function unitById(id) {
   return allUnits().find(u => u.id === id);
 }
 
+// Returns the set of role vals required by all selected traits, or null if unrestricted.
+// The result drives which deployment-type cost columns are shown for this unit.
+function computeAllowedRoles(unit) {
+  const standDict  = allStandTraits();
+  const weaponDict = allWeaponTraits();
+  const roleVals   = new Set();
+  function addFrom(t, dict) {
+    const found = Object.entries(dict).find(([,v]) => v[0] === t[0]);
+    if (!found) return;
+    const [key, entry] = found;
+    allTraitReqs(key, entry).filter(r => r.type === "role").forEach(r => r.vals.forEach(v => roleVals.add(v)));
+  }
+  (unit.standTraits || []).forEach(t => addFrom(t, standDict));
+  (unit.weapons || []).flatMap(w => w.traits || []).forEach(t => addFrom(t, weaponDict));
+  return roleVals.size > 0 ? [...roleVals] : null;
+}
+
 function calcPoints(unit) {
   if (unit.officialPts) {
     const ci = CLASS_INFO[unit.class] || CLASS_INFO.inf;
@@ -1092,15 +1109,18 @@ function calcPoints(unit) {
   let total = Math.ceil((standPts+weaponPts)*ci.mult);
   const pr = premiumsFor(unit.class);
   const prem = p => p==null ? null : roundToFive(total*(1+p));
+  const allowedRoles = unit.allowedRoles || null;
+  const costOk = key => !allowedRoles || allowedRoles.some(r => ROLE_COST_MAP[r] === key);
   return {
     perStand: total,
     unitSize: ci.size,
-    unitPts: roundToFive(total*ci.size),
-    indPts: prem(pr.ind),
-    cmdPts: prem(pr.cmd),
-    heroPts: prem(pr.hero),
-    cmdHeroPts: prem(pr.cmdHero),
+    unitPts:    costOk("unit")    ? roundToFive(total*ci.size) : null,
+    indPts:     costOk("ind")     ? prem(pr.ind)               : null,
+    cmdPts:     costOk("cmd")     ? prem(pr.cmd)               : null,
+    heroPts:    costOk("hero")    ? prem(pr.hero)              : null,
+    cmdHeroPts: costOk("cmdHero") ? prem(pr.cmdHero)           : null,
     saveDice: ci.saveDice,
+    allowedRoles,
     breakdown: {standPts, standComps, weaponPts, weaponComps, mult: ci.mult}
   };
 }
@@ -1185,6 +1205,8 @@ const TRAIT_CLASS_LABELS = {inf:"Infantry",cav:"Cavalry",fg:"Field Gun",scout:"S
 const TRAIT_ROLE_LABELS  = {unit:"Unit",hero:"Hero",independent:"Independent",command:"Command",cmdHero:"Cmd Hero",troop:"Troop"};
 const TRAIT_MOB_LABELS   = {troop:"Troop",grav:"Grav",walk:"Walker",wheel:"Wheeled",track:"Tracked",air:"Air"};
 const FACTION_LABEL_MAP  = {standard:"Standard",precursor:"Precursor",soulless:"Soulless",swarm:"Swarm",warrior:"Warrior"};
+// Maps role requirement vals to the cost-column key they gate
+const ROLE_COST_MAP = {unit:"unit", troop:"unit", independent:"ind", command:"cmd", hero:"hero", cmdHero:"cmdHero"};
 
 function traitReqColor(type, val) {
   if(type === "faction") {
@@ -1524,7 +1546,9 @@ function applyTraits() {
 function closeTraitModal() { closeModal("modal-traits"); }
 
 function gatherBuilderUnit() {
-  return {
+  const standTraits = currentBuilderTraits.slice();
+  const weapons = builderWeapons.map(w => ({...w, traits:(w.traits||[]).slice()}));
+  const unit = {
     name: document.getElementById("b-name").value || "Unnamed Unit",
     class: document.getElementById("b-class").value,
     faction: document.getElementById("b-faction").value || "",
@@ -1534,9 +1558,11 @@ function gatherBuilderUnit() {
     assault: parseInt(document.getElementById("b-assault").value)||0,
     saveNumber: parseInt(document.getElementById("b-savenumber").value)||6,
     morale: parseInt(document.getElementById("b-morale").value)||6,
-    standTraits: currentBuilderTraits.slice(),
-    weapons: builderWeapons.map(w => ({...w, traits:(w.traits||[]).slice()}))
+    standTraits,
+    weapons
   };
+  unit.allowedRoles = computeAllowedRoles(unit);
+  return unit;
 }
 
 function calculateBuilder() {
@@ -1568,11 +1594,11 @@ function calculateBuilder() {
   })() : "";
   document.getElementById("b-result").innerHTML = `
     <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-bottom:12px">
-      <div><div class="points-big">${pts.unitPts}</div><div class="points-label">Unit (${ci.size} stand${ci.size>1?"s":""})</div></div>
-      <div><div class="points-big" style="font-size:20px">${pts.indPts}</div><div class="points-label">Independent</div></div>
-      ${pts.cmdPts?`<div><div class="points-big" style="font-size:20px">${pts.cmdPts}</div><div class="points-label">Command</div></div>`:""}
-      <div><div class="points-big" style="font-size:20px">${pts.heroPts}</div><div class="points-label">Ind. Hero</div></div>
-      ${pts.cmdHeroPts?`<div><div class="points-big" style="font-size:20px">${pts.cmdHeroPts}</div><div class="points-label">Cmd Hero</div></div>`:""}
+      ${pts.unitPts    != null ? `<div><div class="points-big">${pts.unitPts}</div><div class="points-label">Unit (${ci.size} stand${ci.size>1?"s":""})</div></div>` : ""}
+      ${pts.indPts     != null ? `<div><div class="points-big" style="font-size:20px">${pts.indPts}</div><div class="points-label">Independent</div></div>` : ""}
+      ${pts.cmdPts     != null ? `<div><div class="points-big" style="font-size:20px">${pts.cmdPts}</div><div class="points-label">Command</div></div>` : ""}
+      ${pts.heroPts    != null ? `<div><div class="points-big" style="font-size:20px">${pts.heroPts}</div><div class="points-label">Ind. Hero</div></div>` : ""}
+      ${pts.cmdHeroPts != null ? `<div><div class="points-big" style="font-size:20px">${pts.cmdHeroPts}</div><div class="points-label">Cmd Hero</div></div>` : ""}
     </div>
     ${bdHTML}`;
 }
