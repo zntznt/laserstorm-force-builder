@@ -404,9 +404,9 @@ hr{border:none;border-top:1px solid #21262d;margin:12px 0}
       <div class="card">
         <div class="card-title">&#128190; Save / Load</div>
         <div class="form-row">
-          <button class="btn btn-warning" onclick="exportData()">Export JSON</button>
-          <button class="btn btn-secondary" onclick="document.getElementById('import-file').click()">Import JSON</button>
-          <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(event)">
+          <button class="btn btn-warning" onclick="exportLibrary()">Export Library</button>
+          <button class="btn btn-secondary" onclick="document.getElementById('import-file').click()">Import Library</button>
+          <input type="file" id="import-file" accept=".json" style="display:none" onchange="importLibrary(event)">
         </div>
         <div style="font-size:11px;color:#8b949e;margin-top:8px">All data is also auto-saved in browser localStorage.</div>
       </div>
@@ -961,33 +961,112 @@ function loadState() {
     } catch(e) {}
   }
 }
-function exportData() {
-  const blob = new Blob([JSON.stringify(state, null, 2)], {type:"application/json"});
+function exportLibrary() {
+  const payload = {
+    type: "laserstorm-library",
+    version: 1,
+    customFactions: state.customFactions || [],
+    customTraits:   state.customTraits   || [],
+    customUnits:    state.customUnits    || []
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {type:"application/json"});
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
-  a.download = "laserstorm-army.json";
+  a.download = "laserstorm-library.json";
   a.click();
 }
-function importData(evt) {
+function importLibrary(evt) {
   const file = evt.target.files[0];
   if (!file) return;
+  evt.target.value = "";
   const reader = new FileReader();
   reader.onload = function(e) {
     try {
-      const imported = JSON.parse(e.target.result);
-      if (imported.customUnits) state.customUnits = imported.customUnits;
-      if (imported.customFactions) state.customFactions = imported.customFactions;
-      if (imported.customTraits) {
-        state.customTraits = imported.customTraits;
-        state.customTraits.forEach(t => { if(!t.reqs) t.reqs = t.faction ? [{type:"faction",vals:[t.faction]}] : []; });
+      const data = JSON.parse(e.target.result);
+      const impFactions = data.customFactions || [];
+      const impTraits   = data.customTraits   || [];
+      const impUnits    = data.customUnits    || [];
+      if (!impFactions.length && !impTraits.length && !impUnits.length) {
+        alert("No library content found in this file."); return;
       }
-      if (imported.taskForces) state.taskForces = imported.taskForces;
-      if (imported.armies) state.armies = imported.armies;
-      if (imported.deployments) state.deployments = imported.deployments;
+      const added   = {factions:0, traits:0, units:0};
+      const skipped = {factions:[], traits:[], units:[]};
+
+      // Factions — deduplicate by name; remap IDs to avoid collisions
+      const factionIdMap = {};
+      impFactions.forEach(f => {
+        const existing = (state.customFactions||[]).find(x => x.name === f.name);
+        if (existing) {
+          factionIdMap[f.id] = existing.id;
+          skipped.factions.push(f.name);
+        } else {
+          const idTaken = (state.customFactions||[]).some(x => x.id === f.id);
+          const newId = idTaken ? "f_"+uid() : f.id;
+          factionIdMap[f.id] = newId;
+          state.customFactions.push({...f, id: newId});
+          added.factions++;
+        }
+      });
+
+      // Traits — deduplicate by name; remap faction refs and IDs
+      const traitIdMap = {};
+      impTraits.forEach(raw => {
+        let t = {...raw};
+        if (!t.reqs) t.reqs = t.faction ? [{type:"faction",vals:[t.faction]}] : [];
+        t.reqs = t.reqs.map(r => r.type==="faction"
+          ? {...r, vals: r.vals.map(v => factionIdMap[v] ?? v)}
+          : r);
+        const existing = (state.customTraits||[]).find(x => x.name === t.name);
+        if (existing) {
+          traitIdMap[t.id] = existing.id;
+          skipped.traits.push(t.name);
+        } else {
+          const idTaken = (state.customTraits||[]).some(x => x.id === t.id);
+          const newId = idTaken ? "t_"+uid() : t.id;
+          traitIdMap[t.id] = newId;
+          state.customTraits.push({...t, id: newId});
+          added.traits++;
+        }
+      });
+
+      // Units — deduplicate by name; remap faction ID and unit ID
+      impUnits.forEach(u => {
+        const existing = (state.customUnits||[]).find(x => x.name === u.name);
+        if (existing) {
+          skipped.units.push(u.name);
+        } else {
+          const faction = u.faction ? (factionIdMap[u.faction] ?? u.faction) : u.faction;
+          const idTaken = (state.customUnits||[]).some(x => x.id === u.id);
+          const newId = idTaken ? "u_"+uid() : u.id;
+          state.customUnits.push({...u, id: newId, faction});
+          added.units++;
+        }
+      });
+
       saveState();
+      rebuildFactionSelect();
+      renderLibFactionFilters();
+      renderCustomTraitList();
       renderAll();
-      alert("Import successful!");
-    } catch(e) { alert("Invalid file."); }
+
+      const addedParts = [];
+      if (added.factions) addedParts.push(`${added.factions} faction${added.factions>1?"s":""}`);
+      if (added.traits)   addedParts.push(`${added.traits} trait${added.traits>1?"s":""}`);
+      if (added.units)    addedParts.push(`${added.units} unit${added.units>1?"s":""}`);
+      let msg = addedParts.length ? `Imported: ${addedParts.join(", ")}.` : "Nothing new to import.";
+
+      const allSkipped = [
+        ...skipped.factions.map(n=>`Faction: ${n}`),
+        ...skipped.traits.map(n=>`Trait: ${n}`),
+        ...skipped.units.map(n=>`Unit: ${n}`)
+      ];
+      if (allSkipped.length) {
+        const shown = allSkipped.slice(0, 20);
+        msg += `\n\nAlready exist — skipped:\n${shown.map(n=>`• ${n}`).join("\n")}`;
+        if (allSkipped.length > 20) msg += `\n…and ${allSkipped.length-20} more.`;
+      }
+      alert(msg);
+    } catch(err) { alert("Invalid or unreadable file."); }
   };
   reader.readAsText(file);
 }
