@@ -185,16 +185,6 @@ hr{border:none;border-top:1px solid #21262d;margin:12px 0}
             </select>
           </div>
           <div class="form-group">
-            <label>Role <span class="tip ttip" data-tip="Army-building role (book pg. 80): Core, Specialist, Command, Support, or the Task Force Commander. Organizational only — does not change the Stand's stats.">&#9432;</span></label>
-            <select id="b-role" style="width:auto">
-              <option value="core">Core</option>
-              <option value="specialist">Specialist</option>
-              <option value="command">Command</option>
-              <option value="support">Support</option>
-              <option value="commander">Commander</option>
-            </select>
-          </div>
-          <div class="form-group">
             <label>Faction</label>
             <select id="b-faction" style="width:auto" onchange="onFactionSelectChange()">
               <option value="">No Faction</option>
@@ -1105,7 +1095,6 @@ function setEditMode(unit) {
 function resetBuilder() {
   document.getElementById("b-name").value = "";
   document.getElementById("b-class").value = "inf";
-  document.getElementById("b-role").value = "core";
   document.getElementById("b-faction").value = "";
   currentBuilderTraits = [];
   builderWeapons = [];
@@ -1274,7 +1263,6 @@ function gatherBuilderUnit() {
   return {
     name: document.getElementById("b-name").value || "Unnamed Unit",
     class: document.getElementById("b-class").value,
-    role: document.getElementById("b-role").value,
     faction: document.getElementById("b-faction").value || "",
     speed: parseInt(document.getElementById("b-speed").value)||4,
     mobility: document.getElementById("b-mobility").value,
@@ -1516,7 +1504,6 @@ function editUnit(id) {
   if(!unit) return;
   document.getElementById("b-name").value = unit.name;
   document.getElementById("b-class").value = unit.class;
-  document.getElementById("b-role").value = unit.role||"core";
   document.getElementById("b-faction").value = unit.faction||"";
   onClassChange();
   document.getElementById("b-speed").value = unit.speed;
