@@ -148,6 +148,10 @@ label .trait-edit-btn{margin-left:6px}
 .trait-row-info{flex:1;text-transform:none;font-size:inherit;font-weight:normal;color:inherit;margin-bottom:0}
 .trait-row-name{font-size:13px;color:#e0e0e0;font-weight:bold}
 .trait-row-desc{font-size:11px;color:#8b949e;margin-top:2px;line-height:1.4}
+.trait-stepper{display:flex;align-items:center;gap:4px;flex-shrink:0}
+.trait-stepper-btn{background:#21262d;border:1px solid #30363d;color:#8b949e;border-radius:4px;padding:1px 8px;font-size:14px;font-weight:bold;cursor:pointer;line-height:1.4}
+.trait-stepper-btn:hover{background:#30363d;color:#e0e0e0}
+.trait-stepper-count{font-size:13px;font-weight:bold;color:#007eff;min-width:20px;text-align:center}
 @media print{
   nav,.no-print,.btn{display:none!important}
   .page{display:block!important;max-width:100%;padding:10px}
@@ -688,6 +692,12 @@ label .trait-edit-btn{margin-left:6px}
         <label>Description <span style="color:#555;font-size:10px">(optional — shown as tooltip)</span></label>
         <textarea id="ct-description" rows="2" placeholder="What does this trait do?" style="width:100%;resize:vertical"></textarea>
       </div>
+      <div class="form-group" style="margin-bottom:14px">
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;text-transform:none;font-weight:normal">
+          <input type="checkbox" id="ct-stackable" style="width:auto;margin:0">
+          Can be taken multiple times (stackable)
+        </label>
+      </div>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
         <button id="ct-save-btn" class="btn btn-primary" onclick="saveCustomTrait()">Create</button>
         <button id="ct-cancel-edit-btn" class="btn btn-secondary btn-xs" onclick="cancelEditCustomTrait()" style="display:none">Cancel edit</button>
@@ -733,13 +743,9 @@ const STAND_TRAITS = {
   stub:     ["Stubborn",1,          "Ignores Push Back."],
   tDep:     ["Tactical Deployment",1,"+ 1 to regrouping rolls when in Reserve."],
   tHunt:    ["Tank Hunter",1,       "+1 to hit when firing at AFVs or Super Heavies. +1 to Assault against AFVs and Super Heavies."],
-  terror2:  ["Terror +2",1,         "[Unit] This Unit inflicts 2 Terror dice. Stacks with other Terror traits."],
-  terror4:  ["Terror +4",2,         "[Unit] This Unit inflicts 4 Terror dice. Stacks with other Terror traits."],
-  terror6:  ["Terror +6",3,         "[Unit] This Unit inflicts 6 Terror dice. Stacks with other Terror traits."],
+  terror:   ["Terror",1,            "[Unit] This Unit inflicts 2 Terror dice per stack. Can be taken multiple times.",{stackable:true}],
   tFate:    ["Third Fate",3,        "[Precursor][Hero][Infantry] If this Stand hits an enemy Hero, that Hero makes a Damage Save with one fewer dice. If no dice remain, roll twice and keep the lower value."],
-  trans1:   ["Transport 1",1.5,     "This unit can carry 1 Infantry or Cavalry stand inside it during movement."],
-  trans2:   ["Transport 2",3,       "This unit can carry up to 2 Infantry or Cavalry stands inside it during movement."],
-  trans3:   ["Transport 3",4.5,     "This unit can carry up to 3 Infantry or Cavalry stands inside it during movement."],
+  trans:    ["Transport",1.5,       "This unit can carry Infantry or Cavalry stands. Each stack adds 1 transport slot.",{stackable:true,max:6}],
   vSworn:   ["Vowsworn",1,          "[Warrior][Unit] The Stand & Die morale option automatically succeeds without a die roll."],
   vtol:     ["VTOL",1,              "[Aircraft] Can land in open terrain. Can be targeted with AT and GP weapons while Landed."]
 };
@@ -787,9 +793,7 @@ const TRAIT_REQS = {
   spawn:    [{type:"faction",vals:["swarm"]},    {type:"role",vals:["unit"]}],
   stealth:  [{type:"role",vals:["unit"]}],
   tFate:    [{type:"faction",vals:["precursor"]},{type:"role",vals:["hero"]},  {type:"class",vals:["inf"]}],
-  terror2:  [{type:"role",vals:["unit"]}],
-  terror4:  [{type:"role",vals:["unit"]}],
-  terror6:  [{type:"role",vals:["unit"]}],
+  terror:   [{type:"role",vals:["unit"]}],
   vSworn:   [{type:"faction",vals:["warrior"]},  {type:"role",vals:["unit"]}],
   vtol:     [{type:"class",vals:["ac"]}],
   // Weapon traits
@@ -867,7 +871,7 @@ const BUILTIN_UNITS = [
 {id:"std_speedbike", name:"Speeder Bikes",           class:"scout", speed:15, mobility:"grav",  aim:5, assault:1, saveNumber:5, morale:5, standTraits:[], weapons:[{name:"Vehicle MG",mode:"ai",type:"p",range:2,shots:1,impact:0,traits:[]}], role:"specialist",faction:"standard", builtIn:true, officialPts:{perStand:12,  unitPts:50,  indPts:20,  cmdPts:20,  heroPts:20,  cmdHeroPts:25}},
 {id:"std_hunt_dr",   name:"Hunter Drones",           class:"scout", speed:10, mobility:"grav",  aim:3, assault:0, saveNumber:6, morale:1, standTraits:[], weapons:[{name:"Light Laser",mode:"at",type:"p",range:10,shots:1,impact:4,traits:[]}], role:"specialist",faction:"standard", builtIn:true, officialPts:{perStand:34,  unitPts:140, indPts:45,  cmdPts:55,  heroPts:55,  cmdHeroPts:60}},
 {id:"std_scout_jeep",name:"Scout Jeeps",             class:"scout", speed:12, mobility:"wheel", aim:5, assault:0, saveNumber:5, morale:5, standTraits:[], weapons:[{name:"Vehicle MG",mode:"ai",type:"p",range:2,shots:1,impact:0,traits:[]}], role:"specialist",faction:"standard", builtIn:true, officialPts:{perStand:6,   unitPts:25,  indPts:10,  cmdPts:10,  heroPts:10,  cmdHeroPts:15}},
-{id:"std_apc",       name:"APCs",                    class:"afv",   speed:12, mobility:"track", aim:5, assault:0, saveNumber:6, morale:4, standTraits:[["Transport 2",3]], weapons:[{name:"Tank MG",mode:"ai",type:"p",range:2,shots:1,impact:0,traits:[]}], role:"support",   faction:"standard", builtIn:true, officialPts:{perStand:26,  unitPts:80,  indPts:35,  cmdPts:40,  heroPts:45,  cmdHeroPts:50}},
+{id:"std_apc",       name:"APCs",                    class:"afv",   speed:12, mobility:"track", aim:5, assault:0, saveNumber:6, morale:4, standTraits:[["Transport",1.5,"This unit can carry Infantry or Cavalry stands. Each stack adds 1 transport slot.",2]], weapons:[{name:"Tank MG",mode:"ai",type:"p",range:2,shots:1,impact:0,traits:[]}], role:"support",   faction:"standard", builtIn:true, officialPts:{perStand:26,  unitPts:80,  indPts:35,  cmdPts:40,  heroPts:45,  cmdHeroPts:50}},
 {id:"std_scout_wlk", name:"Scout Walkers",           class:"afv",   speed:8,  mobility:"walk",  aim:5, assault:2, saveNumber:4, morale:6, standTraits:[["Infiltrate",1]], weapons:[{name:"Tank MG",mode:"ai",type:"p",range:2,shots:1,impact:0,traits:[]},{name:"Autocannon",mode:"gp",type:"p",range:5,shots:2,impact:2,traits:[]}], role:"specialist",faction:"standard", builtIn:true, officialPts:{perStand:68,  unitPts:205, indPts:90,  cmdPts:105, heroPts:110, cmdHeroPts:120}},
 {id:"std_assault_wlk",name:"Assault Walkers",        class:"afv",   speed:6,  mobility:"walk",  aim:5, assault:4, saveNumber:4, morale:4, standTraits:[["Assault Vehicle",1]], weapons:[{name:"Chain Gun",mode:"ai",type:"s",range:2,shots:2,impact:1,traits:[]},{name:"Light Laser",mode:"at",type:"s",range:10,shots:1,impact:4,traits:[["Targeting",0]]}], role:"core",      faction:"standard", builtIn:true, officialPts:{perStand:70,  unitPts:210, indPts:95,  cmdPts:105, heroPts:110, cmdHeroPts:125}},
 {id:"std_lt_tank",   name:"Light Tanks",             class:"afv",   speed:12, mobility:"track", aim:5, assault:0, saveNumber:4, morale:4, standTraits:[], weapons:[{name:"Tank MG",mode:"ai",type:"p",range:2,shots:1,impact:0,traits:[]},{name:"Light AT Gun",mode:"gp",type:"p",range:5,shots:1,impact:3,traits:[["Frag",0]]}], role:"core",      faction:"standard", builtIn:true, officialPts:{perStand:54,  unitPts:165, indPts:75,  cmdPts:85,  heroPts:85,  cmdHeroPts:95}},
@@ -882,7 +886,7 @@ const BUILTIN_UNITS = [
 {id:"pre_sniper",    name:"Ghoststep Snipers",       class:"inf",   speed:6,  mobility:"troop", aim:3, assault:0, saveNumber:5, morale:6, standTraits:[["Precise Fire",1],["Melee Weapons",0.5],["Active Defenses",3]], weapons:[{name:"Void Rifle",mode:"at",type:"p",range:10,shots:1,impact:8,traits:[["Heavy",-1]]}], role:"specialist",faction:"precursor",builtIn:true, officialPts:{perStand:37,  unitPts:225, indPts:50,  cmdPts:60,  heroPts:60,  cmdHeroPts:65}},
 {id:"pre_leafblade", name:"Leafblade Grav Bikes",    class:"scout", speed:8,  mobility:"grav",  aim:5, assault:0, saveNumber:4, morale:5, standTraits:[["Infiltrate",1],["Precise Fire",1],["Active Defenses",3]], weapons:[{name:"Hvy Shard Rifle",mode:"ai",type:"p",range:2,shots:4,impact:4,traits:[]}], role:"specialist",faction:"precursor",builtIn:true, officialPts:{perStand:38,  unitPts:155, indPts:50,  cmdPts:60,  heroPts:60,  cmdHeroPts:70}},
 {id:"pre_stardrop",  name:"Stardrop Artillery",      class:"afv",   speed:6,  mobility:"grav",  aim:4, assault:0, saveNumber:6, morale:4, standTraits:[["Active Defenses",3]], weapons:[{name:"Hvy Shard Rifle",mode:"ai",type:"p",range:2,shots:4,impact:4,traits:[]},{name:"Star Launcher",mode:"gp",type:"p",range:10,shots:1,impact:5,traits:[["Heavy",-1],["Indirect",3],["Burst",0],["Repeating Fire",0]]}], role:"support",   faction:"precursor",builtIn:true, officialPts:{perStand:236, unitPts:710, indPts:310, cmdPts:355, heroPts:370, cmdHeroPts:415}},
-{id:"pre_swift_apc", name:"Swiftshell APC",          class:"afv",   speed:6,  mobility:"wheel", aim:4, assault:0, saveNumber:6, morale:4, standTraits:[["Transport 2",3]], weapons:[{name:"Hvy Shard Rifle",mode:"ai",type:"p",range:2,shots:4,impact:4,traits:[]},{name:"Hvy Shard Rifle",mode:"ai",type:"p",range:2,shots:4,impact:4,traits:[]}], role:"support",   faction:"precursor",builtIn:true, officialPts:{perStand:134, unitPts:405, indPts:175, cmdPts:205, heroPts:210, cmdHeroPts:235}},
+{id:"pre_swift_apc", name:"Swiftshell APC",          class:"afv",   speed:6,  mobility:"wheel", aim:4, assault:0, saveNumber:6, morale:4, standTraits:[["Transport",1.5,"This unit can carry Infantry or Cavalry stands. Each stack adds 1 transport slot.",2]], weapons:[{name:"Hvy Shard Rifle",mode:"ai",type:"p",range:2,shots:4,impact:4,traits:[]},{name:"Hvy Shard Rifle",mode:"ai",type:"p",range:2,shots:4,impact:4,traits:[]}], role:"support",   faction:"precursor",builtIn:true, officialPts:{perStand:134, unitPts:405, indPts:175, cmdPts:205, heroPts:210, cmdHeroPts:235}},
 {id:"pre_suncrest",  name:"Suncrest Hovertank",      class:"afv",   speed:6,  mobility:"grav",  aim:4, assault:0, saveNumber:5, morale:3, standTraits:[["Active Defenses",3]], weapons:[{name:"Hvy Shard Rifle",mode:"ai",type:"p",range:2,shots:4,impact:4,traits:[]},{name:"Sunbeam",mode:"at",type:"p",range:5,shots:1,impact:10,traits:[]}], role:"core",      faction:"precursor",builtIn:true, officialPts:{perStand:146, unitPts:440, indPts:190, cmdPts:220, heroPts:230, cmdHeroPts:260}},
 {id:"pre_dusklight", name:"Dusklight Battlespire",   class:"beh",   speed:10, mobility:"walk",  aim:4, assault:5, saveNumber:10,morale:3, standTraits:[["Active Defenses",3]], weapons:[{name:"Firepetal Battery",mode:"gp",type:"p",range:2,shots:4,impact:5,traits:[]},{name:"Firepetal Battery",mode:"gp",type:"p",range:2,shots:4,impact:5,traits:[]},{name:"Void Cannon",mode:"at",type:"p",range:10,shots:1,impact:15,traits:[["Indirect",3],["Heavy",-1]]}], role:"core",      faction:"precursor",builtIn:true, officialPts:{perStand:712, unitPts:715, indPts:715, cmdPts:null,heroPts:890, cmdHeroPts:null}},
 // ── SOULLESS ─────────────────────────────────────────────────
@@ -930,6 +934,7 @@ let builderSelectedRole = "unit";
 let editingCustomTraitId = null;
 let currentWeaponTraits = {};
 let traitPickerTarget = null;
+let traitPickerStepperCounts = {};
 let traitPickerWeaponIdx = null;
 let currentTFId = null;
 let addUnitTargetTFId = null;
@@ -961,6 +966,17 @@ function loadState() {
       state.customTraits = saved.customTraits || [];
       // Migration: convert legacy faction string → reqs array
       state.customTraits.forEach(t => { if(!t.reqs) t.reqs = t.faction ? [{type:"faction",vals:[t.faction]}] : []; });
+      // Migrate old terror/transport traits on custom units
+      const _TERROR_DESC = "[Unit] This Unit inflicts 2 Terror dice per stack. Can be taken multiple times.";
+      const _TRANS_DESC  = "This unit can carry Infantry or Cavalry stands. Each stack adds 1 transport slot.";
+      const _terrorMigMap = {"Terror +2":1,"Terror +4":2,"Terror +6":3};
+      const _transMigMap  = {"Transport 1":1,"Transport 2":2,"Transport 3":3};
+      (state.customUnits||[]).forEach(u => {
+        (u.standTraits||[]).forEach((t,i) => {
+          if(_terrorMigMap[t[0]] !== undefined) u.standTraits[i] = ["Terror",1,_TERROR_DESC,_terrorMigMap[t[0]]];
+          if(_transMigMap[t[0]]  !== undefined) u.standTraits[i] = ["Transport",1.5,_TRANS_DESC,_transMigMap[t[0]]];
+        });
+      });
       state.taskForces = saved.taskForces || [];
       state.armies = saved.armies || [];
       state.deployments = saved.deployments || [];
@@ -1164,9 +1180,10 @@ function calcPoints(unit) {
   let ptsTraits = 0;
   const standTraitComps = [];
   (unit.standTraits||[]).forEach(t => {
-    let tc = t[1]===0 ? (t[0]==="Horde" ? (unit.morale<=3?3:1) : 0) : t[1];
+    const cnt = traitCount(t);
+    let tc = t[1]===0 ? (t[0]==="Horde" ? (unit.morale<=3?3:1) : 0) : t[1] * cnt;
     ptsTraits += tc;
-    if(tc !== 0) standTraitComps.push({label: t[0], val: tc});
+    if(tc !== 0) standTraitComps.push({label: cnt > 1 ? `${t[0]} ×${cnt}` : t[0], val: tc});
   });
   let standPts = Math.max(1, Math.ceil(ptsSpeed+ptsAim+ptsAssault+ptsSave+ptsMorale+ptsTraits));
   // Build stand component list (only non-zero entries)
@@ -1270,7 +1287,7 @@ function factionBadge(unit) {
 
 const TRAIT_FACTION_NAMES = new Set(["soulless","precursor","swarm","warrior","standard"]);
 function traitFactionKey(traitEntry) {
-  if(traitEntry && traitEntry.length >= 4) return traitEntry[3] || null;
+  if(traitEntry && traitEntry.length >= 4 && typeof traitEntry[3] === 'string') return traitEntry[3] || null;
   const m = (traitEntry?.[2]||"").match(/^\[(\w+)\]/);
   if(!m) return null;
   const tag = m[1].toLowerCase();
@@ -1284,14 +1301,18 @@ function _customTraitPrimaryFaction(t) {
 function allStandTraits() {
   const custom = {};
   (state.customTraits||[]).filter(t=>t.type==="stand"||t.type==="both").forEach(t=>{
-    custom["custom_"+t.id] = [t.name, t.cost, t.description, _customTraitPrimaryFaction(t)];
+    const fac = _customTraitPrimaryFaction(t);
+    const opts = t.stackable ? {stackable:true} : null;
+    custom["custom_"+t.id] = opts ? (fac ? [t.name,t.cost,t.description,fac,opts] : [t.name,t.cost,t.description,opts]) : [t.name,t.cost,t.description,fac];
   });
   return Object.assign({}, STAND_TRAITS, custom);
 }
 function allWeaponTraits() {
   const custom = {};
   (state.customTraits||[]).filter(t=>t.type==="weapon"||t.type==="both").forEach(t=>{
-    custom["custom_"+t.id] = [t.name, t.cost, t.description, _customTraitPrimaryFaction(t)];
+    const fac = _customTraitPrimaryFaction(t);
+    const opts = t.stackable ? {stackable:true} : null;
+    custom["custom_"+t.id] = opts ? (fac ? [t.name,t.cost,t.description,fac,opts] : [t.name,t.cost,t.description,opts]) : [t.name,t.cost,t.description,fac];
   });
   return Object.assign({}, WEAPON_TRAITS, custom);
 }
@@ -1311,6 +1332,17 @@ function allTraitReqs(key, entry) {
 }
 
 // Strip all leading [Bracket] prefix blocks from a description string.
+function traitIsStackable(entry) {
+  if (!entry) return false;
+  const last = entry[entry.length - 1];
+  return typeof last === 'object' && last !== null && last.stackable === true;
+}
+function traitCount(t) { return typeof t[3] === 'number' ? t[3] : 1; }
+function traitStackMax(entry) {
+  const last = entry?.[entry.length - 1];
+  return (typeof last === 'object' && last?.max) || 99;
+}
+
 function cleanTraitDesc(desc) {
   return (desc||"").replace(/^(\[[^\]]*\]\s*)+/, "").trim();
 }
@@ -1353,6 +1385,7 @@ function traitTipHTML(traitArr, allTraits) {
   if(!traitArr||!traitArr.length) return `<span style="color:#8b949e;font-size:11px">None</span>`;
   return traitArr.map(t => {
     const name = t[0];
+    const cnt = traitCount(t);
     const [key, entry] = Object.entries(allTraits).find(([,v])=>v[0]===name) || [null, null];
     const cleanDesc = cleanTraitDesc(entry?.[2] || "");
     const fac = traitFactionKey(entry);
@@ -1361,8 +1394,9 @@ function traitTipHTML(traitArr, allTraits) {
     const bg = fac ? `${color}22` : "#21262d";
     const border = fac ? `${color}55` : "#30363d";
     const textColor = fac ? color : "#8b949e";
+    const displayName = cnt > 1 ? `${name} ${cnt}` : name;
     const tipAttr = cleanDesc ? ` class="trait-badge tip" data-tip="${cleanDesc.replace(/"/g,"&quot;")}"` : ` class="trait-badge"`;
-    return `<span${tipAttr} style="background:${bg};color:${textColor};border-color:${border}">${name}</span>`;
+    return `<span${tipAttr} style="background:${bg};color:${textColor};border-color:${border}">${displayName}</span>`;
   }).join("");
 }
 
@@ -1601,17 +1635,11 @@ function refreshTraitPickerList() {
     const locked = (facReq && !facReq.vals.includes(currentFaction))
                 || (clsReq && !clsReq.vals.includes(currentClass))
                 || (mobReq && !mobReq.vals.includes(currentMobility));
+    const stackable = traitIsStackable(val);
     const row = document.createElement("div");
     row.className = "trait-row";
     if(locked) row.style.cssText = "opacity:0.4;pointer-events:none";
-    const cb = document.createElement("input");
-    cb.type = "checkbox";
-    cb.value = key;
-    cb.checked = selected.includes(val[0]);
-    cb.disabled = locked;
-    cb.id = "trait_cb_"+key;
     const info = document.createElement("label");
-    info.htmlFor = "trait_cb_"+key;
     info.className = "trait-row-info";
     info.style.cursor = locked ? "default" : "pointer";
     const nameEl = document.createElement("div");
@@ -1631,15 +1659,52 @@ function refreshTraitPickerList() {
       descEl.textContent = cleanDesc;
       info.appendChild(descEl);
     }
-    row.appendChild(cb);
-    row.appendChild(info);
+    if(stackable) {
+      const count = traitPickerStepperCounts[key] || 0;
+      const max = traitStackMax(val);
+      const stepper = document.createElement("div");
+      stepper.className = "trait-stepper";
+      stepper.innerHTML = `<button class="trait-stepper-btn" onclick="stepperDecr('${key}')">−</button><span class="trait-stepper-count" id="step_${key}">${count}</span><button class="trait-stepper-btn" onclick="stepperIncr('${key}',${max})">+</button>`;
+      row.appendChild(stepper);
+      row.appendChild(info);
+    } else {
+      const cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.value = key;
+      cb.checked = selected.includes(val[0]);
+      cb.disabled = locked;
+      cb.id = "trait_cb_"+key;
+      info.htmlFor = "trait_cb_"+key;
+      row.appendChild(cb);
+      row.appendChild(info);
+    }
     list.appendChild(row);
   });
+}
+
+function stepperIncr(key, max) {
+  traitPickerStepperCounts[key] = Math.min((traitPickerStepperCounts[key]||0)+1, max);
+  const el = document.getElementById("step_"+key);
+  if(el) el.textContent = traitPickerStepperCounts[key];
+}
+function stepperDecr(key) {
+  traitPickerStepperCounts[key] = Math.max((traitPickerStepperCounts[key]||0)-1, 0);
+  const el = document.getElementById("step_"+key);
+  if(el) el.textContent = traitPickerStepperCounts[key];
 }
 
 function openTraitPicker(target, wIdx) {
   traitPickerTarget = target;
   traitPickerWeaponIdx = wIdx;
+  traitPickerStepperCounts = {};
+  const allT = target==="stand" ? allStandTraits() : allWeaponTraits();
+  const curT = target==="stand" ? currentBuilderTraits : (builderWeapons[wIdx]?.traits||[]);
+  curT.forEach(t => {
+    if(typeof t[3]==="number" && t[3]>0) {
+      const k = Object.entries(allT).find(([,v])=>v[0]===t[0])?.[0];
+      if(k) traitPickerStepperCounts[k] = t[3];
+    }
+  });
   document.getElementById("trait-modal-title").textContent = target==="stand" ? "Stand Traits" : `Weapon ${wIdx+1} Traits`;
   document.getElementById("trait-modal-list").style.columnCount = "1";
   refreshTraitPickerList();
@@ -1651,6 +1716,11 @@ function applyTraits() {
   const checkboxes = document.querySelectorAll("#trait-modal-list input[type=checkbox]");
   const selected = [];
   checkboxes.forEach(cb => { if(cb.checked) selected.push(traits[cb.value]); });
+  Object.entries(traits).forEach(([key,val]) => {
+    if(!traitIsStackable(val)) return;
+    const count = traitPickerStepperCounts[key]||0;
+    if(count>0) selected.push([val[0],val[1],val[2],count]);
+  });
   if(traitPickerTarget==="stand") {
     currentBuilderTraits = selected;
     document.getElementById("b-traits-display").innerHTML = traitTipHTML(selected, allStandTraits())||"None";
@@ -2075,6 +2145,7 @@ function editCustomTrait(id) {
   document.getElementById("ct-cost").value = t.cost;
   document.getElementById("ct-type").value = t.type;
   document.getElementById("ct-description").value = t.description||"";
+  document.getElementById("ct-stackable").checked = !!t.stackable;
   renderCustomTraitReqPills();
   const reqs = t.reqs && t.reqs.length ? t.reqs : (t.faction ? [{type:"faction",vals:[t.faction]}] : []);
   setCustomTraitReqPills(reqs);
@@ -2090,6 +2161,7 @@ function cancelEditCustomTrait() {
   document.getElementById("ct-cost").value = "1";
   document.getElementById("ct-type").value = "stand";
   document.getElementById("ct-description").value = "";
+  document.getElementById("ct-stackable").checked = false;
   document.getElementById("ct-save-btn").textContent = "Create";
   document.getElementById("ct-form-header").textContent = "New Trait";
   document.getElementById("ct-cancel-edit-btn").style.display = "none";
@@ -2131,11 +2203,12 @@ function saveCustomTrait() {
   const reqs = getCustomTraitReqs();
   const facReq = reqs.find(r=>r.type==="faction");
   const faction = facReq ? facReq.vals[0] : "";
+  const stackable = document.getElementById("ct-stackable").checked;
   if(editingCustomTraitId) {
     const idx = state.customTraits.findIndex(t=>t.id===editingCustomTraitId);
     if(idx !== -1) {
       const oldName = state.customTraits[idx].name;
-      state.customTraits[idx] = {id:editingCustomTraitId, name, cost, description, faction, type, reqs};
+      state.customTraits[idx] = {id:editingCustomTraitId, name, cost, description, faction, type, reqs, stackable};
       if(oldName !== name) {
         state.customUnits.forEach(u => {
           (u.standTraits||[]).forEach(t => { if(t[0]===oldName) t[0]=name; });
@@ -2148,7 +2221,7 @@ function saveCustomTrait() {
     document.getElementById("ct-form-header").textContent = "New Trait";
     document.getElementById("ct-cancel-edit-btn").style.display = "none";
   } else {
-    state.customTraits.push({id:uid(), name, cost, description, faction, type, reqs});
+    state.customTraits.push({id:uid(), name, cost, description, faction, type, reqs, stackable});
   }
   saveState();
   renderCustomTraitList();
@@ -2156,6 +2229,7 @@ function saveCustomTrait() {
   document.getElementById("ct-cost").value = "1";
   document.getElementById("ct-type").value = "stand";
   document.getElementById("ct-description").value = "";
+  document.getElementById("ct-stackable").checked = false;
   document.querySelectorAll("#ct-reqs-container .req-pill").forEach(p=>p.classList.remove("req-pill-on"));
   if(document.getElementById("modal-traits").classList.contains("open")) {
     refreshTraitPickerList();
