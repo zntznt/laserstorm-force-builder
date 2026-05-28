@@ -252,8 +252,17 @@ hr{border:none;border-top:1px solid #21262d;margin:12px 0}
       <button class="btn btn-primary btn-sm" onclick="showPage('builder')">+ Create Unit</button>
     </div>
     <input class="search-bar" id="lib-search" placeholder="&#128269; Search units..." oninput="renderLibrary()">
+    <div class="pill-nav" id="lib-faction-filters">
+      <div class="pill active" onclick="setLibFactionFilter(this,'all')">All Factions</div>
+      <div class="pill" onclick="setLibFactionFilter(this,'standard')" style="--fc:#007eff">&#9651; Standard</div>
+      <div class="pill" onclick="setLibFactionFilter(this,'precursor')" style="--fc:#9c27b0">&#9670; Precursor</div>
+      <div class="pill" onclick="setLibFactionFilter(this,'soulless')" style="--fc:#607d8b">&#9635; Soulless</div>
+      <div class="pill" onclick="setLibFactionFilter(this,'swarm')" style="--fc:#4caf50">&#9632; Swarm</div>
+      <div class="pill" onclick="setLibFactionFilter(this,'warrior')" style="--fc:#f44336">&#9733; Warrior</div>
+      <div class="pill" onclick="setLibFactionFilter(this,'custom')" style="--fc:#ffd700">&#9997; Custom</div>
+    </div>
     <div class="pill-nav" id="lib-filters">
-      <div class="pill active" data-filter="all" onclick="setLibFilter(this,'all')">All</div>
+      <div class="pill active" data-filter="all" onclick="setLibFilter(this,'all')">All Classes</div>
       <div class="pill" data-filter="inf" onclick="setLibFilter(this,'inf')">Infantry</div>
       <div class="pill" data-filter="cav" onclick="setLibFilter(this,'cav')">Cavalry</div>
       <div class="pill" data-filter="fg" onclick="setLibFilter(this,'fg')">Fighter</div>
@@ -262,7 +271,6 @@ hr{border:none;border-top:1px solid #21262d;margin:12px 0}
       <div class="pill" data-filter="ac" onclick="setLibFilter(this,'ac')">AC/Air</div>
       <div class="pill" data-filter="sh" onclick="setLibFilter(this,'sh')">Super Heavy</div>
       <div class="pill" data-filter="beh" onclick="setLibFilter(this,'beh')">Behemoth</div>
-      <div class="pill" data-filter="custom" onclick="setLibFilter(this,'custom')">&#9733; Custom</div>
     </div>
     <div id="lib-list"></div>
   </div>
@@ -555,40 +563,62 @@ const RANGE_OPTS = [
 // DATA: BUILT-IN UNITS (representative Laserstorm units)
 // ============================================================
 const BUILTIN_UNITS = [
-  // --- INFANTRY ---
-  {id:"bi_line_inf", name:"Line Infantry", class:"inf", speed:4, mobility:"troop", aim:5, assault:0, saveNumber:6, morale:6, standTraits:[], weapons:[{mode:"gp",type:"p",range:0,shots:1,impact:0,traits:[]}], role:"core", builtIn:true},
-  {id:"bi_heavy_inf", name:"Heavy Infantry", class:"inf", speed:4, mobility:"troop", aim:4, assault:2, saveNumber:5, morale:5, standTraits:[["Stubborn",1]], weapons:[{mode:"gp",type:"p",range:2,shots:1,impact:0,traits:[]}], role:"core", builtIn:true},
-  {id:"bi_assault_inf", name:"Assault Infantry", class:"inf", speed:4, mobility:"troop", aim:5, assault:3, saveNumber:6, morale:5, standTraits:[["Charge",0.5],["Melee Weapons",0.5]], weapons:[{mode:"gp",type:"p",range:0,shots:2,impact:0,traits:[]}], role:"core", builtIn:true},
-  {id:"bi_recon_inf", name:"Recon Infantry", class:"inf", speed:4, mobility:"troop", aim:4, assault:0, saveNumber:6, morale:6, standTraits:[["Infiltrate",1],["Stealth",2]], weapons:[{mode:"gp",type:"p",range:2,shots:1,impact:0,traits:[]}], role:"specialist", builtIn:true},
-  {id:"bi_hwt_inf", name:"Heavy Weapons Team", class:"inf", speed:4, mobility:"troop", aim:4, assault:0, saveNumber:6, morale:6, standTraits:[], weapons:[{mode:"at",type:"p",range:5,shots:1,impact:4,traits:[]}], role:"specialist", builtIn:true},
-  {id:"bi_mortars", name:"Mortar Section", class:"inf", speed:4, mobility:"troop", aim:4, assault:0, saveNumber:6, morale:6, standTraits:[], weapons:[{mode:"ai",type:"p",range:5,shots:2,impact:0,traits:[["Indirect",3]]}], role:"support", builtIn:true},
-  {id:"bi_cmd_inf", name:"Command Infantry", class:"inf", speed:4, mobility:"troop", aim:4, assault:1, saveNumber:6, morale:5, standTraits:[["Inspiration",3]], weapons:[{mode:"gp",type:"p",range:2,shots:1,impact:0,traits:[]}], role:"command", builtIn:true},
-  // --- CAVALRY ---
-  {id:"bi_recon_cav", name:"Recon Cavalry", class:"cav", speed:8, mobility:"troop", aim:5, assault:1, saveNumber:6, morale:6, standTraits:[], weapons:[{mode:"gp",type:"p",range:2,shots:1,impact:0,traits:[]}], role:"core", builtIn:true},
-  {id:"bi_assault_cav", name:"Assault Cavalry", class:"cav", speed:8, mobility:"troop", aim:5, assault:3, saveNumber:5, morale:5, standTraits:[["Charge",0.5],["Ferocious",1]], weapons:[{mode:"gp",type:"p",range:0,shots:2,impact:0,traits:[]}], role:"core", builtIn:true},
-  {id:"bi_jump_cav", name:"Jump Cavalry", class:"cav", speed:8, mobility:"troop", aim:5, assault:1, saveNumber:6, morale:6, standTraits:[["Jump Troops",0.5]], weapons:[{mode:"gp",type:"p",range:2,shots:1,impact:0,traits:[]}], role:"specialist", builtIn:true},
-  // --- SCOUT ---
-  {id:"bi_light_scout", name:"Light Scout Vehicle", class:"scout", speed:6, mobility:"wheel", aim:5, assault:0, saveNumber:6, morale:6, standTraits:[], weapons:[{mode:"at",type:"p",range:2,shots:1,impact:2,traits:[]}], role:"specialist", builtIn:true},
-  // --- AFV ---
-  {id:"bi_light_tank", name:"Light Tank", class:"afv", speed:4, mobility:"track", aim:5, assault:0, saveNumber:10, morale:6, standTraits:[], weapons:[{mode:"at",type:"p",range:5,shots:1,impact:4,traits:[]}], role:"core", builtIn:true},
-  {id:"bi_battle_tank", name:"Battle Tank", class:"afv", speed:4, mobility:"track", aim:4, assault:0, saveNumber:8, morale:5, standTraits:[], weapons:[{mode:"at",type:"p",range:10,shots:1,impact:6,traits:[]}], role:"core", builtIn:true},
-  {id:"bi_heavy_tank", name:"Heavy Tank", class:"afv", speed:4, mobility:"track", aim:4, assault:0, saveNumber:6, morale:5, standTraits:[["Tank Hunter",1]], weapons:[{mode:"at",type:"p",range:10,shots:1,impact:8,traits:[]}], role:"core", builtIn:true},
-  {id:"bi_aa_tank", name:"AA Tank", class:"afv", speed:4, mobility:"track", aim:5, assault:0, saveNumber:10, morale:6, standTraits:[], weapons:[{mode:"ai",type:"p",range:5,shots:2,impact:0,traits:[["Anti-Aircraft",1]]}], role:"support", builtIn:true},
-  {id:"bi_artillery", name:"Self-Propelled Artillery", class:"afv", speed:4, mobility:"track", aim:4, assault:0, saveNumber:10, morale:6, standTraits:[], weapons:[{mode:"ai",type:"p",range:20,shots:2,impact:2,traits:[["Indirect",3]]}], role:"support", builtIn:true},
-  {id:"bi_cmd_tank", name:"Command Tank", class:"afv", speed:4, mobility:"track", aim:4, assault:0, saveNumber:8, morale:5, standTraits:[["Inspiration",3]], weapons:[{mode:"at",type:"p",range:10,shots:1,impact:4,traits:[]}], role:"command", builtIn:true},
-  // --- AC / AIRCRAFT ---
-  {id:"bi_armored_car", name:"Armored Car", class:"ac", speed:8, mobility:"wheel", aim:5, assault:0, saveNumber:10, morale:6, standTraits:[], weapons:[{mode:"gp",type:"p",range:5,shots:1,impact:2,traits:[]}], role:"core", builtIn:true},
-  {id:"bi_gnd_attack", name:"Ground Attack Aircraft", class:"ac", speed:8, mobility:"air", aim:4, assault:0, saveNumber:10, morale:5, standTraits:[["VTOL",1]], weapons:[{mode:"at",type:"p",range:5,shots:2,impact:4,traits:[]}], role:"support", builtIn:true},
-  {id:"bi_interceptor", name:"Interceptor", class:"ac", speed:8, mobility:"air", aim:4, assault:0, saveNumber:10, morale:5, standTraits:[["Dogfighter",1]], weapons:[{mode:"ai",type:"p",range:5,shots:2,impact:0,traits:[["Anti-Aircraft",1]]}], role:"support", builtIn:true},
-  // --- SUPER HEAVY ---
-  {id:"bi_sh_tank", name:"Super Heavy Tank", class:"sh", speed:4, mobility:"track", aim:4, assault:0, saveNumber:14, morale:5, standTraits:[], weapons:[{mode:"at",type:"p",range:20,shots:1,impact:12,traits:[]}], role:"core", builtIn:true},
-  {id:"bi_sh_walker", name:"Super Heavy Walker", class:"sh", speed:4, mobility:"walk", aim:4, assault:2, saveNumber:14, morale:5, standTraits:[["Terror +2",1]], weapons:[{mode:"at",type:"p",range:10,shots:1,impact:12,traits:[]},{mode:"ai",type:"p",range:5,shots:3,impact:0,traits:[]}], role:"core", builtIn:true},
-  // --- BEHEMOTH ---
-  {id:"bi_titan", name:"Titan Behemoth", class:"beh", speed:4, mobility:"walk", aim:3, assault:4, saveNumber:20, morale:4, standTraits:[["Terror +4",2]], weapons:[{mode:"at",type:"p",range:20,shots:1,impact:14,traits:[]},{mode:"ai",type:"p",range:10,shots:4,impact:0,traits:[["Burst",0]]}], role:"core", builtIn:true},
-  {id:"bi_colossus", name:"Colossus", class:"beh", speed:4, mobility:"walk", aim:3, assault:6, saveNumber:18, morale:3, standTraits:[["Terror +6",3],["Ferocious",1]], weapons:[{mode:"gp",type:"p",range:20,shots:2,impact:10,traits:[]},{mode:"ai",type:"p",range:5,shots:6,impact:0,traits:[["Burst",0]]}], role:"core", builtIn:true},
-  // --- FIGHTER GROUP ---
-  {id:"bi_fighters", name:"Fighter Group", class:"fg", speed:4, mobility:"troop", aim:4, assault:2, saveNumber:6, morale:5, standTraits:[["Ferocious",1]], weapons:[{mode:"gp",type:"p",range:0,shots:2,impact:0,traits:[]}], role:"core", builtIn:true},
-  {id:"bi_power_armor", name:"Power Armor", class:"fg", speed:4, mobility:"troop", aim:4, assault:2, saveNumber:4, morale:5, standTraits:[["Assault Vehicle",1]], weapons:[{mode:"gp",type:"p",range:2,shots:1,impact:2,traits:[]}], role:"specialist", builtIn:true},
+// ── STANDARD (HUMAN) ─────────────────────────────────────────
+{id:"std_reg_inf",   name:"Regular Infantry",       class:"inf",   speed:4,  mobility:"troop", aim:5, assault:0, saveNumber:5, morale:4, standTraits:[], weapons:[{mode:"ai",type:"s",range:2,shots:1,impact:0,traits:[]},{mode:"at",type:"s",range:0,shots:1,impact:3,traits:[]}], role:"core",      faction:"standard", builtIn:true, officialPts:{perStand:10,  unitPts:60,  indPts:15,  cmdPts:15,  heroPts:20,  cmdHeroPts:20}},
+{id:"std_sup_sec",   name:"Support Section",        class:"inf",   speed:4,  mobility:"troop", aim:5, assault:0, saveNumber:5, morale:4, standTraits:[], weapons:[{mode:"ai",type:"p",range:2,shots:2,impact:0,traits:[]},{mode:"at",type:"p",range:10,shots:1,impact:3,traits:[["Heavy",-1],["Targeting",0]]}], role:"support",   faction:"standard", builtIn:true, officialPts:{perStand:22,  unitPts:135, indPts:30,  cmdPts:35,  heroPts:35,  cmdHeroPts:40}},
+{id:"std_star_mar",  name:"Star Marines",            class:"inf",   speed:4,  mobility:"troop", aim:4, assault:2, saveNumber:4, morale:3, standTraits:[], weapons:[{mode:"gp",type:"p",range:2,shots:1,impact:1,traits:[]},{mode:"gp",type:"p",range:0,shots:1,impact:2,traits:[]}], role:"core",      faction:"standard", builtIn:true, officialPts:{perStand:21,  unitPts:130, indPts:30,  cmdPts:35,  heroPts:35,  cmdHeroPts:40}},
+{id:"std_mar_cmd",   name:"Marine Commandos",        class:"inf",   speed:5,  mobility:"troop", aim:3, assault:3, saveNumber:4, morale:3, standTraits:[], weapons:[{mode:"ai",type:"p",range:2,shots:1,impact:0,traits:[["Rapid Fire",0]]},{mode:"at",type:"p",range:0,shots:1,impact:4,traits:[]}], role:"core",      faction:"standard", builtIn:true, officialPts:{perStand:23,  unitPts:140, indPts:30,  cmdPts:35,  heroPts:40,  cmdHeroPts:45}},
+{id:"std_mar_storm", name:"Marine Storm Suits",      class:"inf",   speed:4,  mobility:"troop", aim:4, assault:3, saveNumber:3, morale:3, standTraits:[], weapons:[{mode:"ai",type:"p",range:2,shots:1,impact:0,traits:[["Rapid Fire",0]]},{mode:"ai",type:"p",range:2,shots:2,impact:1,traits:[["Rapid Fire",0]]}], role:"core",      faction:"standard", builtIn:true, officialPts:{perStand:20,  unitPts:120, indPts:30,  cmdPts:30,  heroPts:35,  cmdHeroPts:35}},
+{id:"std_col_mil",   name:"Colonial Militia",        class:"inf",   speed:5,  mobility:"troop", aim:5, assault:0, saveNumber:6, morale:5, standTraits:[], weapons:[{mode:"ai",type:"p",range:2,shots:1,impact:0,traits:[]}], role:"core",      faction:"standard", builtIn:true, officialPts:{perStand:4,   unitPts:25,  indPts:10,  cmdPts:10,  heroPts:10,  cmdHeroPts:10}},
+{id:"std_rabble",    name:"Rabble",                  class:"inf",   speed:4,  mobility:"troop", aim:5, assault:0, saveNumber:6, morale:6, standTraits:[["Horde",0]], weapons:[{mode:"ai",type:"p",range:0,shots:1,impact:0,traits:[]}], role:"core",      faction:"standard", builtIn:true, officialPts:{perStand:2,   unitPts:15,  indPts:5,   cmdPts:5,   heroPts:5,   cmdHeroPts:5}},
+{id:"std_infiltr",   name:"Infiltrators",            class:"inf",   speed:6,  mobility:"troop", aim:3, assault:0, saveNumber:5, morale:3, standTraits:[["Infiltrate",1]], weapons:[{mode:"ai",type:"p",range:5,shots:1,impact:1,traits:[]}], role:"specialist",faction:"standard", builtIn:true, officialPts:{perStand:16,  unitPts:100, indPts:25,  cmdPts:25,  heroPts:25,  cmdHeroPts:30}},
+{id:"std_ac_mnt",    name:"Autocannon Mounts",       class:"fg",    speed:4,  mobility:"troop", aim:4, assault:0, saveNumber:4, morale:4, standTraits:[], weapons:[{mode:"gp",type:"p",range:5,shots:3,impact:2,traits:[["Heavy",-1]]}], role:"support",   faction:"standard", builtIn:true, officialPts:{perStand:31,  unitPts:95,  indPts:45,  cmdPts:null,heroPts:50,  cmdHeroPts:null}},
+{id:"std_mortar",    name:"Mortar Teams",            class:"fg",    speed:4,  mobility:"troop", aim:5, assault:0, saveNumber:5, morale:4, standTraits:[], weapons:[{mode:"ai",type:"p",range:5,shots:2,impact:1,traits:[["Heavy",-1],["Indirect",3]]}], role:"support",   faction:"standard", builtIn:true, officialPts:{perStand:15,  unitPts:45,  indPts:20,  cmdPts:null,heroPts:25,  cmdHeroPts:null}},
+{id:"std_speedbike", name:"Speeder Bikes",           class:"scout", speed:15, mobility:"grav",  aim:5, assault:1, saveNumber:5, morale:5, standTraits:[], weapons:[{mode:"ai",type:"p",range:2,shots:1,impact:0,traits:[]}], role:"specialist",faction:"standard", builtIn:true, officialPts:{perStand:12,  unitPts:50,  indPts:20,  cmdPts:20,  heroPts:20,  cmdHeroPts:25}},
+{id:"std_hunt_dr",   name:"Hunter Drones",           class:"scout", speed:10, mobility:"grav",  aim:3, assault:0, saveNumber:6, morale:1, standTraits:[], weapons:[{mode:"at",type:"p",range:10,shots:1,impact:4,traits:[]}], role:"specialist",faction:"standard", builtIn:true, officialPts:{perStand:34,  unitPts:140, indPts:45,  cmdPts:55,  heroPts:55,  cmdHeroPts:60}},
+{id:"std_scout_jeep",name:"Scout Jeeps",             class:"scout", speed:12, mobility:"wheel", aim:5, assault:0, saveNumber:5, morale:5, standTraits:[], weapons:[{mode:"ai",type:"p",range:2,shots:1,impact:0,traits:[]}], role:"specialist",faction:"standard", builtIn:true, officialPts:{perStand:6,   unitPts:25,  indPts:10,  cmdPts:10,  heroPts:10,  cmdHeroPts:15}},
+{id:"std_apc",       name:"APCs",                    class:"afv",   speed:12, mobility:"track", aim:5, assault:0, saveNumber:6, morale:4, standTraits:[["Transport 2",3]], weapons:[{mode:"ai",type:"p",range:2,shots:1,impact:0,traits:[]}], role:"support",   faction:"standard", builtIn:true, officialPts:{perStand:26,  unitPts:80,  indPts:35,  cmdPts:40,  heroPts:45,  cmdHeroPts:50}},
+{id:"std_scout_wlk", name:"Scout Walkers",           class:"afv",   speed:8,  mobility:"walk",  aim:5, assault:2, saveNumber:4, morale:6, standTraits:[["Infiltrate",1]], weapons:[{mode:"ai",type:"p",range:2,shots:1,impact:0,traits:[]},{mode:"gp",type:"p",range:5,shots:2,impact:2,traits:[]}], role:"specialist",faction:"standard", builtIn:true, officialPts:{perStand:68,  unitPts:205, indPts:90,  cmdPts:105, heroPts:110, cmdHeroPts:120}},
+{id:"std_assault_wlk",name:"Assault Walkers",        class:"afv",   speed:6,  mobility:"walk",  aim:5, assault:4, saveNumber:4, morale:4, standTraits:[["Assault Vehicle",1]], weapons:[{mode:"ai",type:"s",range:2,shots:2,impact:1,traits:[]},{mode:"at",type:"s",range:10,shots:1,impact:4,traits:[["Targeting",0]]}], role:"core",      faction:"standard", builtIn:true, officialPts:{perStand:70,  unitPts:210, indPts:95,  cmdPts:105, heroPts:110, cmdHeroPts:125}},
+{id:"std_lt_tank",   name:"Light Tanks",             class:"afv",   speed:12, mobility:"track", aim:5, assault:0, saveNumber:4, morale:4, standTraits:[], weapons:[{mode:"ai",type:"p",range:2,shots:1,impact:0,traits:[]},{mode:"gp",type:"p",range:5,shots:1,impact:3,traits:[["Frag",0]]}], role:"core",      faction:"standard", builtIn:true, officialPts:{perStand:54,  unitPts:165, indPts:75,  cmdPts:85,  heroPts:85,  cmdHeroPts:95}},
+{id:"std_med_tank",  name:"Medium Tanks",            class:"afv",   speed:10, mobility:"track", aim:4, assault:1, saveNumber:3, morale:3, standTraits:[], weapons:[{mode:"ai",type:"p",range:10,shots:2,impact:0,traits:[]},{mode:"gp",type:"p",range:10,shots:1,impact:5,traits:[["Frag",0]]}], role:"core",      faction:"standard", builtIn:true, officialPts:{perStand:94,  unitPts:285, indPts:125, cmdPts:145, heroPts:150, cmdHeroPts:165}},
+{id:"std_mbt",       name:"Main Battle Tanks",       class:"afv",   speed:8,  mobility:"track", aim:4, assault:2, saveNumber:2, morale:3, standTraits:[], weapons:[{mode:"ai",type:"p",range:10,shots:2,impact:0,traits:[]},{mode:"gp",type:"p",range:10,shots:1,impact:6,traits:[["Frag",0]]}], role:"core",      faction:"standard", builtIn:true, officialPts:{perStand:100, unitPts:300, indPts:130, cmdPts:150, heroPts:155, cmdHeroPts:175}},
+{id:"std_spg",       name:"Self-Propelled Guns",     class:"afv",   speed:8,  mobility:"track", aim:5, assault:0, saveNumber:6, morale:4, standTraits:[], weapons:[{mode:"gp",type:"p",range:20,shots:2,impact:2,traits:[["Frag",0],["Indirect",3]]}], role:"support",   faction:"standard", builtIn:true, officialPts:{perStand:128, unitPts:385, indPts:170, cmdPts:195, heroPts:200, cmdHeroPts:225}},
+{id:"std_air_stk",   name:"Air Striker",             class:"ac",    speed:10, mobility:"air",   aim:4, assault:1, saveNumber:3, morale:4, standTraits:[], weapons:[{mode:"gp",type:"s",range:5,shots:2,impact:2,traits:[]},{mode:"gp",type:"s",range:10,shots:1,impact:5,traits:[["Anti-Aircraft",1],["Burst",0],["Frag",0]]}], role:"support",   faction:"standard", builtIn:true, officialPts:{perStand:174, unitPts:350, indPts:230, cmdPts:265, heroPts:270, cmdHeroPts:305}},
+{id:"std_sh_tank",   name:"Super Heavy Tank",        class:"sh",    speed:6,  mobility:"track", aim:4, assault:2, saveNumber:3, morale:2, standTraits:[], weapons:[{mode:"ai",type:"p",range:2,shots:4,impact:0,traits:[]},{mode:"gp",type:"s",range:5,shots:1,impact:8,traits:[]},{mode:"gp",type:"p",range:5,shots:2,impact:6,traits:[["Burst",0]]}], role:"core",      faction:"standard", builtIn:true, officialPts:{perStand:351, unitPts:355, indPts:355, cmdPts:425, heroPts:440, cmdHeroPts:510}},
+{id:"std_paladin",   name:"Paladin Warstrider",      class:"beh",   speed:6,  mobility:"walk",  aim:4, assault:8, saveNumber:4, morale:2, standTraits:[], weapons:[{mode:"gp",type:"p",range:5,shots:2,impact:3,traits:[]},{mode:"gp",type:"p",range:5,shots:2,impact:3,traits:[]},{mode:"gp",type:"p",range:2,shots:5,impact:1,traits:[]},{mode:"at",type:"p",range:10,shots:1,impact:8,traits:[["Repeating Fire",0]]}], role:"core",      faction:"standard", builtIn:true, officialPts:{perStand:668, unitPts:670, indPts:670, cmdPts:null,heroPts:835, cmdHeroPts:null}},
+// ── PRECURSOR ────────────────────────────────────────────────
+{id:"pre_inf",       name:"Precursor Infantry",      class:"inf",   speed:6,  mobility:"troop", aim:4, assault:0, saveNumber:4, morale:4, standTraits:[["Melee Weapons",0.5],["Active Defenses",3]], weapons:[{mode:"ai",type:"p",range:2,shots:4,impact:2,traits:[]},{mode:"gp",type:"p",range:0,shots:1,impact:5,traits:[]}], role:"core",      faction:"precursor",builtIn:true, officialPts:{perStand:40,  unitPts:240, indPts:55,  cmdPts:60,  heroPts:65,  cmdHeroPts:70}},
+{id:"pre_sniper",    name:"Ghoststep Snipers",       class:"inf",   speed:6,  mobility:"troop", aim:3, assault:0, saveNumber:5, morale:6, standTraits:[["Precise Fire",1],["Melee Weapons",0.5],["Active Defenses",3]], weapons:[{mode:"at",type:"p",range:10,shots:1,impact:8,traits:[["Heavy",-1]]}], role:"specialist",faction:"precursor",builtIn:true, officialPts:{perStand:37,  unitPts:225, indPts:50,  cmdPts:60,  heroPts:60,  cmdHeroPts:65}},
+{id:"pre_leafblade", name:"Leafblade Grav Bikes",    class:"scout", speed:8,  mobility:"grav",  aim:5, assault:0, saveNumber:4, morale:5, standTraits:[["Infiltrate",1],["Precise Fire",1],["Active Defenses",3]], weapons:[{mode:"ai",type:"p",range:2,shots:4,impact:4,traits:[]}], role:"specialist",faction:"precursor",builtIn:true, officialPts:{perStand:38,  unitPts:155, indPts:50,  cmdPts:60,  heroPts:60,  cmdHeroPts:70}},
+{id:"pre_stardrop",  name:"Stardrop Artillery",      class:"afv",   speed:6,  mobility:"grav",  aim:4, assault:0, saveNumber:6, morale:4, standTraits:[["Active Defenses",3]], weapons:[{mode:"ai",type:"p",range:2,shots:4,impact:4,traits:[]},{mode:"gp",type:"p",range:10,shots:1,impact:5,traits:[["Heavy",-1],["Indirect",3],["Burst",0],["Repeating Fire",0]]}], role:"support",   faction:"precursor",builtIn:true, officialPts:{perStand:236, unitPts:710, indPts:310, cmdPts:355, heroPts:370, cmdHeroPts:415}},
+{id:"pre_swift_apc", name:"Swiftshell APC",          class:"afv",   speed:6,  mobility:"wheel", aim:4, assault:0, saveNumber:6, morale:4, standTraits:[["Transport 2",3]], weapons:[{mode:"ai",type:"p",range:2,shots:4,impact:4,traits:[]},{mode:"ai",type:"p",range:2,shots:4,impact:4,traits:[]}], role:"support",   faction:"precursor",builtIn:true, officialPts:{perStand:134, unitPts:405, indPts:175, cmdPts:205, heroPts:210, cmdHeroPts:235}},
+{id:"pre_suncrest",  name:"Suncrest Hovertank",      class:"afv",   speed:6,  mobility:"grav",  aim:4, assault:0, saveNumber:5, morale:3, standTraits:[["Active Defenses",3]], weapons:[{mode:"ai",type:"p",range:2,shots:4,impact:4,traits:[]},{mode:"at",type:"p",range:5,shots:1,impact:10,traits:[]}], role:"core",      faction:"precursor",builtIn:true, officialPts:{perStand:146, unitPts:440, indPts:190, cmdPts:220, heroPts:230, cmdHeroPts:260}},
+{id:"pre_dusklight", name:"Dusklight Battlespire",   class:"beh",   speed:10, mobility:"walk",  aim:4, assault:5, saveNumber:10,morale:3, standTraits:[["Active Defenses",3]], weapons:[{mode:"gp",type:"p",range:2,shots:4,impact:5,traits:[]},{mode:"gp",type:"p",range:2,shots:4,impact:5,traits:[]},{mode:"at",type:"p",range:10,shots:1,impact:15,traits:[["Indirect",3],["Heavy",-1]]}], role:"core",      faction:"precursor",builtIn:true, officialPts:{perStand:712, unitPts:715, indPts:715, cmdPts:null,heroPts:890, cmdHeroPts:null}},
+// ── SOULLESS ─────────────────────────────────────────────────
+{id:"sl_drones",     name:"Soulless Drones",         class:"inf",   speed:4,  mobility:"troop", aim:5, assault:0, saveNumber:6, morale:1, standTraits:[["Stubborn",1]], weapons:[{mode:"ai",type:"s",range:5,shots:1,impact:0,traits:[["Targeting",0]]},{mode:"at",type:"s",range:2,shots:1,impact:3,traits:[]}], role:"core",      faction:"soulless", builtIn:true, officialPts:{perStand:19,  unitPts:115, indPts:25,  cmdPts:30,  heroPts:30,  cmdHeroPts:35}},
+{id:"sl_hvy_drones", name:"Soulless Heavy Drones",   class:"inf",   speed:4,  mobility:"troop", aim:5, assault:0, saveNumber:3, morale:1, standTraits:[["Stubborn",1]], weapons:[{mode:"ai",type:"s",range:5,shots:1,impact:0,traits:[["Targeting",0]]},{mode:"at",type:"s",range:10,shots:1,impact:3,traits:[["Heavy",-1]]}], role:"core",      faction:"soulless", builtIn:true, officialPts:{perStand:28,  unitPts:170, indPts:40,  cmdPts:45,  heroPts:45,  cmdHeroPts:50}},
+{id:"sl_crasher",    name:"Crasher MAUs",             class:"afv",   speed:6,  mobility:"track", aim:5, assault:0, saveNumber:3, morale:1, standTraits:[["Stubborn",1]], weapons:[{mode:"ai",type:"p",range:0,shots:3,impact:0,traits:[["Repeating Fire",0]]},{mode:"at",type:"p",range:10,shots:2,impact:2,traits:[["Indirect",3],["A.I. Guided",0]]}], role:"core",      faction:"soulless", builtIn:true, officialPts:{perStand:84,  unitPts:255, indPts:110, cmdPts:130, heroPts:135, cmdHeroPts:150}},
+{id:"sl_surger",     name:"Surger AFUs",              class:"afv",   speed:6,  mobility:"track", aim:5, assault:0, saveNumber:3, morale:1, standTraits:[["Stubborn",1]], weapons:[{mode:"ai",type:"p",range:0,shots:3,impact:0,traits:[["Repeating Fire",0]]},{mode:"at",type:"p",range:10,shots:1,impact:7,traits:[["Targeting",0]]}], role:"core",      faction:"soulless", builtIn:true, officialPts:{perStand:88,  unitPts:265, indPts:115, cmdPts:135, heroPts:140, cmdHeroPts:155}},
+{id:"sl_mainframe",  name:"Mainframe CBU",            class:"sh",    speed:6,  mobility:"track", aim:5, assault:6, saveNumber:3, morale:1, standTraits:[], weapons:[{mode:"ai",type:"p",range:0,shots:4,impact:0,traits:[["Repeating Fire",0]]},{mode:"gp",type:"p",range:2,shots:4,impact:7,traits:[["Repeating Fire",0]]},{mode:"gp",type:"p",range:10,shots:1,impact:5,traits:[["Indirect",3],["A.I. Guided",0],["Burst",0]]}], role:"core",      faction:"soulless", builtIn:true, officialPts:{perStand:525, unitPts:525, indPts:525, cmdPts:630, heroPts:660, cmdHeroPts:765}},
+{id:"sl_gridwalk",   name:"Gridwalker MTU",           class:"beh",   speed:6,  mobility:"walk",  aim:5, assault:7, saveNumber:3, morale:1, standTraits:[], weapons:[{mode:"gp",type:"p",range:0,shots:3,impact:2,traits:[]},{mode:"gp",type:"p",range:10,shots:1,impact:5,traits:[["Indirect",3],["A.I. Guided",0],["Burst",0]]},{mode:"at",type:"p",range:10,shots:1,impact:10,traits:[["Heavy",-1]]}], role:"core",      faction:"soulless", builtIn:true, officialPts:{perStand:840, unitPts:840, indPts:840, cmdPts:null,heroPts:1050,cmdHeroPts:null}},
+// ── SWARM ────────────────────────────────────────────────────
+{id:"sw_hunters",    name:"Hunters",                  class:"inf",   speed:6,  mobility:"troop", aim:5, assault:3, saveNumber:5, morale:3, standTraits:[["Melee Weapons",0.5],["Horde",0],["Infest",1],["Ferocious",1]], weapons:[], role:"core",      faction:"swarm",    builtIn:true, officialPts:{perStand:14,  unitPts:85,  indPts:20,  cmdPts:25,  heroPts:25,  cmdHeroPts:25}},
+{id:"sw_lurkers",    name:"Lurkers",                  class:"inf",   speed:4,  mobility:"troop", aim:5, assault:3, saveNumber:5, morale:5, standTraits:[["Melee Weapons",0.5],["Horde",0],["Ferocious",1],["Stealth",2],["Infiltrate",1]], weapons:[], role:"specialist",faction:"swarm",    builtIn:true, officialPts:{perStand:11,  unitPts:70,  indPts:15,  cmdPts:20,  heroPts:20,  cmdHeroPts:20}},
+{id:"sw_alphas",     name:"Alphas",                   class:"inf",   speed:6,  mobility:"troop", aim:5, assault:4, saveNumber:3, morale:3, standTraits:[["Melee Weapons",0.5],["Horde",0],["Infest",1],["Ferocious",1]], weapons:[], role:"core",      faction:"swarm",    builtIn:true, officialPts:{perStand:17,  unitPts:105, indPts:25,  cmdPts:30,  heroPts:30,  cmdHeroPts:30}},
+{id:"sw_buzzers",    name:"Buzzers",                  class:"scout", speed:6,  mobility:"grav",  aim:5, assault:0, saveNumber:5, morale:5, standTraits:[], weapons:[{mode:"ai",type:"p",range:0,shots:4,impact:1,traits:[]}], role:"core",      faction:"swarm",    builtIn:true, officialPts:{perStand:12,  unitPts:50,  indPts:20,  cmdPts:20,  heroPts:20,  cmdHeroPts:25}},
+{id:"sw_spitter",    name:"Spitter Carapace",         class:"afv",   speed:4,  mobility:"walk",  aim:5, assault:0, saveNumber:7, morale:6, standTraits:[], weapons:[{mode:"ai",type:"s",range:0,shots:4,impact:1,traits:[]},{mode:"gp",type:"s",range:10,shots:1,impact:4,traits:[["Indirect",3],["Burst",0],["Heavy",-1]]}], role:"core",      faction:"swarm",    builtIn:true, officialPts:{perStand:92,  unitPts:280, indPts:120, cmdPts:140, heroPts:145, cmdHeroPts:165}},
+{id:"sw_slasher",    name:"Slasher Carapace",         class:"afv",   speed:4,  mobility:"walk",  aim:4, assault:6, saveNumber:5, morale:3, standTraits:[["Assault Vehicle",1]], weapons:[{mode:"gp",type:"s",range:0,shots:1,impact:7,traits:[["Flame",0]]},{mode:"at",type:"s",range:5,shots:1,impact:3,traits:[]}], role:"core",      faction:"swarm",    builtIn:true, officialPts:{perStand:148, unitPts:445, indPts:195, cmdPts:225, heroPts:230, cmdHeroPts:260}},
+{id:"sw_ravager",    name:"Ravager Queen",            class:"sh",    speed:6,  mobility:"walk",  aim:4, assault:6, saveNumber:8, morale:3, standTraits:[["Terror +4",2]], weapons:[{mode:"gp",type:"s",range:0,shots:1,impact:7,traits:[["Flame",0]]},{mode:"at",type:"s",range:5,shots:3,impact:3,traits:[]}], role:"core",      faction:"swarm",    builtIn:true, officialPts:{perStand:285, unitPts:285, indPts:285, cmdPts:345, heroPts:360, cmdHeroPts:415}},
+// ── WARRIOR ──────────────────────────────────────────────────
+{id:"war_inf",       name:"Warrior Infantry",         class:"inf",   speed:4,  mobility:"troop", aim:5, assault:2, saveNumber:5, morale:2, standTraits:[["Charge",0.5]], weapons:[{mode:"ai",type:"s",range:2,shots:1,impact:0,traits:[]},{mode:"at",type:"s",range:2,shots:1,impact:3,traits:[]}], role:"core",      faction:"warrior",  builtIn:true, officialPts:{perStand:17,  unitPts:105, indPts:25,  cmdPts:30,  heroPts:30,  cmdHeroPts:30}},
+{id:"war_chosen",    name:"Chosen Commandos",         class:"inf",   speed:6,  mobility:"troop", aim:5, assault:4, saveNumber:4, morale:2, standTraits:[["Charge",0.5],["Melee Weapons",0.5],["Battle Cry",2]], weapons:[{mode:"ai",type:"p",range:2,shots:1,impact:0,traits:[]},{mode:"at",type:"p",range:2,shots:1,impact:5,traits:[["Rapid Fire",0],["Heavy",-1]]}], role:"core",      faction:"warrior",  builtIn:true, officialPts:{perStand:31,  unitPts:190, indPts:45,  cmdPts:50,  heroPts:50,  cmdHeroPts:55}},
+{id:"war_chariot",   name:"Chariot Battle Bikes",     class:"scout", speed:8,  mobility:"wheel", aim:5, assault:2, saveNumber:4, morale:2, standTraits:[], weapons:[{mode:"ai",type:"p",range:2,shots:1,impact:0,traits:[]}], role:"core",      faction:"warrior",  builtIn:true, officialPts:{perStand:11,  unitPts:45,  indPts:15,  cmdPts:20,  heroPts:20,  cmdHeroPts:20}},
+{id:"war_warbeast",  name:"Warbeast Riders",          class:"cav",   speed:8,  mobility:"troop", aim:5, assault:4, saveNumber:5, morale:2, standTraits:[["Charge",0.5],["Melee Weapons",0.5]], weapons:[], role:"core",      faction:"warrior",  builtIn:true, officialPts:{perStand:11,  unitPts:45,  indPts:15,  cmdPts:20,  heroPts:20,  cmdHeroPts:20}},
+{id:"war_longship",  name:"Longship APCs",            class:"afv",   speed:6,  mobility:"track", aim:5, assault:2, saveNumber:6, morale:2, standTraits:[["Transport 3",4.5]], weapons:[{mode:"ai",type:"p",range:2,shots:1,impact:0,traits:[]}], role:"support",   faction:"warrior",  builtIn:true, officialPts:{perStand:34,  unitPts:105, indPts:45,  cmdPts:55,  heroPts:55,  cmdHeroPts:60}},
+{id:"war_vanguard",  name:"Vanguard Assault Tank",    class:"afv",   speed:6,  mobility:"track", aim:5, assault:4, saveNumber:4, morale:2, standTraits:[["Assault Vehicle",1]], weapons:[{mode:"ai",type:"p",range:2,shots:1,impact:0,traits:[]},{mode:"at",type:"p",range:5,shots:1,impact:7,traits:[]}], role:"core",      faction:"warrior",  builtIn:true, officialPts:{perStand:78,  unitPts:235, indPts:105, cmdPts:120, heroPts:125, cmdHeroPts:140}},
+{id:"war_paragon",   name:"Paragon Super Heavy Tank", class:"sh",    speed:6,  mobility:"track", aim:5, assault:6, saveNumber:3, morale:2, standTraits:[], weapons:[{mode:"ai",type:"p",range:2,shots:4,impact:0,traits:[]},{mode:"at",type:"p",range:5,shots:2,impact:7,traits:[]},{mode:"at",type:"p",range:5,shots:2,impact:7,traits:[]}], role:"core",      faction:"warrior",  builtIn:true, officialPts:{perStand:282, unitPts:285, indPts:285, cmdPts:340, heroPts:355, cmdHeroPts:410}},
+{id:"war_predator",  name:"Predator War God",         class:"beh",   speed:4,  mobility:"walk",  aim:5, assault:7, saveNumber:8, morale:2, standTraits:[], weapons:[{mode:"at",type:"p",range:5,shots:2,impact:7,traits:[]},{mode:"gp",type:"p",range:2,shots:3,impact:5,traits:[]},{mode:"at",type:"p",range:10,shots:1,impact:10,traits:[["Indirect",3],["Targeting",0]]}], role:"core",      faction:"warrior",  builtIn:true, officialPts:{perStand:528, unitPts:530, indPts:530, cmdPts:null,heroPts:660, cmdHeroPts:null}},
 ];
 
 // ============================================================
@@ -615,6 +645,7 @@ let currentDeployId = null;
 let bgUnitTargetBGId = null;
 let bgUnitSelectedId = null;
 let libFilterClass = "all";
+let libFilterFaction = "all";
 let weaponRowCount = 0;
 
 // ============================================================
@@ -675,6 +706,12 @@ function unitById(id) {
 }
 
 function calcPoints(unit) {
+  if (unit.officialPts) {
+    const ci = CLASS_INFO[unit.class] || CLASS_INFO.inf;
+    const op = unit.officialPts;
+    return { perStand:op.perStand, unitSize:ci.size, unitPts:op.unitPts, indPts:op.indPts,
+             cmdPts:op.cmdPts, heroPts:op.heroPts, cmdHeroPts:op.cmdHeroPts, saveDice:ci.saveDice };
+  }
   const ci = CLASS_INFO[unit.class] || CLASS_INFO.inf;
   let ptsSpeed = (unit.speed - ci.baseSpeed) * 0.25;
   if (unit.class==="scout"||unit.class==="afv") {
@@ -742,19 +779,30 @@ function classLabel(c) { return (CLASS_INFO[c]||{}).label||c; }
 function classBadge(c) { return `<span class="badge badge-${c}">${classLabel(c)}</span>`; }
 function roleBadge(r) { return `<span class="badge badge-${r}">${r}</span>`; }
 
+function factionBadge(f) {
+  if(!f) return "";
+  const c = FACTION_COLORS[f]||"#555";
+  const labels = {standard:"Standard",precursor:"Precursor",soulless:"Soulless",swarm:"Swarm",warrior:"Warrior"};
+  return `<span style="display:inline-block;padding:1px 7px;border-radius:10px;font-size:10px;font-weight:bold;background:${c}22;color:${c};border:1px solid ${c}55;margin-right:3px">${labels[f]||f}</span>`;
+}
+
 function unitCardHTML(unit, actions) {
   const pts = calcPoints(unit);
   const traits = (unit.standTraits||[]).map(t=>t[0]).join(", ")||"None";
-  const weaponsHTML = (unit.weapons||[]).map(w => {
-    const wt = (w.traits||[]).map(t=>t[0]).join(", ");
-    return `<div class="weapon-row">${w.mode.toUpperCase()}/${w.type.toUpperCase()} | Range <span>${rangeLabel(w.range)}</span> | Shots <span>${w.shots}</span> | Impact <span>+${w.impact}</span>${wt?` | ${wt}`:""}</div>`;
-  }).join("");
+  const weaponsHTML = (unit.weapons||[]).length===0
+    ? `<div class="weapon-row" style="color:#8b949e;font-style:italic">No ranged weapons — melee only</div>`
+    : (unit.weapons||[]).map(w => {
+        const wt = (w.traits||[]).map(t=>t[0]).join(", ");
+        return `<div class="weapon-row">${w.mode.toUpperCase()}/${w.type.toUpperCase()} | Range <span>${rangeLabel(w.range)}</span> | Shots <span>${w.shots}</span> | Impact <span>+${w.impact}</span>${wt?` | ${wt}`:""}</div>`;
+      }).join("");
+  const cmdStr = pts.cmdPts ? `${pts.cmdPts}` : "—";
+  const heroCmdStr = pts.cmdHeroPts ? `${pts.cmdHeroPts}` : "—";
   return `
     <div class="unit-card">
       <div class="unit-card-header">
         <div>
-          ${classBadge(unit.class)}
-          ${unit.builtIn?"":`<span class="badge" style="background:#333;color:#aaa">Custom</span>`}
+          ${classBadge(unit.class)}${factionBadge(unit.faction)}
+          ${!unit.builtIn?`<span class="badge" style="background:#333;color:#aaa">Custom</span>`:""}
           <span class="unit-name" style="display:block;margin-top:4px">${unit.name}</span>
         </div>
         <div style="text-align:right">
@@ -772,6 +820,12 @@ function unitCardHTML(unit, actions) {
       </div>
       ${weaponsHTML}
       <div style="font-size:11px;color:#8b949e;margin-top:6px">Traits: ${traits}</div>
+      <div style="font-size:10px;color:#555;margin-top:4px">
+        Ind: <span style="color:#8b949e">${pts.indPts}</span> &bull;
+        Cmd: <span style="color:#8b949e">${cmdStr}</span> &bull;
+        Hero: <span style="color:#8b949e">${pts.heroPts}</span> &bull;
+        Cmd Hero: <span style="color:#8b949e">${heroCmdStr}</span>
+      </div>
       ${actions||""}
     </div>`;
 }
@@ -952,16 +1006,15 @@ function calculateBuilder() {
   const unit = gatherBuilderUnit();
   const pts = calcPoints(unit);
   const ci = CLASS_INFO[unit.class];
-  const hasCmd = unit.class !== "fg" && unit.class !== "beh";
   document.getElementById("b-result").innerHTML = `
     <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-bottom:12px">
       <div><div class="points-big">${pts.unitPts}</div><div class="points-label">Unit (${ci.size} stands)</div></div>
-      <div><div class="points-big" style="font-size:20px">${pts.indPts}</div><div class="points-label">Independent Stand</div></div>
-      ${hasCmd?`<div><div class="points-big" style="font-size:20px">${pts.cmdPts}</div><div class="points-label">Command Stand</div></div>`:""}
-      ${hasCmd?`<div><div class="points-big" style="font-size:20px">${pts.cmdHeroPts}</div><div class="points-label">Cmd Hero Stand</div></div>`:""}
+      <div><div class="points-big" style="font-size:20px">${pts.indPts}</div><div class="points-label">Ind. Stand</div></div>
+      ${pts.cmdPts?`<div><div class="points-big" style="font-size:20px">${pts.cmdPts}</div><div class="points-label">Cmd Stand</div></div>`:""}
+      <div><div class="points-big" style="font-size:20px">${pts.heroPts}</div><div class="points-label">Hero Stand</div></div>
+      ${pts.cmdHeroPts?`<div><div class="points-big" style="font-size:20px">${pts.cmdHeroPts}</div><div class="points-label">Cmd Hero</div></div>`:""}
     </div>
-    <div class="summary-row"><span>Points per stand</span><span>${pts.perStand} pts</span></div>
-    <div class="summary-row"><span>Hero stand</span><span>${pts.heroPts} pts</span></div>`;
+    <div class="summary-row"><span>Points per stand</span><span>${pts.perStand} pts</span></div>`;
 }
 
 function saveToLibrary() {
@@ -978,6 +1031,15 @@ function saveToLibrary() {
 // ============================================================
 // LIBRARY
 // ============================================================
+const FACTION_COLORS = {standard:"#007eff",precursor:"#9c27b0",soulless:"#607d8b",swarm:"#4caf50",warrior:"#f44336"};
+
+function setLibFactionFilter(el, faction) {
+  document.querySelectorAll("#lib-faction-filters .pill").forEach(p=>p.classList.remove("active"));
+  el.classList.add("active");
+  libFilterFaction = faction;
+  renderLibrary();
+}
+
 function setLibFilter(el, cls) {
   document.querySelectorAll("#lib-filters .pill").forEach(p=>p.classList.remove("active"));
   el.classList.add("active");
@@ -988,8 +1050,9 @@ function setLibFilter(el, cls) {
 function renderLibrary() {
   const search = (document.getElementById("lib-search")?.value||"").toLowerCase();
   let units = allUnits();
-  if(libFilterClass==="custom") units = units.filter(u=>!u.builtIn);
-  else if(libFilterClass!=="all") units = units.filter(u=>u.class===libFilterClass);
+  if(libFilterFaction==="custom") { units = units.filter(u=>!u.builtIn); }
+  else if(libFilterFaction!=="all") { units = units.filter(u=>u.faction===libFilterFaction); }
+  if(libFilterClass!=="all") units = units.filter(u=>u.class===libFilterClass);
   if(search) units = units.filter(u=>u.name.toLowerCase().includes(search));
   const list = document.getElementById("lib-list");
   if(!units.length) { list.innerHTML=`<div class="empty"><div class="empty-icon">&#128269;</div>No units found</div>`; return; }
