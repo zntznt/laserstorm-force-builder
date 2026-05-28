@@ -1868,12 +1868,29 @@ function openTraitPicker(target, wIdx) {
 function applyTraitsLive() {
   const traits = traitPickerTarget==="stand" ? allStandTraits() : allWeaponTraits();
   const checkboxes = document.querySelectorAll("#trait-modal-list input[type=checkbox]");
+
+  // Collect all currently-checked keys (checkboxes + steppers)
+  const checkedKeys = new Set();
+  checkboxes.forEach(cb => { if(cb.checked) checkedKeys.add(cb.value); });
+  Object.entries(traits).forEach(([key,val]) => {
+    if(traitIsStackable(val) && (traitPickerStepperCounts[key]||0) > 0) checkedKeys.add(key);
+  });
+
+  // Drop any trait whose traitr prerequisite is no longer selected
+  const toDrop = new Set();
+  checkedKeys.forEach(key => {
+    const traitrReq = allTraitReqs(key, traits[key]).find(r=>r.type==="traitr");
+    if(traitrReq && !checkedKeys.has(traitrReq.vals[0])) toDrop.add(key);
+  });
+  toDrop.forEach(key => { checkedKeys.delete(key); traitPickerStepperCounts[key] = 0; });
+
+  // Build final selected array preserving DOM order
   const selected = [];
-  checkboxes.forEach(cb => { if(cb.checked) selected.push(traits[cb.value]); });
+  checkboxes.forEach(cb => { if(checkedKeys.has(cb.value)) selected.push(traits[cb.value]); });
   Object.entries(traits).forEach(([key,val]) => {
     if(!traitIsStackable(val)) return;
     const count = traitPickerStepperCounts[key]||0;
-    if(count>0) selected.push([val[0],val[1],val[2],count]);
+    if(count>0 && checkedKeys.has(key)) selected.push([val[0],val[1],val[2],count]);
   });
   if(traitPickerTarget==="stand") {
     currentBuilderTraits = selected;
