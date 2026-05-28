@@ -194,6 +194,18 @@ hr{border:none;border-top:1px solid #21262d;margin:12px 0}
               <option value="commander">Commander</option>
             </select>
           </div>
+          <div class="form-group">
+            <label>Faction</label>
+            <select id="b-faction" style="width:auto" onchange="onFactionSelectChange()">
+              <option value="">No Faction</option>
+              <option value="standard">&#9651; Standard</option>
+              <option value="precursor">&#9670; Precursor</option>
+              <option value="soulless">&#9635; Soulless</option>
+              <option value="swarm">&#9632; Swarm</option>
+              <option value="warrior">&#9733; Warrior</option>
+              <option value="__new__">＋ New Faction…</option>
+            </select>
+          </div>
         </div>
         <div id="b-class-profile" class="class-profile"></div>
         <div class="form-row">
@@ -306,14 +318,9 @@ hr{border:none;border-top:1px solid #21262d;margin:12px 0}
       <button class="btn btn-primary btn-sm" onclick="resetBuilder();showPage('builder')">+ Create Unit</button>
     </div>
     <input class="search-bar" id="lib-search" placeholder="&#128269; Search units..." oninput="renderLibrary()">
-    <div class="pill-nav" id="lib-faction-filters">
-      <div class="pill active" onclick="setLibFactionFilter(this,'all')">All Factions</div>
-      <div class="pill" onclick="setLibFactionFilter(this,'standard')" style="--fc:#007eff">&#9651; Standard</div>
-      <div class="pill" onclick="setLibFactionFilter(this,'precursor')" style="--fc:#9c27b0">&#9670; Precursor</div>
-      <div class="pill" onclick="setLibFactionFilter(this,'soulless')" style="--fc:#607d8b">&#9635; Soulless</div>
-      <div class="pill" onclick="setLibFactionFilter(this,'swarm')" style="--fc:#4caf50">&#9632; Swarm</div>
-      <div class="pill" onclick="setLibFactionFilter(this,'warrior')" style="--fc:#f44336">&#9733; Warrior</div>
-      <div class="pill" onclick="setLibFactionFilter(this,'custom')" style="--fc:#ffd700">&#9997; Custom</div>
+    <div style="display:flex;align-items:flex-start;gap:8px">
+      <div class="pill-nav" id="lib-faction-filters" style="flex:1"></div>
+      <button class="btn btn-secondary btn-xs" style="margin-top:4px;white-space:nowrap" onclick="openFactionModal(false)">&#9881; Factions</button>
     </div>
     <div class="pill-nav" id="lib-filters">
       <div class="pill active" data-filter="all" onclick="setLibFilter(this,'all')">All Classes</div>
@@ -596,6 +603,33 @@ hr{border:none;border-top:1px solid #21262d;margin:12px 0}
   </div>
 </div>
 
+<div id="modal-faction" class="modal-bg">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-header">Custom Factions <button class="modal-close" onclick="closeModal('modal-faction')">&#215;</button></div>
+    <div id="faction-modal-list"></div>
+    <div style="margin-top:16px;padding-top:14px;border-top:1px solid #30363d">
+      <div style="font-size:12px;font-weight:bold;color:#8b949e;margin-bottom:10px;text-transform:uppercase;letter-spacing:.05em">New Faction</div>
+      <div class="form-group" style="margin-bottom:10px">
+        <label>Name</label>
+        <input type="text" id="faction-name" placeholder="e.g. Iron Brotherhood" style="width:100%">
+      </div>
+      <div class="form-group" style="margin-bottom:10px">
+        <label>Icon</label>
+        <div id="faction-icon-picker" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:6px"></div>
+        <input type="hidden" id="faction-icon" value="&#11042;">
+      </div>
+      <div class="form-group" style="margin-bottom:14px">
+        <label>Color</label>
+        <input type="color" id="faction-color" value="#ff6600" style="width:54px;height:32px;padding:2px 4px;border-radius:6px;border:1px solid #30363d;background:#0d1117;cursor:pointer">
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-primary" onclick="saveCustomFaction()">Create</button>
+        <button class="btn btn-secondary" onclick="closeModal('modal-faction')">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 // ============================================================
 // DATA: TRAITS
@@ -777,6 +811,7 @@ const BUILTIN_UNITS = [
 // ============================================================
 let state = {
   customUnits: [],
+  customFactions: [],
   taskForces: [],
   armies: [],
   deployments: []
@@ -812,6 +847,7 @@ function loadState() {
     try {
       const saved = JSON.parse(raw);
       state.customUnits = saved.customUnits || [];
+      state.customFactions = saved.customFactions || [];
       state.taskForces = saved.taskForces || [];
       state.armies = saved.armies || [];
       state.deployments = saved.deployments || [];
@@ -836,6 +872,7 @@ function importData(evt) {
     try {
       const imported = JSON.parse(e.target.result);
       if (imported.customUnits) state.customUnits = imported.customUnits;
+      if (imported.customFactions) state.customFactions = imported.customFactions;
       if (imported.taskForces) state.taskForces = imported.taskForces;
       if (imported.armies) state.armies = imported.armies;
       if (imported.deployments) state.deployments = imported.deployments;
@@ -946,11 +983,20 @@ function classBadge(c) {
 }
 function roleBadge(r) { return `<span class="badge badge-${r}">${r}</span>`; }
 
-function factionBadge(f) {
-  if(!f) return "";
-  const c = FACTION_COLORS[f]||"#555";
-  const labels = {standard:"Standard",precursor:"Precursor",soulless:"Soulless",swarm:"Swarm",warrior:"Warrior"};
-  return `<span style="display:inline-block;padding:1px 7px;border-radius:10px;font-size:10px;font-weight:bold;background:${c}22;color:${c};border:1px solid ${c}55;margin-right:3px">${labels[f]||f}</span>`;
+function factionBadge(unit) {
+  const f = unit.faction;
+  const badge = (label, color) =>
+    `<span style="display:inline-block;padding:1px 7px;border-radius:10px;font-size:10px;font-weight:bold;background:${color}22;color:${color};border:1px solid ${color}55;margin-right:3px">${label}</span>`;
+  if(f && FACTION_COLORS[f]) {
+    const labels = {standard:"&#9651; Standard",precursor:"&#9670; Precursor",soulless:"&#9635; Soulless",swarm:"&#9632; Swarm",warrior:"&#9733; Warrior"};
+    return badge(labels[f]||f, FACTION_COLORS[f]);
+  }
+  if(f) {
+    const cf = (state.customFactions||[]).find(x=>x.id===f);
+    if(cf) return badge(`${cf.icon} ${cf.name}`, cf.color);
+  }
+  if(!unit.builtIn) return badge("No Faction","#888");
+  return "";
 }
 
 function traitTipHTML(traitArr, allTraits) {
@@ -981,7 +1027,7 @@ function unitCardHTML(unit, actions) {
     <div class="unit-card">
       <div class="unit-card-header">
         <div>
-          ${classBadge(unit.class)}${factionBadge(unit.faction)}
+          ${classBadge(unit.class)}${factionBadge(unit)}
           ${!unit.builtIn?`<span class="badge" style="background:#333;color:#aaa">Custom</span>`:""}
           <span class="unit-name" style="display:block;margin-top:4px">${esc(unit.name)}</span>
         </div>
@@ -1055,6 +1101,7 @@ function resetBuilder() {
   document.getElementById("b-name").value = "";
   document.getElementById("b-class").value = "inf";
   document.getElementById("b-role").value = "core";
+  document.getElementById("b-faction").value = "";
   currentBuilderTraits = [];
   builderWeapons = [];
   setEditMode(null);
@@ -1223,6 +1270,7 @@ function gatherBuilderUnit() {
     name: document.getElementById("b-name").value || "Unnamed Unit",
     class: document.getElementById("b-class").value,
     role: document.getElementById("b-role").value,
+    faction: document.getElementById("b-faction").value || "",
     speed: parseInt(document.getElementById("b-speed").value)||4,
     mobility: document.getElementById("b-mobility").value,
     aim: parseInt(document.getElementById("b-aim").value)||5,
@@ -1279,14 +1327,122 @@ function saveToLibrary() {
 }
 
 // ============================================================
-// LIBRARY
+// FACTIONS
 // ============================================================
 const FACTION_COLORS = {standard:"#007eff",precursor:"#9c27b0",soulless:"#607d8b",swarm:"#4caf50",warrior:"#f44336"};
+const FACTION_ICONS = ["⬢","▲","◆","●","■","★","✦","♦","⚔","⚡","☠","⚙","✿","☯","☽","♣","♠","♥","⚜","☢","⚛","⊕","⬟","⬡"];
+
+function rebuildFactionSelect(selectValue) {
+  const sel = document.getElementById("b-faction");
+  if(!sel) return;
+  const builtins = [
+    {v:"standard",l:"&#9651; Standard"},{v:"precursor",l:"&#9670; Precursor"},
+    {v:"soulless",l:"&#9635; Soulless"},{v:"swarm",l:"&#9632; Swarm"},{v:"warrior",l:"&#9733; Warrior"}
+  ];
+  sel.innerHTML = `<option value="">No Faction</option>`
+    + builtins.map(b=>`<option value="${b.v}">${b.l}</option>`).join("")
+    + (state.customFactions||[]).map(f=>`<option value="${f.id}">${f.icon} ${esc(f.name)}</option>`).join("")
+    + `<option value="__new__">&#65291; New Faction&hellip;</option>`;
+  if(selectValue !== undefined) sel.value = selectValue;
+}
+
+function onFactionSelectChange() {
+  if(document.getElementById("b-faction").value === "__new__") {
+    document.getElementById("b-faction").value = "";
+    openFactionModal(true);
+  }
+}
+
+function openFactionModal(fromBuilder) {
+  window._factionModalFromBuilder = !!fromBuilder;
+  document.getElementById("faction-name").value = "";
+  document.getElementById("faction-icon").value = "⬢";
+  document.getElementById("faction-color").value = "#ff6600";
+  renderFactionModalContent();
+  openModal("modal-faction");
+}
+
+function renderFactionModalContent() {
+  const list = document.getElementById("faction-modal-list");
+  const facs = state.customFactions||[];
+  list.innerHTML = facs.length
+    ? `<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:4px">`
+      + facs.map(f=>`
+        <div style="display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:6px;background:#0d1117;border:1px solid #30363d">
+          <span style="font-size:18px">${f.icon}</span>
+          <span style="flex:1;font-weight:bold;color:${f.color}">${esc(f.name)}</span>
+          <button class="btn btn-danger btn-xs" onclick="deleteCustomFaction('${f.id}')">Delete</button>
+        </div>`).join("")
+      + `</div>`
+    : `<div style="color:#666;font-size:12px;margin-bottom:4px">No custom factions yet.</div>`;
+
+  const selIcon = document.getElementById("faction-icon").value;
+  document.getElementById("faction-icon-picker").innerHTML = FACTION_ICONS.map(ic=>{
+    const border = ic===selIcon ? "#007eff" : "#30363d";
+    return `<button type="button" onclick="selectFactionIcon(this,this.textContent)"
+      style="width:34px;height:34px;font-size:17px;border-radius:6px;cursor:pointer;border:2px solid ${border};background:#0d1117;color:#e0e0e0">${ic}</button>`;
+  }).join("");
+}
+
+function selectFactionIcon(btn, icon) {
+  document.getElementById("faction-icon").value = icon;
+  document.querySelectorAll("#faction-icon-picker button").forEach(b=>b.style.borderColor="#30363d");
+  btn.style.borderColor = "#007eff";
+}
+
+function saveCustomFaction() {
+  const name = document.getElementById("faction-name").value.trim();
+  if(!name) { alert("Enter a faction name."); return; }
+  const icon = document.getElementById("faction-icon").value || "⬡";
+  const color = document.getElementById("faction-color").value || "#ff6600";
+  const id = "fac_" + uid();
+  state.customFactions.push({id, name, icon, color});
+  saveState();
+  rebuildFactionSelect(window._factionModalFromBuilder ? id : undefined);
+  renderLibFactionFilters();
+  renderFactionModalContent();
+}
+
+function deleteCustomFaction(id) {
+  if(!confirm("Delete this faction? Units assigned to it will become 'No Faction'.")) return;
+  state.customFactions = state.customFactions.filter(f=>f.id!==id);
+  state.customUnits.forEach(u=>{ if(u.faction===id) u.faction=""; });
+  saveState();
+  rebuildFactionSelect();
+  renderLibFactionFilters();
+  renderFactionModalContent();
+  if(libFilterFaction===id) { libFilterFaction="all"; renderLibrary(); }
+}
+
+// ============================================================
+// LIBRARY
+// ============================================================
+
+function renderLibFactionFilters() {
+  const builtins = [
+    {v:"all",   l:"All Factions",    c:null},
+    {v:"standard",  l:"&#9651; Standard",  c:"#007eff"},
+    {v:"precursor", l:"&#9670; Precursor", c:"#9c27b0"},
+    {v:"soulless",  l:"&#9635; Soulless",  c:"#607d8b"},
+    {v:"swarm",     l:"&#9632; Swarm",     c:"#4caf50"},
+    {v:"warrior",   l:"&#9733; Warrior",   c:"#f44336"},
+  ];
+  const customs = (state.customFactions||[]).map(f=>({v:f.id, l:`${f.icon} ${esc(f.name)}`, c:f.color}));
+  const extras = [
+    {v:"none",   l:"&mdash; No Faction", c:"#888"},
+    {v:"custom", l:"&#9997; Custom",     c:"#ffd700"},
+  ];
+  const all = [...builtins, ...customs, ...extras];
+  document.getElementById("lib-faction-filters").innerHTML = all.map(p=>{
+    const style = p.c ? `style="--fc:${p.c}"` : "";
+    const active = libFilterFaction===p.v ? " active" : "";
+    return `<div class="pill${active}" ${style} onclick="setLibFactionFilter(this,'${p.v}')">${p.l}</div>`;
+  }).join("");
+}
 
 function setLibFactionFilter(el, faction) {
-  document.querySelectorAll("#lib-faction-filters .pill").forEach(p=>p.classList.remove("active"));
-  el.classList.add("active");
   libFilterFaction = faction;
+  renderLibFactionFilters();
   renderLibrary();
 }
 
@@ -1298,11 +1454,13 @@ function setLibFilter(el, cls) {
 }
 
 function renderLibrary() {
+  renderLibFactionFilters();
   const sortEl = document.getElementById("lib-sort");
   if(sortEl && sortEl.value !== libSort) sortEl.value = libSort;
   const search = (document.getElementById("lib-search")?.value||"").toLowerCase();
   let units = allUnits();
   if(libFilterFaction==="custom") { units = units.filter(u=>!u.builtIn); }
+  else if(libFilterFaction==="none") { units = units.filter(u=>!u.builtIn && !u.faction); }
   else if(libFilterFaction!=="all") { units = units.filter(u=>u.faction===libFilterFaction); }
   if(libFilterClass!=="all") units = units.filter(u=>u.class===libFilterClass);
   if(search) units = units.filter(u=>u.name.toLowerCase().includes(search));
@@ -1354,6 +1512,7 @@ function editUnit(id) {
   document.getElementById("b-name").value = unit.name;
   document.getElementById("b-class").value = unit.class;
   document.getElementById("b-role").value = unit.role||"core";
+  document.getElementById("b-faction").value = unit.faction||"";
   onClassChange();
   document.getElementById("b-speed").value = unit.speed;
   document.getElementById("b-mobility").value = unit.mobility;
@@ -2189,6 +2348,7 @@ function renderAll() {
 
 loadState();
 resetBuilder();
+rebuildFactionSelect();
 
 showPage("builder");
 
