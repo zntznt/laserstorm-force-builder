@@ -190,6 +190,7 @@ label .trait-edit-btn{margin-left:6px}
 .tip::after{content:attr(data-tip);display:none;position:absolute;left:0;top:calc(100% + 4px);z-index:400;background:var(--surface-page);border:1px solid var(--accent);border-radius:6px;padding:8px 10px;font-size:11px;color:var(--text-primary);white-space:normal;width:280px;line-height:1.5;font-weight:normal;pointer-events:none;box-shadow:0 4px 12px rgba(0,0,0,.6)}
 .tip:hover::after{display:block}
 .tip-left::after{left:auto;right:0}
+.tip-up::after{top:auto;bottom:calc(100% + 4px)}
 .trait-row{display:flex;align-items:flex-start;gap:8px;padding:5px 4px;border-radius:4px;cursor:pointer}
 .trait-row:hover{background:var(--surface-raised)}
 .trait-row input[type=checkbox]{flex-shrink:0;margin-top:2px}
@@ -738,7 +739,7 @@ label .trait-edit-btn{margin-left:6px}
         <label>Requirements <span style="color:var(--text-faint);font-size:10px">(optional — multiple selections in a row = OR)</span></label>
         <div id="ct-reqs-container" style="display:flex;flex-direction:column;gap:7px;margin-top:6px"></div>
         <div style="margin-top:8px">
-          <label style="margin-bottom:4px">Requires Trait <span class="tip ttip tip-left" data-tip="This trait can only be picked if the selected trait is already active on the unit or weapon. Only built-in traits with no requirements of their own are listed here — this keeps chains simple and avoids circular dependencies. If you need a more complex prerequisite, use the faction or class requirements instead."><i class="fa-solid fa-circle-info"></i></span></label>
+          <label style="margin-bottom:4px">Requires Trait <span class="tip ttip tip-left tip-up" data-tip="This trait can only be picked if the selected trait is already active on the unit or weapon. Only built-in traits with no requirements of their own are listed here — this keeps chains simple and avoids circular dependencies. If you need a more complex prerequisite, use the faction or class requirements instead."><i class="fa-solid fa-circle-info"></i></span></label>
           <select id="ct-req-trait" style="width:auto"></select>
         </div>
       </div>
