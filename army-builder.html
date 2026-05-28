@@ -828,7 +828,6 @@ function renderClassProfile() {
   const el = document.getElementById("b-class-profile");
   if(!el || !cp) { if(el) el.innerHTML=""; return; }
   el.innerHTML = `
-    <div><strong>${ci.label}</strong> &middot; ${cp.cat} &middot; represents ${cp.represents} &middot; Unit size ${ci.size} &middot; &times;${ci.mult} cost</div>
     <div class="cp-tags">
       <span class="cp-tag"><b>Save</b> ${cp.save}</span>
       <span class="cp-tag"><b>Double-Time</b> ${cp.dtime}</span>
