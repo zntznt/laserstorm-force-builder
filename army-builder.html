@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
 <style>
 /* ── Design tokens ──────────────────────────────────────────────────────────
    Surfaces (darkest → lightest):
@@ -231,7 +232,7 @@ label .trait-edit-btn{margin-left:6px}
     <div class="nav-tab" id="tab-taskforces" onclick="showPage('taskforces')">Task Forces</div>
     <div class="nav-tab" id="tab-armies" onclick="showPage('armies')">Armies</div>
     <div class="nav-tab" id="tab-deploy" onclick="showPage('deploy')">Deploy</div>
-    <div class="nav-tab" id="tab-print" onclick="showPage('print')">&#128438; Print</div>
+    <div class="nav-tab" id="tab-print" onclick="showPage('print')"><i class="fa-solid fa-print"></i> Print</div>
   </div>
   <a href="https://www.wargamevault.com/product/476399/laserstorm-2nd-edition?affiliate_id=564654" target="_blank" rel="noopener" style="margin-left:auto;margin-right:12px;padding:5px 13px;background:#007eff;color:#fff;border-radius:20px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;text-decoration:none;white-space:nowrap;transition:background .2s" onmouseover="this.style.background='#0066cc'" onmouseout="this.style.background='#007eff'">Buy LaserStorm</a>
 </nav>
@@ -266,12 +267,12 @@ label .trait-edit-btn{margin-left:6px}
             <label>Faction</label>
             <select id="b-faction" style="width:auto" onchange="onFactionSelectChange()">
               <option value="">No Faction</option>
-              <option value="standard">&#9651; Standard</option>
-              <option value="precursor">&#9670; Precursor</option>
-              <option value="soulless">&#9635; Soulless</option>
-              <option value="swarm">&#9632; Swarm</option>
-              <option value="warrior">&#9733; Warrior</option>
-              <option value="__new__">＋ New Faction…</option>
+              <option value="standard">Standard</option>
+              <option value="precursor">Precursor</option>
+              <option value="soulless">Soulless</option>
+              <option value="swarm">Swarm</option>
+              <option value="warrior">Warrior</option>
+              <option value="__new__">+ New Faction…</option>
             </select>
           </div>
         </div>
@@ -344,7 +345,7 @@ label .trait-edit-btn{margin-left:6px}
         </div>
       </div>
       <div class="card">
-        <div class="card-title" onclick="toggleCostRef()" style="cursor:pointer;user-select:none">Cost Reference <span id="cost-ref-chev" style="font-size:11px;color:#555;font-weight:normal;margin-left:2px">&#9654;</span></div>
+        <div class="card-title" onclick="toggleCostRef()" style="cursor:pointer;user-select:none">Cost Reference <span id="cost-ref-chev" style="font-size:11px;color:#555;font-weight:normal;margin-left:2px"><i class="fa-solid fa-chevron-right"></i></span></div>
         <div id="cost-ref-body" style="font-size:11px;color:#8b949e;line-height:1.6;display:none">
           <p style="margin-bottom:8px">Costs build up the <strong style="color:#fff">Stand</strong> first, then add each <strong style="color:#fff">weapon</strong>, then apply the <strong style="color:#fff">class multiplier</strong>. Fractions are kept until each break point, then rounded up (stand, weapon, &amp; unit to nearest 5).</p>
           <table class="ref-table">
@@ -395,10 +396,10 @@ label .trait-edit-btn{margin-left:6px}
     <div class="card-title">Unit Library
       <button class="btn btn-primary btn-sm" onclick="resetBuilder();showPage('builder')">+ Create Unit</button>
     </div>
-    <input class="search-bar" id="lib-search" placeholder="&#128269; Search units..." oninput="renderLibrary()">
+    <input class="search-bar" id="lib-search" placeholder="Search units..." oninput="renderLibrary()">
     <div style="display:flex;align-items:flex-start;gap:8px">
       <div class="pill-nav" id="lib-faction-filters" style="flex:1"></div>
-      <button class="btn btn-secondary btn-xs" style="margin-top:4px;white-space:nowrap" onclick="openFactionModal(false)">&#9881; Factions</button>
+      <button class="btn btn-secondary btn-xs" style="margin-top:4px;white-space:nowrap" onclick="openFactionModal(false)"><i class="fa-solid fa-gear"></i> Factions</button>
     </div>
     <div class="pill-nav" id="lib-filters">
       <div class="pill active" data-filter="all" onclick="setLibFilter(this,'all')">All Classes</div>
@@ -448,7 +449,7 @@ label .trait-edit-btn{margin-left:6px}
     </div>
     <div id="tf-detail-panel">
       <div class="card">
-        <div class="empty"><div class="empty-icon">&#128101;</div>Select a Task Force to edit</div>
+        <div class="empty"><div class="empty-icon"><i class="fa-solid fa-users"></i></div>Select a Task Force to edit</div>
       </div>
     </div>
   </div>
@@ -465,7 +466,7 @@ label .trait-edit-btn{margin-left:6px}
         <div id="army-list"></div>
       </div>
       <div class="card">
-        <div class="card-title">&#128190; Save / Load</div>
+        <div class="card-title"><i class="fa-solid fa-floppy-disk"></i> Save / Load</div>
         <div class="form-row">
           <button class="btn btn-warning" onclick="exportLibrary()">Export Library</button>
           <button class="btn btn-secondary" onclick="document.getElementById('import-file').click()">Import Library</button>
@@ -476,7 +477,7 @@ label .trait-edit-btn{margin-left:6px}
     </div>
     <div id="army-detail-panel">
       <div class="card">
-        <div class="empty"><div class="empty-icon">&#9876;</div>Select an army to view</div>
+        <div class="empty"><div class="empty-icon"><i class="fa-solid fa-chess-rook"></i></div>Select an army to view</div>
       </div>
     </div>
   </div>
@@ -505,7 +506,7 @@ label .trait-edit-btn{margin-left:6px}
           <input type="text" id="dep-name" style="width:100%">
         </div>
         <div class="form-group">
-          <label>Battle Groups <span class="tip ttip" data-tip="Each side splits its army into 3-5 roughly equal Battle Groups for activation. No Battle Group may have fewer than half the Units of the largest (min % shown). Aim for at least one Command Stand in each.">&#9432;</span></label>
+          <label>Battle Groups <span class="tip ttip" data-tip="Each side splits its army into 3-5 roughly equal Battle Groups for activation. No Battle Group may have fewer than half the Units of the largest (min % shown). Aim for at least one Command Stand in each."><i class="fa-solid fa-circle-info"></i></span></label>
           <select id="dep-bg-count" onchange="rebuildBGEditor()">
             <option value="3">3 Battle Groups</option>
             <option value="4">4 Battle Groups</option>
@@ -513,7 +514,7 @@ label .trait-edit-btn{margin-left:6px}
           </select>
         </div>
         <div class="form-group">
-          <label>Army (Optional) <span class="tip ttip tip-left" data-tip="Limit available units to one army's Task Forces. With 3+ Task Forces, assign one per Battle Group; extras spread evenly.">&#9432;</span></label>
+          <label>Army (Optional) <span class="tip ttip tip-left" data-tip="Limit available units to one army's Task Forces. With 3+ Task Forces, assign one per Battle Group; extras spread evenly."><i class="fa-solid fa-circle-info"></i></span></label>
           <select id="dep-army" style="width:auto" onchange="rebuildBGEditor()">
             <option value="">-- All Task Forces --</option>
           </select>
@@ -523,7 +524,7 @@ label .trait-edit-btn{margin-left:6px}
         <strong style="color:#c9d1d9">Battle Group rules:</strong>
         min size <span id="dep-minpct" style="color:#007eff">20%</span> of total units
         (no group below half the largest, rounded up) &bull; each group should hold &ge;1 Command Stand.
-        <span class="tip" data-tip="When counting Units for minimum size, every 3 Independent Stands count as one Unit.">Independent Stands note &#9432;</span>
+        <span class="tip" data-tip="When counting Units for minimum size, every 3 Independent Stands count as one Unit.">Independent Stands note <i class="fa-solid fa-circle-info"></i></span>
       </div>
       <div id="dep-validation" style="margin-bottom:12px"></div>
       <div id="dep-bgs"></div>
@@ -534,7 +535,7 @@ label .trait-edit-btn{margin-left:6px}
 <!-- ===== PRINT PAGE ===== -->
 <div id="page-print" class="page">
   <div class="no-print card">
-    <div class="card-title">&#128438; Print / Export</div>
+    <div class="card-title"><i class="fa-solid fa-print"></i> Print / Export</div>
     <div class="form-row">
       <div class="form-group">
         <label>Print Content</label>
@@ -548,7 +549,7 @@ label .trait-edit-btn{margin-left:6px}
         <label>Select</label>
         <select id="print-which" style="width:auto" onchange="renderPrint()"></select>
       </div>
-      <button class="btn btn-primary" onclick="window.print()">&#128438; Print</button>
+      <button class="btn btn-primary" onclick="window.print()"><i class="fa-solid fa-print"></i> Print</button>
     </div>
   </div>
   <div id="print-content"></div>
@@ -561,7 +562,7 @@ label .trait-edit-btn{margin-left:6px}
       <span id="trait-modal-title">Select Traits</span>
       <div style="display:flex;gap:8px;align-items:center">
         <button class="trait-edit-btn" onclick="openCustomTraitModal()">Custom</button>
-        <button class="modal-close" onclick="closeTraitModal()">&#215;</button>
+        <button class="modal-close" onclick="closeTraitModal()"><i class="fa-solid fa-xmark"></i></button>
       </div>
     </div>
     <input class="search-bar" id="trait-picker-search" placeholder="Filter traits..." oninput="refreshTraitPickerList()" style="margin-bottom:4px">
@@ -575,7 +576,7 @@ label .trait-edit-btn{margin-left:6px}
 <!-- ===== NEW TF MODAL ===== -->
 <div id="modal-tf" class="modal-bg">
   <div class="modal">
-    <div class="modal-header">New Task Force <button class="modal-close" onclick="closeModal('modal-tf')">&#215;</button></div>
+    <div class="modal-header">New Task Force <button class="modal-close" onclick="closeModal('modal-tf')"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="form-group" style="margin-bottom:12px">
       <label>Task Force Name</label>
       <input type="text" id="tf-new-name" placeholder="e.g. Alpha Strike Force" style="width:100%">
@@ -600,8 +601,8 @@ label .trait-edit-btn{margin-left:6px}
 <!-- ===== ADD UNIT TO TF MODAL ===== -->
 <div id="modal-add-unit" class="modal-bg">
   <div class="modal">
-    <div class="modal-header">Add Unit to Task Force <button class="modal-close" onclick="closeModal('modal-add-unit')">&#215;</button></div>
-    <input class="search-bar" id="addunit-search" placeholder="&#128269; Search..." oninput="renderAddUnitList()">
+    <div class="modal-header">Add Unit to Task Force <button class="modal-close" onclick="closeModal('modal-add-unit')"><i class="fa-solid fa-xmark"></i></button></div>
+    <input class="search-bar" id="addunit-search" placeholder="Search..." oninput="renderAddUnitList()">
     <div class="form-row" style="margin-bottom:8px">
       <div class="form-group">
         <label>Role</label>
@@ -629,7 +630,7 @@ label .trait-edit-btn{margin-left:6px}
 <!-- ===== NEW ARMY MODAL ===== -->
 <div id="modal-army" class="modal-bg">
   <div class="modal">
-    <div class="modal-header">New Army <button class="modal-close" onclick="closeModal('modal-army')">&#215;</button></div>
+    <div class="modal-header">New Army <button class="modal-close" onclick="closeModal('modal-army')"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="form-group" style="margin-bottom:12px">
       <label>Army Name</label>
       <input type="text" id="army-new-name" placeholder="e.g. Iron Legion" style="width:100%">
@@ -648,7 +649,7 @@ label .trait-edit-btn{margin-left:6px}
 <!-- ===== ADD TF TO ARMY MODAL ===== -->
 <div id="modal-add-tf" class="modal-bg">
   <div class="modal">
-    <div class="modal-header">Add Task Force to Army <button class="modal-close" onclick="closeModal('modal-add-tf')">&#215;</button></div>
+    <div class="modal-header">Add Task Force to Army <button class="modal-close" onclick="closeModal('modal-add-tf')"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="scrolllist" id="add-tf-list"></div>
     <div style="margin-top:12px;display:flex;justify-content:flex-end;gap:8px">
       <button class="btn btn-secondary" onclick="closeModal('modal-add-tf')">Cancel</button>
@@ -660,7 +661,7 @@ label .trait-edit-btn{margin-left:6px}
 <!-- ===== NEW DEPLOY MODAL ===== -->
 <div id="modal-deploy" class="modal-bg">
   <div class="modal">
-    <div class="modal-header">New Deployment <button class="modal-close" onclick="closeModal('modal-deploy')">&#215;</button></div>
+    <div class="modal-header">New Deployment <button class="modal-close" onclick="closeModal('modal-deploy')"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="form-group" style="margin-bottom:12px">
       <label>Deployment Name</label>
       <input type="text" id="dep-new-name" placeholder="e.g. Operation Thunder" style="width:100%">
@@ -675,8 +676,8 @@ label .trait-edit-btn{margin-left:6px}
 <!-- ===== ADD UNIT TO BG MODAL ===== -->
 <div id="modal-bg-unit" class="modal-bg">
   <div class="modal">
-    <div class="modal-header">Add Units to Battle Group <button class="modal-close" onclick="closeModal('modal-bg-unit')">&#215;</button></div>
-    <input class="search-bar" id="bgunit-search" placeholder="&#128269; Search..." oninput="renderBGUnitList()">
+    <div class="modal-header">Add Units to Battle Group <button class="modal-close" onclick="closeModal('modal-bg-unit')"><i class="fa-solid fa-xmark"></i></button></div>
+    <input class="search-bar" id="bgunit-search" placeholder="Search..." oninput="renderBGUnitList()">
     <div class="scrolllist" id="bgunit-list"></div>
     <div style="margin-top:12px;display:flex;justify-content:flex-end;gap:8px">
       <button class="btn btn-secondary" onclick="closeModal('modal-bg-unit')">Cancel</button>
@@ -687,7 +688,7 @@ label .trait-edit-btn{margin-left:6px}
 
 <div id="modal-faction" class="modal-bg">
   <div class="modal" style="max-width:480px">
-    <div class="modal-header">Custom Factions <button class="modal-close" onclick="closeModal('modal-faction')">&#215;</button></div>
+    <div class="modal-header">Custom Factions <button class="modal-close" onclick="closeModal('modal-faction')"><i class="fa-solid fa-xmark"></i></button></div>
     <div id="faction-modal-list"></div>
     <div style="margin-top:16px;padding-top:14px;border-top:1px solid #30363d">
       <div style="font-size:12px;font-weight:bold;color:#8b949e;margin-bottom:10px;text-transform:uppercase;letter-spacing:.05em">New Faction</div>
@@ -698,7 +699,7 @@ label .trait-edit-btn{margin-left:6px}
       <div class="form-group" style="margin-bottom:10px">
         <label>Icon</label>
         <div id="faction-icon-picker" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:6px"></div>
-        <input type="hidden" id="faction-icon" value="&#11042;">
+        <input type="hidden" id="faction-icon" value="shield">
       </div>
       <div class="form-group" style="margin-bottom:14px">
         <label>Color</label>
@@ -714,7 +715,7 @@ label .trait-edit-btn{margin-left:6px}
 
 <div id="modal-custom-trait" class="modal-bg">
   <div class="modal" style="max-width:500px">
-    <div class="modal-header">Custom Traits <button class="modal-close" onclick="closeModal('modal-custom-trait')">&#215;</button></div>
+    <div class="modal-header">Custom Traits <button class="modal-close" onclick="closeModal('modal-custom-trait')"><i class="fa-solid fa-xmark"></i></button></div>
     <div id="custom-trait-list"></div>
     <div>
       <div id="ct-form-header" class="modal-sub-header">New Trait</div>
@@ -1037,6 +1038,17 @@ function loadState() {
       // Migration: ensure every slot has a stable id (older data may lack one)
       state.taskForces.forEach(tf => (tf.units||[]).forEach(s=>{ if(!s.id) s.id="slot_"+uid(); }));
       state.deployments.forEach(d => (d.battleGroups||[]).forEach(bg=>(bg.units||[]).forEach(s=>{ if(!s.id) s.id="bgu_"+uid(); })));
+      // Migration: convert old emoji icon characters to FA icon names for custom factions
+      const _ICON_MIG = {
+        "⬢":"shield","▲":"flag","◆":"gem","●":"circle","■":"square",
+        "★":"star","✦":"star","♦":"gem","⚔":"shield","⚡":"bolt",
+        "☠":"skull","⚙":"gear","✿":"leaf","☯":"infinity","☽":"moon",
+        "♣":"clover","♠":"flag","♥":"heart","⚜":"crown","☢":"radiation",
+        "⚛":"atom","⊕":"circle-plus","⬟":"shield","⬡":"shield"
+      };
+      (state.customFactions||[]).forEach(f => {
+        if(f.icon && _ICON_MIG[f.icon]) f.icon = _ICON_MIG[f.icon];
+      });
     } catch(e) {}
   }
 }
@@ -1328,12 +1340,15 @@ function factionBadge(unit) {
   const badge = (label, color) =>
     `<span style="display:inline-block;padding:1px 7px;border-radius:10px;font-size:10px;font-weight:bold;background:${color}22;color:${color};border:1px solid ${color}55;margin-right:3px">${label}</span>`;
   if(f && FACTION_COLORS[f]) {
-    const labels = {standard:"&#9651; Standard",precursor:"&#9670; Precursor",soulless:"&#9635; Soulless",swarm:"&#9632; Swarm",warrior:"&#9733; Warrior"};
-    return badge(labels[f]||f, FACTION_COLORS[f]);
+    const BUILTIN_FACTION_ICONS = {standard:"shield",precursor:"gem",soulless:"robot",swarm:"virus",warrior:"hand-fist"};
+    const labels = {standard:"Standard",precursor:"Precursor",soulless:"Soulless",swarm:"Swarm",warrior:"Warrior"};
+    const icon = BUILTIN_FACTION_ICONS[f];
+    const label = icon ? `<i class="fa-solid fa-${icon}"></i> ${labels[f]||f}` : (labels[f]||f);
+    return badge(label, FACTION_COLORS[f]);
   }
   if(f) {
     const cf = (state.customFactions||[]).find(x=>x.id===f);
-    if(cf) return badge(`${cf.icon} ${cf.name}`, cf.color);
+    if(cf) return badge(`<i class="fa-solid fa-${cf.icon}"></i> ${cf.name}`, cf.color);
   }
   if(!unit.builtIn) return badge("No Faction","#888");
   return "";
@@ -1528,7 +1543,7 @@ function toggleCostRef() {
   const chev = document.getElementById("cost-ref-chev");
   const open = body.style.display === "none";
   body.style.display = open ? "" : "none";
-  chev.innerHTML = open ? "&#9660;" : "&#9654;";
+  chev.innerHTML = open ? '<i class="fa-solid fa-chevron-down"></i>' : '<i class="fa-solid fa-chevron-right"></i>';
 }
 
 // ============================================================
@@ -1543,7 +1558,7 @@ function setEditMode(unit) {
   if(unit) {
     editingUnitId = unit.id;
     hint.style.display = "block";
-    hint.innerHTML = `&#9998; Editing <strong>${esc(unit.name)}</strong> — saving updates it in place.`;
+    hint.innerHTML = `<i class="fa-solid fa-pen"></i> Editing <strong>${esc(unit.name)}</strong> — saving updates it in place.`;
     saveBtn.textContent = "Update Unit";
     newBtn.style.display = "inline-block";
   } else {
@@ -1987,19 +2002,23 @@ function saveToLibrary() {
 // FACTIONS
 // ============================================================
 const FACTION_COLORS = {standard:"#007eff",precursor:"#9c27b0",soulless:"#607d8b",swarm:"#4caf50",warrior:"#f44336"};
-const FACTION_ICONS = ["⬢","▲","◆","●","■","★","✦","♦","⚔","⚡","☠","⚙","✿","☯","☽","♣","♠","♥","⚜","☢","⚛","⊕","⬟","⬡"];
+const FACTION_ICONS = [
+  "shield","gem","robot","virus","hand-fist","skull","fire","bolt","star",
+  "dragon","chess-rook","crown","atom","radiation","biohazard","infinity",
+  "ankh","moon","sun","snowflake","leaf","mountain","tornado","heart"
+];
 
 function rebuildFactionSelect(selectValue) {
   const sel = document.getElementById("b-faction");
   if(!sel) return;
   const builtins = [
-    {v:"standard",l:"&#9651; Standard"},{v:"precursor",l:"&#9670; Precursor"},
-    {v:"soulless",l:"&#9635; Soulless"},{v:"swarm",l:"&#9632; Swarm"},{v:"warrior",l:"&#9733; Warrior"}
+    {v:"standard",l:"Standard"},{v:"precursor",l:"Precursor"},
+    {v:"soulless",l:"Soulless"},{v:"swarm",l:"Swarm"},{v:"warrior",l:"Warrior"}
   ];
   sel.innerHTML = `<option value="">No Faction</option>`
     + builtins.map(b=>`<option value="${b.v}">${b.l}</option>`).join("")
-    + (state.customFactions||[]).map(f=>`<option value="${f.id}">${f.icon} ${esc(f.name)}</option>`).join("")
-    + `<option value="__new__">&#65291; New Faction&hellip;</option>`;
+    + (state.customFactions||[]).map(f=>`<option value="${f.id}">${esc(f.name)}</option>`).join("")
+    + `<option value="__new__">+ New Faction&hellip;</option>`;
   if(selectValue !== undefined) sel.value = selectValue;
 }
 
@@ -2075,7 +2094,7 @@ function onMobilityChange() {
 function openFactionModal(fromBuilder) {
   window._factionModalFromBuilder = !!fromBuilder;
   document.getElementById("faction-name").value = "";
-  document.getElementById("faction-icon").value = "⬢";
+  document.getElementById("faction-icon").value = "shield";
   document.getElementById("faction-color").value = "#ff6600";
   renderFactionModalContent();
   openModal("modal-faction");
@@ -2088,7 +2107,7 @@ function renderFactionModalContent() {
     ? `<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:4px">`
       + facs.map(f=>`
         <div style="display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:6px;background:#0d1117;border:1px solid #30363d">
-          <span style="font-size:18px">${f.icon}</span>
+          <span style="font-size:18px"><i class="fa-solid fa-${f.icon}"></i></span>
           <span style="flex:1;font-weight:bold;color:${f.color}">${esc(f.name)}</span>
           <button class="btn btn-danger btn-xs" onclick="deleteCustomFaction('${f.id}')">Delete</button>
         </div>`).join("")
@@ -2098,8 +2117,8 @@ function renderFactionModalContent() {
   const selIcon = document.getElementById("faction-icon").value;
   document.getElementById("faction-icon-picker").innerHTML = FACTION_ICONS.map(ic=>{
     const border = ic===selIcon ? "#007eff" : "#30363d";
-    return `<button type="button" onclick="selectFactionIcon(this,this.textContent)"
-      style="width:34px;height:34px;font-size:17px;border-radius:6px;cursor:pointer;border:2px solid ${border};background:#0d1117;color:#e0e0e0">${ic}</button>`;
+    return `<button type="button" onclick="selectFactionIcon(this,'${ic}')"
+      style="width:34px;height:34px;font-size:17px;border-radius:6px;cursor:pointer;border:2px solid ${border};background:#0d1117;color:#e0e0e0"><i class="fa-solid fa-${ic}"></i></button>`;
   }).join("");
 }
 
@@ -2112,7 +2131,7 @@ function selectFactionIcon(btn, icon) {
 function saveCustomFaction() {
   const name = document.getElementById("faction-name").value.trim();
   if(!name) { alert("Enter a faction name."); return; }
-  const icon = document.getElementById("faction-icon").value || "⬡";
+  const icon = document.getElementById("faction-icon").value || "shield";
   const color = document.getElementById("faction-color").value || "#ff6600";
   const id = "fac_" + uid();
   state.customFactions.push({id, name, icon, color});
@@ -2154,12 +2173,12 @@ function _ctReqSections() {
     {
       type:"faction", label:"Faction",
       opts: [
-        {val:"standard", label:"▲ Standard", color:FACTION_COLORS.standard},
-        {val:"precursor",label:"◆ Precursor",color:FACTION_COLORS.precursor},
-        {val:"soulless", label:"▪ Soulless", color:FACTION_COLORS.soulless},
-        {val:"swarm",    label:"■ Swarm",    color:FACTION_COLORS.swarm},
-        {val:"warrior",  label:"★ Warrior",  color:FACTION_COLORS.warrior},
-        ...(state.customFactions||[]).map(f=>({val:f.id,label:`${f.icon} ${esc(f.name)}`,color:f.color}))
+        {val:"standard", label:'<i class="fa-solid fa-shield"></i> Standard', color:FACTION_COLORS.standard},
+        {val:"precursor",label:'<i class="fa-solid fa-gem"></i> Precursor',color:FACTION_COLORS.precursor},
+        {val:"soulless", label:'<i class="fa-solid fa-robot"></i> Soulless', color:FACTION_COLORS.soulless},
+        {val:"swarm",    label:'<i class="fa-solid fa-virus"></i> Swarm',    color:FACTION_COLORS.swarm},
+        {val:"warrior",  label:'<i class="fa-solid fa-hand-fist"></i> Warrior',  color:FACTION_COLORS.warrior},
+        ...(state.customFactions||[]).map(f=>({val:f.id,label:`<i class="fa-solid fa-${f.icon}"></i> ${esc(f.name)}`,color:f.color}))
       ]
     },
     {
@@ -2367,16 +2386,16 @@ function deleteCustomTrait(id) {
 function renderLibFactionFilters() {
   const builtins = [
     {v:"all",   l:"All Factions",    c:null},
-    {v:"standard",  l:"&#9651; Standard",  c:"#007eff"},
-    {v:"precursor", l:"&#9670; Precursor", c:"#9c27b0"},
-    {v:"soulless",  l:"&#9635; Soulless",  c:"#607d8b"},
-    {v:"swarm",     l:"&#9632; Swarm",     c:"#4caf50"},
-    {v:"warrior",   l:"&#9733; Warrior",   c:"#f44336"},
+    {v:"standard",  l:'<i class="fa-solid fa-shield"></i> Standard',  c:"#007eff"},
+    {v:"precursor", l:'<i class="fa-solid fa-gem"></i> Precursor', c:"#9c27b0"},
+    {v:"soulless",  l:'<i class="fa-solid fa-robot"></i> Soulless',  c:"#607d8b"},
+    {v:"swarm",     l:'<i class="fa-solid fa-virus"></i> Swarm',     c:"#4caf50"},
+    {v:"warrior",   l:'<i class="fa-solid fa-hand-fist"></i> Warrior',   c:"#f44336"},
   ];
-  const customs = (state.customFactions||[]).map(f=>({v:f.id, l:`${f.icon} ${esc(f.name)}`, c:f.color}));
+  const customs = (state.customFactions||[]).map(f=>({v:f.id, l:`<i class="fa-solid fa-${f.icon}"></i> ${esc(f.name)}`, c:f.color}));
   const extras = [
     {v:"none",   l:"&mdash; No Faction", c:"#888"},
-    {v:"custom", l:"&#9997; Custom",     c:"#ffd700"},
+    {v:"custom", l:'<i class="fa-solid fa-pen"></i> Custom',     c:"#ffd700"},
   ];
   const all = [...builtins, ...customs, ...extras];
   document.getElementById("lib-faction-filters").innerHTML = all.map(p=>{
@@ -2431,7 +2450,7 @@ function renderLibrary() {
     }
   });
   const list = document.getElementById("lib-list");
-  if(!units.length) { list.innerHTML=`<div class="empty"><div class="empty-icon">&#128269;</div>No units found</div>`; return; }
+  if(!units.length) { list.innerHTML=`<div class="empty"><div class="empty-icon"><i class="fa-solid fa-magnifying-glass"></i></div>No units found</div>`; return; }
   list.innerHTML = units.map(u => {
     const pts = calcPoints(u);
     const actions = `<div style="display:flex;gap:6px;margin-top:8px">
@@ -2501,7 +2520,7 @@ function quickAddToTF(unitId) {
 function renderTFList() {
   const list = document.getElementById("tf-list");
   if(!state.taskForces.length) {
-    list.innerHTML = `<div class="empty"><div class="empty-icon">&#128101;</div>No task forces yet</div>`;
+    list.innerHTML = `<div class="empty"><div class="empty-icon"><i class="fa-solid fa-users"></i></div>No task forces yet</div>`;
     return;
   }
   list.innerHTML = state.taskForces.map(tf => {
@@ -2693,7 +2712,7 @@ function changeTFSlotRole(tfId, slotId, role) {
 // ============================================================
 function renderArmyList() {
   const list = document.getElementById("army-list");
-  if(!state.armies.length) { list.innerHTML=`<div class="empty"><div class="empty-icon">&#9876;</div>No armies yet</div>`; return; }
+  if(!state.armies.length) { list.innerHTML=`<div class="empty"><div class="empty-icon"><i class="fa-solid fa-chess-rook"></i></div>No armies yet</div>`; return; }
   list.innerHTML = state.armies.map(a => {
     const pts = armyPoints(a);
     const tfCount = a.taskForceIds.length;
@@ -2734,7 +2753,7 @@ function renderArmyDetail() {
       ${esc(army.name)}
       <div style="display:flex;gap:6px">
         <button class="btn btn-primary btn-sm" onclick="openAddTFModal('${army.id}')">+ Add TF</button>
-        <button class="btn btn-warning btn-sm" onclick="openDeployFromArmy('${army.id}')">&#9876; Deploy</button>
+        <button class="btn btn-warning btn-sm" onclick="openDeployFromArmy('${army.id}')"><i class="fa-solid fa-chess-rook"></i> Deploy</button>
       </div>
     </div>
     <div style="margin-bottom:12px;display:flex;gap:20px;flex-wrap:wrap">
@@ -2833,7 +2852,7 @@ let currentDeployment = null;
 function renderDeployList() {
   const list = document.getElementById("deploy-list");
   if(!state.deployments.length) {
-    list.innerHTML=`<div class="empty"><div class="empty-icon">&#9876;</div>No deployments yet. Create one to assign units to Battle Groups.</div>`;
+    list.innerHTML=`<div class="empty"><div class="empty-icon"><i class="fa-solid fa-chess-rook"></i></div>No deployments yet. Create one to assign units to Battle Groups.</div>`;
     return;
   }
   list.innerHTML = state.deployments.map(d => {
@@ -2987,9 +3006,9 @@ function renderBGEditor() {
   const validMsgs = validateDeployment(currentDeployment);
   const valEl = document.getElementById("dep-validation");
   if(validMsgs.length) {
-    valEl.innerHTML = validMsgs.map(m=>`<div class="validation-warn">&#9888; ${m}</div>`).join("");
+    valEl.innerHTML = validMsgs.map(m=>`<div class="validation-warn"><i class="fa-solid fa-triangle-exclamation"></i> ${m}</div>`).join("");
   } else if(currentDeployment.battleGroups.some(bg=>bg.units.length>0)) {
-    valEl.innerHTML = `<div class="validation-ok">&#10003; Deployment valid — all Battle Groups meet requirements</div>`;
+    valEl.innerHTML = `<div class="validation-ok"><i class="fa-solid fa-circle-check"></i> Deployment valid — all Battle Groups meet requirements</div>`;
   } else {
     valEl.innerHTML = "";
   }
@@ -3013,7 +3032,7 @@ function renderBGEditor() {
       <div class="bg-header">
         <div>
           <input type="text" value="${esc(bg.name)}" style="background:transparent;border:none;color:#007eff;font-size:16px;font-weight:bold;width:220px;padding:0" onchange="bg_rename('${bg.id}',this.value)">
-          <div style="font-size:11px;color:#8b949e">${bgSize} unit${bgSize!==1?"s":""}${totalUnits>0?` (${pctOfTotal}%)`:""} &bull; ${bgPts} pts ${isValid&&bgSize>0?"&#10003;":""}${!hasCmd&&bgSize>0?"| &#9888; No Command":""}${bgSize<minAllowed&&maxSize>0?"| &#9888; Too small (min "+minAllowed+")":""}</div>
+          <div style="font-size:11px;color:#8b949e">${bgSize} unit${bgSize!==1?"s":""}${totalUnits>0?` (${pctOfTotal}%)`:""} &bull; ${bgPts} pts ${isValid&&bgSize>0?'<i class="fa-solid fa-circle-check"></i>':""}${!hasCmd&&bgSize>0?'| <i class="fa-solid fa-triangle-exclamation"></i> No Command':""}${bgSize<minAllowed&&maxSize>0?'| <i class="fa-solid fa-triangle-exclamation"></i> Too small (min '+minAllowed+')':""}</div>
         </div>
         <div style="display:flex;gap:6px;align-items:center">
           <button class="btn btn-primary btn-xs" onclick="openBGUnitModal('${bg.id}')">+ Add Unit</button>
@@ -3131,7 +3150,7 @@ function renderBGUnitList() {
     })();
     return `<div class="list-row" style="${sel?"border-color:#007eff;background:#1a2a4a":""}" onclick="bgUnitSelectedId='${u.id}';renderBGUnitList()">
       <div>
-        ${inTF?`<span style="font-size:10px;color:#4caf50;margin-right:4px">&#9733; In TF</span>`:""}
+        ${inTF?`<span style="font-size:10px;color:#4caf50;margin-right:4px"><i class="fa-solid fa-star"></i> In TF</span>`:""}
         ${classBadge(u.class)}
         <span style="font-weight:bold;margin-left:6px;color:${sel?"#007eff":"#fff"}">${esc(u.name)}</span>
         <div style="font-size:11px;color:#8b949e">${pts.unitPts}pts | ${pts.unitSize} stands</div>
@@ -3261,7 +3280,7 @@ function printDeployHTML(dep) {
             </div>
           </div>
           <div style="text-align:right;font-size:12px;color:${bgSize>=minSize||maxSize===0?"#4caf50":"#ef5350"}">
-            ${bgSize>=minSize||maxSize===0?"&#10003; Valid size":"&#9888; Below minimum"}
+            ${bgSize>=minSize||maxSize===0?'<i class="fa-solid fa-circle-check"></i> Valid size':'<i class="fa-solid fa-triangle-exclamation"></i> Below minimum'}
           </div>
         </div>
         ${bg.units.map(slot=>{
