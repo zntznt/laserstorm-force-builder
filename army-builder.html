@@ -110,6 +110,13 @@ hr{border:none;border-top:1px solid #21262d;margin:12px 0}
 .summary-row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #21262d;font-size:13px}
 .summary-row:last-child{border-bottom:none;font-weight:bold;color:#ffd700}
 .tip{position:relative;display:inline;border-bottom:1px dotted #555;cursor:help}
+.tip.ttip{border-bottom:none;cursor:help;color:#007eff;font-weight:bold;font-size:11px;margin-left:3px}
+.badge.tip{border-bottom:none;cursor:help}
+.class-profile{background:#0d1117;border:1px solid #21262d;border-radius:6px;padding:8px 10px;margin-top:8px;font-size:11px;color:#8b949e;line-height:1.5}
+.class-profile strong{color:#c9d1d9}
+.cp-tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}
+.cp-tag{background:#161b22;border:1px solid #30363d;border-radius:4px;padding:1px 6px;font-size:10px;color:#8b949e}
+.cp-tag b{color:#007eff;font-weight:bold}
 .tip::after{content:attr(data-tip);display:none;position:absolute;left:0;top:calc(100% + 4px);z-index:400;background:#0d1117;border:1px solid #007eff;border-radius:6px;padding:8px 10px;font-size:11px;color:#e0e0e0;white-space:normal;width:280px;line-height:1.5;font-weight:normal;pointer-events:none;box-shadow:0 4px 12px rgba(0,0,0,.6)}
 .tip:hover::after{display:block}
 .tip-left::after{left:auto;right:0}
@@ -165,7 +172,7 @@ hr{border:none;border-top:1px solid #21262d;margin:12px 0}
             <input type="text" id="b-name" placeholder="e.g. Line Infantry" style="width:100%">
           </div>
           <div class="form-group">
-            <label>Class</label>
+            <label>Class <span class="tip ttip" data-tip="A shorthand for common game rule interactions (Class determines Unit size, base Save dice, cost multiplier and tactical abilities).">&#9432;</span></label>
             <select id="b-class" onchange="onClassChange()" style="width:auto">
               <option value="inf">Infantry</option>
               <option value="cav">Cavalry</option>
@@ -178,7 +185,7 @@ hr{border:none;border-top:1px solid #21262d;margin:12px 0}
             </select>
           </div>
           <div class="form-group">
-            <label>Role</label>
+            <label>Role <span class="tip ttip" data-tip="Army-building role (book pg. 80): Core, Specialist, Command, Support, or the Task Force Commander. Organizational only — does not change the Stand's stats.">&#9432;</span></label>
             <select id="b-role" style="width:auto">
               <option value="core">Core</option>
               <option value="specialist">Specialist</option>
@@ -188,13 +195,14 @@ hr{border:none;border-top:1px solid #21262d;margin:12px 0}
             </select>
           </div>
         </div>
+        <div id="b-class-profile" class="class-profile"></div>
         <div class="form-row">
           <div class="form-group">
-            <label>Speed</label>
+            <label>Speed <span class="tip ttip" data-tip="Movement rate in inches. Base 4&quot; is free (Cavalry &amp; Aircraft 8&quot;); each extra inch costs +0.25.">&#9432;</span></label>
             <input type="number" id="b-speed" value="4" min="1" max="20">
           </div>
           <div class="form-group">
-            <label>Mobility</label>
+            <label>Mobility <span class="tip ttip" data-tip="Movement type. Walker (+2) and Grav (+4) add to the Speed cost for Scouts &amp; AFVs. Aircraft must be Air; Field Gun/Infantry/Cavalry are Troop.">&#9432;</span></label>
             <select id="b-mobility" style="width:auto">
               <option value="troop">Troop</option>
               <option value="wheel">Wheeled</option>
@@ -205,29 +213,29 @@ hr{border:none;border-top:1px solid #21262d;margin:12px 0}
             </select>
           </div>
           <div class="form-group">
-            <label>Aim</label>
+            <label>Aim <span class="tip ttip tip-left" data-tip="Roll this number or higher to hit with ranged attacks (lower is better). 5+ is free; each point better adds +2 per weapon slot (+1 for Infantry).">&#9432;</span></label>
             <input type="number" id="b-aim" value="5" min="2" max="5">
             <span style="font-size:10px;color:#666">+</span>
           </div>
           <div class="form-group">
-            <label>Assault</label>
+            <label>Assault <span class="tip ttip tip-left" data-tip="Added to close-combat rolls. +0.5 per point; +1 extra if better than +3. Field Guns, Scouts &amp; Aircraft cannot Assault.">&#9432;</span></label>
             <input type="number" id="b-assault" value="0" min="0" max="10">
             <span style="font-size:10px;color:#666">+</span>
           </div>
           <div class="form-group">
-            <label>Save</label>
+            <label>Save <span class="tip ttip tip-left" data-tip="Roll this many D6; the total must meet or exceed the Save Number to avoid destruction. Each pip below the class base costs +1.">&#9432;</span></label>
             <span id="b-savedice" style="color:#fff;font-weight:bold">1</span>D6/
             <input type="number" id="b-savenumber" value="6" min="1" max="24">
             <span style="font-size:10px;color:#666">+</span>
           </div>
           <div class="form-group">
-            <label>Morale</label>
+            <label>Morale <span class="tip ttip tip-left" data-tip="Roll this or higher on a D6 to avoid Withdrawing. 6+ is free; +1 per pip below, +1 extra if better than 4+.">&#9432;</span></label>
             <input type="number" id="b-morale" value="6" min="1" max="6">
             <span style="font-size:10px;color:#666">+</span>
           </div>
         </div>
         <div class="form-group" style="margin-bottom:10px">
-          <label>Stand Traits <span style="color:#007eff;cursor:pointer;font-size:11px" onclick="openTraitPicker('stand')">[+ Edit]</span></label>
+          <label>Stand Traits <span class="tip ttip" data-tip="Other special rules that modify the Stand. Hover any trait to read its effect.">&#9432;</span> <span style="color:#007eff;cursor:pointer;font-size:11px" onclick="openTraitPicker('stand')">[+ Edit]</span></label>
           <div id="b-traits-display" style="font-size:12px;color:#8b949e">None</div>
         </div>
         <div id="b-weapons-container"></div>
@@ -388,13 +396,13 @@ hr{border:none;border-top:1px solid #21262d;margin:12px 0}
           <button class="btn btn-secondary btn-sm" onclick="closeDeployEditor()">Close</button>
         </div>
       </div>
-      <div class="form-row" style="margin-bottom:16px">
+      <div class="form-row" style="margin-bottom:10px">
         <div class="form-group" style="flex:2">
           <label>Deployment Name</label>
           <input type="text" id="dep-name" style="width:100%">
         </div>
         <div class="form-group">
-          <label>Battle Groups</label>
+          <label>Battle Groups <span class="tip ttip" data-tip="Each side splits its army into 3-5 roughly equal Battle Groups for activation. No Battle Group may have fewer than half the Units of the largest (min % shown). Aim for at least one Command Stand in each.">&#9432;</span></label>
           <select id="dep-bg-count" onchange="rebuildBGEditor()">
             <option value="3">3 Battle Groups</option>
             <option value="4">4 Battle Groups</option>
@@ -402,11 +410,17 @@ hr{border:none;border-top:1px solid #21262d;margin:12px 0}
           </select>
         </div>
         <div class="form-group">
-          <label>Army (Optional)</label>
+          <label>Army (Optional) <span class="tip ttip tip-left" data-tip="Limit available units to one army's Task Forces. With 3+ Task Forces, assign one per Battle Group; extras spread evenly.">&#9432;</span></label>
           <select id="dep-army" style="width:auto" onchange="rebuildBGEditor()">
             <option value="">-- All Task Forces --</option>
           </select>
         </div>
+      </div>
+      <div style="font-size:11px;color:#8b949e;margin-bottom:12px;padding:6px 10px;background:#0d1117;border:1px solid #21262d;border-radius:6px">
+        <strong style="color:#c9d1d9">Battle Group rules:</strong>
+        min size <span id="dep-minpct" style="color:#007eff">20%</span> of total units
+        (no group below half the largest, rounded up) &bull; each group should hold &ge;1 Command Stand.
+        <span class="tip" data-tip="When counting Units for minimum size, every 3 Independent Stands count as one Unit.">Independent Stands note &#9432;</span>
       </div>
       <div id="dep-validation" style="margin-bottom:12px"></div>
       <div id="dep-bgs"></div>
@@ -644,6 +658,35 @@ function premiumsFor(cls) {
   return                 {ind:0.30, cmd:0.50, hero:0.55, cmdHero:0.75};
 }
 
+// Tactical class profiles (Unit Classes — CLASSES table)
+const CLASS_PROFILE = {
+  inf:  {cat:"Troops",  represents:"4-6 infantry", dtime:"Yes", assault:"Yes", vuln:"AI, GP",     snap:"Move or Fire", transport:"Fills 1 slot",  save:"1D6"},
+  cav:  {cat:"Troops",  represents:"3-5 cavalry",  dtime:"Yes", assault:"Yes", vuln:"AI, GP",     snap:"Move",         transport:"No",            save:"1D6"},
+  scout:{cat:"Troops",  represents:"2-3 scouts",   dtime:"Yes", assault:"No",  vuln:"AI, AT, GP", snap:"Move",         transport:"No",            save:"1D6"},
+  fg:   {cat:"Troops",  represents:"1-3 guns & crew", dtime:"No", assault:"No", vuln:"AI, GP",    snap:"Fire",         transport:"Fills 2 slots", save:"1D6"},
+  afv:  {cat:"Vehicle", represents:"single AFV",   dtime:"Yes", assault:"With Assault Vehicle trait", vuln:"AT, GP", snap:"Move or Fire", transport:"No", save:"2D6 (1D6 vs AI/GP)"},
+  ac:   {cat:"Vehicle", represents:"single aircraft", dtime:"No", assault:"No", vuln:"AT (AA), GP (AA)", snap:"Move",   transport:"No",            save:"1D6"},
+  sh:   {cat:"Vehicle", represents:"single Super Heavy", dtime:"No", assault:"Crush", vuln:"AT, GP", snap:"Move or Fire (1 stand)", transport:"No", save:"3D6"},
+  beh:  {cat:"Vehicle", represents:"single Behemoth", dtime:"No", assault:"Crush / Titanic Brawl", vuln:"AT, GP", snap:"No", transport:"No",       save:"4D6"}
+};
+
+function renderClassProfile() {
+  const cls = document.getElementById("b-class").value;
+  const ci = CLASS_INFO[cls], cp = CLASS_PROFILE[cls];
+  const el = document.getElementById("b-class-profile");
+  if(!el || !cp) { if(el) el.innerHTML=""; return; }
+  el.innerHTML = `
+    <div><strong>${ci.label}</strong> &middot; ${cp.cat} &middot; represents ${cp.represents} &middot; Unit size ${ci.size} &middot; &times;${ci.mult} cost</div>
+    <div class="cp-tags">
+      <span class="cp-tag"><b>Save</b> ${cp.save}</span>
+      <span class="cp-tag"><b>Double-Time</b> ${cp.dtime}</span>
+      <span class="cp-tag"><b>Assault</b> ${cp.assault}</span>
+      <span class="cp-tag"><b>Vulnerable</b> ${cp.vuln}</span>
+      <span class="cp-tag"><b>Snap</b> ${cp.snap}</span>
+      <span class="cp-tag"><b>Transport</b> ${cp.transport}</span>
+    </div>`;
+}
+
 const RANGE_OPTS = [
   {label:"10\"", val:0}, {label:"20\"", val:2}, {label:"30\"", val:5},
   {label:"40\"", val:10}, {label:"50\"", val:20}
@@ -877,7 +920,12 @@ function rangeLabel(rv) {
   return {0:"10\"",2:"20\"",5:"30\"",10:"40\"",20:"50\""}[rv] || rv+"\"";
 }
 function classLabel(c) { return (CLASS_INFO[c]||{}).label||c; }
-function classBadge(c) { return `<span class="badge badge-${c}">${classLabel(c)}</span>`; }
+function classBadge(c) {
+  const cp = CLASS_PROFILE[c], ci = CLASS_INFO[c]||{};
+  if(!cp) return `<span class="badge badge-${c}">${classLabel(c)}</span>`;
+  const tip = `${ci.label} — ${cp.cat}. Save ${cp.save} | Assault ${cp.assault} | Vulnerable ${cp.vuln} | Snap ${cp.snap} | Transport ${cp.transport}.`;
+  return `<span class="badge badge-${c} tip" data-tip="${esc(tip)}">${classLabel(c)}</span>`;
+}
 function roleBadge(r) { return `<span class="badge badge-${r}">${r}</span>`; }
 
 function factionBadge(f) {
@@ -1015,6 +1063,7 @@ function onClassChange() {
   document.getElementById("b-traits-display").innerHTML = "None";
   builderWeapons = [{mode:"gp",type:"p",range:0,shots:1,impact:0,traits:[]}];
   renderWeaponRows();
+  renderClassProfile();
 }
 
 function renderWeaponRows() {
@@ -1031,7 +1080,7 @@ function renderWeaponRows() {
       </div>
       <div class="weapon-builder-row">
         <div class="form-group">
-          <label>Mode</label>
+          <label>Mode <span class="tip ttip" data-tip="AI = Anti-Infantry, AT = Anti-Tank, GP = General Purpose. AI/AT are free; GP costs &times;1.5.">&#9432;</span></label>
           <select onchange="builderWeapons[${i}].mode=this.value" style="width:auto">
             <option value="ai" ${w.mode==="ai"?"selected":""}>AI</option>
             <option value="at" ${w.mode==="at"?"selected":""}>AT</option>
@@ -1039,28 +1088,28 @@ function renderWeaponRows() {
           </select>
         </div>
         <div class="form-group">
-          <label>Type</label>
+          <label>Type <span class="tip ttip" data-tip="Primary or Selective. Selective is &times;0.8 cost but the Stand must have at least 2 Selective weapons.">&#9432;</span></label>
           <select onchange="builderWeapons[${i}].type=this.value" style="width:auto">
             <option value="p" ${w.type==="p"?"selected":""}>Primary</option>
             <option value="s" ${w.type==="s"?"selected":""}>Selective</option>
           </select>
         </div>
         <div class="form-group">
-          <label>Range</label>
+          <label>Range <span class="tip ttip" data-tip="Range of the weapon in inches. 10&quot;=0, 20&quot;=2, 30&quot;=5, 40&quot;=10, 50&quot;=20 points.">&#9432;</span></label>
           <select onchange="builderWeapons[${i}].range=parseInt(this.value)" style="width:auto">
             ${RANGE_OPTS.map(r=>`<option value="${r.val}" ${w.range===r.val?"selected":""}>${r.label}</option>`).join("")}
           </select>
         </div>
         <div class="form-group">
-          <label>Shots</label>
+          <label>Shots <span class="tip ttip" data-tip="Number of attack dice rolled. Each shot beyond the first adds +50% of the Range + Impact + impact-trait cost.">&#9432;</span></label>
           <input type="number" value="${w.shots}" min="1" max="20" style="width:55px" onchange="builderWeapons[${i}].shots=parseInt(this.value)||1">
         </div>
         <div class="form-group">
-          <label>Impact</label>
+          <label>Impact <span class="tip ttip tip-left" data-tip="Modifier applied to the target's Damage Save Number. +2/point; +2 more above +6; +5 more above +10.">&#9432;</span></label>
           <input type="number" value="${w.impact}" min="0" max="20" style="width:55px" onchange="builderWeapons[${i}].impact=parseInt(this.value)||0">
         </div>
         <div class="form-group">
-          <label>Traits <span style="color:#007eff;cursor:pointer" onclick="openTraitPicker('weapon',${i})">[+]</span></label>
+          <label>Traits <span class="tip ttip tip-left" data-tip="Other special rules for this weapon. Hover any trait to read its effect.">&#9432;</span> <span style="color:#007eff;cursor:pointer" onclick="openTraitPicker('weapon',${i})">[+]</span></label>
           <div id="wtrait-display-${i}" style="font-size:11px;color:#8b949e">${traitTipHTML(w.traits||[], WEAPON_TRAITS)||"None"}</div>
         </div>
       </div>`;
@@ -1768,6 +1817,11 @@ function validateDeployment(dep) {
 function renderBGEditor() {
   if(!currentDeployment) return;
   const availTFs = getAvailableTFs();
+  const bgCount = currentDeployment.battleGroups.length;
+  const minPct = bgCount===3?"20%":bgCount===4?"14.28%":"11.11%";
+  const minPctEl = document.getElementById("dep-minpct");
+  if(minPctEl) minPctEl.textContent = minPct;
+  const totalUnits = currentDeployment.battleGroups.reduce((s,b)=>s+b.units.reduce((a,u)=>a+u.quantity,0),0);
   const validMsgs = validateDeployment(currentDeployment);
   const valEl = document.getElementById("dep-validation");
   if(validMsgs.length) {
@@ -1782,6 +1836,7 @@ function renderBGEditor() {
     const allBGSizes = currentDeployment.battleGroups.map(b=>b.units.reduce((s,u)=>s+u.quantity,0));
     const maxSize = Math.max(...allBGSizes,0);
     const minAllowed = Math.ceil(maxSize/2);
+    const pctOfTotal = totalUnits>0 ? Math.round(bgSize/totalUnits*100) : 0;
     const hasCmd = bg.units.some(u=>{
       const unit = unitById(u.unitId);
       return unit && (u.isCommand||(unit.standTraits||[]).some(t=>t[0]==="Inspiration")||unit.role==="command"||unit.role==="commander");
@@ -1796,7 +1851,7 @@ function renderBGEditor() {
       <div class="bg-header">
         <div>
           <input type="text" value="${esc(bg.name)}" style="background:transparent;border:none;color:#007eff;font-size:16px;font-weight:bold;width:220px;padding:0" onchange="bg_rename('${bg.id}',this.value)">
-          <div style="font-size:11px;color:#8b949e">${bgSize} unit${bgSize!==1?"s":""} &bull; ${bgPts} pts ${isValid&&bgSize>0?"&#10003;":""}${!hasCmd&&bgSize>0?"| &#9888; No Command":""}${bgSize<minAllowed&&maxSize>0?"| &#9888; Too small":""}</div>
+          <div style="font-size:11px;color:#8b949e">${bgSize} unit${bgSize!==1?"s":""}${totalUnits>0?` (${pctOfTotal}%)`:""} &bull; ${bgPts} pts ${isValid&&bgSize>0?"&#10003;":""}${!hasCmd&&bgSize>0?"| &#9888; No Command":""}${bgSize<minAllowed&&maxSize>0?"| &#9888; Too small (min "+minAllowed+")":""}</div>
         </div>
         <div style="display:flex;gap:6px;align-items:center">
           <button class="btn btn-primary btn-xs" onclick="openBGUnitModal('${bg.id}')">+ Add Unit</button>
