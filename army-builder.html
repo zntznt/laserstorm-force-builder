@@ -1827,15 +1827,23 @@ function saveCustomTrait() {
 }
 
 function deleteCustomTrait(id) {
-  if(!confirm("Delete this custom trait? It will be removed from any units using it.")) return;
   const trait = state.customTraits.find(t=>t.id===id);
-  state.customTraits = state.customTraits.filter(t=>t.id!==id);
-  if(trait) {
-    state.customUnits.forEach(u => {
-      u.standTraits = (u.standTraits||[]).filter(t=>t[0]!==trait.name);
-      (u.weapons||[]).forEach(w => { w.traits = (w.traits||[]).filter(t=>t[0]!==trait.name); });
-    });
+  if(!trait) return;
+  // Check library units
+  const usedBy = state.customUnits.filter(u =>
+    (u.standTraits||[]).some(t=>t[0]===trait.name) ||
+    (u.weapons||[]).some(w=>(w.traits||[]).some(t=>t[0]===trait.name))
+  ).map(u=>u.name);
+  // Check current builder session
+  const inBuilder = currentBuilderTraits.some(t=>t[0]===trait.name) ||
+    builderWeapons.some(w=>(w.traits||[]).some(t=>t[0]===trait.name));
+  if(inBuilder) usedBy.unshift("(current unit in builder)");
+  if(usedBy.length) {
+    alert(`"${trait.name}" is used by the following units and cannot be deleted:\n\n${usedBy.map(n=>`• ${n}`).join("\n")}\n\nRemove it from those units first.`);
+    return;
   }
+  if(!confirm(`Delete trait "${trait.name}"?`)) return;
+  state.customTraits = state.customTraits.filter(t=>t.id!==id);
   saveState();
   renderCustomTraitList();
 }
