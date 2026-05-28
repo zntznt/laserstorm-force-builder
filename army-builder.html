@@ -334,6 +334,14 @@ hr{border:none;border-top:1px solid #21262d;margin:12px 0}
         <option value="pts-asc">Points: Low → High</option>
         <option value="pts-desc">Points: High → Low</option>
         <option value="class">Class</option>
+        <option value="speed-desc">Speed: Fast → Slow</option>
+        <option value="speed-asc">Speed: Slow → Fast</option>
+        <option value="aim-asc">Aim: Best → Worst</option>
+        <option value="aim-desc">Aim: Worst → Best</option>
+        <option value="save-asc">Save: Best → Worst</option>
+        <option value="save-desc">Save: Worst → Best</option>
+        <option value="morale-asc">Morale: Best → Worst</option>
+        <option value="morale-desc">Morale: Worst → Best</option>
       </select>
     </div>
     <div id="lib-list"></div>
@@ -1299,11 +1307,19 @@ function renderLibrary() {
   const classOrder = ["inf","cav","fg","scout","afv","ac","sh","beh"];
   units.sort((a,b) => {
     switch(libSort) {
-      case "name-desc": return b.name.localeCompare(a.name);
-      case "pts-asc":   return calcPoints(a).perStand - calcPoints(b).perStand;
-      case "pts-desc":  return calcPoints(b).perStand - calcPoints(a).perStand;
-      case "class":     return (classOrder.indexOf(a.class)-classOrder.indexOf(b.class)) || a.name.localeCompare(b.name);
-      default:          return a.name.localeCompare(b.name);
+      case "name-desc":  return b.name.localeCompare(a.name);
+      case "pts-asc":    return calcPoints(a).perStand - calcPoints(b).perStand;
+      case "pts-desc":   return calcPoints(b).perStand - calcPoints(a).perStand;
+      case "class":      return (classOrder.indexOf(a.class)-classOrder.indexOf(b.class)) || a.name.localeCompare(b.name);
+      case "speed-desc": return (b.speed - a.speed) || a.name.localeCompare(b.name);
+      case "speed-asc":  return (a.speed - b.speed) || a.name.localeCompare(b.name);
+      case "aim-asc":    return (a.aim - b.aim) || a.name.localeCompare(b.name);
+      case "aim-desc":   return (b.aim - a.aim) || a.name.localeCompare(b.name);
+      case "save-asc":   return (a.saveNumber - b.saveNumber) || a.name.localeCompare(b.name);
+      case "save-desc":  return (b.saveNumber - a.saveNumber) || a.name.localeCompare(b.name);
+      case "morale-asc": return (a.morale - b.morale) || a.name.localeCompare(b.name);
+      case "morale-desc":return (b.morale - a.morale) || a.name.localeCompare(b.name);
+      default:           return a.name.localeCompare(b.name);
     }
   });
   const list = document.getElementById("lib-list");
