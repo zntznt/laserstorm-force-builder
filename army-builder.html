@@ -112,8 +112,10 @@ hr{border:none;border-top:1px solid #21262d;margin:12px 0}
 .qty-btn{background:#21262d;border:none;color:#fff;width:22px;height:22px;border-radius:50%;cursor:pointer;font-size:14px;line-height:22px;text-align:center}
 .qty-btn:hover{background:#007eff}
 .qty-val{width:30px;text-align:center;font-weight:bold;font-size:14px}
-.summary-row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #21262d;font-size:13px}
+.summary-row{display:flex;justify-content:space-between;padding:5px 0 4px;border-bottom:1px solid #21262d;font-size:13px;margin-top:2px}
 .summary-row:last-child{border-bottom:none;font-weight:bold;color:#ffd700}
+.detail-row{display:flex;justify-content:space-between;padding:1px 0 1px 12px;font-size:11px;color:#555}
+.detail-row+.summary-row{margin-top:6px}
 .tip{position:relative;display:inline;border-bottom:1px dotted #555;cursor:help}
 .tip.ttip{border-bottom:none;cursor:help;color:#007eff;font-weight:bold;font-size:11px;margin-left:3px}
 .badge.tip{border-bottom:none;cursor:help}
@@ -1014,11 +1016,10 @@ function calcPoints(unit) {
              cmdPts:op.cmdPts, heroPts:op.heroPts, cmdHeroPts:op.cmdHeroPts, saveDice:ci.saveDice };
   }
   const ci = CLASS_INFO[unit.class] || CLASS_INFO.inf;
-  let ptsSpeed = (unit.speed - ci.baseSpeed) * 0.25;
-  if (unit.class==="scout"||unit.class==="afv") {
-    if (unit.mobility==="walk") ptsSpeed += 2;
-    if (unit.mobility==="grav") ptsSpeed += 4;
-  }
+  const ptsSpeedBase = (unit.speed - ci.baseSpeed) * 0.25;
+  const ptsMobSurcharge = (unit.class==="scout"||unit.class==="afv")
+    ? (unit.mobility==="walk" ? 2 : unit.mobility==="grav" ? 4 : 0) : 0;
+  let ptsSpeed = ptsSpeedBase + ptsMobSurcharge;
   const aimFactor = unit.class==="inf" ? 1 : 2;
   const wSlots = unit.weapons.length;
   const ptsAim = Math.max(0, 5 - unit.aim) * aimFactor * wSlots;
@@ -1027,12 +1028,24 @@ function calcPoints(unit) {
   let ptsMorale = 6 - unit.morale;
   if (unit.morale < 4) ptsMorale += 1;
   let ptsTraits = 0;
+  const standTraitComps = [];
   (unit.standTraits||[]).forEach(t => {
-    if (t[1]===0) { if(t[0]==="Horde") ptsTraits += (unit.morale<=3?3:1); }
-    else ptsTraits += t[1];
+    let tc = t[1]===0 ? (t[0]==="Horde" ? (unit.morale<=3?3:1) : 0) : t[1];
+    ptsTraits += tc;
+    if(tc !== 0) standTraitComps.push({label: t[0], val: tc});
   });
   let standPts = Math.max(1, Math.ceil(ptsSpeed+ptsAim+ptsAssault+ptsSave+ptsMorale+ptsTraits));
+  // Build stand component list (only non-zero entries)
+  const standComps = [];
+  if(ptsSpeedBase > 0) standComps.push({label:`Speed (${unit.speed}")`, val: ptsSpeedBase});
+  if(ptsMobSurcharge > 0) standComps.push({label:`${unit.mobility==="walk"?"Walker":"Grav"} mobility`, val: ptsMobSurcharge});
+  if(ptsAim > 0) standComps.push({label:`Aim ${unit.aim}+`, val: ptsAim});
+  if(ptsAssault > 0) standComps.push({label:`Assault ${unit.assault}+`, val: ptsAssault});
+  if(ptsSave > 0) standComps.push({label:`Save ${unit.saveNumber}+`, val: ptsSave});
+  if(ptsMorale > 0) standComps.push({label:`Morale ${unit.morale}+`, val: ptsMorale});
+  standComps.push(...standTraitComps);
   let weaponPts = 0;
+  const weaponComps = [];
   (unit.weapons||[]).forEach((w,i) => {
     let wCost = 0;
     let impCost = w.impact * 2;
@@ -1058,6 +1071,7 @@ function calcPoints(unit) {
     if(unit.class==="fg"&&wSlots===1) wCost-=1;
     if(wCost<1) wCost=w.shots;
     weaponPts += wCost;
+    weaponComps.push({label: w.name || `Weapon ${i+1}`, cost: wCost});
   });
   let total = Math.ceil((standPts+weaponPts)*ci.mult);
   const pr = premiumsFor(unit.class);
@@ -1071,7 +1085,7 @@ function calcPoints(unit) {
     heroPts: prem(pr.hero),
     cmdHeroPts: prem(pr.cmdHero),
     saveDice: ci.saveDice,
-    breakdown: {standPts, weaponPts, mult: ci.mult}
+    breakdown: {standPts, standComps, weaponPts, weaponComps, mult: ci.mult}
   };
 }
 
@@ -1506,11 +1520,23 @@ function calculateBuilder() {
   const pts = calcPoints(unit);
   const ci = CLASS_INFO[unit.class];
   const bd = pts.breakdown;
-  const bdHTML = bd ? `
-    <div class="summary-row"><span>Stand cost (no weapons)</span><span>${bd.standPts}</span></div>
-    <div class="summary-row"><span>Weapon systems (${unit.weapons.length})</span><span>${bd.weaponPts}</span></div>
-    <div class="summary-row"><span>Class multiplier</span><span>&times;${bd.mult}</span></div>
-    <div class="summary-row"><span>Cost per stand</span><span>${pts.perStand} pts</span></div>` : "";
+  function fmtBD(v) { return (v>0?"+":"") + (Number.isInteger(v) ? v : v.toFixed(1)); }
+  const bdHTML = bd ? (() => {
+    const standRows = bd.standComps.map(c =>
+      `<div class="detail-row"><span>${esc(c.label)}</span><span>${fmtBD(c.val)}</span></div>`).join("");
+    const wpnLabel = unit.weapons.length
+      ? (unit.weapons.length === 1 ? "1 weapon" : `${unit.weapons.length} weapons`)
+      : "no weapons";
+    const wpnRows = bd.weaponComps.map(w =>
+      `<div class="detail-row"><span>${esc(w.label)}</span><span>+${w.cost}</span></div>`).join("");
+    return `
+      <div class="summary-row"><span>Stand cost <span style="color:#555;font-size:11px;font-weight:normal">(${wpnLabel} excluded)</span></span><span>${bd.standPts}</span></div>
+      ${standRows}
+      <div class="summary-row"><span>Weapon systems</span><span>${bd.weaponPts > 0 ? "+"+bd.weaponPts : bd.weaponPts}</span></div>
+      ${wpnRows}
+      <div class="summary-row"><span>Class multiplier</span><span>&times;${bd.mult}</span></div>
+      <div class="summary-row"><span>Per stand</span><span>${pts.perStand} pts</span></div>`;
+  })() : "";
   document.getElementById("b-result").innerHTML = `
     <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-bottom:12px">
       <div><div class="points-big">${pts.unitPts}</div><div class="points-label">Unit (${ci.size} stand${ci.size>1?"s":""})</div></div>
