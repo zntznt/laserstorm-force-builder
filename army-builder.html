@@ -1004,7 +1004,7 @@ function unitCardHTML(unit, actions) {
   const pts = calcPoints(unit);
   const traitsHTML = traitTipHTML(unit.standTraits||[], STAND_TRAITS);
   const weaponsHTML = (unit.weapons||[]).length===0
-    ? `<div class="weapon-row" style="color:#8b949e;font-style:italic">No ranged weapons — melee only</div>`
+    ? `<div class="weapon-row" style="color:#8b949e;font-style:italic">No ranged weapons — assault only</div>`
     : (unit.weapons||[]).map(w => {
         const wtHTML = (w.traits||[]).length
           ? " | " + traitTipHTML(w.traits, WEAPON_TRAITS)
@@ -1147,7 +1147,7 @@ function renderWeaponRows() {
     div.innerHTML = `
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
         <span style="font-size:11px;font-weight:bold;color:#8b949e;text-transform:uppercase">Weapon ${i+1}</span>
-        ${builderWeapons.length>1?`<button class="btn btn-danger btn-xs" onclick="removeWeapon(${i})">Remove</button>`:""}
+        <button class="btn btn-danger btn-xs" onclick="removeWeapon(${i})">Remove</button>
       </div>
       <div class="weapon-builder-row">
         <div class="form-group">
@@ -1194,7 +1194,6 @@ function addWeaponRow() {
   calculateBuilder();
 }
 function removeWeapon(i) {
-  if(builderWeapons.length<=1){alert("Need at least one weapon.");return;}
   builderWeapons.splice(i,1);
   renderWeaponRows();
   calculateBuilder();
