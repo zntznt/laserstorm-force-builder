@@ -199,6 +199,7 @@ label .trait-edit-btn{margin-left:6px}
 .trait-stepper{display:flex;align-items:center;gap:4px;flex-shrink:0}
 .trait-stepper-btn{background:var(--surface-raised);border:1px solid var(--border-default);color:var(--text-muted);border-radius:4px;padding:1px 8px;font-size:14px;font-weight:bold;cursor:pointer;line-height:1.4}
 .trait-stepper-btn:hover{background:var(--surface-hover);color:var(--text-primary)}
+.trait-stepper-btn:disabled{opacity:0.3;cursor:not-allowed;pointer-events:none}
 .trait-stepper-count{font-size:13px;font-weight:bold;color:var(--accent);min-width:20px;text-align:center}
 .trait-group-header{font-family:var(--font-display);font-size:14px;letter-spacing:1px;color:var(--text-muted);padding:10px 0 4px;border-bottom:1px solid var(--border-subtle);margin:10px 0 2px}
 .trait-cost{font-size:10px;font-weight:600;color:var(--accent-light);background:var(--accent-tint);border:1px solid #1f6feb44;border-radius:8px;padding:0 5px;margin-left:5px;vertical-align:middle}
@@ -567,9 +568,6 @@ label .trait-edit-btn{margin-left:6px}
     </div>
     <input class="search-bar" id="trait-picker-search" placeholder="Filter traits..." oninput="refreshTraitPickerList()" style="margin-bottom:4px">
     <div id="trait-modal-list"></div>
-    <div style="margin-top:12px;display:flex;justify-content:flex-start">
-      <button class="btn btn-primary" onclick="applyTraits()">Apply</button>
-    </div>
   </div>
 </div>
 
@@ -1776,7 +1774,7 @@ function refreshTraitPickerList() {
         const max = traitStackMax(val);
         const stepper = document.createElement("div");
         stepper.className = "trait-stepper";
-        stepper.innerHTML = `<button class="trait-stepper-btn" onclick="stepperDecr('${key}')">−</button><span class="trait-stepper-count" id="step_${key}">${count}</span><button class="trait-stepper-btn" onclick="stepperIncr('${key}',${max})">+</button>`;
+        stepper.innerHTML = `<button class="trait-stepper-btn" onclick="stepperDecr('${key}',${max})" ${count<=0?"disabled":""}>−</button><span class="trait-stepper-count" id="step_${key}">${count}</span><button class="trait-stepper-btn" onclick="stepperIncr('${key}',${max})" ${count>=max?"disabled":""}>+</button>`;
         row.appendChild(stepper);
         row.appendChild(info);
       } else {
@@ -1786,6 +1784,7 @@ function refreshTraitPickerList() {
         cb.checked = selected.includes(val[0]);
         cb.disabled = locked;
         cb.id = "trait_cb_"+key;
+        cb.addEventListener("change", applyTraitsLive);
         info.htmlFor = "trait_cb_"+key;
         row.appendChild(cb);
         row.appendChild(info);
@@ -1798,12 +1797,22 @@ function refreshTraitPickerList() {
 function stepperIncr(key, max) {
   traitPickerStepperCounts[key] = Math.min((traitPickerStepperCounts[key]||0)+1, max);
   const el = document.getElementById("step_"+key);
-  if(el) el.textContent = traitPickerStepperCounts[key];
+  if(el) {
+    el.textContent = traitPickerStepperCounts[key];
+    el.previousElementSibling.disabled = traitPickerStepperCounts[key] <= 0;
+    el.nextElementSibling.disabled = traitPickerStepperCounts[key] >= max;
+  }
+  applyTraitsLive();
 }
-function stepperDecr(key) {
+function stepperDecr(key, max) {
   traitPickerStepperCounts[key] = Math.max((traitPickerStepperCounts[key]||0)-1, 0);
   const el = document.getElementById("step_"+key);
-  if(el) el.textContent = traitPickerStepperCounts[key];
+  if(el) {
+    el.textContent = traitPickerStepperCounts[key];
+    el.previousElementSibling.disabled = traitPickerStepperCounts[key] <= 0;
+    el.nextElementSibling.disabled = traitPickerStepperCounts[key] >= max;
+  }
+  applyTraitsLive();
 }
 
 function openTraitPicker(target, wIdx) {
@@ -1825,7 +1834,7 @@ function openTraitPicker(target, wIdx) {
   openModal("modal-traits");
 }
 
-function applyTraits() {
+function applyTraitsLive() {
   const traits = traitPickerTarget==="stand" ? allStandTraits() : allWeaponTraits();
   const checkboxes = document.querySelectorAll("#trait-modal-list input[type=checkbox]");
   const selected = [];
@@ -1843,7 +1852,6 @@ function applyTraits() {
     const el = document.getElementById(`wtrait-display-${traitPickerWeaponIdx}`);
     if(el) el.innerHTML = traitTipHTML(selected, allWeaponTraits())||"None";
   }
-  closeModal("modal-traits");
   calculateBuilder();
 }
 
