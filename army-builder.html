@@ -277,7 +277,7 @@ hr{border:none;border-top:1px solid #21262d;margin:12px 0}
         <div id="b-edit-hint" style="display:none;font-size:11px;color:#ffb74d;margin-top:10px"></div>
         <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
           <button class="btn btn-success" id="b-save-btn" onclick="saveToLibrary()">Save to Library</button>
-          <button class="btn btn-secondary" id="b-new-btn" onclick="resetBuilder()" style="display:none">New Unit</button>
+          <button class="btn btn-secondary" id="b-new-btn" onclick="saveAsNewUnit()" style="display:none">Save as New Unit</button>
         </div>
       </div>
       <div class="card">
@@ -1726,9 +1726,32 @@ function calculateBuilder() {
     ${bdHTML}`;
 }
 
+function saveAsNewUnit() {
+  const nameEl = document.getElementById("b-name");
+  let name = nameEl.value.trim();
+  const nameTaken = n => state.customUnits.some(u => u.name === n);
+  if (!name || name === "Unnamed Unit" || nameTaken(name)) {
+    const suggestion = name && name !== "Unnamed Unit" ? name + " copy" : "";
+    const msg = nameTaken(name)
+      ? `"${name}" already exists. Enter a different name for the new unit:`
+      : "Enter a name for the new unit:";
+    const newName = prompt(msg, suggestion);
+    if (newName === null) return;
+    const trimmed = newName.trim();
+    if (!trimmed) { alert("Please enter a name."); return; }
+    if (nameTaken(trimmed)) { alert(`"${trimmed}" already exists. Please choose a different name.`); return; }
+    nameEl.value = trimmed;
+  }
+  editingUnitId = null;
+  setEditMode(null);
+  saveToLibrary();
+}
+
 function saveToLibrary() {
   const unit = gatherBuilderUnit();
   if(!unit.name || unit.name==="Unnamed Unit") { alert("Give your unit a name first."); return; }
+  const duplicate = state.customUnits.find(u => u.name === unit.name && u.id !== editingUnitId);
+  if (duplicate) { alert(`A unit named "${unit.name}" already exists. Please choose a different name.`); return; }
   calculateBuilder();
   unit.builtIn = false;
   if(editingUnitId) {
