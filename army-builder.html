@@ -687,7 +687,7 @@ const STAND_TRAITS = {
   bNet:     ["Bot-Net",1,           "[Soulless][Unit] Stands that are out of coherency may still fire, but all fire is Inaccurate."],
   charge:   ["Charge",0.5,          "+1 to Assault rolls if the Unit initiated the combat."],
   dFighter: ["Dogfighter",1,        "[Aircraft] Minimum movement is half of maximum Speed (instead of 3/4)."],
-  emplace:  ["Emplacement",0,       "[Independent AFV or Super Heavy] Gains the Emplacement mobility type. Cannot move or be moved under any circumstances. Does not test Morale."],
+  emplace:  ["Emplacement",0,       "Gains the Emplacement mobility type. Cannot move or be moved under any circumstances. Does not test Morale."],
   feroc:    ["Ferocious",1,         "[Swarm] If this Unit initiated the Assault, the target Stands retreat 3\" after the combat, even if the target wins."],
   frenzy:   ["Frenzy",1,            "[Swarm] This Stand can Follow On 3\" after close combat, but it must be toward the nearest enemy, and into contact if possible."],
   glory:    ["Glory",1,             "[Warrior][Unit][Infantry] When this Unit wins a close combat it initiated against a higher Assault target, the target makes a Damage Save with one fewer dice."],
@@ -732,6 +732,44 @@ const WEAPON_TRAITS = {
   rFire:    ["Rapid Fire",0,   "+1 Shot if this Stand did not move during this activation."],
   repFire:  ["Repeating Fire",0,"Every 6 rolled to hit allows an additional shot to be fired."],
   tgt:      ["Targeting",0,    "+1 to hit rolls."]
+};
+
+// Structured requirements for built-in traits.
+// Each entry is an array of requirement objects (all ANDed together).
+// Within one object, vals[] items are ORed ("afv" or "sh" → vals:["afv","sh"]).
+//   type "faction"  → must belong to this faction
+//   type "class"    → must be this class key, or "troop" (inf/cav/fg)
+//   type "mobility" → must use this mobility key
+//   type "role"     → "unit"=multi-stand, "hero", "independent", "troop"=non-vehicle
+//   type "traitr"   → weapon must also carry this weapon-trait key
+const TRAIT_REQS = {
+  // Stand traits
+  aggLoop:  [{type:"faction",vals:["soulless"]}, {type:"role",vals:["unit"]}],
+  bCry:     [{type:"faction",vals:["warrior"]},  {type:"role",vals:["unit"]},  {type:"role",vals:["troop"]}],
+  bNet:     [{type:"faction",vals:["soulless"]}, {type:"role",vals:["unit"]}],
+  bTide:    [{type:"faction",vals:["precursor"]}],
+  dFighter: [{type:"class",vals:["ac"]}],
+  emplace:  [{type:"role",vals:["independent"]}, {type:"class",vals:["afv","sh"]}],
+  feroc:    [{type:"faction",vals:["swarm"]}],
+  frenzy:   [{type:"faction",vals:["swarm"]}],
+  glory:    [{type:"faction",vals:["warrior"]},  {type:"role",vals:["unit"]},  {type:"class",vals:["inf"]}],
+  horde:    [{type:"role",vals:["unit"]}],
+  hover:    [{type:"class",vals:["ac"]}],
+  inWalls:  [{type:"faction",vals:["swarm"]}],
+  infil:    [{type:"role",vals:["unit"]}],
+  minSpeed: [{type:"mobility",vals:["grav"]}],
+  oClock:   [{type:"faction",vals:["soulless"]}, {type:"role",vals:["unit"]},  {type:"class",vals:["inf"]}],
+  relic:    [{type:"faction",vals:["precursor"]},{type:"role",vals:["hero"]},  {type:"role",vals:["troop"]}],
+  spawn:    [{type:"faction",vals:["swarm"]},    {type:"role",vals:["unit"]}],
+  stealth:  [{type:"role",vals:["unit"]}],
+  tFate:    [{type:"faction",vals:["precursor"]},{type:"role",vals:["hero"]},  {type:"class",vals:["inf"]}],
+  terror2:  [{type:"role",vals:["unit"]}],
+  terror4:  [{type:"role",vals:["unit"]}],
+  terror6:  [{type:"role",vals:["unit"]}],
+  vSworn:   [{type:"faction",vals:["warrior"]},  {type:"role",vals:["unit"]}],
+  vtol:     [{type:"class",vals:["ac"]}],
+  // Weapon traits
+  aiGuide:  [{type:"faction",vals:["soulless"]}, {type:"traitr",vals:["indir"]}],
 };
 
 const CLASS_INFO = {
@@ -1072,19 +1110,68 @@ function allWeaponTraits() {
   return Object.assign({}, WEAPON_TRAITS, custom);
 }
 
+// Returns structured requirement array for a trait.
+// Built-ins use TRAIT_REQS; custom traits (key "custom_*") derive from the faction field.
+function allTraitReqs(key, entry) {
+  if(key && key.startsWith("custom_")) {
+    const reqs = [];
+    const fac = entry && entry[3];
+    if(fac) reqs.push({type:"faction", vals:[fac]});
+    return reqs;
+  }
+  return TRAIT_REQS[key] || [];
+}
+
+// Strip all leading [Bracket] prefix blocks from a description string.
+function cleanTraitDesc(desc) {
+  return (desc||"").replace(/^(\[[^\]]*\]\s*)+/, "").trim();
+}
+
+const TRAIT_REQ_COLORS = {faction:"", class:"#f57c00", mobility:"#0097a7", role:"#5c6bc0", traitr:"#7b1fa2"};
+const TRAIT_CLASS_LABELS = {inf:"Infantry",cav:"Cavalry",fg:"Field Gun",scout:"Scout",afv:"AFV",ac:"Aircraft",sh:"SH",beh:"Behemoth",troop:"Troop"};
+const TRAIT_ROLE_LABELS  = {unit:"Unit",hero:"Hero",independent:"Independent",troop:"Troop"};
+const TRAIT_MOB_LABELS   = {grav:"Grav",walk:"Walker",wheel:"Wheeled",track:"Tracked"};
+const FACTION_LABEL_MAP  = {standard:"Standard",precursor:"Precursor",soulless:"Soulless",swarm:"Swarm",warrior:"Warrior"};
+
+function traitReqColor(type, val) {
+  if(type === "faction") {
+    const cf = (state.customFactions||[]).find(f=>f.id===val);
+    return cf ? cf.color : (FACTION_COLORS[val] || "#888");
+  }
+  return TRAIT_REQ_COLORS[type] || "#888";
+}
+
+function traitReqLabel(type, vals) {
+  if(type === "faction") return vals.map(v => {
+    const cf = (state.customFactions||[]).find(f=>f.id===v);
+    return cf ? `${cf.icon} ${cf.name}` : (FACTION_LABEL_MAP[v] || v);
+  }).join(" / ");
+  if(type === "class")    return vals.map(v => TRAIT_CLASS_LABELS[v]||v).join(" / ");
+  if(type === "mobility") return vals.map(v => TRAIT_MOB_LABELS[v]||v).join(" / ");
+  if(type === "role")     return vals.map(v => TRAIT_ROLE_LABELS[v]||v).join(" / ");
+  if(type === "traitr")   { const wt = WEAPON_TRAITS[vals[0]]; return "req. "+(wt?.[0]||vals[0]); }
+  return vals.join(" / ");
+}
+
+function traitReqBadgeHTML(req) {
+  const color = traitReqColor(req.type, req.vals[0]);
+  const label = traitReqLabel(req.type, req.vals);
+  return `<span class="trait-badge" style="background:${color}22;color:${color};border-color:${color}55;font-size:9px;padding:0 5px">${label}</span>`;
+}
+
 function traitTipHTML(traitArr, allTraits) {
   if(!traitArr||!traitArr.length) return `<span style="color:#444;font-size:11px">None</span>`;
   return traitArr.map(t => {
     const name = t[0];
-    const entry = Object.values(allTraits).find(v=>v[0]===name);
-    const desc = entry?.[2] || "";
+    const [key, entry] = Object.entries(allTraits).find(([,v])=>v[0]===name) || [null, null];
+    const cleanDesc = cleanTraitDesc(entry?.[2] || "");
     const fac = traitFactionKey(entry);
     const facObj = fac ? (state.customFactions||[]).find(f=>f.id===fac) : null;
     const color = facObj ? facObj.color : (fac ? (FACTION_COLORS[fac]||"#888") : "#555");
     const bg = fac ? `${color}22` : "#21262d";
     const border = fac ? `${color}55` : "#30363d";
     const textColor = fac ? color : "#8b949e";
-    const tipAttr = desc ? ` class="trait-badge tip" data-tip="${desc.replace(/"/g,"&quot;")}"` : ` class="trait-badge"`;
+    const tipAttr = cleanDesc ? ` class="trait-badge tip" data-tip="${cleanDesc.replace(/"/g,"&quot;")}"` : ` class="trait-badge"`;
     return `<span${tipAttr} style="background:${bg};color:${textColor};border-color:${border}">${name}</span>`;
   }).join("");
 }
@@ -1319,17 +1406,19 @@ function refreshTraitPickerList() {
     const nameEl = document.createElement("div");
     nameEl.className = "trait-row-name";
     nameEl.textContent = val[0];
-    if(fac) {
-      const facObj = (state.customFactions||[]).find(f=>f.id===fac);
-      const facColor = facObj ? facObj.color : (FACTION_COLORS[fac]||"#888");
-      const facName = facObj ? facObj.name : fac;
-      nameEl.innerHTML += ` <span style="font-size:9px;padding:0 5px;border-radius:8px;background:${facColor}22;color:${facColor};border:1px solid ${facColor}55;font-weight:600">${facName}</span>`;
-    }
     info.appendChild(nameEl);
-    if(val[2]) {
+    const reqs = allTraitReqs(key, val);
+    if(reqs.length) {
+      const reqsEl = document.createElement("div");
+      reqsEl.style.cssText = "display:flex;flex-wrap:wrap;gap:2px;margin-top:3px";
+      reqsEl.innerHTML = reqs.map(traitReqBadgeHTML).join("");
+      info.appendChild(reqsEl);
+    }
+    const cleanDesc = cleanTraitDesc(val[2] || "");
+    if(cleanDesc) {
       const descEl = document.createElement("div");
       descEl.className = "trait-row-desc";
-      descEl.textContent = val[2];
+      descEl.textContent = cleanDesc;
       info.appendChild(descEl);
     }
     row.appendChild(cb);
