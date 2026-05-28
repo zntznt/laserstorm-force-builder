@@ -918,6 +918,7 @@ let state = {
 let currentBuilderTraits = [];
 let builderFactionPrev = "";
 let builderMobilityPrev = "";
+let builderSelectedRole = "unit";
 let editingCustomTraitId = null;
 let currentWeaponTraits = {};
 let traitPickerTarget = null;
@@ -1436,6 +1437,7 @@ function resetBuilder() {
   document.getElementById("b-faction").value = "";
   builderFactionPrev = "";
   builderMobilityPrev = "";
+  builderSelectedRole = "unit";
   currentBuilderTraits = [];
   builderWeapons = [];
   setEditMode(null);
@@ -1644,12 +1646,43 @@ function gatherBuilderUnit() {
   return unit;
 }
 
+function selectBuilderRole(key) {
+  builderSelectedRole = key;
+  calculateBuilder();
+}
+
 function calculateBuilder() {
   const unit = gatherBuilderUnit();
   const pts = calcPoints(unit);
   const ci = CLASS_INFO[unit.class];
+  const pr = premiumsFor(unit.class);
   const bd = pts.breakdown;
+
+  // Available cost tiles in display order
+  const roleTiles = [
+    {key:"unit",    label:`Unit (${ci.size} stand${ci.size>1?"s":""})`, pts:pts.unitPts},
+    {key:"ind",     label:"Independent",  pts:pts.indPts,     prem:pr.ind},
+    {key:"cmd",     label:"Command",      pts:pts.cmdPts,     prem:pr.cmd},
+    {key:"hero",    label:"Ind. Hero",    pts:pts.heroPts,    prem:pr.hero},
+    {key:"cmdHero", label:"Cmd Hero",     pts:pts.cmdHeroPts, prem:pr.cmdHero},
+  ].filter(r => r.pts != null);
+
+  // Auto-correct selection if the chosen role is no longer available
+  if (!roleTiles.find(r => r.key === builderSelectedRole))
+    builderSelectedRole = roleTiles[0]?.key || "unit";
+
+  const tilesHTML = roleTiles.map(r => {
+    const sel = r.key === builderSelectedRole;
+    return `<div style="text-align:center;padding:7px 10px;border-radius:8px;cursor:pointer;transition:opacity .1s;${
+      sel ? "background:#0d1e36;border:1px solid #1f6feb" : "border:1px solid transparent;opacity:0.45"
+    }" onclick="selectBuilderRole('${r.key}')">
+      <div class="points-big" style="${sel ? "" : "font-size:20px;color:#8b949e"}">${r.pts}</div>
+      <div class="points-label" style="${sel ? "" : "color:#444"}">${r.label}</div>
+    </div>`;
+  }).join("");
+
   function fmtBD(v) { return (v>0?"+":"") + (Number.isInteger(v) ? v : v.toFixed(1)); }
+
   const bdHTML = bd ? (() => {
     const standRows = bd.standComps.map(c =>
       `<div class="detail-row"><span>${esc(c.label)}</span><span>${fmtBD(c.val)}</span></div>`).join("");
@@ -1663,21 +1696,32 @@ function calculateBuilder() {
         `<div class="detail-row-2" style="color:#555;font-style:italic"><span>${esc(m)}</span><span></span></div>`).join("");
       return `<div class="detail-row"><span>${esc(w.label)}</span><span>+${w.cost}</span></div>${subRows}${multRows}`;
     }).join("");
+
+    const sel = roleTiles.find(r => r.key === builderSelectedRole);
+    let typeRow = "";
+    if (sel) {
+      if (builderSelectedRole === "unit") {
+        typeRow = `<div class="summary-row"><span>Unit &times;${ci.size} stands</span><span>${sel.pts} pts</span></div>`;
+      } else {
+        const pct = Math.round((sel.prem||0) * 100);
+        const premStr = pct === 0 ? "no premium" : `+${pct}%`;
+        typeRow = `<div class="summary-row"><span>${sel.label} <span style="color:#555;font-size:11px;font-weight:normal">(${premStr})</span></span><span>${sel.pts} pts</span></div>`;
+      }
+    }
+
     return `
       <div class="summary-row"><span>Stand cost <span style="color:#555;font-size:11px;font-weight:normal">(${wpnLabel} excluded)</span></span><span>${bd.standPts}</span></div>
       ${standRows}
       <div class="summary-row"><span>Weapon systems</span><span>${bd.weaponPts > 0 ? "+"+bd.weaponPts : bd.weaponPts}</span></div>
       ${wpnRows}
       <div class="summary-row"><span>Class multiplier</span><span>&times;${bd.mult}</span></div>
-      <div class="summary-row"><span>Per stand</span><span>${pts.perStand} pts</span></div>`;
+      <div class="summary-row"><span>Per stand</span><span>${pts.perStand} pts</span></div>
+      ${typeRow}`;
   })() : "";
+
   document.getElementById("b-result").innerHTML = `
-    <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-bottom:12px">
-      ${pts.unitPts    != null ? `<div><div class="points-big">${pts.unitPts}</div><div class="points-label">Unit (${ci.size} stand${ci.size>1?"s":""})</div></div>` : ""}
-      ${pts.indPts     != null ? `<div><div class="points-big" style="font-size:20px">${pts.indPts}</div><div class="points-label">Independent</div></div>` : ""}
-      ${pts.cmdPts     != null ? `<div><div class="points-big" style="font-size:20px">${pts.cmdPts}</div><div class="points-label">Command</div></div>` : ""}
-      ${pts.heroPts    != null ? `<div><div class="points-big" style="font-size:20px">${pts.heroPts}</div><div class="points-label">Ind. Hero</div></div>` : ""}
-      ${pts.cmdHeroPts != null ? `<div><div class="points-big" style="font-size:20px">${pts.cmdHeroPts}</div><div class="points-label">Cmd Hero</div></div>` : ""}
+    <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:12px">
+      ${tilesHTML}
     </div>
     ${bdHTML}`;
 }
@@ -2181,6 +2225,7 @@ function editUnit(id) {
   document.getElementById("b-speed").value = unit.speed;
   document.getElementById("b-mobility").value = unit.mobility;
   builderMobilityPrev = unit.mobility;
+  builderSelectedRole = "unit";
   document.getElementById("b-aim").value = unit.aim;
   document.getElementById("b-assault").value = unit.assault;
   document.getElementById("b-savenumber").value = unit.saveNumber;
