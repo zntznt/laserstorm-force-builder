@@ -278,8 +278,8 @@ hr{border:none;border-top:1px solid #21262d;margin:12px 0}
         </div>
       </div>
       <div class="card">
-        <div class="card-title">The Workshop &mdash; Cost Reference</div>
-        <div style="font-size:11px;color:#8b949e;line-height:1.6">
+        <div class="card-title" onclick="toggleCostRef()" style="cursor:pointer;user-select:none">Cost Reference <span id="cost-ref-chev" style="font-size:11px;color:#555;font-weight:normal;margin-left:2px">&#9654;</span></div>
+        <div id="cost-ref-body" style="font-size:11px;color:#8b949e;line-height:1.6;display:none">
           <p style="margin-bottom:8px">Costs build up the <strong style="color:#fff">Stand</strong> first, then add each <strong style="color:#fff">weapon</strong>, then apply the <strong style="color:#fff">class multiplier</strong>. Fractions are kept until each break point, then rounded up (stand, weapon, &amp; unit to nearest 5).</p>
           <table class="ref-table">
             <tr><th colspan="2">Class &bull; Size &bull; Save &bull; Multiplier</th></tr>
@@ -1268,6 +1268,13 @@ function showPage(p) {
 
 function closeModal(id) { document.getElementById(id).classList.remove("open"); }
 function openModal(id) { document.getElementById(id).classList.add("open"); }
+function toggleCostRef() {
+  const body = document.getElementById("cost-ref-body");
+  const chev = document.getElementById("cost-ref-chev");
+  const open = body.style.display === "none";
+  body.style.display = open ? "" : "none";
+  chev.innerHTML = open ? "&#9660;" : "&#9654;";
+}
 
 // ============================================================
 // UNIT BUILDER
