@@ -218,7 +218,7 @@ hr{border:none;border-top:1px solid #21262d;margin:12px 0}
             <span style="font-size:10px;color:#666">+</span>
           </div>
           <div class="form-group">
-            <label>Assault <span class="tip ttip tip-left" data-tip="Added to close-combat rolls. +0.5 per point; +1 extra if better than +3. Field Guns, Scouts &amp; Aircraft cannot Assault.">&#9432;</span></label>
+            <label>Assault <span class="tip ttip tip-left" data-tip="Added to close-combat rolls. +0.5 per point; each point of Assault 3 or higher also costs an additional +1. Field Guns, Scouts &amp; Aircraft cannot Assault.">&#9432;</span></label>
             <input type="number" id="b-assault" value="0" min="0" max="10" oninput="calculateBuilder()" onchange="calculateBuilder()">
             <span style="font-size:10px;color:#666">+</span>
           </div>
@@ -273,7 +273,7 @@ hr{border:none;border-top:1px solid #21262d;margin:12px 0}
             <tr><td>Speed</td><td>+0.25 / inch over base 4" (Cav/Air 8")</td></tr>
             <tr><td>Mobility</td><td>Walker +2, Grav +4 speed cost (Scout/AFV)</td></tr>
             <tr><td>Aim</td><td>0 at 5+; each pt better +2/weapon slot (+1 Infantry)</td></tr>
-            <tr><td>Assault</td><td>+0.5 / pt; +1 extra if better than +3</td></tr>
+            <tr><td>Assault</td><td>+0.5 / pt; each pt of Assault 3+ costs an extra +1</td></tr>
             <tr><td>Save</td><td>+1 per pip below class base</td></tr>
             <tr><td>Morale</td><td>+1 per pip below 6+; +1 extra if better than 4+</td></tr>
           </table>
@@ -637,12 +637,12 @@ const WEAPON_TRAITS = {
 };
 
 const CLASS_INFO = {
-  inf:  {label:"Infantry",    size:6, mult:1, baseSave:6,  saveDice:1, baseSpeed:4, minSave:3},
-  cav:  {label:"Cavalry",     size:4, mult:1, baseSave:6,  saveDice:1, baseSpeed:8, minSave:3},
-  fg:   {label:"Field Gun",   size:3, mult:1, baseSave:6,  saveDice:1, baseSpeed:4, minSave:3},
-  scout:{label:"Scout",       size:4, mult:1, baseSave:6,  saveDice:1, baseSpeed:4, minSave:3},
-  afv:  {label:"AFV",         size:3, mult:2, baseSave:10, saveDice:2, baseSpeed:4, minSave:2},
-  ac:   {label:"Aircraft",    size:2, mult:2, baseSave:10, saveDice:1, baseSpeed:8, minSave:2},
+  inf:  {label:"Infantry",    size:6, mult:1, baseSave:6,  saveDice:1, baseSpeed:4, minSave:1},
+  cav:  {label:"Cavalry",     size:4, mult:1, baseSave:6,  saveDice:1, baseSpeed:8, minSave:1},
+  fg:   {label:"Field Gun",   size:3, mult:1, baseSave:6,  saveDice:1, baseSpeed:4, minSave:1},
+  scout:{label:"Scout",       size:4, mult:1, baseSave:6,  saveDice:1, baseSpeed:4, minSave:1},
+  afv:  {label:"AFV",         size:3, mult:2, baseSave:10, saveDice:2, baseSpeed:4, minSave:1},
+  ac:   {label:"Aircraft",    size:2, mult:2, baseSave:10, saveDice:1, baseSpeed:8, minSave:1},
   sh:   {label:"Super Heavy", size:1, mult:3, baseSave:18, saveDice:3, baseSpeed:4, minSave:1},
   beh:  {label:"Behemoth",    size:1, mult:4, baseSave:24, saveDice:4, baseSpeed:4, minSave:0}
 };
@@ -860,8 +860,7 @@ function calcPoints(unit) {
   const aimFactor = unit.class==="inf" ? 1 : 2;
   const wSlots = unit.weapons.length;
   const ptsAim = Math.max(0, 5 - unit.aim) * aimFactor * wSlots;
-  let ptsAssault = unit.assault * 0.5;
-  if (unit.assault > 3) ptsAssault += 1;
+  const ptsAssault = unit.assault * 0.5 + Math.max(0, unit.assault - 2);
   const ptsSave = ci.baseSave - unit.saveNumber;
   let ptsMorale = 6 - unit.morale;
   if (unit.morale < 4) ptsMorale += 1;
