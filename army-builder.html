@@ -1497,35 +1497,40 @@ function renderWeaponRows() {
           oninput="builderWeapons[${i}].name=this.value" onchange="builderWeapons[${i}].name=this.value">
         <button class="btn btn-danger btn-xs" onclick="removeWeapon(${i})">Remove</button>
       </div>
-      <div class="weapon-builder-row">
-        <div class="form-group">
-          <label>Mode</label>
-          <select onchange="builderWeapons[${i}].mode=this.value;calculateBuilder()" style="width:auto">
+      <div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px">
+        <div class="stat-block">
+          <div class="stat-label">Mode</div>
+          <select onchange="builderWeapons[${i}].mode=this.value;calculateBuilder()">
             <option value="ai" ${w.mode==="ai"?"selected":""}>AI</option>
             <option value="at" ${w.mode==="at"?"selected":""}>AT</option>
             <option value="gp" ${w.mode==="gp"?"selected":""}>GP</option>
           </select>
         </div>
-        <div class="form-group">
-          <label>Type</label>
-          <select onchange="builderWeapons[${i}].type=this.value;calculateBuilder()" style="width:auto">
+        <div class="stat-block">
+          <div class="stat-label">Type</div>
+          <select onchange="builderWeapons[${i}].type=this.value;calculateBuilder()">
             <option value="p" ${w.type==="p"?"selected":""}>Primary</option>
             <option value="s" ${w.type==="s"?"selected":""}>Selective</option>
           </select>
         </div>
-        <div class="form-group">
-          <label>Range</label>
-          <select onchange="builderWeapons[${i}].range=parseInt(this.value);calculateBuilder()" style="width:auto">
+        <div class="stat-block">
+          <div class="stat-label">Range</div>
+          <select onchange="builderWeapons[${i}].range=parseInt(this.value);calculateBuilder()">
             ${RANGE_OPTS.map(r=>`<option value="${r.val}" ${w.range===r.val?"selected":""}>${r.label}</option>`).join("")}
           </select>
         </div>
-        <div class="form-group">
-          <label>Shots</label>
-          <input type="number" value="${w.shots}" min="1" max="20" style="width:55px" onchange="builderWeapons[${i}].shots=parseInt(this.value)||1;calculateBuilder()" oninput="builderWeapons[${i}].shots=parseInt(this.value)||1;calculateBuilder()">
+        <div class="stat-block">
+          <div class="stat-label">Shots</div>
+          <div class="stat-row">
+            <input type="number" value="${w.shots}" min="1" max="20" onchange="builderWeapons[${i}].shots=parseInt(this.value)||1;calculateBuilder()" oninput="builderWeapons[${i}].shots=parseInt(this.value)||1;calculateBuilder()">
+          </div>
         </div>
-        <div class="form-group">
-          <label>Impact</label>
-          <input type="number" value="${w.impact}" min="0" max="20" style="width:55px" onchange="builderWeapons[${i}].impact=parseInt(this.value)||0;calculateBuilder()" oninput="builderWeapons[${i}].impact=parseInt(this.value)||0;calculateBuilder()">
+        <div class="stat-block">
+          <div class="stat-label">Impact</div>
+          <div class="stat-row">
+            <span class="stat-sfx">+</span>
+            <input type="number" value="${w.impact}" min="0" max="20" onchange="builderWeapons[${i}].impact=parseInt(this.value)||0;calculateBuilder()" oninput="builderWeapons[${i}].impact=parseInt(this.value)||0;calculateBuilder()">
+          </div>
         </div>
       </div>
       <div class="form-group" style="margin-top:8px">
