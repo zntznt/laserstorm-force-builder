@@ -2170,7 +2170,6 @@ function deleteCustomFaction(id) {
     alert(`"${faction.name}" is in use and cannot be deleted:\n\n${usedBy.map(n=>`• ${n}`).join("\n")}\n\nRemove it from those units and traits first.`);
     return;
   }
-  if(!confirm(`Delete faction "${faction.name}"?`)) return;
   state.customFactions = state.customFactions.filter(f=>f.id!==id);
   saveState();
   rebuildFactionSelect();
@@ -2398,7 +2397,6 @@ function deleteCustomTrait(id) {
     alert(`"${trait.name}" is used by the following units and cannot be deleted:\n\n${usedBy.map(n=>`• ${n}`).join("\n")}\n\nRemove it from those units first.`);
     return;
   }
-  if(!confirm(`Delete trait "${trait.name}"?`)) return;
   state.customTraits = state.customTraits.filter(t=>t.id!==id);
   saveState();
   renderCustomTraitList();
