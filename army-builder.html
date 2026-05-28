@@ -1298,7 +1298,7 @@ function traitReqColor(type, val) {
 function traitReqLabel(type, vals) {
   if(type === "faction") return vals.map(v => {
     const cf = (state.customFactions||[]).find(f=>f.id===v);
-    return cf ? `${cf.icon} ${cf.name}` : (FACTION_LABEL_MAP[v] || v);
+    return cf ? cf.name : (FACTION_LABEL_MAP[v] || v);
   }).join(" / ");
   if(type === "class")    return vals.map(v => TRAIT_CLASS_LABELS[v]||v).join(" / ");
   if(type === "mobility") return vals.map(v => TRAIT_MOB_LABELS[v]||v).join(" / ");
