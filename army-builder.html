@@ -271,7 +271,7 @@ hr{border:none;border-top:1px solid #21262d;margin:12px 0}
           <table class="ref-table">
             <tr><th colspan="2">Stand factors</th></tr>
             <tr><td>Speed</td><td>+0.25 / inch over base 4" (Cav/Air 8")</td></tr>
-            <tr><td>Mobility</td><td>Walker +2, Grav +4 speed cost (Scout/AFV)</td></tr>
+            <tr><td>Mobility</td><td>Walker +2, Grav +4 speed cost (all ground vehicles)</td></tr>
             <tr><td>Aim</td><td>0 at 5+; each pt better +2/weapon slot (+1 Infantry)</td></tr>
             <tr><td>Assault</td><td>+0.5 / pt; each pt of Assault 3+ costs an extra +1</td></tr>
             <tr><td>Save</td><td>+1 per pip below class base</td></tr>
@@ -853,7 +853,8 @@ function calcPoints(unit) {
   }
   const ci = CLASS_INFO[unit.class] || CLASS_INFO.inf;
   let ptsSpeed = (unit.speed - ci.baseSpeed) * 0.25;
-  if (unit.class==="scout"||unit.class==="afv") {
+  const isGroundVehicle = unit.class==="scout"||unit.class==="afv"||unit.class==="sh"||unit.class==="beh";
+  if (isGroundVehicle) {
     if (unit.mobility==="walk") ptsSpeed += 2;
     if (unit.mobility==="grav") ptsSpeed += 4;
   }
