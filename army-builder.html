@@ -1631,9 +1631,25 @@ function saveCustomFaction() {
 }
 
 function deleteCustomFaction(id) {
-  if(!confirm("Delete this faction? Units assigned to it will become 'No Faction'.")) return;
+  const faction = (state.customFactions||[]).find(f=>f.id===id);
+  if(!faction) return;
+  const usedBy = [];
+  // Units in library
+  state.customUnits.filter(u=>u.faction===id).forEach(u=>usedBy.push(`Unit: ${u.name}`));
+  // Traits with this faction in reqs
+  (state.customTraits||[]).forEach(t=>{
+    const uses = (t.reqs||[]).some(r=>r.type==="faction"&&r.vals.includes(id)) || t.faction===id;
+    if(uses) usedBy.push(`Trait: ${t.name}`);
+  });
+  // Current builder session
+  const builderFaction = document.getElementById("b-faction")?.value;
+  if(builderFaction===id) usedBy.unshift("(current unit in builder)");
+  if(usedBy.length) {
+    alert(`"${faction.name}" is in use and cannot be deleted:\n\n${usedBy.map(n=>`• ${n}`).join("\n")}\n\nRemove it from those units and traits first.`);
+    return;
+  }
+  if(!confirm(`Delete faction "${faction.name}"?`)) return;
   state.customFactions = state.customFactions.filter(f=>f.id!==id);
-  state.customUnits.forEach(u=>{ if(u.faction===id) u.faction=""; });
   saveState();
   rebuildFactionSelect();
   renderLibFactionFilters();
