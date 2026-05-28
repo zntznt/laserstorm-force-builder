@@ -741,12 +741,18 @@ label .trait-edit-btn{margin-left:6px}
         <label>Description <span style="color:var(--text-faint);font-size:10px">(optional — shown as tooltip)</span></label>
         <textarea id="ct-description" rows="2" placeholder="What does this trait do?" style="width:100%;resize:vertical"></textarea>
       </div>
-      <div style="background:var(--surface-raised);border:1px solid var(--border-default);border-radius:6px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;cursor:pointer" onclick="document.getElementById('ct-stackable').click()">
-        <div>
-          <div style="font-size:12px;font-weight:bold;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em">Stackable</div>
-          <div style="font-size:11px;color:var(--text-muted);margin-top:3px">This trait can be taken multiple times. Each stack counts independently toward cost.</div>
+      <div style="background:var(--surface-raised);border:1px solid var(--border-default);border-radius:6px;padding:10px 14px;margin-bottom:16px">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer" onclick="document.getElementById('ct-stackable').click()">
+          <div>
+            <div style="font-size:12px;font-weight:bold;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em">Stackable</div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:3px">This trait can be taken multiple times. Each stack counts independently toward cost.</div>
+          </div>
+          <input type="checkbox" id="ct-stackable" style="width:16px;height:16px;flex-shrink:0;margin:0;cursor:pointer" onclick="event.stopPropagation()" onchange="toggleStackCap()">
         </div>
-        <input type="checkbox" id="ct-stackable" style="width:16px;height:16px;flex-shrink:0;margin:0;cursor:pointer" onclick="event.stopPropagation()">
+        <div id="ct-stackcap-row" style="display:none;margin-top:10px;padding-top:10px;border-top:1px solid var(--border-subtle)">
+          <label>Stack cap <span style="color:var(--text-faint);font-size:10px;text-transform:none;letter-spacing:0">(optional — leave blank for unlimited)</span></label>
+          <input type="number" id="ct-stackcap" min="2" step="1" placeholder="Unlimited" style="width:120px">
+        </div>
       </div>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
         <button id="ct-save-btn" class="btn btn-primary" onclick="saveCustomTrait()">Create</button>
@@ -1366,7 +1372,7 @@ function allStandTraits() {
   const custom = {};
   (state.customTraits||[]).filter(t=>t.type==="stand"||t.type==="both").forEach(t=>{
     const fac = _customTraitPrimaryFaction(t);
-    const opts = t.stackable ? {stackable:true} : null;
+    const opts = t.stackable ? {stackable:true, ...(t.stackCap ? {max:t.stackCap} : {})} : null;
     custom["custom_"+t.id] = opts ? (fac ? [t.name,t.cost,t.description,fac,opts] : [t.name,t.cost,t.description,opts]) : [t.name,t.cost,t.description,fac];
   });
   return Object.assign({}, STAND_TRAITS, custom);
@@ -1375,7 +1381,7 @@ function allWeaponTraits() {
   const custom = {};
   (state.customTraits||[]).filter(t=>t.type==="weapon"||t.type==="both").forEach(t=>{
     const fac = _customTraitPrimaryFaction(t);
-    const opts = t.stackable ? {stackable:true} : null;
+    const opts = t.stackable ? {stackable:true, ...(t.stackCap ? {max:t.stackCap} : {})} : null;
     custom["custom_"+t.id] = opts ? (fac ? [t.name,t.cost,t.description,fac,opts] : [t.name,t.cost,t.description,opts]) : [t.name,t.cost,t.description,fac];
   });
   return Object.assign({}, WEAPON_TRAITS, custom);
@@ -2263,6 +2269,12 @@ function openCustomTraitModal() {
   openModal("modal-custom-trait");
 }
 
+function toggleStackCap() {
+  const on = document.getElementById("ct-stackable").checked;
+  document.getElementById("ct-stackcap-row").style.display = on ? "" : "none";
+  if(!on) document.getElementById("ct-stackcap").value = "";
+}
+
 function editCustomTrait(id) {
   const t = (state.customTraits||[]).find(t=>t.id===id);
   if(!t) return;
@@ -2272,6 +2284,8 @@ function editCustomTrait(id) {
   document.getElementById("ct-type").value = t.type;
   document.getElementById("ct-description").value = t.description||"";
   document.getElementById("ct-stackable").checked = !!t.stackable;
+  document.getElementById("ct-stackcap").value = t.stackCap||"";
+  document.getElementById("ct-stackcap-row").style.display = t.stackable ? "" : "none";
   renderCustomTraitReqPills();
   const reqs = t.reqs && t.reqs.length ? t.reqs : (t.faction ? [{type:"faction",vals:[t.faction]}] : []);
   setCustomTraitReqPills(reqs);
@@ -2288,6 +2302,8 @@ function cancelEditCustomTrait() {
   document.getElementById("ct-type").value = "stand";
   document.getElementById("ct-description").value = "";
   document.getElementById("ct-stackable").checked = false;
+  document.getElementById("ct-stackcap").value = "";
+  document.getElementById("ct-stackcap-row").style.display = "none";
   document.getElementById("ct-save-btn").textContent = "Create";
   document.getElementById("ct-form-header").textContent = "New Trait";
   document.getElementById("ct-cancel-edit-btn").style.display = "none";
@@ -2311,7 +2327,7 @@ function renderCustomTraitList() {
         <div style="flex:1;min-width:0">
           <div style="font-weight:bold;color:var(--text-primary);font-size:13px">${esc(t.name)} <span style="font-size:10px;color:var(--text-faint);font-weight:normal">(${t.cost >= 0 ? '+' : ''}${t.cost} pts)</span></div>
           <div style="margin-top:2px">${reqBadges}</div>
-          <div style="font-size:10px;color:var(--text-faint);margin-top:1px">${typeLabel[t.type]||t.type}${t.description ? ` — ${esc(t.description)}` : ""}</div>
+          <div style="font-size:10px;color:var(--text-faint);margin-top:1px">${typeLabel[t.type]||t.type}${t.stackable ? ` — stackable${t.stackCap ? `, max ${t.stackCap}` : ""}` : ""}${t.description ? ` — ${esc(t.description)}` : ""}</div>
         </div>
         <button class="trait-edit-btn" onclick="editCustomTrait('${t.id}')">Edit</button>
         <button class="trait-edit-btn" onclick="confirmBtn(this,()=>deleteCustomTrait('${t.id}'))">Delete</button>
@@ -2330,11 +2346,13 @@ function saveCustomTrait() {
   const facReq = reqs.find(r=>r.type==="faction");
   const faction = facReq ? facReq.vals[0] : "";
   const stackable = document.getElementById("ct-stackable").checked;
+  const stackCapRaw = parseInt(document.getElementById("ct-stackcap").value);
+  const stackCap = (stackable && stackCapRaw >= 2) ? stackCapRaw : null;
   if(editingCustomTraitId) {
     const idx = state.customTraits.findIndex(t=>t.id===editingCustomTraitId);
     if(idx !== -1) {
       const oldName = state.customTraits[idx].name;
-      state.customTraits[idx] = {id:editingCustomTraitId, name, cost, description, faction, type, reqs, stackable};
+      state.customTraits[idx] = {id:editingCustomTraitId, name, cost, description, faction, type, reqs, stackable, stackCap};
       if(oldName !== name) {
         state.customUnits.forEach(u => {
           (u.standTraits||[]).forEach(t => { if(t[0]===oldName) t[0]=name; });
@@ -2347,7 +2365,7 @@ function saveCustomTrait() {
     document.getElementById("ct-form-header").textContent = "New Trait";
     document.getElementById("ct-cancel-edit-btn").style.display = "none";
   } else {
-    state.customTraits.push({id:uid(), name, cost, description, faction, type, reqs, stackable});
+    state.customTraits.push({id:uid(), name, cost, description, faction, type, reqs, stackable, stackCap});
   }
   saveState();
   renderCustomTraitList();
@@ -2356,6 +2374,8 @@ function saveCustomTrait() {
   document.getElementById("ct-type").value = "stand";
   document.getElementById("ct-description").value = "";
   document.getElementById("ct-stackable").checked = false;
+  document.getElementById("ct-stackcap").value = "";
+  document.getElementById("ct-stackcap-row").style.display = "none";
   document.querySelectorAll("#ct-reqs-container .req-pill").forEach(p=>p.classList.remove("req-pill-on"));
   if(document.getElementById("modal-traits").classList.contains("open")) {
     refreshTraitPickerList();
