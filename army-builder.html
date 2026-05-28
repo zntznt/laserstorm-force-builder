@@ -267,7 +267,7 @@ hr{border:none;border-top:1px solid #21262d;margin:12px 0}
         </div>
         <div class="form-group" style="margin-bottom:10px">
           <label>Stand Traits <span class="trait-edit-btn" onclick="openTraitPicker('stand')">edit</span></label>
-          <div id="b-traits-display" style="font-size:12px;color:#8b949e">None</div>
+          <div id="b-traits-display" class="cp-tags" style="margin-top:4px"><span style="color:#444;font-size:11px">None</span></div>
         </div>
         <div id="b-weapons-container"></div>
         <button class="btn btn-secondary btn-sm" onclick="addWeaponRow()" style="margin-top:8px">+ Add Weapon</button>
@@ -1317,6 +1317,20 @@ function traitReqBadgeHTML(req) {
   return `<span class="trait-badge" style="background:${color}22;color:${color};border-color:${color}55;font-size:9px;padding:0 5px">${label}</span>`;
 }
 
+function traitBuilderPillsHTML(traitArr, allTraits) {
+  if (!traitArr || !traitArr.length) return `<span style="color:#444;font-size:11px">None</span>`;
+  return traitArr.map(t => {
+    const name = t[0];
+    const [, entry] = Object.entries(allTraits).find(([,v]) => v[0] === name) || [null, null];
+    const cleanDesc = cleanTraitDesc(entry?.[2] || "");
+    const fac = traitFactionKey(entry);
+    const facObj = fac ? (state.customFactions||[]).find(f=>f.id===fac) : null;
+    const color = facObj ? facObj.color : (fac ? (FACTION_COLORS[fac]||"#888") : "#007eff");
+    const tipAttr = cleanDesc ? ` data-tip="${cleanDesc.replace(/"/g,"&quot;")}"` : ``;
+    return `<span class="cp-tag${cleanDesc?" tip":""}"${tipAttr}><b style="color:${color}">${name}</b></span>`;
+  }).join("");
+}
+
 function traitTipHTML(traitArr, allTraits) {
   if(!traitArr||!traitArr.length) return `<span style="color:#444;font-size:11px">None</span>`;
   return traitArr.map(t => {
@@ -1476,7 +1490,7 @@ function onClassChange() {
   mobSel.value = defaultMob[cls] || opts[0].v;
   builderMobilityPrev = mobSel.value;
   currentBuilderTraits = [];
-  document.getElementById("b-traits-display").innerHTML = "None";
+  document.getElementById("b-traits-display").innerHTML = `<span style="color:#444;font-size:11px">None</span>`;
   builderWeapons = [{name:"",mode:"gp",type:"p",range:0,shots:1,impact:0,traits:[]}];
   renderWeaponRows();
   renderClassProfile();
@@ -1530,7 +1544,7 @@ function renderWeaponRows() {
       </div>
       <div class="form-group" style="margin-top:8px">
         <label>Weapon Traits <span class="trait-edit-btn" onclick="openTraitPicker('weapon',${i})">edit</span></label>
-        <div id="wtrait-display-${i}" style="font-size:11px;color:#8b949e;margin-top:4px">${traitTipHTML(w.traits||[], allWeaponTraits())||"None"}</div>
+        <div id="wtrait-display-${i}" class="cp-tags" style="margin-top:4px">${traitBuilderPillsHTML(w.traits||[], allWeaponTraits())}</div>
       </div>`;
     container.appendChild(div);
   });
@@ -1617,11 +1631,11 @@ function applyTraits() {
   checkboxes.forEach(cb => { if(cb.checked) selected.push(traits[cb.value]); });
   if(traitPickerTarget==="stand") {
     currentBuilderTraits = selected;
-    document.getElementById("b-traits-display").innerHTML = traitTipHTML(selected, allStandTraits())||"None";
+    document.getElementById("b-traits-display").innerHTML = traitBuilderPillsHTML(selected, allStandTraits());
   } else {
     builderWeapons[traitPickerWeaponIdx].traits = selected;
     const el = document.getElementById(`wtrait-display-${traitPickerWeaponIdx}`);
-    if(el) el.innerHTML = traitTipHTML(selected, allWeaponTraits())||"None";
+    if(el) el.innerHTML = traitBuilderPillsHTML(selected, allWeaponTraits());
   }
   closeModal("modal-traits");
   calculateBuilder();
@@ -1824,7 +1838,7 @@ function onFactionSelectChange() {
   // Remove locked traits
   const lockedStandNames = locked.filter(l=>l.src==="stand").map(l=>l.name);
   currentBuilderTraits = currentBuilderTraits.filter(t=>!lockedStandNames.includes(t[0]));
-  document.getElementById("b-traits-display").innerHTML = traitTipHTML(currentBuilderTraits, allStandTraits())||"None";
+  document.getElementById("b-traits-display").innerHTML = traitBuilderPillsHTML(currentBuilderTraits, allStandTraits());
   builderWeapons.forEach(w => {
     const lockedWNames = locked.filter(l=>l.src==="weapon").map(l=>l.name);
     w.traits = (w.traits||[]).filter(t=>!lockedWNames.includes(t[0]));
@@ -1856,7 +1870,7 @@ function onMobilityChange() {
   if(!proceed) { sel.value = builderMobilityPrev; return; }
   const lockedStandNames = locked.filter(l=>l.src==="stand").map(l=>l.name);
   currentBuilderTraits = currentBuilderTraits.filter(t=>!lockedStandNames.includes(t[0]));
-  document.getElementById("b-traits-display").innerHTML = traitTipHTML(currentBuilderTraits, allStandTraits())||"None";
+  document.getElementById("b-traits-display").innerHTML = traitBuilderPillsHTML(currentBuilderTraits, allStandTraits());
   const lockedWNames = locked.filter(l=>l.src==="weapon").map(l=>l.name);
   builderWeapons.forEach(w => { w.traits = (w.traits||[]).filter(t=>!lockedWNames.includes(t[0])); });
   renderWeaponRows();
@@ -2257,7 +2271,7 @@ function editUnit(id) {
   document.getElementById("b-savenumber").value = unit.saveNumber;
   document.getElementById("b-morale").value = unit.morale;
   currentBuilderTraits = (unit.standTraits||[]).slice();
-  document.getElementById("b-traits-display").innerHTML = traitTipHTML(currentBuilderTraits, allStandTraits())||"None";
+  document.getElementById("b-traits-display").innerHTML = traitBuilderPillsHTML(currentBuilderTraits, allStandTraits());
   builderWeapons = (unit.weapons||[]).map(w=>({...w, traits:(w.traits||[]).slice()}));
   renderWeaponRows();
   setEditMode(unit);
