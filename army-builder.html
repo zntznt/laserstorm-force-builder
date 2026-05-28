@@ -97,6 +97,10 @@ input:focus,select:focus,textarea:focus{border-color:#007eff;outline:none}
 .trait-chip{display:inline-block;background:#21262d;border:1px solid #30363d;border-radius:12px;padding:2px 8px;font-size:11px;margin:2px;cursor:pointer}
 .trait-chip.selected{background:#007eff;color:#fff;border-color:#007eff}
 .trait-badge{display:inline-block;padding:1px 7px;border-radius:10px;font-size:10px;font-weight:600;margin:1px 2px;border:1px solid transparent;white-space:nowrap}
+.req-pill{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;cursor:pointer;border:1px solid;opacity:0.28;transition:opacity .15s,transform .1s;user-select:none}
+.req-pill.req-pill-on{opacity:1}
+.req-pill:hover{opacity:0.6}
+.req-pill.req-pill-on:hover{opacity:0.85}
 hr{border:none;border-top:1px solid #21262d;margin:12px 0}
 .ref-table{width:100%;border-collapse:collapse;margin:6px 0 10px}
 .ref-table th{background:#21262d;color:#007eff;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.5px;padding:4px 8px;border:1px solid #30363d}
@@ -640,26 +644,17 @@ hr{border:none;border-top:1px solid #21262d;margin:12px 0}
           <input type="number" id="ct-cost" value="1" min="-5" max="20" step="0.5" style="width:100%">
         </div>
       </div>
-      <div class="form-row" style="gap:8px">
-        <div class="form-group">
-          <label>Applies to</label>
-          <select id="ct-type" style="width:auto">
-            <option value="stand">Stand trait</option>
-            <option value="weapon">Weapon trait</option>
-            <option value="both">Both</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Faction (optional)</label>
-          <select id="ct-faction" style="width:auto">
-            <option value="">Any faction</option>
-            <option value="standard">&#9651; Standard</option>
-            <option value="precursor">&#9670; Precursor</option>
-            <option value="soulless">&#9635; Soulless</option>
-            <option value="swarm">&#9632; Swarm</option>
-            <option value="warrior">&#9733; Warrior</option>
-          </select>
-        </div>
+      <div class="form-group">
+        <label>Applies to</label>
+        <select id="ct-type" style="width:auto">
+          <option value="stand">Stand trait</option>
+          <option value="weapon">Weapon trait</option>
+          <option value="both">Both</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Requirements <span style="color:#555;font-size:10px">(optional — multiple in a row = OR)</span></label>
+        <div id="ct-reqs-container" style="display:flex;flex-direction:column;gap:7px;margin-top:4px"></div>
       </div>
       <div class="form-group" style="margin-bottom:14px">
         <label>Description <span style="color:#555;font-size:10px">(optional — shown as tooltip)</span></label>
@@ -934,6 +929,8 @@ function loadState() {
       state.customUnits = saved.customUnits || [];
       state.customFactions = saved.customFactions || [];
       state.customTraits = saved.customTraits || [];
+      // Migration: convert legacy faction string → reqs array
+      state.customTraits.forEach(t => { if(!t.reqs) t.reqs = t.faction ? [{type:"faction",vals:[t.faction]}] : []; });
       state.taskForces = saved.taskForces || [];
       state.armies = saved.armies || [];
       state.deployments = saved.deployments || [];
@@ -959,7 +956,10 @@ function importData(evt) {
       const imported = JSON.parse(e.target.result);
       if (imported.customUnits) state.customUnits = imported.customUnits;
       if (imported.customFactions) state.customFactions = imported.customFactions;
-      if (imported.customTraits) state.customTraits = imported.customTraits;
+      if (imported.customTraits) {
+        state.customTraits = imported.customTraits;
+        state.customTraits.forEach(t => { if(!t.reqs) t.reqs = t.faction ? [{type:"faction",vals:[t.faction]}] : []; });
+      }
       if (imported.taskForces) state.taskForces = imported.taskForces;
       if (imported.armies) state.armies = imported.armies;
       if (imported.deployments) state.deployments = imported.deployments;
@@ -1095,29 +1095,35 @@ function traitFactionKey(traitEntry) {
   return TRAIT_FACTION_NAMES.has(tag) ? tag : null;
 }
 
+function _customTraitPrimaryFaction(t) {
+  const facReq = (t.reqs||[]).find(r=>r.type==="faction");
+  return facReq ? facReq.vals[0] : (t.faction||null);
+}
 function allStandTraits() {
   const custom = {};
   (state.customTraits||[]).filter(t=>t.type==="stand"||t.type==="both").forEach(t=>{
-    custom["custom_"+t.id] = [t.name, t.cost, t.description, t.faction||null];
+    custom["custom_"+t.id] = [t.name, t.cost, t.description, _customTraitPrimaryFaction(t)];
   });
   return Object.assign({}, STAND_TRAITS, custom);
 }
 function allWeaponTraits() {
   const custom = {};
   (state.customTraits||[]).filter(t=>t.type==="weapon"||t.type==="both").forEach(t=>{
-    custom["custom_"+t.id] = [t.name, t.cost, t.description, t.faction||null];
+    custom["custom_"+t.id] = [t.name, t.cost, t.description, _customTraitPrimaryFaction(t)];
   });
   return Object.assign({}, WEAPON_TRAITS, custom);
 }
 
 // Returns structured requirement array for a trait.
-// Built-ins use TRAIT_REQS; custom traits (key "custom_*") derive from the faction field.
+// Custom traits use their reqs[] field; built-ins use TRAIT_REQS.
 function allTraitReqs(key, entry) {
   if(key && key.startsWith("custom_")) {
-    const reqs = [];
-    const fac = entry && entry[3];
-    if(fac) reqs.push({type:"faction", vals:[fac]});
-    return reqs;
+    const ct = (state.customTraits||[]).find(t=>"custom_"+t.id===key);
+    if(ct) {
+      if(ct.reqs && ct.reqs.length) return ct.reqs;
+      if(ct.faction) return [{type:"faction", vals:[ct.faction]}];
+    }
+    return [];
   }
   return TRAIT_REQS[key] || [];
 }
@@ -1129,8 +1135,8 @@ function cleanTraitDesc(desc) {
 
 const TRAIT_REQ_COLORS = {faction:"", class:"#f57c00", mobility:"#0097a7", role:"#5c6bc0", traitr:"#7b1fa2"};
 const TRAIT_CLASS_LABELS = {inf:"Infantry",cav:"Cavalry",fg:"Field Gun",scout:"Scout",afv:"AFV",ac:"Aircraft",sh:"SH",beh:"Behemoth",troop:"Troop"};
-const TRAIT_ROLE_LABELS  = {unit:"Unit",hero:"Hero",independent:"Independent",troop:"Troop"};
-const TRAIT_MOB_LABELS   = {grav:"Grav",walk:"Walker",wheel:"Wheeled",track:"Tracked"};
+const TRAIT_ROLE_LABELS  = {unit:"Unit",hero:"Hero",independent:"Independent",command:"Command",cmdHero:"Cmd Hero",troop:"Troop"};
+const TRAIT_MOB_LABELS   = {troop:"Troop",grav:"Grav",walk:"Walker",wheel:"Wheeled",track:"Tracked",air:"Air"};
 const FACTION_LABEL_MAP  = {standard:"Standard",precursor:"Precursor",soulless:"Soulless",swarm:"Swarm",warrior:"Warrior"};
 
 function traitReqColor(type, val) {
@@ -1388,8 +1394,8 @@ function refreshTraitPickerList() {
     : (builderWeapons[traitPickerWeaponIdx]?.traits||[]).map(t=>t[0]);
   const currentFaction = document.getElementById("b-faction")?.value || "";
   Object.entries(traits).forEach(([key,val]) => {
-    const fac = traitFactionKey(val);
-    const facLocked = fac && fac !== currentFaction;
+    const facReq = allTraitReqs(key, val).find(r=>r.type==="faction");
+    const facLocked = facReq && !facReq.vals.includes(currentFaction);
     const row = document.createElement("div");
     row.className = "trait-row";
     if(facLocked) row.style.cssText = "opacity:0.4;pointer-events:none";
@@ -1546,15 +1552,15 @@ function onFactionSelectChange() {
   // Collect traits that are locked to a faction incompatible with newFaction
   const locked = [];
   currentBuilderTraits.forEach(t => {
-    const entry = Object.values(allStandTraits()).find(v=>v[0]===t[0]);
-    const fac = traitFactionKey(entry);
-    if(fac && fac !== newFaction) locked.push({label:`Stand trait: ${t[0]}`, src:"stand", name:t[0]});
+    const [key, entry] = Object.entries(allStandTraits()).find(([,v])=>v[0]===t[0]) || [null,null];
+    const facReq = allTraitReqs(key, entry).find(r=>r.type==="faction");
+    if(facReq && !facReq.vals.includes(newFaction)) locked.push({label:`Stand trait: ${t[0]}`, src:"stand", name:t[0]});
   });
   builderWeapons.forEach((w, wi) => {
     (w.traits||[]).forEach(t => {
-      const entry = Object.values(allWeaponTraits()).find(v=>v[0]===t[0]);
-      const fac = traitFactionKey(entry);
-      if(fac && fac !== newFaction) locked.push({label:`Weapon ${wi+1} (${w.name||"unnamed"}): ${t[0]}`, src:"weapon", wi, name:t[0]});
+      const [key, entry] = Object.entries(allWeaponTraits()).find(([,v])=>v[0]===t[0]) || [null,null];
+      const facReq = allTraitReqs(key, entry).find(r=>r.type==="faction");
+      if(facReq && !facReq.vals.includes(newFaction)) locked.push({label:`Weapon ${wi+1} (${w.name||"unnamed"}): ${t[0]}`, src:"weapon", wi, name:t[0]});
     });
   });
   if(!locked.length) { builderFactionPrev = newFaction; return; }
@@ -1635,6 +1641,82 @@ function deleteCustomFaction(id) {
   if(libFilterFaction===id) { libFilterFaction="all"; renderLibrary(); }
 }
 
+function _ctReqSections() {
+  return [
+    {
+      type:"faction", label:"Faction",
+      opts: [
+        {val:"standard", label:"▲ Standard", color:FACTION_COLORS.standard},
+        {val:"precursor",label:"◆ Precursor",color:FACTION_COLORS.precursor},
+        {val:"soulless", label:"▪ Soulless", color:FACTION_COLORS.soulless},
+        {val:"swarm",    label:"■ Swarm",    color:FACTION_COLORS.swarm},
+        {val:"warrior",  label:"★ Warrior",  color:FACTION_COLORS.warrior},
+        ...(state.customFactions||[]).map(f=>({val:f.id,label:`${f.icon} ${esc(f.name)}`,color:f.color}))
+      ]
+    },
+    {
+      type:"class", label:"Class", color:"#f57c00",
+      opts:[
+        {val:"inf",  label:"Infantry"},{val:"cav",  label:"Cavalry"},{val:"fg",   label:"Field Gun"},
+        {val:"scout",label:"Scout"},   {val:"afv",  label:"AFV"},    {val:"ac",   label:"Aircraft"},
+        {val:"sh",   label:"SH"},      {val:"beh",  label:"Behemoth"},{val:"troop",label:"Troop (any)"}
+      ]
+    },
+    {
+      type:"mobility", label:"Mobility", color:"#0097a7",
+      opts:[
+        {val:"troop",label:"Troop"},{val:"wheel",label:"Wheeled"},{val:"track",label:"Tracked"},
+        {val:"walk", label:"Walker"},{val:"grav",label:"Grav"},   {val:"air",  label:"Air"}
+      ]
+    },
+    {
+      type:"role", label:"Unit type", color:"#5c6bc0",
+      opts:[
+        {val:"unit",       label:"Unit"},       {val:"independent",label:"Independent"},
+        {val:"command",    label:"Command"},     {val:"hero",       label:"Hero"},
+        {val:"cmdHero",    label:"Cmd Hero"}
+      ]
+    }
+  ];
+}
+
+function renderCustomTraitReqPills() {
+  const container = document.getElementById("ct-reqs-container");
+  if(!container) return;
+  container.innerHTML = _ctReqSections().map(sec => {
+    const secColor = sec.color || "";
+    return `<div>
+      <div style="font-size:10px;color:#666;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px">${sec.label}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:3px">${sec.opts.map(o=>{
+        const c = o.color || secColor;
+        return `<button type="button" class="req-pill" data-type="${sec.type}" data-val="${o.val}"
+          style="background:${c}22;color:${c};border-color:${c}55" onclick="toggleTraitReqPill(this)">${o.label}</button>`;
+      }).join("")}</div>
+    </div>`;
+  }).join("");
+}
+
+function toggleTraitReqPill(btn) {
+  btn.classList.toggle("req-pill-on");
+}
+
+function getCustomTraitReqs() {
+  const byType = {};
+  document.querySelectorAll("#ct-reqs-container .req-pill.req-pill-on").forEach(p => {
+    const t = p.dataset.type, v = p.dataset.val;
+    (byType[t] = byType[t]||[]).push(v);
+  });
+  return Object.entries(byType).map(([type,vals])=>({type,vals}));
+}
+
+function setCustomTraitReqPills(reqs) {
+  document.querySelectorAll("#ct-reqs-container .req-pill").forEach(p=>p.classList.remove("req-pill-on"));
+  (reqs||[]).forEach(req => req.vals.forEach(val => {
+    const p = document.querySelector(`#ct-reqs-container .req-pill[data-type="${req.type}"][data-val="${val}"]`);
+    if(p) p.classList.add("req-pill-on");
+  }));
+}
+
 function openCustomTraitModal() {
   editingCustomTraitId = null;
   document.getElementById("ct-name").value = "";
@@ -1644,7 +1726,7 @@ function openCustomTraitModal() {
   document.getElementById("ct-save-btn").textContent = "Create";
   document.getElementById("ct-form-header").textContent = "New Trait";
   document.getElementById("ct-cancel-edit-btn").style.display = "none";
-  renderCustomTraitFactionSelect();
+  renderCustomTraitReqPills();
   renderCustomTraitList();
   openModal("modal-custom-trait");
 }
@@ -1657,8 +1739,9 @@ function editCustomTrait(id) {
   document.getElementById("ct-cost").value = t.cost;
   document.getElementById("ct-type").value = t.type;
   document.getElementById("ct-description").value = t.description||"";
-  renderCustomTraitFactionSelect();
-  document.getElementById("ct-faction").value = t.faction||"";
+  renderCustomTraitReqPills();
+  const reqs = t.reqs && t.reqs.length ? t.reqs : (t.faction ? [{type:"faction",vals:[t.faction]}] : []);
+  setCustomTraitReqPills(reqs);
   document.getElementById("ct-save-btn").textContent = "Save Changes";
   document.getElementById("ct-form-header").textContent = "Edit Trait";
   document.getElementById("ct-cancel-edit-btn").style.display = "";
@@ -1671,22 +1754,10 @@ function cancelEditCustomTrait() {
   document.getElementById("ct-cost").value = "1";
   document.getElementById("ct-type").value = "stand";
   document.getElementById("ct-description").value = "";
-  document.getElementById("ct-faction").value = "";
   document.getElementById("ct-save-btn").textContent = "Create";
   document.getElementById("ct-form-header").textContent = "New Trait";
   document.getElementById("ct-cancel-edit-btn").style.display = "none";
-}
-
-function renderCustomTraitFactionSelect() {
-  const sel = document.getElementById("ct-faction");
-  if(!sel) return;
-  const builtins = [
-    {v:"standard",l:"▲ Standard"},{v:"precursor",l:"◆ Precursor"},
-    {v:"soulless",l:"▪ Soulless"},{v:"swarm",l:"■ Swarm"},{v:"warrior",l:"★ Warrior"}
-  ];
-  sel.innerHTML = `<option value="">Any faction</option>`
-    + builtins.map(b=>`<option value="${b.v}">${b.l}</option>`).join("")
-    + (state.customFactions||[]).map(f=>`<option value="${f.id}">${f.icon} ${esc(f.name)}</option>`).join("");
+  document.querySelectorAll("#ct-reqs-container .req-pill").forEach(p=>p.classList.remove("req-pill-on"));
 }
 
 function renderCustomTraitList() {
@@ -1699,14 +1770,14 @@ function renderCustomTraitList() {
   const typeLabel = {stand:"Stand",weapon:"Weapon",both:"Stand+Weapon"};
   list.innerHTML = `<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:4px">`
     + traits.map(t => {
-      const fac = t.faction ? (state.customFactions||[]).find(f=>f.id===t.faction) : null;
-      const facLabel = fac ? `${fac.icon} ${esc(fac.name)}` : (t.faction ? t.faction : "");
-      const facColor = fac ? fac.color : (FACTION_COLORS[t.faction]||"#555");
-      const facBadge = t.faction ? `<span style="font-size:9px;padding:0 5px;border-radius:8px;background:${facColor}22;color:${facColor};border:1px solid ${facColor}55;font-weight:600">${facLabel}</span>` : "";
+      const reqBadges = (t.reqs && t.reqs.length)
+        ? t.reqs.map(traitReqBadgeHTML).join("")
+        : (t.faction ? traitReqBadgeHTML({type:"faction",vals:[t.faction]}) : "");
       return `<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:6px;background:#0d1117;border:1px solid #30363d">
         <div style="flex:1;min-width:0">
-          <div style="font-weight:bold;color:#e0e0e0;font-size:13px">${esc(t.name)} <span style="font-size:10px;color:#555;font-weight:normal">(${t.cost >= 0 ? '+' : ''}${t.cost} pts)</span> ${facBadge}</div>
-          <div style="font-size:10px;color:#555">${typeLabel[t.type]||t.type}${t.description ? ` — ${esc(t.description)}` : ""}</div>
+          <div style="font-weight:bold;color:#e0e0e0;font-size:13px">${esc(t.name)} <span style="font-size:10px;color:#555;font-weight:normal">(${t.cost >= 0 ? '+' : ''}${t.cost} pts)</span></div>
+          <div style="margin-top:2px">${reqBadges}</div>
+          <div style="font-size:10px;color:#555;margin-top:1px">${typeLabel[t.type]||t.type}${t.description ? ` — ${esc(t.description)}` : ""}</div>
         </div>
         <button class="btn btn-secondary btn-xs" onclick="editCustomTrait('${t.id}')">Edit</button>
         <button class="btn btn-danger btn-xs" onclick="deleteCustomTrait('${t.id}')">Delete</button>
@@ -1720,13 +1791,15 @@ function saveCustomTrait() {
   if(!name) { alert("Enter a trait name."); return; }
   const cost = parseFloat(document.getElementById("ct-cost").value)||0;
   const type = document.getElementById("ct-type").value;
-  const faction = document.getElementById("ct-faction").value;
   const description = document.getElementById("ct-description").value.trim();
+  const reqs = getCustomTraitReqs();
+  const facReq = reqs.find(r=>r.type==="faction");
+  const faction = facReq ? facReq.vals[0] : "";
   if(editingCustomTraitId) {
     const idx = state.customTraits.findIndex(t=>t.id===editingCustomTraitId);
     if(idx !== -1) {
       const oldName = state.customTraits[idx].name;
-      state.customTraits[idx] = {id: editingCustomTraitId, name, cost, description, faction, type};
+      state.customTraits[idx] = {id:editingCustomTraitId, name, cost, description, faction, type, reqs};
       if(oldName !== name) {
         state.customUnits.forEach(u => {
           (u.standTraits||[]).forEach(t => { if(t[0]===oldName) t[0]=name; });
@@ -1739,7 +1812,7 @@ function saveCustomTrait() {
     document.getElementById("ct-form-header").textContent = "New Trait";
     document.getElementById("ct-cancel-edit-btn").style.display = "none";
   } else {
-    state.customTraits.push({id: uid(), name, cost, description, faction, type});
+    state.customTraits.push({id:uid(), name, cost, description, faction, type, reqs});
   }
   saveState();
   renderCustomTraitList();
@@ -1747,7 +1820,7 @@ function saveCustomTrait() {
   document.getElementById("ct-cost").value = "1";
   document.getElementById("ct-type").value = "stand";
   document.getElementById("ct-description").value = "";
-  document.getElementById("ct-faction").value = "";
+  document.querySelectorAll("#ct-reqs-container .req-pill").forEach(p=>p.classList.remove("req-pill-on"));
   if(document.getElementById("modal-traits").classList.contains("open")) {
     refreshTraitPickerList();
   }
