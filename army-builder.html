@@ -187,7 +187,7 @@ hr{border:none;border-top:1px solid #21262d;margin:12px 0}
             <input type="text" id="b-name" placeholder="e.g. Line Infantry" style="width:100%" oninput="calculateBuilder()">
           </div>
           <div class="form-group">
-            <label>Class <span class="tip ttip" data-tip="A shorthand for common game rule interactions (Class determines Unit size, base Save dice, cost multiplier and tactical abilities).">&#9432;</span></label>
+            <label>Class</label>
             <select id="b-class" onchange="onClassChange()" style="width:auto">
               <option value="inf">Infantry</option>
               <option value="cav">Cavalry</option>
@@ -215,13 +215,13 @@ hr{border:none;border-top:1px solid #21262d;margin:12px 0}
         <div id="b-class-profile" class="class-profile"></div>
         <div style="display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;margin-top:14px;margin-bottom:14px">
           <div class="stat-block">
-            <div class="stat-label">Speed <span class="tip ttip" data-tip="Movement rate in inches. Base 4&quot; is free (Cavalry &amp; Aircraft 8&quot;); each extra inch costs +0.25.">&#9432;</span></div>
+            <div class="stat-label">Speed</div>
             <div class="stat-row">
               <input type="number" id="b-speed" value="4" min="1" max="20" oninput="calculateBuilder()" onchange="calculateBuilder()">
             </div>
           </div>
           <div class="stat-block">
-            <div class="stat-label">Mobility <span class="tip ttip" data-tip="Movement type. Infantry/Cavalry/Field Gun are always Troop; Aircraft are always Air. Scouts, AFVs, Super Heavies, and Behemoths may be Wheeled, Tracked, Walker, or Grav. Walker (+2) and Grav (+4) add to Speed cost.">&#9432;</span></div>
+            <div class="stat-label">Mobility</div>
             <select id="b-mobility" onchange="onMobilityChange()">
               <option value="troop">Troop</option>
               <option value="wheel">Wheeled</option>
@@ -232,21 +232,21 @@ hr{border:none;border-top:1px solid #21262d;margin:12px 0}
             </select>
           </div>
           <div class="stat-block">
-            <div class="stat-label">Aim <span class="tip ttip tip-left" data-tip="Roll this number or higher to hit with ranged attacks (lower is better). 5+ is free; each point better adds +2 per weapon slot (+1 for Infantry).">&#9432;</span></div>
+            <div class="stat-label">Aim</div>
             <div class="stat-row">
               <input type="number" id="b-aim" value="5" min="2" max="5" oninput="calculateBuilder()" onchange="calculateBuilder()">
               <span class="stat-sfx">+</span>
             </div>
           </div>
           <div class="stat-block">
-            <div class="stat-label">Assault <span class="tip ttip tip-left" data-tip="Added to close-combat rolls. +0.5 per point; each point of Assault 3 or higher also costs an additional +1. Field Guns, Scouts &amp; Aircraft cannot Assault.">&#9432;</span></div>
+            <div class="stat-label">Assault</div>
             <div class="stat-row">
               <input type="number" id="b-assault" value="0" min="0" max="10" oninput="calculateBuilder()" onchange="calculateBuilder()">
               <span class="stat-sfx">+</span>
             </div>
           </div>
           <div class="stat-block">
-            <div class="stat-label">Save <span class="tip ttip tip-left" data-tip="Roll this many D6; the total must meet or exceed the Save Number to avoid destruction. Each pip below the class base costs +1.">&#9432;</span></div>
+            <div class="stat-label">Save</div>
             <div class="stat-row">
               <span id="b-savedice" class="stat-dice">1</span>
               <span class="stat-sfx">D6/</span>
@@ -255,7 +255,7 @@ hr{border:none;border-top:1px solid #21262d;margin:12px 0}
             </div>
           </div>
           <div class="stat-block">
-            <div class="stat-label">Morale <span class="tip ttip tip-left" data-tip="Roll this or higher on a D6 to avoid Withdrawing. 6+ is free; +1 per pip below, +1 extra if better than 4+.">&#9432;</span></div>
+            <div class="stat-label">Morale</div>
             <div class="stat-row">
               <input type="number" id="b-morale" value="6" min="1" max="6" oninput="calculateBuilder()" onchange="calculateBuilder()">
               <span class="stat-sfx">+</span>
@@ -263,7 +263,7 @@ hr{border:none;border-top:1px solid #21262d;margin:12px 0}
           </div>
         </div>
         <div class="form-group" style="margin-bottom:10px">
-          <label>Stand Traits <span class="tip ttip" data-tip="Other special rules that modify the Stand. Hover any trait to read its effect.">&#9432;</span> <span style="color:#007eff;cursor:pointer;font-size:11px" onclick="openTraitPicker('stand')">[+ Edit]</span></label>
+          <label>Stand Traits <span style="color:#007eff;cursor:pointer;font-size:11px" onclick="openTraitPicker('stand')">[+ Edit]</span></label>
           <div id="b-traits-display" style="font-size:12px;color:#8b949e">None</div>
         </div>
         <div id="b-weapons-container"></div>
@@ -1494,7 +1494,7 @@ function renderWeaponRows() {
       </div>
       <div class="weapon-builder-row">
         <div class="form-group">
-          <label>Mode <span class="tip ttip" data-tip="AI = Anti-Infantry, AT = Anti-Tank, GP = General Purpose. AI/AT are free; GP costs &times;1.5.">&#9432;</span></label>
+          <label>Mode</label>
           <select onchange="builderWeapons[${i}].mode=this.value;calculateBuilder()" style="width:auto">
             <option value="ai" ${w.mode==="ai"?"selected":""}>AI</option>
             <option value="at" ${w.mode==="at"?"selected":""}>AT</option>
@@ -1502,28 +1502,28 @@ function renderWeaponRows() {
           </select>
         </div>
         <div class="form-group">
-          <label>Type <span class="tip ttip" data-tip="Primary or Selective. Selective is &times;0.8 cost but the Stand must have at least 2 Selective weapons.">&#9432;</span></label>
+          <label>Type</label>
           <select onchange="builderWeapons[${i}].type=this.value;calculateBuilder()" style="width:auto">
             <option value="p" ${w.type==="p"?"selected":""}>Primary</option>
             <option value="s" ${w.type==="s"?"selected":""}>Selective</option>
           </select>
         </div>
         <div class="form-group">
-          <label>Range <span class="tip ttip" data-tip="Range of the weapon in inches. 10&quot;=0, 20&quot;=2, 30&quot;=5, 40&quot;=10, 50&quot;=20 points.">&#9432;</span></label>
+          <label>Range</label>
           <select onchange="builderWeapons[${i}].range=parseInt(this.value);calculateBuilder()" style="width:auto">
             ${RANGE_OPTS.map(r=>`<option value="${r.val}" ${w.range===r.val?"selected":""}>${r.label}</option>`).join("")}
           </select>
         </div>
         <div class="form-group">
-          <label>Shots <span class="tip ttip" data-tip="Number of attack dice rolled. Each shot beyond the first adds +50% of the Range + Impact + impact-trait cost.">&#9432;</span></label>
+          <label>Shots</label>
           <input type="number" value="${w.shots}" min="1" max="20" style="width:55px" onchange="builderWeapons[${i}].shots=parseInt(this.value)||1;calculateBuilder()" oninput="builderWeapons[${i}].shots=parseInt(this.value)||1;calculateBuilder()">
         </div>
         <div class="form-group">
-          <label>Impact <span class="tip ttip tip-left" data-tip="Modifier applied to the target's Damage Save Number. +2/point; +2 more above +6; +5 more above +10.">&#9432;</span></label>
+          <label>Impact</label>
           <input type="number" value="${w.impact}" min="0" max="20" style="width:55px" onchange="builderWeapons[${i}].impact=parseInt(this.value)||0;calculateBuilder()" oninput="builderWeapons[${i}].impact=parseInt(this.value)||0;calculateBuilder()">
         </div>
         <div class="form-group">
-          <label>Traits <span class="tip ttip tip-left" data-tip="Other special rules for this weapon. Hover any trait to read its effect.">&#9432;</span> <span style="color:#007eff;cursor:pointer" onclick="openTraitPicker('weapon',${i})">[+]</span></label>
+          <label>Traits <span style="color:#007eff;cursor:pointer" onclick="openTraitPicker('weapon',${i})">[+]</span></label>
           <div id="wtrait-display-${i}" style="font-size:11px;color:#8b949e">${traitTipHTML(w.traits||[], allWeaponTraits())||"None"}</div>
         </div>
       </div>`;
