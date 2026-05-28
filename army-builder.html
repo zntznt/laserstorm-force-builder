@@ -222,7 +222,7 @@ hr{border:none;border-top:1px solid #21262d;margin:12px 0}
           </div>
           <div class="stat-block">
             <div class="stat-label">Mobility <span class="tip ttip" data-tip="Movement type. Infantry/Cavalry/Field Gun are always Troop; Aircraft are always Air. Scouts, AFVs, Super Heavies, and Behemoths may be Wheeled, Tracked, Walker, or Grav. Walker (+2) and Grav (+4) add to Speed cost.">&#9432;</span></div>
-            <select id="b-mobility" onchange="calculateBuilder()">
+            <select id="b-mobility" onchange="onMobilityChange()">
               <option value="troop">Troop</option>
               <option value="wheel">Wheeled</option>
               <option value="track">Tracked</option>
@@ -917,6 +917,7 @@ let state = {
 
 let currentBuilderTraits = [];
 let builderFactionPrev = "";
+let builderMobilityPrev = "";
 let editingCustomTraitId = null;
 let currentWeaponTraits = {};
 let traitPickerTarget = null;
@@ -1333,6 +1334,7 @@ function resetBuilder() {
   document.getElementById("b-class").value = "inf";
   document.getElementById("b-faction").value = "";
   builderFactionPrev = "";
+  builderMobilityPrev = "";
   currentBuilderTraits = [];
   builderWeapons = [];
   setEditMode(null);
@@ -1366,6 +1368,7 @@ function onClassChange() {
   mobSel.disabled = opts.length === 1;
   const defaultMob = {inf:"troop",cav:"troop",fg:"troop",ac:"air",scout:"wheel",afv:"track",sh:"track",beh:"walk"};
   mobSel.value = defaultMob[cls] || opts[0].v;
+  builderMobilityPrev = mobSel.value;
   currentBuilderTraits = [];
   document.getElementById("b-traits-display").innerHTML = "None";
   builderWeapons = [{name:"",mode:"gp",type:"p",range:0,shots:1,impact:0,traits:[]}];
@@ -1446,27 +1449,33 @@ function refreshTraitPickerList() {
     ? currentBuilderTraits.map(t=>t[0])
     : (builderWeapons[traitPickerWeaponIdx]?.traits||[]).map(t=>t[0]);
   const currentFaction = document.getElementById("b-faction")?.value || "";
+  const currentClass   = document.getElementById("b-class")?.value   || "";
+  const currentMobility= document.getElementById("b-mobility")?.value|| "";
   Object.entries(traits).forEach(([key,val]) => {
-    const facReq = allTraitReqs(key, val).find(r=>r.type==="faction");
-    const facLocked = facReq && !facReq.vals.includes(currentFaction);
+    const reqs   = allTraitReqs(key, val);
+    const facReq = reqs.find(r=>r.type==="faction");
+    const clsReq = reqs.find(r=>r.type==="class");
+    const mobReq = reqs.find(r=>r.type==="mobility");
+    const locked = (facReq && !facReq.vals.includes(currentFaction))
+                || (clsReq && !clsReq.vals.includes(currentClass))
+                || (mobReq && !mobReq.vals.includes(currentMobility));
     const row = document.createElement("div");
     row.className = "trait-row";
-    if(facLocked) row.style.cssText = "opacity:0.4;pointer-events:none";
+    if(locked) row.style.cssText = "opacity:0.4;pointer-events:none";
     const cb = document.createElement("input");
     cb.type = "checkbox";
     cb.value = key;
     cb.checked = selected.includes(val[0]);
-    cb.disabled = facLocked;
+    cb.disabled = locked;
     cb.id = "trait_cb_"+key;
     const info = document.createElement("label");
     info.htmlFor = "trait_cb_"+key;
     info.className = "trait-row-info";
-    info.style.cursor = facLocked ? "default" : "pointer";
+    info.style.cursor = locked ? "default" : "pointer";
     const nameEl = document.createElement("div");
     nameEl.className = "trait-row-name";
     nameEl.textContent = val[0];
     info.appendChild(nameEl);
-    const reqs = allTraitReqs(key, val);
     if(reqs.length) {
       const reqsEl = document.createElement("div");
       reqsEl.style.cssText = "display:flex;flex-wrap:wrap;gap:2px;margin-top:3px";
@@ -1647,6 +1656,36 @@ function onFactionSelectChange() {
   });
   renderWeaponRows();
   builderFactionPrev = newFaction;
+  calculateBuilder();
+}
+
+function onMobilityChange() {
+  const sel = document.getElementById("b-mobility");
+  const newMobility = sel.value;
+  const locked = [];
+  currentBuilderTraits.forEach(t => {
+    const [key, entry] = Object.entries(allStandTraits()).find(([,v])=>v[0]===t[0]) || [null,null];
+    const mobReq = allTraitReqs(key, entry).find(r=>r.type==="mobility");
+    if(mobReq && !mobReq.vals.includes(newMobility)) locked.push({label:`Stand trait: ${t[0]}`, src:"stand", name:t[0]});
+  });
+  builderWeapons.forEach((w, wi) => {
+    (w.traits||[]).forEach(t => {
+      const [key, entry] = Object.entries(allWeaponTraits()).find(([,v])=>v[0]===t[0]) || [null,null];
+      const mobReq = allTraitReqs(key, entry).find(r=>r.type==="mobility");
+      if(mobReq && !mobReq.vals.includes(newMobility)) locked.push({label:`Weapon ${wi+1} (${w.name||"unnamed"}): ${t[0]}`, src:"weapon", wi, name:t[0]});
+    });
+  });
+  if(!locked.length) { builderMobilityPrev = newMobility; calculateBuilder(); return; }
+  const traitList = locked.map(l=>`• ${l.label}`).join("\n");
+  const proceed = confirm(`Changing mobility will remove these mobility-locked traits:\n\n${traitList}\n\nRemove them and change mobility?`);
+  if(!proceed) { sel.value = builderMobilityPrev; return; }
+  const lockedStandNames = locked.filter(l=>l.src==="stand").map(l=>l.name);
+  currentBuilderTraits = currentBuilderTraits.filter(t=>!lockedStandNames.includes(t[0]));
+  document.getElementById("b-traits-display").innerHTML = traitTipHTML(currentBuilderTraits, allStandTraits())||"None";
+  const lockedWNames = locked.filter(l=>l.src==="weapon").map(l=>l.name);
+  builderWeapons.forEach(w => { w.traits = (w.traits||[]).filter(t=>!lockedWNames.includes(t[0])); });
+  renderWeaponRows();
+  builderMobilityPrev = newMobility;
   calculateBuilder();
 }
 
@@ -2036,6 +2075,7 @@ function editUnit(id) {
   onClassChange();
   document.getElementById("b-speed").value = unit.speed;
   document.getElementById("b-mobility").value = unit.mobility;
+  builderMobilityPrev = unit.mobility;
   document.getElementById("b-aim").value = unit.aim;
   document.getElementById("b-assault").value = unit.assault;
   document.getElementById("b-savenumber").value = unit.saveNumber;
