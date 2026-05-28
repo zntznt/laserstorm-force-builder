@@ -97,6 +97,10 @@ input:focus,select:focus,textarea:focus{border-color:#007eff;outline:none}
 .trait-chip{display:inline-block;background:#21262d;border:1px solid #30363d;border-radius:12px;padding:2px 8px;font-size:11px;margin:2px;cursor:pointer}
 .trait-chip.selected{background:#007eff;color:#fff;border-color:#007eff}
 hr{border:none;border-top:1px solid #21262d;margin:12px 0}
+.ref-table{width:100%;border-collapse:collapse;margin:6px 0 10px}
+.ref-table th{background:#21262d;color:#007eff;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.5px;padding:4px 8px;border:1px solid #30363d}
+.ref-table td{padding:3px 8px;border:1px solid #21262d;font-size:11px;color:#c9d1d9;vertical-align:top}
+.ref-table td:first-child{color:#8b949e;white-space:nowrap;font-weight:bold;width:34%}
 .tf-unit-row{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:#0d1117;border:1px solid #21262d;border-radius:4px;margin-bottom:5px;gap:8px}
 .tf-unit-row:hover{border-color:#30363d}
 .qty-ctrl{display:flex;align-items:center;gap:4px}
@@ -165,10 +169,10 @@ hr{border:none;border-top:1px solid #21262d;margin:12px 0}
             <select id="b-class" onchange="onClassChange()" style="width:auto">
               <option value="inf">Infantry</option>
               <option value="cav">Cavalry</option>
-              <option value="fg">Fighter Group</option>
               <option value="scout">Scout</option>
+              <option value="fg">Field Gun</option>
               <option value="afv">AFV (Tank)</option>
-              <option value="ac">Armored Car / Aircraft</option>
+              <option value="ac">Aircraft</option>
               <option value="sh">Super Heavy</option>
               <option value="beh">Behemoth</option>
             </select>
@@ -202,7 +206,7 @@ hr{border:none;border-top:1px solid #21262d;margin:12px 0}
           </div>
           <div class="form-group">
             <label>Aim</label>
-            <input type="number" id="b-aim" value="5" min="2" max="6">
+            <input type="number" id="b-aim" value="5" min="2" max="5">
             <span style="font-size:10px;color:#666">+</span>
           </div>
           <div class="form-group">
@@ -218,7 +222,7 @@ hr{border:none;border-top:1px solid #21262d;margin:12px 0}
           </div>
           <div class="form-group">
             <label>Morale</label>
-            <input type="number" id="b-morale" value="6" min="2" max="6">
+            <input type="number" id="b-morale" value="6" min="1" max="6">
             <span style="font-size:10px;color:#666">+</span>
           </div>
         </div>
@@ -244,13 +248,45 @@ hr{border:none;border-top:1px solid #21262d;margin:12px 0}
         </div>
       </div>
       <div class="card">
-        <div class="card-title">Quick Reference</div>
-        <div style="font-size:11px;color:#8b949e;line-height:1.8">
-          <div><strong style="color:#fff">Classes:</strong> Infantry=6 stands | Cavalry/Scout=4 | FG/AFV=3 | AC=2 | SH/Beh=1</div>
-          <div><strong style="color:#fff">Weapon Modes:</strong> AI=Anti-Infantry | AT=Anti-Tank | GP=General Purpose (×1.5)</div>
-          <div><strong style="color:#fff">Weapon Types:</strong> P=Primary | S=Selective (×0.8)</div>
-          <div><strong style="color:#fff">Ranges:</strong> 10" | 20" | 30" | 40" | 50"</div>
-          <div><strong style="color:#fff">Impact:</strong> Bonus dice added on hit</div>
+        <div class="card-title">The Workshop &mdash; Cost Reference</div>
+        <div style="font-size:11px;color:#8b949e;line-height:1.6">
+          <p style="margin-bottom:8px">Costs build up the <strong style="color:#fff">Stand</strong> first, then add each <strong style="color:#fff">weapon</strong>, then apply the <strong style="color:#fff">class multiplier</strong>. Fractions are kept until each break point, then rounded up (stand, weapon, &amp; unit to nearest 5).</p>
+          <table class="ref-table">
+            <tr><th colspan="2">Class &bull; Size &bull; Save &bull; Multiplier</th></tr>
+            <tr><td>Infantry</td><td>6 &bull; 1D6/6+ &bull; &times;1</td></tr>
+            <tr><td>Cavalry</td><td>4 &bull; 1D6/6+ &bull; &times;1 &bull; base spd 8"</td></tr>
+            <tr><td>Scout</td><td>4 &bull; 1D6/6+ &bull; &times;1</td></tr>
+            <tr><td>Field Gun</td><td>3 &bull; 1D6/6+ &bull; &times;1 &bull; &minus;1 wpn if single</td></tr>
+            <tr><td>AFV</td><td>3 &bull; 2D6/10+ &bull; &times;2</td></tr>
+            <tr><td>Aircraft</td><td>2 &bull; 1D6/10+ &bull; &times;2 &bull; base spd 8", air</td></tr>
+            <tr><td>Super Heavy</td><td>1 &bull; 3D6/18+ &bull; &times;3</td></tr>
+            <tr><td>Behemoth</td><td>1 &bull; 4D6/24+ &bull; &times;4</td></tr>
+          </table>
+          <table class="ref-table">
+            <tr><th colspan="2">Stand factors</th></tr>
+            <tr><td>Speed</td><td>+0.25 / inch over base 4" (Cav/Air 8")</td></tr>
+            <tr><td>Mobility</td><td>Walker +2, Grav +4 speed cost (Scout/AFV)</td></tr>
+            <tr><td>Aim</td><td>0 at 5+; each pt better +2/weapon slot (+1 Infantry)</td></tr>
+            <tr><td>Assault</td><td>+0.5 / pt; +1 extra if better than +3</td></tr>
+            <tr><td>Save</td><td>+1 per pip below class base</td></tr>
+            <tr><td>Morale</td><td>+1 per pip below 6+; +1 extra if better than 4+</td></tr>
+          </table>
+          <table class="ref-table">
+            <tr><th colspan="2">Weapon factors</th></tr>
+            <tr><td>Range</td><td>10"=0, 20"=2, 30"=5, 40"=10, 50"=20</td></tr>
+            <tr><td>Impact</td><td>+2/pt; +2 more if &gt;6; +5 more if &gt;10</td></tr>
+            <tr><td>Extra shots</td><td>+50% of (Range+Impact+impact traits) each</td></tr>
+            <tr><td>Mode</td><td>AI/AT free &bull; GP &times;1.5</td></tr>
+            <tr><td>Type</td><td>Primary free &bull; Selective &times;0.8 (needs 2+)</td></tr>
+            <tr><td>Minimum</td><td>1 pt per shot</td></tr>
+          </table>
+          <table class="ref-table">
+            <tr><th>Stand role</th><th>Other / FG / SH / Beh</th></tr>
+            <tr><td>Independent</td><td>+30% / +30% / +0% / +0%</td></tr>
+            <tr><td>Command</td><td>+50% / &mdash; / +20% / &mdash;</td></tr>
+            <tr><td>Ind. Hero</td><td>+55% / +55% / +25% / +25%</td></tr>
+            <tr><td>Cmd Hero</td><td>+75% / &mdash; / +45% / &mdash;</td></tr>
+          </table>
         </div>
       </div>
     </div>
@@ -277,7 +313,7 @@ hr{border:none;border-top:1px solid #21262d;margin:12px 0}
       <div class="pill active" data-filter="all" onclick="setLibFilter(this,'all')">All Classes</div>
       <div class="pill" data-filter="inf" onclick="setLibFilter(this,'inf')">Infantry</div>
       <div class="pill" data-filter="cav" onclick="setLibFilter(this,'cav')">Cavalry</div>
-      <div class="pill" data-filter="fg" onclick="setLibFilter(this,'fg')">Fighter</div>
+      <div class="pill" data-filter="fg" onclick="setLibFilter(this,'fg')">Field Gun</div>
       <div class="pill" data-filter="scout" onclick="setLibFilter(this,'scout')">Scout</div>
       <div class="pill" data-filter="afv" onclick="setLibFilter(this,'afv')">AFV</div>
       <div class="pill" data-filter="ac" onclick="setLibFilter(this,'ac')">AC/Air</div>
@@ -589,15 +625,24 @@ const WEAPON_TRAITS = {
 };
 
 const CLASS_INFO = {
-  inf:  {label:"Infantry",    size:6, mult:1, baseSave:6,  saveDice:1, baseSpeed:4},
-  cav:  {label:"Cavalry",     size:4, mult:1, baseSave:6,  saveDice:1, baseSpeed:8},
-  fg:   {label:"Fighter Grp", size:3, mult:1, baseSave:6,  saveDice:1, baseSpeed:4},
-  scout:{label:"Scout",       size:4, mult:1, baseSave:6,  saveDice:1, baseSpeed:4},
-  afv:  {label:"AFV",         size:3, mult:2, baseSave:10, saveDice:2, baseSpeed:4},
-  ac:   {label:"AC/Aircraft", size:2, mult:2, baseSave:10, saveDice:2, baseSpeed:8},
-  sh:   {label:"Super Heavy", size:1, mult:3, baseSave:18, saveDice:3, baseSpeed:4},
-  beh:  {label:"Behemoth",    size:1, mult:4, baseSave:24, saveDice:4, baseSpeed:4}
+  inf:  {label:"Infantry",    size:6, mult:1, baseSave:6,  saveDice:1, baseSpeed:4, minSave:3},
+  cav:  {label:"Cavalry",     size:4, mult:1, baseSave:6,  saveDice:1, baseSpeed:8, minSave:3},
+  fg:   {label:"Field Gun",   size:3, mult:1, baseSave:6,  saveDice:1, baseSpeed:4, minSave:3},
+  scout:{label:"Scout",       size:4, mult:1, baseSave:6,  saveDice:1, baseSpeed:4, minSave:3},
+  afv:  {label:"AFV",         size:3, mult:2, baseSave:10, saveDice:2, baseSpeed:4, minSave:2},
+  ac:   {label:"Aircraft",    size:2, mult:2, baseSave:10, saveDice:1, baseSpeed:8, minSave:2},
+  sh:   {label:"Super Heavy", size:1, mult:3, baseSave:18, saveDice:3, baseSpeed:4, minSave:1},
+  beh:  {label:"Behemoth",    size:1, mult:4, baseSave:24, saveDice:4, baseSpeed:4, minSave:0}
 };
+
+// Independent / Command / Hero premiums by Stand Class (Workshop ch.)
+// null = not allowed (e.g. Field Gun & Behemoth cannot be Command Stands)
+function premiumsFor(cls) {
+  if(cls==="beh") return {ind:0.00, cmd:null, hero:0.25, cmdHero:null};
+  if(cls==="sh")  return {ind:0.00, cmd:0.20, hero:0.25, cmdHero:0.45};
+  if(cls==="fg")  return {ind:0.30, cmd:null, hero:0.55, cmdHero:null};
+  return                 {ind:0.30, cmd:0.50, hero:0.55, cmdHero:0.75};
+}
 
 const RANGE_OPTS = [
   {label:"10\"", val:0}, {label:"20\"", val:2}, {label:"30\"", val:5},
@@ -773,7 +818,7 @@ function calcPoints(unit) {
   }
   const aimFactor = unit.class==="inf" ? 1 : 2;
   const wSlots = unit.weapons.length;
-  const ptsAim = (5 - unit.aim) * aimFactor * wSlots;
+  const ptsAim = Math.max(0, 5 - unit.aim) * aimFactor * wSlots;
   let ptsAssault = unit.assault * 0.5;
   if (unit.assault > 3) ptsAssault += 1;
   const ptsSave = ci.baseSave - unit.saveNumber;
@@ -813,15 +858,18 @@ function calcPoints(unit) {
     weaponPts += wCost;
   });
   let total = Math.ceil((standPts+weaponPts)*ci.mult);
+  const pr = premiumsFor(unit.class);
+  const prem = p => p==null ? null : roundToFive(total*(1+p));
   return {
     perStand: total,
     unitSize: ci.size,
     unitPts: roundToFive(total*ci.size),
-    indPts: roundToFive(total*1.3),
-    cmdPts: roundToFive(total*1.5),
-    heroPts: roundToFive(total*1.55),
-    cmdHeroPts: roundToFive(total*1.75),
-    saveDice: ci.saveDice
+    indPts: prem(pr.ind),
+    cmdPts: prem(pr.cmd),
+    heroPts: prem(pr.hero),
+    cmdHeroPts: prem(pr.cmdHero),
+    saveDice: ci.saveDice,
+    breakdown: {standPts, weaponPts, mult: ci.mult}
   };
 }
 
@@ -954,14 +1002,15 @@ function onClassChange() {
   document.getElementById("b-speed").value = ci.baseSpeed;
   document.getElementById("b-savedice").textContent = ci.saveDice;
   document.getElementById("b-savenumber").value = ci.baseSave;
-  document.getElementById("b-savenumber").min = Math.max(1, ci.baseSave - 12);
+  document.getElementById("b-savenumber").min = ci.minSave;
+  document.getElementById("b-savenumber").max = ci.baseSave;
   document.getElementById("b-aim").value = 5;
   document.getElementById("b-assault").value = 0;
   document.getElementById("b-morale").value = 6;
   const mobSel = document.getElementById("b-mobility");
   if(cls==="inf"||cls==="cav"||cls==="fg") { mobSel.value="troop"; mobSel.disabled=true; }
   else if(cls==="ac") { mobSel.value="air"; mobSel.disabled=true; }
-  else { mobSel.disabled=false; mobSel.value=cls==="sh"||cls==="beh"?"track":"track"; }
+  else { mobSel.disabled=false; mobSel.value = cls==="beh"?"walk":"track"; }
   currentBuilderTraits = [];
   document.getElementById("b-traits-display").innerHTML = "None";
   builderWeapons = [{mode:"gp",type:"p",range:0,shots:1,impact:0,traits:[]}];
@@ -1107,15 +1156,21 @@ function calculateBuilder() {
   const unit = gatherBuilderUnit();
   const pts = calcPoints(unit);
   const ci = CLASS_INFO[unit.class];
+  const bd = pts.breakdown;
+  const bdHTML = bd ? `
+    <div class="summary-row"><span>Stand cost (no weapons)</span><span>${bd.standPts}</span></div>
+    <div class="summary-row"><span>Weapon systems (${unit.weapons.length})</span><span>${bd.weaponPts}</span></div>
+    <div class="summary-row"><span>Class multiplier</span><span>&times;${bd.mult}</span></div>
+    <div class="summary-row"><span>Cost per stand</span><span>${pts.perStand} pts</span></div>` : "";
   document.getElementById("b-result").innerHTML = `
     <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-bottom:12px">
-      <div><div class="points-big">${pts.unitPts}</div><div class="points-label">Unit (${ci.size} stands)</div></div>
-      <div><div class="points-big" style="font-size:20px">${pts.indPts}</div><div class="points-label">Ind. Stand</div></div>
-      ${pts.cmdPts?`<div><div class="points-big" style="font-size:20px">${pts.cmdPts}</div><div class="points-label">Cmd Stand</div></div>`:""}
-      <div><div class="points-big" style="font-size:20px">${pts.heroPts}</div><div class="points-label">Hero Stand</div></div>
+      <div><div class="points-big">${pts.unitPts}</div><div class="points-label">Unit (${ci.size} stand${ci.size>1?"s":""})</div></div>
+      <div><div class="points-big" style="font-size:20px">${pts.indPts}</div><div class="points-label">Independent</div></div>
+      ${pts.cmdPts?`<div><div class="points-big" style="font-size:20px">${pts.cmdPts}</div><div class="points-label">Command</div></div>`:""}
+      <div><div class="points-big" style="font-size:20px">${pts.heroPts}</div><div class="points-label">Ind. Hero</div></div>
       ${pts.cmdHeroPts?`<div><div class="points-big" style="font-size:20px">${pts.cmdHeroPts}</div><div class="points-label">Cmd Hero</div></div>`:""}
     </div>
-    <div class="summary-row"><span>Points per stand</span><span>${pts.perStand} pts</span></div>`;
+    ${bdHTML}`;
 }
 
 function saveToLibrary() {
