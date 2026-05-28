@@ -1497,7 +1497,7 @@ function renderWeaponRows() {
     div.innerHTML = `
       <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px">
         <span style="font-size:11px;font-weight:bold;color:#8b949e;text-transform:uppercase;white-space:nowrap">Weapon ${i+1}</span>
-        <input type="text" value="${esc(w.name||"")}" placeholder="Name (optional)" style="flex:1;font-size:12px;padding:3px 8px"
+        <input type="text" value="${esc(w.name||"")}" placeholder="Name (optional)" style="flex:1;font-size:12px;padding:3px 8px;background:#161b22;border-color:#21262d"
           oninput="builderWeapons[${i}].name=this.value" onchange="builderWeapons[${i}].name=this.value">
         <button class="btn btn-danger btn-xs" onclick="removeWeapon(${i})">Remove</button>
       </div>
