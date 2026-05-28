@@ -738,7 +738,7 @@ label .trait-edit-btn{margin-left:6px}
         <label>Requirements <span style="color:var(--text-faint);font-size:10px">(optional — multiple selections in a row = OR)</span></label>
         <div id="ct-reqs-container" style="display:flex;flex-direction:column;gap:7px;margin-top:6px"></div>
         <div style="margin-top:8px">
-          <label style="margin-bottom:4px">Requires Trait <span style="color:var(--text-faint);font-size:10px;text-transform:none;letter-spacing:0">(optional — only pickable if this trait is already active)</span></label>
+          <label style="margin-bottom:4px">Requires Trait <span class="tip ttip tip-left" data-tip="This trait can only be picked if the selected trait is already active on the unit or weapon. Only built-in traits with no requirements of their own are listed here — this keeps chains simple and avoids circular dependencies. If you need a more complex prerequisite, use the faction or class requirements instead."><i class="fa-solid fa-circle-info"></i></span></label>
           <select id="ct-req-trait" style="width:auto"></select>
         </div>
       </div>
