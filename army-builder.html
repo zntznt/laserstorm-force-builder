@@ -187,7 +187,7 @@ label .trait-edit-btn{margin-left:6px}
     <div>
       <div class="card">
         <div class="card-title">Unit Builder
-          <button class="trait-edit-btn" onclick="resetBuilder()">Reset</button>
+          <button class="trait-edit-btn" onclick="confirmBtn(this,resetBuilder)">Reset</button>
         </div>
         <div class="form-row">
           <div class="form-group" style="flex:2">
@@ -1091,6 +1091,33 @@ function esc(s) {
     .replace(/"/g,"&quot;").replace(/'/g,"&#39;");
 }
 
+function confirmBtn(btn, action, ms=5000) {
+  if (btn._confirming) {
+    clearTimeout(btn._confirmTimer);
+    btn._confirming = false;
+    _revertConfirmBtn(btn);
+    action();
+    return;
+  }
+  btn._confirming = true;
+  btn._origText = btn.textContent;
+  btn._origBg = btn.style.background;
+  btn._origBorderColor = btn.style.borderColor;
+  btn._origColor = btn.style.color;
+  btn.textContent = "CONFIRM";
+  btn.style.background = "#8b0000";
+  btn.style.borderColor = "#cc0000";
+  btn.style.color = "#fff";
+  btn._confirmTimer = setTimeout(() => { btn._confirming = false; _revertConfirmBtn(btn); }, ms);
+}
+
+function _revertConfirmBtn(btn) {
+  btn.textContent = btn._origText;
+  btn.style.background = btn._origBg;
+  btn.style.borderColor = btn._origBorderColor;
+  btn.style.color = btn._origColor;
+}
+
 function allUnits() {
   return [...BUILTIN_UNITS, ...state.customUnits];
 }
@@ -1500,7 +1527,7 @@ function renderWeaponRows() {
         <span style="font-size:11px;font-weight:bold;color:#8b949e;text-transform:uppercase;white-space:nowrap">Weapon ${i+1}</span>
         <input type="text" value="${esc(w.name||"")}" placeholder="Name (optional)" style="flex:1;font-size:12px;padding:3px 8px;background:#161b22;border-color:#21262d"
           oninput="builderWeapons[${i}].name=this.value" onchange="builderWeapons[${i}].name=this.value">
-        <button class="trait-edit-btn" onclick="removeWeapon(${i})">Remove</button>
+        <button class="trait-edit-btn" onclick="confirmBtn(this,()=>removeWeapon(${i}))">Remove</button>
       </div>
       <div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px">
         <div class="stat-block">
