@@ -399,7 +399,7 @@ label .trait-edit-btn{margin-left:6px}
     <input class="search-bar" id="lib-search" placeholder="Search units..." oninput="renderLibrary()">
     <div style="display:flex;align-items:flex-start;gap:8px">
       <div class="pill-nav" id="lib-faction-filters" style="flex:1"></div>
-      <button class="btn btn-secondary btn-xs" style="margin-top:4px;white-space:nowrap" onclick="openFactionModal(false)"><i class="fa-solid fa-gear"></i> Factions</button>
+      <button class="btn btn-secondary btn-xs" style="margin-top:4px;white-space:nowrap" onclick="openFactionModal(false)"><i class="fa-solid fa-gear"></i> Custom Factions</button>
     </div>
     <div class="pill-nav" id="lib-filters">
       <div class="pill active" data-filter="all" onclick="setLibFilter(this,'all')">All Classes</div>
@@ -561,7 +561,7 @@ label .trait-edit-btn{margin-left:6px}
     <div class="modal-header">
       <span id="trait-modal-title">Select Traits</span>
       <div style="display:flex;gap:8px;align-items:center">
-        <button class="trait-edit-btn" onclick="openCustomTraitModal()">Custom</button>
+        <button class="trait-edit-btn" onclick="openCustomTraitModal()"><i class="fa-solid fa-gear"></i> Custom Traits</button>
         <button class="modal-close" onclick="closeTraitModal()"><i class="fa-solid fa-xmark"></i></button>
       </div>
     </div>
