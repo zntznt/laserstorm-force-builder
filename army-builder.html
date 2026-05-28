@@ -1722,8 +1722,14 @@ function refreshTraitPickerList() {
   const groups = {};
   filtered.forEach(e => { (groups[e.group]||(groups[e.group]=[])).push(e); });
 
+  // Always include a section for every custom faction (even if no traits gated to it yet)
+  (state.customFactions||[]).forEach(f => {
+    const gk = "faction:"+f.id;
+    if(!groups[gk]) groups[gk] = [];
+  });
+
   const factionGroupKeys = Object.keys(groups).filter(g=>g.startsWith("faction:"));
-  const groupOrder = ["general",...factionGroupKeys,"custom"].filter(g=>groups[g]?.length);
+  const groupOrder = ["general",...factionGroupKeys,"custom"].filter(g=>groups[g]?.length || g.startsWith("faction:"));
 
   function groupLabel(g) {
     if(g==="general") return "General";
@@ -1748,6 +1754,12 @@ function refreshTraitPickerList() {
     hdr.textContent = groupLabel(g);
     list.appendChild(hdr);
 
+    if(!groups[g].length) {
+      const hint = document.createElement("div");
+      hint.style.cssText = "color:var(--text-faint);font-size:11px;padding:4px 2px 6px";
+      hint.textContent = "No traits for this faction yet — create some in Custom Traits.";
+      list.appendChild(hint);
+    }
     groups[g].forEach(({key, val, reqs, locked}) => {
       const stackable = traitIsStackable(val);
       const row = document.createElement("div");
