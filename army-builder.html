@@ -202,7 +202,7 @@ hr{border:none;border-top:1px solid #21262d;margin:12px 0}
             <input type="number" id="b-speed" value="4" min="1" max="20">
           </div>
           <div class="form-group">
-            <label>Mobility <span class="tip ttip" data-tip="Movement type. Infantry/Cavalry/Field Gun are always Troop; Aircraft are always Air. Scouts: Wheel/Track/Walk/Grav. AFVs: Track/Walk/Grav. Super Heavies: Track/Walk. Behemoths: Walk only. Walker (+2) and Grav (+4) add to Speed cost.">&#9432;</span></label>
+            <label>Mobility <span class="tip ttip" data-tip="Movement type. Infantry/Cavalry/Field Gun are always Troop; Aircraft are always Air. Scouts, AFVs, Super Heavies, and Behemoths may be Wheeled, Tracked, Walker, or Grav. Walker (+2) and Grav (+4) add to Speed cost.">&#9432;</span></label>
             <select id="b-mobility" style="width:auto">
               <option value="troop">Troop</option>
               <option value="wheel">Wheeled</option>
@@ -1062,14 +1062,15 @@ function onClassChange() {
     fg:    [{v:"troop",l:"Troop"}],
     ac:    [{v:"air",  l:"Air"}],
     scout: [{v:"wheel",l:"Wheeled"},{v:"track",l:"Tracked"},{v:"walk",l:"Walker"},{v:"grav",l:"Grav"}],
-    afv:   [{v:"track",l:"Tracked"},{v:"walk",l:"Walker"},{v:"grav",l:"Grav"}],
-    sh:    [{v:"track",l:"Tracked"},{v:"walk",l:"Walker"}],
-    beh:   [{v:"walk", l:"Walker"}]
+    afv:   [{v:"wheel",l:"Wheeled"},{v:"track",l:"Tracked"},{v:"walk",l:"Walker"},{v:"grav",l:"Grav"}],
+    sh:    [{v:"wheel",l:"Wheeled"},{v:"track",l:"Tracked"},{v:"walk",l:"Walker"},{v:"grav",l:"Grav"}],
+    beh:   [{v:"wheel",l:"Wheeled"},{v:"track",l:"Tracked"},{v:"walk",l:"Walker"},{v:"grav",l:"Grav"}]
   };
   const opts = MOB_OPTIONS[cls] || [{v:"track",l:"Tracked"}];
   mobSel.innerHTML = opts.map(o=>`<option value="${o.v}">${o.l}</option>`).join("");
   mobSel.disabled = opts.length === 1;
-  mobSel.value = opts[0].v;
+  const defaultMob = {inf:"troop",cav:"troop",fg:"troop",ac:"air",scout:"wheel",afv:"track",sh:"track",beh:"walk"};
+  mobSel.value = defaultMob[cls] || opts[0].v;
   currentBuilderTraits = [];
   document.getElementById("b-traits-display").innerHTML = "None";
   builderWeapons = [{mode:"gp",type:"p",range:0,shots:1,impact:0,traits:[]}];
