@@ -121,6 +121,13 @@ hr{border:none;border-top:1px solid #21262d;margin:12px 0}
 .class-profile strong{color:#c9d1d9}
 .cp-tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}
 .cp-tag{background:#161b22;border:1px solid #30363d;border-radius:4px;padding:1px 6px;font-size:10px;color:#8b949e}
+.stat-block{background:#161b22;border:1px solid #21262d;border-radius:6px;padding:7px 8px;display:flex;flex-direction:column;gap:5px}
+.stat-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:#6e7681;display:flex;align-items:center;gap:3px;white-space:nowrap}
+.stat-row{display:flex;align-items:center;gap:2px}
+.stat-block input[type=number]{flex:1;min-width:0;width:auto;text-align:center;padding:5px 3px;font-size:13px;font-weight:600}
+.stat-block select{padding:5px 3px;font-size:12px;width:100%}
+.stat-sfx{font-size:10px;color:#555;font-weight:600;flex-shrink:0}
+.stat-dice{font-size:12px;color:#8b949e;font-weight:700;flex-shrink:0}
 .cp-tag b{color:#007eff;font-weight:bold}
 .tip::after{content:attr(data-tip);display:none;position:absolute;left:0;top:calc(100% + 4px);z-index:400;background:#0d1117;border:1px solid #007eff;border-radius:6px;padding:8px 10px;font-size:11px;color:#e0e0e0;white-space:normal;width:280px;line-height:1.5;font-weight:normal;pointer-events:none;box-shadow:0 4px 12px rgba(0,0,0,.6)}
 .tip:hover::after{display:block}
@@ -203,14 +210,16 @@ hr{border:none;border-top:1px solid #21262d;margin:12px 0}
           </div>
         </div>
         <div id="b-class-profile" class="class-profile"></div>
-        <div class="form-row">
-          <div class="form-group">
-            <label>Speed <span class="tip ttip" data-tip="Movement rate in inches. Base 4&quot; is free (Cavalry &amp; Aircraft 8&quot;); each extra inch costs +0.25.">&#9432;</span></label>
-            <input type="number" id="b-speed" value="4" min="1" max="20" oninput="calculateBuilder()" onchange="calculateBuilder()">
+        <div style="display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;margin-bottom:14px">
+          <div class="stat-block">
+            <div class="stat-label">Speed <span class="tip ttip" data-tip="Movement rate in inches. Base 4&quot; is free (Cavalry &amp; Aircraft 8&quot;); each extra inch costs +0.25.">&#9432;</span></div>
+            <div class="stat-row">
+              <input type="number" id="b-speed" value="4" min="1" max="20" oninput="calculateBuilder()" onchange="calculateBuilder()">
+            </div>
           </div>
-          <div class="form-group">
-            <label>Mobility <span class="tip ttip" data-tip="Movement type. Infantry/Cavalry/Field Gun are always Troop; Aircraft are always Air. Scouts, AFVs, Super Heavies, and Behemoths may be Wheeled, Tracked, Walker, or Grav. Walker (+2) and Grav (+4) add to Speed cost.">&#9432;</span></label>
-            <select id="b-mobility" style="width:auto" onchange="calculateBuilder()">
+          <div class="stat-block">
+            <div class="stat-label">Mobility <span class="tip ttip" data-tip="Movement type. Infantry/Cavalry/Field Gun are always Troop; Aircraft are always Air. Scouts, AFVs, Super Heavies, and Behemoths may be Wheeled, Tracked, Walker, or Grav. Walker (+2) and Grav (+4) add to Speed cost.">&#9432;</span></div>
+            <select id="b-mobility" onchange="calculateBuilder()">
               <option value="troop">Troop</option>
               <option value="wheel">Wheeled</option>
               <option value="track">Tracked</option>
@@ -219,26 +228,35 @@ hr{border:none;border-top:1px solid #21262d;margin:12px 0}
               <option value="air">Air</option>
             </select>
           </div>
-          <div class="form-group">
-            <label>Aim <span class="tip ttip tip-left" data-tip="Roll this number or higher to hit with ranged attacks (lower is better). 5+ is free; each point better adds +2 per weapon slot (+1 for Infantry).">&#9432;</span></label>
-            <input type="number" id="b-aim" value="5" min="2" max="5" oninput="calculateBuilder()" onchange="calculateBuilder()">
-            <span style="font-size:10px;color:#666">+</span>
+          <div class="stat-block">
+            <div class="stat-label">Aim <span class="tip ttip tip-left" data-tip="Roll this number or higher to hit with ranged attacks (lower is better). 5+ is free; each point better adds +2 per weapon slot (+1 for Infantry).">&#9432;</span></div>
+            <div class="stat-row">
+              <input type="number" id="b-aim" value="5" min="2" max="5" oninput="calculateBuilder()" onchange="calculateBuilder()">
+              <span class="stat-sfx">+</span>
+            </div>
           </div>
-          <div class="form-group">
-            <label>Assault <span class="tip ttip tip-left" data-tip="Added to close-combat rolls. +0.5 per point; each point of Assault 3 or higher also costs an additional +1. Field Guns, Scouts &amp; Aircraft cannot Assault.">&#9432;</span></label>
-            <input type="number" id="b-assault" value="0" min="0" max="10" oninput="calculateBuilder()" onchange="calculateBuilder()">
-            <span style="font-size:10px;color:#666">+</span>
+          <div class="stat-block">
+            <div class="stat-label">Assault <span class="tip ttip tip-left" data-tip="Added to close-combat rolls. +0.5 per point; each point of Assault 3 or higher also costs an additional +1. Field Guns, Scouts &amp; Aircraft cannot Assault.">&#9432;</span></div>
+            <div class="stat-row">
+              <input type="number" id="b-assault" value="0" min="0" max="10" oninput="calculateBuilder()" onchange="calculateBuilder()">
+              <span class="stat-sfx">+</span>
+            </div>
           </div>
-          <div class="form-group">
-            <label>Save <span class="tip ttip tip-left" data-tip="Roll this many D6; the total must meet or exceed the Save Number to avoid destruction. Each pip below the class base costs +1.">&#9432;</span></label>
-            <span id="b-savedice" style="color:#fff;font-weight:bold">1</span>D6/
-            <input type="number" id="b-savenumber" value="6" min="1" max="24" oninput="calculateBuilder()" onchange="calculateBuilder()">
-            <span style="font-size:10px;color:#666">+</span>
+          <div class="stat-block">
+            <div class="stat-label">Save <span class="tip ttip tip-left" data-tip="Roll this many D6; the total must meet or exceed the Save Number to avoid destruction. Each pip below the class base costs +1.">&#9432;</span></div>
+            <div class="stat-row">
+              <span id="b-savedice" class="stat-dice">1</span>
+              <span class="stat-sfx">D6/</span>
+              <input type="number" id="b-savenumber" value="6" min="1" max="24" oninput="calculateBuilder()" onchange="calculateBuilder()">
+              <span class="stat-sfx">+</span>
+            </div>
           </div>
-          <div class="form-group">
-            <label>Morale <span class="tip ttip tip-left" data-tip="Roll this or higher on a D6 to avoid Withdrawing. 6+ is free; +1 per pip below, +1 extra if better than 4+.">&#9432;</span></label>
-            <input type="number" id="b-morale" value="6" min="1" max="6" oninput="calculateBuilder()" onchange="calculateBuilder()">
-            <span style="font-size:10px;color:#666">+</span>
+          <div class="stat-block">
+            <div class="stat-label">Morale <span class="tip ttip tip-left" data-tip="Roll this or higher on a D6 to avoid Withdrawing. 6+ is free; +1 per pip below, +1 extra if better than 4+.">&#9432;</span></div>
+            <div class="stat-row">
+              <input type="number" id="b-morale" value="6" min="1" max="6" oninput="calculateBuilder()" onchange="calculateBuilder()">
+              <span class="stat-sfx">+</span>
+            </div>
           </div>
         </div>
         <div class="form-group" style="margin-bottom:10px">
