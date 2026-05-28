@@ -115,6 +115,7 @@ hr{border:none;border-top:1px solid #21262d;margin:12px 0}
 .summary-row{display:flex;justify-content:space-between;padding:5px 0 4px;border-bottom:1px solid #21262d;font-size:13px;margin-top:2px}
 .summary-row:last-child{border-bottom:none;font-weight:bold;color:#ffd700}
 .detail-row{display:flex;justify-content:space-between;padding:1px 0 1px 12px;font-size:11px;color:#555}
+.detail-row-2{display:flex;justify-content:space-between;padding:1px 0 1px 24px;font-size:10px;color:#444}
 .detail-row+.summary-row{margin-top:6px}
 .tip{position:relative;display:inline;border-bottom:1px dotted #555;cursor:help}
 .tip.ttip{border-bottom:none;cursor:help;color:#007eff;font-weight:bold;font-size:11px;margin-left:3px}
@@ -1051,27 +1052,41 @@ function calcPoints(unit) {
     let impCost = w.impact * 2;
     if (w.impact>6) impCost+=2;
     if (w.impact>10) impCost+=5;
-    wCost += w.range + impCost;
+    const rangeCost = w.range;
+    wCost += rangeCost + impCost;
     let tCost=0, impTCost=0;
+    const traitComps = [];
     (w.traits||[]).forEach(t => {
+      let tc = 0;
       if (t[1]===0) {
-        if(t[0]==="Burst"){tCost+=(impCost+w.range+7);impTCost+=(impCost+w.range+7);}
-        if(t[0]==="Frag"&&w.impact>1){tCost-=(impCost*0.25);impTCost-=(impCost*0.25);}
-        if(t[0]==="A.I. Guided") tCost+=(w.shots*0.5);
-        if(t[0]==="Repeating Fire") tCost+=(w.shots*0.5);
-        if(t[0]==="Rapid Fire") tCost+=((w.range+impCost+impTCost)/4);
-        if(t[0]==="Targeting"&&wSlots>1) tCost+=0.5;
-        if(t[0]==="Flame"){tCost+=(impCost+w.range+5);impTCost+=(impCost+w.range+5);}
-      } else { tCost+=t[1]; }
+        if(t[0]==="Burst"){tc=(impCost+w.range+7);impTCost+=tc;}
+        else if(t[0]==="Frag"&&w.impact>1){tc=-(impCost*0.25);impTCost+=tc;}
+        else if(t[0]==="A.I. Guided"){tc=(w.shots*0.5);}
+        else if(t[0]==="Repeating Fire"){tc=(w.shots*0.5);}
+        else if(t[0]==="Rapid Fire"){tc=((w.range+impCost+impTCost)/4);}
+        else if(t[0]==="Targeting"&&wSlots>1){tc=0.5;}
+        else if(t[0]==="Flame"){tc=(impCost+w.range+5);impTCost+=tc;}
+        tCost+=tc;
+      } else {
+        tc=t[1]; tCost+=tc;
+      }
+      if(tc!==0) traitComps.push({label:t[0], val:tc});
     });
-    wCost += tCost + (w.shots-1)*((w.range+impCost+impTCost)/2);
-    if(w.mode==="gp") wCost*=1.5;
-    if(w.type==="s") wCost*=0.8;
+    const extraShotsCost = (w.shots-1)*((w.range+impCost+impTCost)/2);
+    wCost += tCost + extraShotsCost;
+    const mults = [];
+    if(w.mode==="gp"){ wCost*=1.5; mults.push("GP ×1.5"); }
+    if(w.type==="s"){ wCost*=0.8; mults.push("Selective ×0.8"); }
     wCost = Math.ceil(wCost);
     if(unit.class==="fg"&&wSlots===1) wCost-=1;
     if(wCost<1) wCost=w.shots;
+    const wComps = [];
+    if(rangeCost>0) wComps.push({label:`Range (${w.range}")`, val:rangeCost});
+    if(impCost>0) wComps.push({label:`Impact ${w.impact}`, val:impCost});
+    wComps.push(...traitComps);
+    if(extraShotsCost>0) wComps.push({label:`+${w.shots-1} extra shot${w.shots-1>1?"s":""}`, val:extraShotsCost});
     weaponPts += wCost;
-    weaponComps.push({label: w.name || `Weapon ${i+1}`, cost: wCost});
+    weaponComps.push({label: w.name || `Weapon ${i+1}`, cost: wCost, comps: wComps, mults});
   });
   let total = Math.ceil((standPts+weaponPts)*ci.mult);
   const pr = premiumsFor(unit.class);
@@ -1527,8 +1542,13 @@ function calculateBuilder() {
     const wpnLabel = unit.weapons.length
       ? (unit.weapons.length === 1 ? "1 weapon" : `${unit.weapons.length} weapons`)
       : "no weapons";
-    const wpnRows = bd.weaponComps.map(w =>
-      `<div class="detail-row"><span>${esc(w.label)}</span><span>+${w.cost}</span></div>`).join("");
+    const wpnRows = bd.weaponComps.map(w => {
+      const subRows = (w.comps||[]).map(c =>
+        `<div class="detail-row-2"><span>${esc(c.label)}</span><span>${fmtBD(c.val)}</span></div>`).join("");
+      const multRows = (w.mults||[]).map(m =>
+        `<div class="detail-row-2" style="color:#555;font-style:italic"><span>${esc(m)}</span><span></span></div>`).join("");
+      return `<div class="detail-row"><span>${esc(w.label)}</span><span>+${w.cost}</span></div>${subRows}${multRows}`;
+    }).join("");
     return `
       <div class="summary-row"><span>Stand cost <span style="color:#555;font-size:11px;font-weight:normal">(${wpnLabel} excluded)</span></span><span>${bd.standPts}</span></div>
       ${standRows}
