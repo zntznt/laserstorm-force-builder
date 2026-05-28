@@ -729,7 +729,7 @@ label .trait-edit-btn{margin-left:6px}
       </div>
       <div class="form-group" style="margin-bottom:12px">
         <label>Trait Type</label>
-        <select id="ct-type" style="width:auto">
+        <select id="ct-type" style="width:auto" onchange="updateReqTraitDropdown()">
           <option value="stand">Stand</option>
           <option value="weapon">Weapon</option>
         </select>
@@ -737,6 +737,10 @@ label .trait-edit-btn{margin-left:6px}
       <div class="form-group" style="margin-bottom:12px">
         <label>Requirements <span style="color:var(--text-faint);font-size:10px">(optional — multiple selections in a row = OR)</span></label>
         <div id="ct-reqs-container" style="display:flex;flex-direction:column;gap:7px;margin-top:6px"></div>
+        <div style="margin-top:8px">
+          <label style="margin-bottom:4px">Requires Trait <span style="color:var(--text-faint);font-size:10px;text-transform:none;letter-spacing:0">(optional — only pickable if this trait is already active)</span></label>
+          <select id="ct-req-trait" style="width:auto"></select>
+        </div>
       </div>
       <div class="form-group" style="margin-bottom:12px">
         <label>Description <span style="color:var(--text-faint);font-size:10px">(optional — shown as tooltip)</span></label>
@@ -1443,7 +1447,7 @@ function traitReqLabel(type, vals) {
   if(type === "class")    return vals.map(v => TRAIT_CLASS_LABELS[v]||v).join(" / ");
   if(type === "mobility") return vals.map(v => TRAIT_MOB_LABELS[v]||v).join(" / ");
   if(type === "role")     return vals.map(v => TRAIT_ROLE_LABELS[v]||v).join(" / ");
-  if(type === "traitr")   { const wt = WEAPON_TRAITS[vals[0]]; return "req. "+(wt?.[0]||vals[0]); }
+  if(type === "traitr")   { const t = STAND_TRAITS[vals[0]] || WEAPON_TRAITS[vals[0]]; return "req. "+(t?.[0]||vals[0]); }
   return vals.join(" / ");
 }
 
@@ -1693,22 +1697,26 @@ function refreshTraitPickerList() {
   const list = document.getElementById("trait-modal-list");
   list.innerHTML = "";
   const traits = traitPickerTarget==="stand" ? allStandTraits() : allWeaponTraits();
-  const selected = traitPickerTarget==="stand"
-    ? currentBuilderTraits.map(t=>t[0])
-    : (builderWeapons[traitPickerWeaponIdx]?.traits||[]).map(t=>t[0]);
+  const curTraits = traitPickerTarget==="stand"
+    ? currentBuilderTraits
+    : (builderWeapons[traitPickerWeaponIdx]?.traits||[]);
+  const selected = curTraits.map(t=>t[0]);
+  const selectedTraitKeys = new Set(curTraits.map(t=>Object.entries(traits).find(([,v])=>v[0]===t[0])?.[0]).filter(Boolean));
   const currentFaction  = document.getElementById("b-faction")?.value  || "";
   const currentClass    = document.getElementById("b-class")?.value    || "";
   const currentMobility = document.getElementById("b-mobility")?.value || "";
   const search = (document.getElementById("trait-picker-search")?.value||"").toLowerCase();
 
   const entries = Object.entries(traits).map(([key, val]) => {
-    const reqs   = allTraitReqs(key, val);
-    const facReq = reqs.find(r=>r.type==="faction");
-    const clsReq = reqs.find(r=>r.type==="class");
-    const mobReq = reqs.find(r=>r.type==="mobility");
-    const locked = (facReq && !facReq.vals.includes(currentFaction))
-                || (clsReq && !clsReq.vals.includes(currentClass))
-                || (mobReq && !mobReq.vals.includes(currentMobility));
+    const reqs      = allTraitReqs(key, val);
+    const facReq    = reqs.find(r=>r.type==="faction");
+    const clsReq    = reqs.find(r=>r.type==="class");
+    const mobReq    = reqs.find(r=>r.type==="mobility");
+    const traitrReq = reqs.find(r=>r.type==="traitr");
+    const locked = (facReq    && !facReq.vals.includes(currentFaction))
+                || (clsReq    && !clsReq.vals.includes(currentClass))
+                || (mobReq    && !mobReq.vals.includes(currentMobility))
+                || (traitrReq && !selectedTraitKeys.has(traitrReq.vals[0]));
     const group  = facReq ? "faction:"+facReq.vals[0]
                  : key.startsWith("custom_") ? "custom"
                  : "general";
@@ -1873,6 +1881,7 @@ function applyTraitsLive() {
     if(el) el.innerHTML = traitTipHTML(selected, allWeaponTraits())||"None";
   }
   calculateBuilder();
+  refreshTraitPickerList();
 }
 
 function closeTraitModal() { closeModal("modal-traits"); }
@@ -2301,15 +2310,25 @@ function getCustomTraitReqs() {
     const t = p.dataset.type, v = p.dataset.val;
     (byType[t] = byType[t]||[]).push(v);
   });
+  const traitReq = document.getElementById("ct-req-trait")?.value;
+  if(traitReq) byType["traitr"] = [traitReq];
   return Object.entries(byType).map(([type,vals])=>({type,vals}));
 }
 
 function setCustomTraitReqPills(reqs) {
   document.querySelectorAll("#ct-reqs-container .req-pill").forEach(p=>p.classList.remove("req-pill-on"));
-  (reqs||[]).forEach(req => req.vals.forEach(val => {
-    const p = document.querySelector(`#ct-reqs-container .req-pill[data-type="${req.type}"][data-val="${val}"]`);
-    if(p) p.classList.add("req-pill-on");
-  }));
+  const sel = document.getElementById("ct-req-trait");
+  if(sel) sel.value = "";
+  (reqs||[]).forEach(req => {
+    if(req.type === "traitr") {
+      if(sel && req.vals[0]) sel.value = req.vals[0];
+      return;
+    }
+    req.vals.forEach(val => {
+      const p = document.querySelector(`#ct-reqs-container .req-pill[data-type="${req.type}"][data-val="${val}"]`);
+      if(p) p.classList.add("req-pill-on");
+    });
+  });
 }
 
 function openCustomTraitModal() {
@@ -2322,8 +2341,24 @@ function openCustomTraitModal() {
   document.getElementById("ct-form-header").textContent = "New Trait";
   document.getElementById("ct-cancel-edit-btn").style.display = "none";
   renderCustomTraitReqPills();
+  updateReqTraitDropdown();
   renderCustomTraitList();
   openModal("modal-custom-trait");
+}
+
+function updateReqTraitDropdown() {
+  const type = document.getElementById("ct-type").value;
+  const traits = type === "weapon" ? WEAPON_TRAITS : STAND_TRAITS;
+  const sel = document.getElementById("ct-req-trait");
+  if(!sel) return;
+  const current = sel.value;
+  sel.innerHTML = `<option value="">None</option>`
+    + Object.entries(traits)
+        .filter(([key]) => !(TRAIT_REQS[key] && TRAIT_REQS[key].length))
+        .sort((a, b) => a[1][0].localeCompare(b[1][0]))
+        .map(([key, val]) => `<option value="${esc(key)}">${esc(val[0])}</option>`)
+        .join("");
+  if([...sel.options].some(o => o.value === current)) sel.value = current;
 }
 
 function toggleStackCap() {
@@ -2339,6 +2374,7 @@ function editCustomTrait(id) {
   document.getElementById("ct-name").value = t.name;
   document.getElementById("ct-cost").value = t.cost;
   document.getElementById("ct-type").value = t.type;
+  updateReqTraitDropdown();
   document.getElementById("ct-description").value = t.description||"";
   document.getElementById("ct-stackable").checked = !!t.stackable;
   document.getElementById("ct-stackcap").value = t.stackCap||"";
@@ -2361,6 +2397,7 @@ function cancelEditCustomTrait() {
   document.getElementById("ct-stackable").checked = false;
   document.getElementById("ct-stackcap").value = "";
   document.getElementById("ct-stackcap-row").style.display = "none";
+  updateReqTraitDropdown();
   document.getElementById("ct-save-btn").textContent = "Create";
   document.getElementById("ct-form-header").textContent = "New Trait";
   document.getElementById("ct-cancel-edit-btn").style.display = "none";
@@ -2433,6 +2470,7 @@ function saveCustomTrait() {
   document.getElementById("ct-stackable").checked = false;
   document.getElementById("ct-stackcap").value = "";
   document.getElementById("ct-stackcap-row").style.display = "none";
+  updateReqTraitDropdown();
   document.querySelectorAll("#ct-reqs-container .req-pill").forEach(p=>p.classList.remove("req-pill-on"));
   if(document.getElementById("modal-traits").classList.contains("open")) {
     refreshTraitPickerList();
