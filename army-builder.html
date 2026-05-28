@@ -629,7 +629,7 @@ hr{border:none;border-top:1px solid #21262d;margin:12px 0}
     <div class="modal-header">Custom Traits <button class="modal-close" onclick="closeModal('modal-custom-trait')">&#215;</button></div>
     <div id="custom-trait-list"></div>
     <div style="margin-top:16px;padding-top:14px;border-top:1px solid #30363d">
-      <div style="font-size:12px;font-weight:bold;color:#8b949e;margin-bottom:10px;text-transform:uppercase;letter-spacing:.05em">New Trait</div>
+      <div id="ct-form-header" style="font-size:12px;font-weight:bold;color:#8b949e;margin-bottom:10px;text-transform:uppercase;letter-spacing:.05em">New Trait</div>
       <div class="form-row" style="gap:8px">
         <div class="form-group" style="flex:2">
           <label>Name</label>
@@ -665,9 +665,10 @@ hr{border:none;border-top:1px solid #21262d;margin:12px 0}
         <label>Description <span style="color:#555;font-size:10px">(optional — shown as tooltip)</span></label>
         <textarea id="ct-description" rows="2" placeholder="What does this trait do?" style="width:100%;resize:vertical"></textarea>
       </div>
-      <div style="display:flex;gap:8px">
-        <button class="btn btn-primary" onclick="saveCustomTrait()">Create</button>
-        <button class="btn btn-secondary" onclick="closeModal('modal-custom-trait')">Cancel</button>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <button id="ct-save-btn" class="btn btn-primary" onclick="saveCustomTrait()">Create</button>
+        <button id="ct-cancel-edit-btn" class="btn btn-secondary btn-xs" onclick="cancelEditCustomTrait()" style="display:none">Cancel edit</button>
+        <button class="btn btn-secondary" onclick="closeModal('modal-custom-trait')">Close</button>
       </div>
     </div>
   </div>
@@ -863,6 +864,7 @@ let state = {
 
 let currentBuilderTraits = [];
 let builderFactionPrev = "";
+let editingCustomTraitId = null;
 let currentWeaponTraits = {};
 let traitPickerTarget = null;
 let traitPickerWeaponIdx = null;
@@ -1290,17 +1292,13 @@ function removeWeapon(i) {
   calculateBuilder();
 }
 
-function openTraitPicker(target, wIdx) {
-  traitPickerTarget = target;
-  traitPickerWeaponIdx = wIdx;
+function refreshTraitPickerList() {
   const list = document.getElementById("trait-modal-list");
   list.innerHTML = "";
-  const traits = target==="stand" ? allStandTraits() : allWeaponTraits();
-  const selected = target==="stand"
+  const traits = traitPickerTarget==="stand" ? allStandTraits() : allWeaponTraits();
+  const selected = traitPickerTarget==="stand"
     ? currentBuilderTraits.map(t=>t[0])
-    : (builderWeapons[wIdx]?.traits||[]).map(t=>t[0]);
-  document.getElementById("trait-modal-title").textContent = target==="stand" ? "Stand Traits" : `Weapon ${wIdx+1} Traits`;
-  list.style.columnCount = "1";
+    : (builderWeapons[traitPickerWeaponIdx]?.traits||[]).map(t=>t[0]);
   const currentFaction = document.getElementById("b-faction")?.value || "";
   Object.entries(traits).forEach(([key,val]) => {
     const fac = traitFactionKey(val);
@@ -1338,6 +1336,14 @@ function openTraitPicker(target, wIdx) {
     row.appendChild(info);
     list.appendChild(row);
   });
+}
+
+function openTraitPicker(target, wIdx) {
+  traitPickerTarget = target;
+  traitPickerWeaponIdx = wIdx;
+  document.getElementById("trait-modal-title").textContent = target==="stand" ? "Stand Traits" : `Weapon ${wIdx+1} Traits`;
+  document.getElementById("trait-modal-list").style.columnCount = "1";
+  refreshTraitPickerList();
   openModal("modal-traits");
 }
 
@@ -1541,13 +1547,45 @@ function deleteCustomFaction(id) {
 }
 
 function openCustomTraitModal() {
+  editingCustomTraitId = null;
   document.getElementById("ct-name").value = "";
   document.getElementById("ct-cost").value = "1";
   document.getElementById("ct-type").value = "stand";
   document.getElementById("ct-description").value = "";
+  document.getElementById("ct-save-btn").textContent = "Create";
+  document.getElementById("ct-form-header").textContent = "New Trait";
+  document.getElementById("ct-cancel-edit-btn").style.display = "none";
   renderCustomTraitFactionSelect();
   renderCustomTraitList();
   openModal("modal-custom-trait");
+}
+
+function editCustomTrait(id) {
+  const t = (state.customTraits||[]).find(t=>t.id===id);
+  if(!t) return;
+  editingCustomTraitId = id;
+  document.getElementById("ct-name").value = t.name;
+  document.getElementById("ct-cost").value = t.cost;
+  document.getElementById("ct-type").value = t.type;
+  document.getElementById("ct-description").value = t.description||"";
+  renderCustomTraitFactionSelect();
+  document.getElementById("ct-faction").value = t.faction||"";
+  document.getElementById("ct-save-btn").textContent = "Save Changes";
+  document.getElementById("ct-form-header").textContent = "Edit Trait";
+  document.getElementById("ct-cancel-edit-btn").style.display = "";
+  document.getElementById("ct-name").focus();
+}
+
+function cancelEditCustomTrait() {
+  editingCustomTraitId = null;
+  document.getElementById("ct-name").value = "";
+  document.getElementById("ct-cost").value = "1";
+  document.getElementById("ct-type").value = "stand";
+  document.getElementById("ct-description").value = "";
+  document.getElementById("ct-faction").value = "";
+  document.getElementById("ct-save-btn").textContent = "Create";
+  document.getElementById("ct-form-header").textContent = "New Trait";
+  document.getElementById("ct-cancel-edit-btn").style.display = "none";
 }
 
 function renderCustomTraitFactionSelect() {
@@ -1581,6 +1619,7 @@ function renderCustomTraitList() {
           <div style="font-weight:bold;color:#e0e0e0;font-size:13px">${esc(t.name)} <span style="font-size:10px;color:#555;font-weight:normal">(${t.cost >= 0 ? '+' : ''}${t.cost} pts)</span> ${facBadge}</div>
           <div style="font-size:10px;color:#555">${typeLabel[t.type]||t.type}${t.description ? ` — ${esc(t.description)}` : ""}</div>
         </div>
+        <button class="btn btn-secondary btn-xs" onclick="editCustomTrait('${t.id}')">Edit</button>
         <button class="btn btn-danger btn-xs" onclick="deleteCustomTrait('${t.id}')">Delete</button>
       </div>`;
     }).join("")
@@ -1594,12 +1633,35 @@ function saveCustomTrait() {
   const type = document.getElementById("ct-type").value;
   const faction = document.getElementById("ct-faction").value;
   const description = document.getElementById("ct-description").value.trim();
-  const id = uid();
-  state.customTraits.push({id, name, cost, description, faction, type});
+  if(editingCustomTraitId) {
+    const idx = state.customTraits.findIndex(t=>t.id===editingCustomTraitId);
+    if(idx !== -1) {
+      const oldName = state.customTraits[idx].name;
+      state.customTraits[idx] = {id: editingCustomTraitId, name, cost, description, faction, type};
+      if(oldName !== name) {
+        state.customUnits.forEach(u => {
+          (u.standTraits||[]).forEach(t => { if(t[0]===oldName) t[0]=name; });
+          (u.weapons||[]).forEach(w => { (w.traits||[]).forEach(t => { if(t[0]===oldName) t[0]=name; }); });
+        });
+      }
+    }
+    editingCustomTraitId = null;
+    document.getElementById("ct-save-btn").textContent = "Create";
+    document.getElementById("ct-form-header").textContent = "New Trait";
+    document.getElementById("ct-cancel-edit-btn").style.display = "none";
+  } else {
+    state.customTraits.push({id: uid(), name, cost, description, faction, type});
+  }
   saveState();
   renderCustomTraitList();
   document.getElementById("ct-name").value = "";
+  document.getElementById("ct-cost").value = "1";
+  document.getElementById("ct-type").value = "stand";
   document.getElementById("ct-description").value = "";
+  document.getElementById("ct-faction").value = "";
+  if(document.getElementById("modal-traits").classList.contains("open")) {
+    refreshTraitPickerList();
+  }
 }
 
 function deleteCustomTrait(id) {
