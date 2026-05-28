@@ -133,6 +133,10 @@ hr{border:none;border-top:1px solid #21262d;margin:12px 0}
 .stat-block select{padding:5px 3px;font-size:12px;width:100%}
 .stat-sfx{font-size:10px;color:#555;font-weight:600;flex-shrink:0}
 .stat-dice{font-size:12px;color:#8b949e;font-weight:700;flex-shrink:0}
+.stand-stats-grid .stat-block{background:#0d1117;border-color:#30363d}
+.stand-stats-grid .stat-block input[type=number],.stand-stats-grid .stat-block select{background:#161b22;border-color:#21262d}
+.stand-stats-grid .stat-label{color:#8b949e}
+.stand-stats-grid .stat-sfx,.stand-stats-grid .stat-dice{color:#6e7681}
 .cp-tag b{color:#007eff;font-weight:bold}
 .tip::after{content:attr(data-tip);display:none;position:absolute;left:0;top:calc(100% + 4px);z-index:400;background:#0d1117;border:1px solid #007eff;border-radius:6px;padding:8px 10px;font-size:11px;color:#e0e0e0;white-space:normal;width:280px;line-height:1.5;font-weight:normal;pointer-events:none;box-shadow:0 4px 12px rgba(0,0,0,.6)}
 .tip:hover::after{display:block}
@@ -216,7 +220,7 @@ hr{border:none;border-top:1px solid #21262d;margin:12px 0}
           </div>
         </div>
         <div id="b-class-profile" class="class-profile"></div>
-        <div style="display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;margin-top:14px;margin-bottom:14px">
+        <div class="stand-stats-grid" style="display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;margin-top:14px;margin-bottom:14px">
           <div class="stat-block">
             <div class="stat-label">Speed</div>
             <div class="stat-row">
