@@ -608,12 +608,16 @@ label .trait-edit-btn{margin-left:6px}
       </div>
     </div>
     <div class="form-group" style="margin-bottom:12px">
-      <label>Commander <span style="font-size:10px;color:#8b949e;font-weight:normal">(flavor name)</span></label>
+      <label>Commander <span style="color:#ef5350">*</span></label>
       <input type="text" id="tf-commander" placeholder="e.g. Colonel Marcus" style="width:100%">
     </div>
     <div class="form-group" style="margin-bottom:16px">
       <label>Faction</label>
       <select id="tf-faction" style="width:100%"></select>
+    </div>
+    <div class="form-group" style="margin-bottom:16px">
+      <label>Notes <span style="font-size:10px;color:#8b949e;font-weight:normal">(optional — lore, composition notes, etc.)</span></label>
+      <textarea id="tf-notes" placeholder="e.g. Veteran unit tasked with holding the northern flank..." style="width:100%;min-height:72px;resize:vertical;background:var(--surface-raised);border:1px solid var(--border-subtle);border-radius:6px;color:#e0e0e0;padding:8px;font-family:var(--font-body);font-size:13px;line-height:1.5"></textarea>
     </div>
     <div style="display:flex;justify-content:flex-end;gap:8px">
       <button class="btn btn-secondary" onclick="closeModal('modal-tf')">Cancel</button>
@@ -3257,6 +3261,7 @@ function renderTFDetail() {
       <span class="points-label" style="margin-left:6px">pts</span>
     </div>
     ${commanderSection}
+    ${tf.notes ? `<div style="background:#0d0f14;border:1px solid #1e2530;border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:13px;color:#8b949e;line-height:1.6;font-style:italic">${esc(tf.notes).replace(/\n/g,"<br>")}</div>` : ""}
     ${slotsHTML}
   </div>`;
 }
@@ -3265,6 +3270,7 @@ function openNewTFModal() {
   editingTFId = null;
   document.getElementById("tf-new-name").value = "";
   document.getElementById("tf-commander").value = "";
+  document.getElementById("tf-notes").value = "";
   document.getElementById("modal-tf-title").textContent = "New Task Force";
   document.getElementById("tf-modal-submit").textContent = "Create";
   _populateTFTypeSelect(document.getElementById("tf-type"), "infantry");
@@ -3278,6 +3284,7 @@ function openEditTFModal(id) {
   editingTFId = id;
   document.getElementById("tf-new-name").value = tf.name || "";
   document.getElementById("tf-commander").value = tf.commander || "";
+  document.getElementById("tf-notes").value = tf.notes || "";
   document.getElementById("modal-tf-title").textContent = "Edit Task Force";
   document.getElementById("tf-modal-submit").textContent = "Save";
   _populateTFTypeSelect(document.getElementById("tf-type"), tf.tfType || "infantry");
@@ -3288,15 +3295,17 @@ function openEditTFModal(id) {
 function createTaskForce() {
   const name = document.getElementById("tf-new-name").value.trim();
   if(!name) { alert("Enter a name."); return; }
-  const tfType = document.getElementById("tf-type").value;
   const commander = document.getElementById("tf-commander").value.trim();
+  if(!commander) { alert("Enter a commander name."); return; }
+  const tfType = document.getElementById("tf-type").value;
   const faction = document.getElementById("tf-faction").value;
+  const notes = document.getElementById("tf-notes").value.trim();
   if(editingTFId) {
     const tf = state.taskForces.find(t=>t.id===editingTFId);
-    if(tf) { tf.name = name; tf.tfType = tfType; tf.commander = commander; tf.faction = faction; }
+    if(tf) { tf.name = name; tf.tfType = tfType; tf.commander = commander; tf.faction = faction; tf.notes = notes; }
     editingTFId = null;
   } else {
-    const tf = { id:"tf_"+uid(), name, tfType, commander, faction, units:[] };
+    const tf = { id:"tf_"+uid(), name, tfType, commander, faction, notes, units:[] };
     state.taskForces.push(tf);
     currentTFId = tf.id;
   }
