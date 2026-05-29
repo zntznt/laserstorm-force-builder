@@ -1536,8 +1536,8 @@ function factionPill(factionId, opts={}) {
 
 function factionBadge(unit) {
   const f = unit.faction;
-  if(f) return factionPill(f, {marginRight:true});
-  if(!unit.builtIn) return `<span style="display:inline-block;padding:1px 7px;border-radius:10px;font-size:10px;font-weight:bold;background:#88888822;color:#888;border:1px solid #88888855;margin-right:3px">No Faction</span>`;
+  if(f) return factionPill(f);
+  if(!unit.builtIn) return `<span style="display:inline-block;padding:1px 7px;border-radius:10px;font-size:10px;font-weight:bold;background:#88888822;color:#888;border:1px solid #88888855">No Faction</span>`;
   return "";
 }
 
@@ -1690,7 +1690,7 @@ function unitCardHTML(unit, actions) {
   return `
     <div class="unit-card">
       <div class="unit-card-header">
-        <div>
+        <div style="display:flex;flex-wrap:wrap;align-items:center;gap:4px">
           ${classBadge(unit.class, true)}${factionBadge(unit)}
           ${!unit.builtIn?`<span class="badge" style="background:#333;color:#aaa">Custom</span>`:""}
           <span class="unit-name-wrap">
