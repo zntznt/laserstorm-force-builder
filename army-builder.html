@@ -303,6 +303,10 @@ label .trait-edit-btn{margin-left:6px}
               <option value="__new__">+ New Faction…</option>
             </select>
           </div>
+          <div class="form-group" style="flex:0 0 auto">
+            <label>Size <span id="b-size-hint" style="font-weight:normal;color:var(--text-dim);font-size:9px;text-transform:none;letter-spacing:0">(def 6)</span></label>
+            <input type="number" id="b-unit-size" value="6" min="2" max="30" style="width:58px" oninput="calculateBuilder()" onchange="calculateBuilder()">
+          </div>
         </div>
         <div class="form-group" style="margin-top:10px">
           <label>Description <span style="font-size:10px;color:#8b949e;font-weight:normal">(optional — hover reveal on cards)</span></label>
@@ -357,11 +361,6 @@ label .trait-edit-btn{margin-left:6px}
               <span class="stat-sfx">+</span>
             </div>
           </div>
-        </div>
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
-          <label style="margin-bottom:0;white-space:nowrap">Unit Size</label>
-          <input type="number" id="b-unit-size" value="6" min="2" max="30" style="width:72px" oninput="calculateBuilder()" onchange="calculateBuilder()">
-          <span id="b-size-hint" style="font-size:11px;color:var(--text-muted)">Default for Infantry: 6 stands</span>
         </div>
         <div class="form-group" style="margin-bottom:4px">
           <label>Stand Traits <span class="trait-edit-btn" onclick="openTraitPicker('stand')">edit</span></label>
@@ -1845,7 +1844,7 @@ function onClassChange() {
     sizeEl.value = ci.size;
     sizeEl.min = (cls==="sh"||cls==="beh") ? 1 : 2;
     const hint = document.getElementById("b-size-hint");
-    if(hint) hint.textContent = `Default for ${ci.label}: ${ci.size} stand${ci.size>1?"s":""}`;
+    if(hint) hint.textContent = `(def ${ci.size})`;
   }
   currentBuilderTraits = [];
   document.getElementById("b-traits-display").innerHTML = `<span style="color:#8b949e;font-size:11px">None</span>`;
