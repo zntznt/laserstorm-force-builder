@@ -309,7 +309,7 @@ label .trait-edit-btn{margin-left:6px}
           <textarea id="b-description" placeholder="e.g. Elite shock troops specialising in close-quarters breaching..." style="width:100%;min-height:56px;resize:vertical;background:var(--surface-raised);border:1px solid var(--border-subtle);border-radius:6px;color:#e0e0e0;padding:8px;font-family:var(--font-body);font-size:13px;line-height:1.5"></textarea>
         </div>
         <div id="b-class-profile" class="class-profile"></div>
-        <div class="stand-stats-grid" style="display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;margin-top:14px;margin-bottom:14px">
+        <div class="stand-stats-grid" style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;margin-top:14px;margin-bottom:14px">
           <div class="stat-block">
             <div class="stat-label">Speed</div>
             <div class="stat-row">
@@ -355,6 +355,12 @@ label .trait-edit-btn{margin-left:6px}
             <div class="stat-row">
               <input type="number" id="b-morale" value="6" min="1" max="6" oninput="calculateBuilder()" onchange="calculateBuilder()">
               <span class="stat-sfx">+</span>
+            </div>
+          </div>
+          <div class="stat-block">
+            <div class="stat-label" style="white-space:nowrap">Size <span id="b-size-hint" style="font-weight:normal;color:var(--text-dim);font-size:9px">(def 6)</span></div>
+            <div class="stat-row">
+              <input type="number" id="b-unit-size" value="6" min="2" max="30" oninput="calculateBuilder()" onchange="calculateBuilder()">
             </div>
           </div>
         </div>
@@ -1496,10 +1502,17 @@ function calcPoints(unit) {
   const prem = p => p==null ? null : roundToFive(total*(1+p));
   const allowedRoles = unit.allowedRoles || null;
   const costOk = key => !allowedRoles || allowedRoles.some(r => ROLE_COST_MAP[r] === key);
+  const defaultSize = ci.size;
+  const minSize = (unit.class==="sh"||unit.class==="beh") ? 1 : 2;
+  const effectiveSize = unit.customSize ? Math.max(minSize, unit.customSize) : defaultSize;
+  const belowDefault = effectiveSize < defaultSize;
+  const sizeFactor = belowDefault ? 1.10 : 1.0;
   return {
     perStand: total,
-    unitSize: ci.size,
-    unitPts:    costOk("unit")    ? roundToFive(total*ci.size) : null,
+    unitSize: effectiveSize,
+    defaultSize,
+    belowDefault,
+    unitPts:    costOk("unit")    ? roundToFive(total*effectiveSize*sizeFactor) : null,
     indPts:     costOk("ind")     ? prem(pr.ind)               : null,
     cmdPts:     costOk("cmd")     ? prem(pr.cmd)               : null,
     heroPts:    costOk("hero")    ? prem(pr.hero)              : null,
@@ -1828,6 +1841,13 @@ function onClassChange() {
   const defaultMob = {inf:"troop",cav:"troop",fg:"troop",ac:"air",scout:"wheel",afv:"track",sh:"track",beh:"walk"};
   mobSel.value = defaultMob[cls] || opts[0].v;
   builderMobilityPrev = mobSel.value;
+  const sizeEl = document.getElementById("b-unit-size");
+  if(sizeEl) {
+    sizeEl.value = ci.size;
+    sizeEl.min = (cls==="sh"||cls==="beh") ? 1 : 2;
+    const hint = document.getElementById("b-size-hint");
+    if(hint) hint.textContent = `(def ${ci.size})`;
+  }
   currentBuilderTraits = [];
   document.getElementById("b-traits-display").innerHTML = `<span style="color:#8b949e;font-size:11px">None</span>`;
   builderWeapons = [{name:"",mode:"gp",type:"p",range:0,shots:1,impact:0,traits:[]}];
@@ -2118,10 +2138,14 @@ function closeTraitModal() { closeModal("modal-traits"); }
 function gatherBuilderUnit() {
   const standTraits = currentBuilderTraits.slice();
   const weapons = builderWeapons.map(w => ({...w, traits:(w.traits||[]).slice()}));
+  const cls = document.getElementById("b-class").value;
+  const ci = CLASS_INFO[cls] || CLASS_INFO.inf;
+  const minSize = (cls==="sh"||cls==="beh") ? 1 : 2;
+  const rawSize = parseInt(document.getElementById("b-unit-size")?.value) || ci.size;
   const unit = {
     name: document.getElementById("b-name").value || "Unnamed Unit",
     description: document.getElementById("b-description").value.trim() || "",
-    class: document.getElementById("b-class").value,
+    class: cls,
     faction: document.getElementById("b-faction").value || "",
     speed: parseInt(document.getElementById("b-speed").value)||4,
     mobility: document.getElementById("b-mobility").value,
@@ -2129,6 +2153,7 @@ function gatherBuilderUnit() {
     assault: parseInt(document.getElementById("b-assault").value)||0,
     saveNumber: parseInt(document.getElementById("b-savenumber").value)||6,
     morale: parseInt(document.getElementById("b-morale").value)||6,
+    customSize: Math.max(minSize, rawSize),
     standTraits,
     weapons
   };
@@ -2150,7 +2175,7 @@ function calculateBuilder() {
 
   // Available cost tiles in display order
   const roleTiles = [
-    {key:"unit",    label:`Unit (${ci.size} stand${ci.size>1?"s":""})`, pts:pts.unitPts},
+    {key:"unit",    label:`Unit (${pts.unitSize} stand${pts.unitSize>1?"s":""})`, pts:pts.unitPts},
     {key:"ind",     label:"Independent",  pts:pts.indPts,     prem:pr.ind},
     {key:"cmd",     label:"Command",      pts:pts.cmdPts,     prem:pr.cmd},
     {key:"hero",    label:"Ind. Hero",    pts:pts.heroPts,    prem:pr.hero},
@@ -2191,7 +2216,8 @@ function calculateBuilder() {
     let typeRow = "";
     if (sel) {
       if (builderSelectedRole === "unit") {
-        typeRow = `<div class="summary-row"><span>Unit &times;${ci.size} stands</span><span>${sel.pts} pts</span></div>`;
+        const premNote = pts.belowDefault ? ` <span style="color:#ffb74d;font-size:10px;font-weight:normal">(+10% small unit)</span>` : "";
+        typeRow = `<div class="summary-row"><span>Unit &times;${pts.unitSize} stands${premNote}</span><span>${sel.pts} pts</span></div>`;
       } else {
         const pct = Math.round((sel.prem||0) * 100);
         const premStr = pct === 0 ? "no premium" : `+${pct}%`;
@@ -2978,6 +3004,10 @@ function editUnit(id) {
   document.getElementById("b-faction").value = unit.faction||"";
   builderFactionPrev = unit.faction||"";
   onClassChange();
+  if(unit.customSize) {
+    const sizeEl = document.getElementById("b-unit-size");
+    if(sizeEl) sizeEl.value = unit.customSize;
+  }
   document.getElementById("b-speed").value = unit.speed;
   document.getElementById("b-mobility").value = unit.mobility;
   builderMobilityPrev = unit.mobility;
