@@ -1032,6 +1032,16 @@ let editingUnitId = null;
 // ============================================================
 // PERSISTENCE
 // ============================================================
+const _TERROR_DESC = "[Unit] This Unit inflicts 2 Terror dice per stack. Can be taken multiple times.";
+const _TRANS_DESC  = "This unit can carry Infantry or Cavalry stands. Each stack adds 1 transport slot.";
+const _terrorMigMap = {"Terror +2":1,"Terror +4":2,"Terror +6":3};
+const _transMigMap  = {"Transport 1":1,"Transport 2":2,"Transport 3":3};
+function migrateCustomUnit(u) {
+  (u.standTraits||[]).forEach((t,i) => {
+    if(_terrorMigMap[t[0]] !== undefined) u.standTraits[i] = ["Terror",1,_TERROR_DESC,_terrorMigMap[t[0]]];
+    if(_transMigMap[t[0]]  !== undefined) u.standTraits[i] = ["Transport",1.5,_TRANS_DESC,_transMigMap[t[0]]];
+  });
+}
 function saveState() {
   localStorage.setItem("ls_army_builder", JSON.stringify(state));
 }
@@ -1046,16 +1056,7 @@ function loadState() {
       // Migration: convert legacy faction string → reqs array
       state.customTraits.forEach(t => { if(!t.reqs) t.reqs = t.faction ? [{type:"faction",vals:[t.faction]}] : []; });
       // Migrate old terror/transport traits on custom units
-      const _TERROR_DESC = "[Unit] This Unit inflicts 2 Terror dice per stack. Can be taken multiple times.";
-      const _TRANS_DESC  = "This unit can carry Infantry or Cavalry stands. Each stack adds 1 transport slot.";
-      const _terrorMigMap = {"Terror +2":1,"Terror +4":2,"Terror +6":3};
-      const _transMigMap  = {"Transport 1":1,"Transport 2":2,"Transport 3":3};
-      (state.customUnits||[]).forEach(u => {
-        (u.standTraits||[]).forEach((t,i) => {
-          if(_terrorMigMap[t[0]] !== undefined) u.standTraits[i] = ["Terror",1,_TERROR_DESC,_terrorMigMap[t[0]]];
-          if(_transMigMap[t[0]]  !== undefined) u.standTraits[i] = ["Transport",1.5,_TRANS_DESC,_transMigMap[t[0]]];
-        });
-      });
+      (state.customUnits||[]).forEach(migrateCustomUnit);
       state.taskForces = saved.taskForces || [];
       state.armies = saved.armies || [];
       state.deployments = saved.deployments || [];
@@ -1153,7 +1154,9 @@ function importLibrary(evt) {
           const faction = u.faction ? (factionIdMap[u.faction] ?? u.faction) : u.faction;
           const idTaken = (state.customUnits||[]).some(x => x.id === u.id);
           const newId = idTaken ? "u_"+uid() : u.id;
-          state.customUnits.push({...u, id: newId, faction});
+          const imported = {...u, id: newId, faction};
+          migrateCustomUnit(imported);
+          state.customUnits.push(imported);
           added.units++;
         }
       });
@@ -1489,7 +1492,8 @@ function traitTipHTML(traitArr, allTraits) {
   return traitArr.map(t => {
     const name = t[0];
     const cnt = traitCount(t);
-    const [key, entry] = Object.entries(allTraits).find(([,v])=>v[0]===name) || [null, null];
+    const [key, entry] = Object.entries(allTraits).find(([,v])=>v[0]===name)
+      || (() => { const base=name.replace(/\s[+]?\d+$/,""); return base!==name ? (Object.entries(allTraits).find(([,v])=>v[0]===base)||[null,null]) : [null,null]; })();
     const cleanDesc = cleanTraitDesc(entry?.[2] || "");
     const isUT = traitIsUnitTrait(entry);
     const utRule = "Unit Trait — effect applies to the whole Unit. No effect if any stand of the same class lacks this trait. If multiple levels exist, only the least powerful applies.";
