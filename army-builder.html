@@ -2907,7 +2907,6 @@ function renderLibrary() {
     const actions = `
       ${u.builtIn?"":`<button class="trait-edit-btn" onclick="confirmBtn(this,()=>deleteCustomUnit('${u.id}'))">Delete</button>`}
       ${u.builtIn?"":`<button class="trait-edit-btn" onclick="editUnit('${u.id}')">Edit</button>`}
-      <button class="trait-edit-btn" onclick="quickAddToTF('${u.id}')">Add to Task Force</button>
       <!-- Export Unit hidden pending custom trait/faction handling -->`;
     return unitCardHTML(u, actions, libViewType);
   }).join("");
