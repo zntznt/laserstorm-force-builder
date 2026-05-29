@@ -67,7 +67,7 @@ nav{background:var(--surface-nav);border-bottom:2px solid var(--accent);display:
 .card{background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:8px;padding:16px;margin-bottom:16px}
 .card-title{font-family:var(--font-display);color:var(--accent);font-size:18px;letter-spacing:1.5px;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border-subtle);display:flex;justify-content:space-between;align-items:center}
 .btn{display:inline-block;padding:7px 14px;border:none;border-radius:20px;cursor:pointer;font-family:var(--font-display);font-size:14px;text-transform:uppercase;letter-spacing:1px;transition:all .2s;line-height:1.2}
-.btn-primary{background:var(--accent);color:var(--text-bright)}.btn-primary:hover{background:var(--accent-hover)}
+.btn-primary{background:var(--accent);color:var(--text-bright)}.btn-primary:hover{background:var(--accent-hover)}.btn-primary:disabled{background:#1e2a3a;color:#3a4a5a;border-color:#1e2a3a;cursor:not-allowed}
 .btn-danger{background:var(--danger);color:var(--text-bright)}.btn-danger:hover{background:var(--danger-hover)}
 .btn-success{background:var(--success);color:var(--text-bright)}.btn-success:hover{background:var(--success-hover)}
 .btn-warning{background:var(--warn);color:var(--text-bright)}.btn-warning:hover{background:var(--warn-hover)}
@@ -595,7 +595,7 @@ label .trait-edit-btn{margin-left:6px}
       <label>TF Type</label>
       <div style="display:flex;gap:6px;align-items:center">
         <select id="tf-type" style="flex:1"></select>
-        <button class="trait-edit-btn" onclick="openCustomTFTypeModal()">Custom Types</button>
+        <button class="trait-edit-btn" onclick="openCustomTFTypeModal()"><i class="fa-solid fa-gear"></i> Custom Types</button>
       </div>
     </div>
     <div class="form-group" style="margin-bottom:12px">
@@ -619,16 +619,16 @@ label .trait-edit-btn{margin-left:6px}
     <div class="modal-header">Custom TF Types <button class="modal-close" onclick="closeModal('modal-custom-tf-type')"><i class="fa-solid fa-xmark"></i></button></div>
     <div id="custom-tf-type-list" style="margin-bottom:8px"></div>
     <hr style="border-color:#30363d;margin:10px 0">
-    <div style="font-weight:bold;color:#fff;font-size:12px;margin-bottom:8px">New Custom Type</div>
+    <div style="font-weight:bold;color:#fff;font-size:12px;margin-bottom:8px" id="custom-tf-type-form-title">New Custom Type</div>
     <div class="form-group" style="margin-bottom:8px">
       <label>Name</label>
-      <input type="text" id="custom-tf-type-name" placeholder="e.g. Rapid Strike" style="width:100%">
+      <input type="text" id="custom-tf-type-name" placeholder="e.g. Rapid Strike" style="width:100%" oninput="_updateCustomTFTypeSaveBtn()">
     </div>
-    <div style="font-size:11px;color:#8b949e;margin-bottom:6px">Set min/max stands per unit class (0–5):</div>
+    <div style="font-size:11px;color:#8b949e;margin-bottom:6px">Min/max <strong style="color:#e0e0e0">Core unit</strong> slots per class (0–5). At least one class must have a max &gt; 0.</div>
     <div id="custom-tf-type-slots"></div>
     <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px">
-      <button class="btn btn-secondary" onclick="closeModal('modal-custom-tf-type')">Close</button>
-      <button class="btn btn-primary" onclick="saveCustomTFType()">Add Type</button>
+      <button class="btn btn-secondary" id="custom-tf-type-cancel" onclick="closeModal('modal-custom-tf-type')">Close</button>
+      <button class="btn btn-primary" id="custom-tf-type-submit" onclick="saveCustomTFType()" disabled>Add Type</button>
     </div>
   </div>
 </div>
@@ -1027,6 +1027,7 @@ let traitPickerStepperCounts = {};
 let traitPickerWeaponIdx = null;
 let currentTFId = null;
 let editingTFId = null;
+let editingCustomTFTypeId = null;
 let addUnitTargetTFId = null;
 let addUnitTargetRole = "core";
 let addUnitSelectedId = null;
@@ -2988,57 +2989,108 @@ function changeTFSlotRole(tfId, slotId, role) {
 
 // ---- Custom TF Types ----
 function openCustomTFTypeModal() {
+  editingCustomTFTypeId = null;
   document.getElementById("custom-tf-type-name").value = "";
-  _renderCustomTFTypeSlots();
+  document.getElementById("custom-tf-type-form-title").textContent = "New Custom Type";
+  document.getElementById("custom-tf-type-submit").textContent = "Add Type";
+  document.getElementById("custom-tf-type-cancel").textContent = "Close";
+  _renderCustomTFTypeSlots({});
   _renderCustomTFTypeList();
+  _updateCustomTFTypeSaveBtn();
   openModal("modal-custom-tf-type");
 }
 
 const _TF_CLASS_KEYS = ["inf","scout","cav","fg","afv","sh","beh","ac"];
 const _TF_CLASS_NAMES = {inf:"Infantry",scout:"Scout",cav:"Cavalry",fg:"Field Gun",afv:"AFV",sh:"Super Heavy",beh:"Behemoth",ac:"Aircraft"};
 
-function _renderCustomTFTypeSlots() {
+function _renderCustomTFTypeSlots(slots) {
   const el = document.getElementById("custom-tf-type-slots");
   const nums = [0,1,2,3,4,5];
   el.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:12px">
     <thead><tr style="color:#8b949e"><th style="text-align:left;padding:3px 6px">Class</th><th style="padding:3px 6px">Min</th><th style="padding:3px 6px">Max</th></tr></thead>
-    <tbody>${_TF_CLASS_KEYS.map(k=>`<tr>
-      <td style="padding:3px 6px;color:#e0e0e0">${_TF_CLASS_NAMES[k]}</td>
-      <td style="padding:3px 6px"><select id="ctft-min-${k}" style="background:#0d1117;border:1px solid #30363d;color:#e0e0e0;border-radius:4px;padding:2px 4px">${nums.map(n=>`<option>${n}</option>`).join("")}</select></td>
-      <td style="padding:3px 6px"><select id="ctft-max-${k}" style="background:#0d1117;border:1px solid #30363d;color:#e0e0e0;border-radius:4px;padding:2px 4px">${nums.map(n=>`<option>${n}</option>`).join("")}</select></td>
-    </tr>`).join("")}</tbody>
+    <tbody>${_TF_CLASS_KEYS.map(k=>{
+      const cur = slots[k]||[0,0];
+      return `<tr>
+        <td style="padding:3px 6px;color:#e0e0e0">${_TF_CLASS_NAMES[k]}</td>
+        <td style="padding:3px 6px"><select id="ctft-min-${k}" onchange="_updateCustomTFTypeSaveBtn()" style="background:#0d1117;border:1px solid #30363d;color:#e0e0e0;border-radius:4px;padding:2px 4px">${nums.map(n=>`<option${n===cur[0]?" selected":""}>${n}</option>`).join("")}</select></td>
+        <td style="padding:3px 6px"><select id="ctft-max-${k}" onchange="_updateCustomTFTypeSaveBtn()" style="background:#0d1117;border:1px solid #30363d;color:#e0e0e0;border-radius:4px;padding:2px 4px">${nums.map(n=>`<option${n===cur[1]?" selected":""}>${n}</option>`).join("")}</select></td>
+      </tr>`;
+    }).join("")}</tbody>
   </table>`;
+}
+
+function _updateCustomTFTypeSaveBtn() {
+  const btn = document.getElementById("custom-tf-type-submit");
+  if(!btn) return;
+  const name = (document.getElementById("custom-tf-type-name")?.value||"").trim();
+  const anySet = _TF_CLASS_KEYS.some(k => parseInt(document.getElementById(`ctft-max-${k}`)?.value||0) > 0);
+  btn.disabled = !name || !anySet;
 }
 
 function _renderCustomTFTypeList() {
   const el = document.getElementById("custom-tf-type-list");
   if(!state.customTFTypes.length) { el.innerHTML = `<div style="font-size:12px;color:#555;font-style:italic">No custom types yet</div>`; return; }
-  el.innerHTML = state.customTFTypes.map(t=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid #21262d">
-    <div style="font-size:12px;color:#e0e0e0;font-weight:bold">${esc(t.name)}</div>
-    <button class="trait-edit-btn" style="border-color:#8b000066;color:#ef5350;background:#2a0a0a" onclick="confirmBtn(this,()=>deleteCustomTFType('${t.id}'))">Del</button>
-  </div>`).join("");
+  el.innerHTML = `<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:4px">`
+    + state.customTFTypes.map(t=>`<div class="custom-trait-item">
+      <span style="flex:1;font-weight:bold;color:var(--text-primary)">${esc(t.name)}</span>
+      <button class="trait-edit-btn" onclick="editCustomTFType('${t.id}')">Edit</button>
+      <button class="trait-edit-btn" style="border-color:#8b000066;color:#ef5350;background:#2a0a0a" onclick="confirmBtn(this,()=>deleteCustomTFType('${t.id}'))">Delete</button>
+    </div>`).join("")
+    + `</div>`;
+}
+
+function editCustomTFType(id) {
+  const t = state.customTFTypes.find(x=>x.id===id);
+  if(!t) return;
+  editingCustomTFTypeId = id;
+  document.getElementById("custom-tf-type-name").value = t.name;
+  document.getElementById("custom-tf-type-form-title").textContent = "Edit Custom Type";
+  document.getElementById("custom-tf-type-submit").textContent = "Save";
+  document.getElementById("custom-tf-type-cancel").textContent = "Cancel";
+  _renderCustomTFTypeSlots(t.slots||{});
+  _updateCustomTFTypeSaveBtn();
 }
 
 function saveCustomTFType() {
   const name = document.getElementById("custom-tf-type-name").value.trim();
-  if(!name) { alert("Enter a name."); return; }
+  if(!name) return;
   const slots = {};
   _TF_CLASS_KEYS.forEach(k => {
     const mn = parseInt(document.getElementById(`ctft-min-${k}`).value)||0;
     const mx = parseInt(document.getElementById(`ctft-max-${k}`).value)||0;
     slots[k] = [mn, Math.max(mn,mx)];
   });
-  state.customTFTypes.push({id:"ctft_"+uid(), name, slots});
+  if(editingCustomTFTypeId) {
+    const t = state.customTFTypes.find(x=>x.id===editingCustomTFTypeId);
+    if(t) { t.name = name; t.slots = slots; }
+    editingCustomTFTypeId = null;
+    document.getElementById("custom-tf-type-form-title").textContent = "New Custom Type";
+    document.getElementById("custom-tf-type-submit").textContent = "Add Type";
+    document.getElementById("custom-tf-type-cancel").textContent = "Close";
+  } else {
+    state.customTFTypes.push({id:"ctft_"+uid(), name, slots});
+  }
   saveState();
   document.getElementById("custom-tf-type-name").value = "";
+  _renderCustomTFTypeSlots({});
   _renderCustomTFTypeList();
+  _updateCustomTFTypeSaveBtn();
   _populateTFTypeSelect(document.getElementById("tf-type"), document.getElementById("tf-type").value);
 }
 
 function deleteCustomTFType(id) {
   state.customTFTypes = state.customTFTypes.filter(t=>t.id!==id);
+  if(editingCustomTFTypeId===id) {
+    editingCustomTFTypeId = null;
+    document.getElementById("custom-tf-type-form-title").textContent = "New Custom Type";
+    document.getElementById("custom-tf-type-submit").textContent = "Add Type";
+    document.getElementById("custom-tf-type-cancel").textContent = "Close";
+    document.getElementById("custom-tf-type-name").value = "";
+    _renderCustomTFTypeSlots({});
+  }
   saveState();
   _renderCustomTFTypeList();
+  _updateCustomTFTypeSaveBtn();
   _populateTFTypeSelect(document.getElementById("tf-type"), document.getElementById("tf-type").value);
 }
 
