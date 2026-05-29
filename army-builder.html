@@ -80,6 +80,9 @@ input[type=number]{width:70px}
 input:focus,select:focus,textarea:focus{border-color:var(--accent);outline:none}
 .form-row{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;margin-bottom:12px}
 .form-group{display:flex;flex-direction:column;gap:3px}
+.field-error{display:none;font-size:11px;color:#ef5350;margin-top:2px}
+.field-error.visible{display:block}
+input.input-error,textarea.input-error{border-color:#ef535066!important;outline:none}
 .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
 @media(max-width:768px){.grid-2,.grid-3{grid-template-columns:1fr}}
@@ -598,7 +601,8 @@ label .trait-edit-btn{margin-left:6px}
     <div class="modal-header"><span id="modal-tf-title">New Task Force</span> <button class="modal-close" onclick="closeModal('modal-tf')"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="form-group" style="margin-bottom:12px">
       <label>Task Force Name</label>
-      <input type="text" id="tf-new-name" placeholder="e.g. Alpha Strike Force" style="width:100%">
+      <input type="text" id="tf-new-name" placeholder="e.g. Alpha Strike Force" style="width:100%" oninput="tfClearErr('tf-new-name')">
+      <span class="field-error" id="tf-new-name-err"></span>
     </div>
     <div class="form-group" style="margin-bottom:12px">
       <label>TF Type</label>
@@ -609,7 +613,8 @@ label .trait-edit-btn{margin-left:6px}
     </div>
     <div class="form-group" style="margin-bottom:12px">
       <label>Commander</label>
-      <input type="text" id="tf-commander" placeholder="e.g. Colonel Marcus" style="width:100%">
+      <input type="text" id="tf-commander" placeholder="e.g. Colonel Marcus" style="width:100%" oninput="tfClearErr('tf-commander')">
+      <span class="field-error" id="tf-commander-err"></span>
     </div>
     <div class="form-group" style="margin-bottom:16px">
       <label>Faction <span style="font-size:10px;color:#8b949e;font-weight:normal">(optional)</span></label>
@@ -3271,6 +3276,7 @@ function openNewTFModal() {
   document.getElementById("tf-new-name").value = "";
   document.getElementById("tf-commander").value = "";
   document.getElementById("tf-notes").value = "";
+  tfClearErr("tf-new-name"); tfClearErr("tf-commander");
   document.getElementById("modal-tf-title").textContent = "New Task Force";
   document.getElementById("tf-modal-submit").textContent = "Create";
   _populateTFTypeSelect(document.getElementById("tf-type"), "infantry");
@@ -3285,6 +3291,7 @@ function openEditTFModal(id) {
   document.getElementById("tf-new-name").value = tf.name || "";
   document.getElementById("tf-commander").value = tf.commander || "";
   document.getElementById("tf-notes").value = tf.notes || "";
+  tfClearErr("tf-new-name"); tfClearErr("tf-commander");
   document.getElementById("modal-tf-title").textContent = "Edit Task Force";
   document.getElementById("tf-modal-submit").textContent = "Save";
   _populateTFTypeSelect(document.getElementById("tf-type"), tf.tfType || "infantry");
@@ -3292,11 +3299,26 @@ function openEditTFModal(id) {
   openModal("modal-tf");
 }
 
+function tfClearErr(id) {
+  const el = document.getElementById(id);
+  const err = document.getElementById(id+"-err");
+  if(el) el.classList.remove("input-error");
+  if(err) { err.textContent=""; err.classList.remove("visible"); }
+}
+function tfShowErr(id, msg) {
+  const el = document.getElementById(id);
+  const err = document.getElementById(id+"-err");
+  if(el) { el.classList.add("input-error"); el.focus(); }
+  if(err) { err.textContent=msg; err.classList.add("visible"); }
+}
+
 function createTaskForce() {
   const name = document.getElementById("tf-new-name").value.trim();
-  if(!name) { alert("Enter a name."); return; }
   const commander = document.getElementById("tf-commander").value.trim();
-  if(!commander) { alert("Enter a commander name."); return; }
+  let invalid = false;
+  if(!name)      { tfShowErr("tf-new-name","Task force name is required."); invalid=true; }
+  if(!commander) { tfShowErr("tf-commander","Commander name is required."); invalid=true; }
+  if(invalid) { if(!name) document.getElementById("tf-new-name").focus(); return; }
   const tfType = document.getElementById("tf-type").value;
   const faction = document.getElementById("tf-faction").value;
   const notes = document.getElementById("tf-notes").value.trim();
