@@ -104,6 +104,16 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);outline:none}
 .unit-card{background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:6px;padding:12px;margin-bottom:8px;transition:border-color .2s}
 .unit-card:hover{border-color:var(--accent)}
 .unit-card-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;gap:8px}
+.unit-card-section-label{font-size:10px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.05em;white-space:nowrap;flex-shrink:0}
+.unit-card-traits{margin-top:6px;display:flex;align-items:baseline;gap:4px;flex-wrap:wrap}
+.unit-card-pts{display:flex;gap:4px;flex-wrap:wrap;margin-top:8px;padding-top:8px;border-top:1px solid var(--border-subtle)}
+.pts-box{flex:1;min-width:46px;text-align:center;background:var(--surface-page);border:1px solid var(--border-subtle);border-radius:6px;padding:5px 2px}
+.pts-box-val{font-size:13px;font-weight:bold;color:var(--text-bright)}
+.pts-box.empty .pts-box-val{color:var(--text-faint)}
+.pts-box-label{font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.04em}
+.wtype{color:var(--text-dim);font-weight:normal!important}
+.unit-card-actions{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+@media(min-width:860px){#lib-list{display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:start}.unit-card{margin-bottom:0}}
 .unit-name{font-weight:bold;color:var(--text-bright);font-size:14px}
 .unit-pts{color:var(--gold);font-weight:bold;font-size:13px}
 .weapon-row{background:var(--surface-page);border-radius:4px;padding:5px 8px;margin-top:4px;font-size:11px;color:var(--text-muted)}
@@ -177,7 +187,7 @@ hr{border:none;border-top:1px solid var(--border-subtle);margin:12px 0}
 .trait-edit-btn:hover{background:#16263f;border-color:#1f6feb}
 label .trait-edit-btn{margin-left:6px}
 .stat-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--text-dim);display:flex;align-items:center;gap:3px;white-space:nowrap}
-.stat-row{display:flex;align-items:center;gap:2px;margin-top:0}
+.stat-block .stat-row{display:flex;align-items:center;gap:2px;margin-top:0}
 .stat-block input[type=number]{flex:1;min-width:0;width:auto;text-align:center;padding:5px 3px;font-size:13px;font-weight:600}
 .stat-block select{padding:5px 3px;font-size:12px;width:100%}
 .stat-sfx{font-size:10px;color:var(--text-faint);font-weight:600;flex-shrink:0}
@@ -415,7 +425,7 @@ label .trait-edit-btn{margin-left:6px}
       <div class="pill" data-filter="beh" onclick="setLibFilter(this,'beh')">Behemoth</div>
     </div>
     <div style="display:flex;align-items:center;gap:8px;margin:6px 0 2px">
-      <label style="font-size:0.82em;color:var(--muted);white-space:nowrap">Sort by</label>
+      <label style="font-size:0.82em;color:var(--text-muted);white-space:nowrap">Sort by</label>
       <select id="lib-sort" onchange="libSort=this.value;renderLibrary()" style="width:auto">
         <option value="name-asc">Name A → Z</option>
         <option value="name-desc">Name Z → A</option>
@@ -1489,7 +1499,7 @@ function unitCardHTML(unit, actions) {
           ? " | " + traitTipHTML(w.traits, allWeaponTraits())
           : "";
         const wName = w.name ? `<strong>${esc(w.name)}</strong> ` : "";
-        return `<div class="weapon-row">${wName}<span style="color:#555">${w.mode.toUpperCase()}/${w.type.toUpperCase()}</span> | Range <span>${rangeLabel(w.range)}</span> | Shots <span>${w.shots}</span> | Impact <span>+${w.impact}</span>${wtHTML}</div>`;
+        return `<div class="weapon-row">${wName}<span class="wtype">${w.mode.toUpperCase()}/${w.type.toUpperCase()}</span> | Range <span>${rangeLabel(w.range)}</span> | Shots <span>${w.shots}</span> | Impact <span>+${w.impact}</span>${wtHTML}</div>`;
       }).join("");
   const cmdStr = pts.cmdPts ? `${pts.cmdPts}` : "—";
   const heroCmdStr = pts.cmdHeroPts ? `${pts.cmdHeroPts}` : "—";
@@ -1501,7 +1511,7 @@ function unitCardHTML(unit, actions) {
           ${!unit.builtIn?`<span class="badge" style="background:#333;color:#aaa">Custom</span>`:""}
           <span class="unit-name" style="display:block;margin-top:4px">${esc(unit.name)}</span>
         </div>
-        <div style="text-align:right;font-size:11px;color:#8b949e">
+        <div style="text-align:right;font-size:11px;color:var(--text-muted)">
           ${pts.unitSize} stand${pts.unitSize>1?"s":""}
         </div>
       </div>
@@ -1514,20 +1524,20 @@ function unitCardHTML(unit, actions) {
         <div class="stat"><span class="stat-name">Morale</span><span class="stat-val">${unit.morale}+</span></div>
       </div>
       ${weaponsHTML}
-      <div style="margin-top:6px;display:flex;align-items:baseline;gap:4px;flex-wrap:wrap"><span style="font-size:10px;color:#555;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap">Traits</span>${traitsHTML}</div>
-      <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:8px;padding-top:6px;border-top:1px solid #21262d">
+      <div class="unit-card-traits"><span class="unit-card-section-label">Traits</span>${traitsHTML}</div>
+      <div class="unit-card-pts">
         ${[
-          {label:"Unit",    val:pts.unitPts},
-          {label:"Ind",     val:pts.indPts},
-          {label:"Cmd",     val:cmdStr},
-          {label:"I.Hero",  val:pts.heroPts},
-          {label:"C.Hero",  val:heroCmdStr}
-        ].map(c=>`<div style="flex:1;min-width:46px;text-align:center;background:#0d1117;border-radius:6px;padding:5px 2px">
-          <div style="font-size:13px;font-weight:bold;color:${c.val==="—"?"#444":"#e0e0e0"}">${c.val}</div>
-          <div style="font-size:9px;color:#555;text-transform:uppercase;letter-spacing:.04em">${c.label}</div>
+          {label:"Unit",   val:pts.unitPts},
+          {label:"Ind",    val:pts.indPts},
+          {label:"Cmd",    val:cmdStr},
+          {label:"I.Hero", val:pts.heroPts},
+          {label:"C.Hero", val:heroCmdStr}
+        ].map(c=>`<div class="pts-box${c.val==="—"?" empty":""}">
+          <div class="pts-box-val">${c.val}</div>
+          <div class="pts-box-label">${c.label}</div>
         </div>`).join("")}
       </div>
-      ${actions||""}
+      ${actions ? `<div class="unit-card-actions">${actions}</div>` : ""}
     </div>`;
 }
 
@@ -2600,11 +2610,10 @@ function renderLibrary() {
   if(!units.length) { list.innerHTML=`<div class="empty"><div class="empty-icon"><i class="fa-solid fa-magnifying-glass"></i></div>No units found</div>`; return; }
   list.innerHTML = units.map(u => {
     const pts = calcPoints(u);
-    const actions = `<div style="display:flex;gap:6px;margin-top:8px">
+    const actions = `
       ${u.builtIn?"":`<button class="btn btn-danger btn-xs" onclick="deleteCustomUnit('${u.id}')">Delete</button>`}
       ${u.builtIn?"":`<button class="btn btn-secondary btn-xs" onclick="editUnit('${u.id}')">Edit</button>`}
-      <button class="btn btn-primary btn-xs" onclick="quickAddToTF('${u.id}')">+ Add to Task Force</button>
-    </div>`;
+      <button class="btn btn-primary btn-xs" onclick="quickAddToTF('${u.id}')">+ Add to Task Force</button>`;
     return unitCardHTML(u, actions);
   }).join("");
 }
