@@ -309,7 +309,7 @@ label .trait-edit-btn{margin-left:6px}
           <textarea id="b-description" placeholder="e.g. Elite shock troops specialising in close-quarters breaching..." style="width:100%;min-height:56px;resize:vertical;background:var(--surface-raised);border:1px solid var(--border-subtle);border-radius:6px;color:#e0e0e0;padding:8px;font-family:var(--font-body);font-size:13px;line-height:1.5"></textarea>
         </div>
         <div id="b-class-profile" class="class-profile"></div>
-        <div class="stand-stats-grid" style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;margin-top:14px;margin-bottom:14px">
+        <div class="stand-stats-grid" style="display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;margin-top:14px;margin-bottom:14px">
           <div class="stat-block">
             <div class="stat-label">Speed</div>
             <div class="stat-row">
@@ -357,12 +357,11 @@ label .trait-edit-btn{margin-left:6px}
               <span class="stat-sfx">+</span>
             </div>
           </div>
-          <div class="stat-block">
-            <div class="stat-label" style="white-space:nowrap">Size <span id="b-size-hint" style="font-weight:normal;color:var(--text-dim);font-size:9px">(def 6)</span></div>
-            <div class="stat-row">
-              <input type="number" id="b-unit-size" value="6" min="2" max="30" oninput="calculateBuilder()" onchange="calculateBuilder()">
-            </div>
-          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+          <label style="margin-bottom:0;white-space:nowrap">Unit Size</label>
+          <input type="number" id="b-unit-size" value="6" min="2" max="30" style="width:72px" oninput="calculateBuilder()" onchange="calculateBuilder()">
+          <span id="b-size-hint" style="font-size:11px;color:var(--text-muted)">Default for Infantry: 6 stands</span>
         </div>
         <div class="form-group" style="margin-bottom:4px">
           <label>Stand Traits <span class="trait-edit-btn" onclick="openTraitPicker('stand')">edit</span></label>
@@ -1846,7 +1845,7 @@ function onClassChange() {
     sizeEl.value = ci.size;
     sizeEl.min = (cls==="sh"||cls==="beh") ? 1 : 2;
     const hint = document.getElementById("b-size-hint");
-    if(hint) hint.textContent = `(def ${ci.size})`;
+    if(hint) hint.textContent = `Default for ${ci.label}: ${ci.size} stand${ci.size>1?"s":""}`;
   }
   currentBuilderTraits = [];
   document.getElementById("b-traits-display").innerHTML = `<span style="color:#8b949e;font-size:11px">None</span>`;
