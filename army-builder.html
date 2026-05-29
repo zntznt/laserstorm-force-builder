@@ -109,7 +109,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);outline:none}
 .unit-card-pts{display:flex;gap:4px;flex-wrap:wrap;margin-top:8px;padding-top:8px;border-top:1px solid var(--border-subtle)}
 .pts-box{flex:1;min-width:46px;text-align:center;background:var(--surface-page);border:1px solid var(--border-subtle);border-radius:6px;padding:5px 2px}
 .pts-box-val{font-size:13px;font-weight:bold;color:var(--text-bright)}
-.pts-box.empty .pts-box-val{color:var(--text-faint)}
+.pts-box.pts-na .pts-box-val{color:var(--text-faint)}
 .pts-box-label{font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.04em}
 .wtype{color:var(--text-dim);font-weight:normal!important}
 .unit-card-actions{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
@@ -1532,7 +1532,7 @@ function unitCardHTML(unit, actions) {
           {label:"Cmd",    val:cmdStr},
           {label:"I.Hero", val:pts.heroPts},
           {label:"C.Hero", val:heroCmdStr}
-        ].map(c=>`<div class="pts-box${c.val==="—"?" empty":""}">
+        ].map(c=>`<div class="pts-box${c.val==="—"?" pts-na":""}">
           <div class="pts-box-val">${c.val}</div>
           <div class="pts-box-label">${c.label}</div>
         </div>`).join("")}
