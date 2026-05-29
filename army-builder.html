@@ -4090,16 +4090,12 @@ function renderArmyDetail() {
       const unit = unitById(slot.unitId);
       if(!unit) return "";
       const tfColor = FACTION_COLORS[tf.faction] || "#555";
-      return `<div class="army-bg-entry">
-        <div style="min-width:0;flex:1">
-          <div style="font-size:12px;font-weight:bold;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(unit.name)}</div>
-          <div style="display:flex;align-items:center;gap:4px;margin-top:2px;flex-wrap:wrap">
-            <span style="font-size:9px;font-weight:bold;padding:0 5px;border-radius:8px;background:${tfColor}18;color:${tfColor};border:1px solid ${tfColor}44;white-space:nowrap;flex-shrink:0">${esc(tf.name)}</span>
-            <span style="font-size:10px;color:var(--text-dim)">×${slot.quantity} &bull; ${slotPointValue(slot)} pts</span>
-          </div>
-        </div>
-        <button class="trait-edit-btn" style="border-color:#8b000066;color:#ef5350;background:#2a0a0a;padding:0 5px;flex-shrink:0;line-height:1.4" onclick="removeFromBG('${army.id}','${bg.id}','${e.id}')">×</button>
+      const tfBadge = `<span style="font-size:9px;font-weight:bold;padding:1px 6px;border-radius:8px;background:${tfColor}18;color:${tfColor};border:1px solid ${tfColor}44">${esc(tf.name)}</span>`;
+      const actions = `<div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+        <span style="font-size:10px;color:var(--text-muted)">from ${tfBadge}</span>
+        <button class="trait-edit-btn" style="border-color:#8b000066;color:#ef5350;background:#2a0a0a" onclick="removeFromBG('${army.id}','${bg.id}','${e.id}')">Remove</button>
       </div>`;
+      return unitCardHTML(unit, actions, slot.unitType || "unit");
     }).join("");
 
     return `<div class="army-bg-card">
