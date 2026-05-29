@@ -106,7 +106,7 @@ input.input-error,textarea.input-error{border-color:#ef535066!important;outline:
 .badge-command{background:#2a1a0a;color:#ffb74d}
 .badge-support{background:#1a0a2a;color:#ba68c8}
 .badge-commander{background:#3a0a0a;color:#ef5350}
-.unit-card{background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:6px;padding:12px;margin-bottom:8px;transition:border-color .2s}
+.unit-card{background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:6px;padding:12px;margin-bottom:8px;transition:border-color .2s;overflow:hidden}
 .unit-card:hover{border-color:var(--accent)}
 .unit-card-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;gap:8px}
 .unit-card-section-label{font-size:10px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.05em;white-space:nowrap;flex-shrink:0}
@@ -150,7 +150,8 @@ input.input-error,textarea.input-error{border-color:#ef535066!important;outline:
 .validation-err{background:#2a0a0a;border:1px solid #8b0000;color:#ef5350;padding:6px 10px;border-radius:4px;font-size:12px;margin-top:8px}
 .empty{text-align:center;padding:40px;color:#444;font-size:14px}
 .empty-icon{font-size:40px;margin-bottom:8px}
-.list-row{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--surface-page);border:1px solid var(--border-subtle);border-radius:4px;margin-bottom:6px;gap:8px}
+.list-row{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--surface-page);border:1px solid var(--border-subtle);border-radius:4px;margin-bottom:6px;gap:8px;overflow:hidden}
+.list-row>div:first-child{min-width:0;overflow:hidden}
 .list-row:hover{border-color:var(--accent)}
 .pill-nav{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;row-gap:6px}
 .pill{padding:6px 14px;border-radius:20px;cursor:pointer;font-size:11px;font-weight:bold;text-transform:uppercase;background:var(--surface-raised);color:var(--text-inactive);border:1px solid transparent;transition:all .2s}
@@ -3055,9 +3056,9 @@ function renderTFList() {
       </div>` : "";
     return `<div class="list-row" style="${isCurrent?"border-color:#007eff":""}" onclick="selectTF('${tf.id}')">
       <div>
-        <div style="font-weight:bold;color:${isCurrent?"#007eff":"#fff"};display:flex;align-items:center;gap:5px;flex-wrap:wrap">${esc(tf.name)}${facPill}</div>
-        <div style="font-size:11px;color:#7986cb;margin-top:1px">${typeLabel?esc(typeLabel):"No type"}</div>
-        <div style="font-size:11px;color:#8b949e">${unitCount} unit${unitCount!==1?"s":""} &bull; ${pts} pts</div>
+        <div style="font-weight:bold;color:${isCurrent?"#007eff":"#fff"};display:flex;align-items:center;gap:5px;min-width:0"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;flex:1">${esc(tf.name)}</span>${facPill}</div>
+        <div style="font-size:11px;color:#7986cb;margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${typeLabel?esc(typeLabel):"No type"}</div>
+        <div style="font-size:11px;color:#8b949e;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${unitCount} unit${unitCount!==1?"s":""} &bull; ${pts} pts</div>
         ${cmdAssetLine}
       </div>
     </div>`;
