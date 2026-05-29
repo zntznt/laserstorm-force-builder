@@ -1705,7 +1705,7 @@ function unitCardHTML(unit, actions, viewType="unit") {
       <div class="unit-card-header">
         <div style="min-width:0;overflow:hidden">
           <div style="display:flex;align-items:baseline;gap:6px;min-width:0">
-            <span class="unit-name-wrap" style="min-width:0;flex:1;overflow:hidden">
+            <span class="unit-name-wrap" style="min-width:0;flex:0 1 auto;overflow:hidden">
               <span class="unit-name">${esc(unit.name)}</span>${unit.description ? `<span class="unit-desc">${esc(unit.description)}</span>` : ""}
             </span>
             ${standsHTML}
