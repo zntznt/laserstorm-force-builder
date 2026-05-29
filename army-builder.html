@@ -3046,6 +3046,7 @@ function renderTFList() {
     const isCurrent = tf.id === currentTFId;
     const typeLabel = tf.tfType ? _tfTypeLabel(tf.tfType) : "";
     const asset = tf.tacAsset ? allAssets.find(a=>a.id===tf.tacAsset) : null;
+    const facPill = tf.faction ? factionPill(tf.faction) : "";
     const cmdAssetLine = (tf.commander || asset) ? `
       <div style="font-size:11px;color:#6a7a6a;margin-top:2px;display:flex;align-items:center;gap:6px;flex-wrap:wrap">
         ${tf.commander?`<span><i class="fa-solid fa-star" style="color:#ffd54f;font-size:9px;margin-right:3px"></i>${esc(tf.commander)}</span>`:""}
@@ -3054,8 +3055,9 @@ function renderTFList() {
       </div>` : "";
     return `<div class="list-row" style="${isCurrent?"border-color:#007eff":""}" onclick="selectTF('${tf.id}')">
       <div>
-        <div style="font-weight:bold;color:${isCurrent?"#007eff":"#fff"}">${esc(tf.name)}</div>
-        <div style="font-size:11px;color:#8b949e">${typeLabel?`<span style="color:#7986cb">${esc(typeLabel)}</span> &bull; `:""}${unitCount} unit${unitCount!==1?"s":""} &bull; ${pts} pts</div>
+        <div style="font-weight:bold;color:${isCurrent?"#007eff":"#fff"};display:flex;align-items:center;gap:5px;flex-wrap:wrap">${esc(tf.name)}${facPill}</div>
+        <div style="font-size:11px;color:#7986cb;margin-top:1px">${typeLabel?esc(typeLabel):"No type"}</div>
+        <div style="font-size:11px;color:#8b949e">${unitCount} unit${unitCount!==1?"s":""} &bull; ${pts} pts</div>
         ${cmdAssetLine}
       </div>
     </div>`;
