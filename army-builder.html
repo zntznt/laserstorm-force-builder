@@ -1523,8 +1523,8 @@ function unitCardHTML(unit, actions) {
         <div class="stat"><span class="stat-name">Save</span><span class="stat-val">${pts.saveDice}D6/${unit.saveNumber}+</span></div>
         <div class="stat"><span class="stat-name">Morale</span><span class="stat-val">${unit.morale}+</span></div>
       </div>
-      ${weaponsHTML}
       <div class="unit-card-traits"><span class="unit-card-section-label">Stand Traits</span>${traitsHTML}</div>
+      ${weaponsHTML}
       <div class="unit-card-pts">
         ${[
           {label:"Unit",   val:pts.unitPts},
