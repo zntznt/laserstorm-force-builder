@@ -3059,8 +3059,8 @@ function renderTFList() {
       </div>` : "";
     return `<div class="list-row" style="${isCurrent?"border-color:#007eff":""}" onclick="selectTF('${tf.id}')">
       <div>
-        <div style="font-weight:bold;color:${isCurrent?"#007eff":"#fff"};display:flex;align-items:center;gap:5px;min-width:0"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;flex:1">${esc(tf.name)}</span>${facPill}</div>
-        <div style="font-size:11px;color:#7986cb;margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${typeLabel?esc(typeLabel):"No type"}</div>
+        <div style="font-weight:bold;color:${isCurrent?"#007eff":"#fff"};overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(tf.name)}</div>
+        <div style="font-size:11px;color:#7986cb;margin-top:1px;display:flex;align-items:center;gap:5px;flex-wrap:wrap">${typeLabel?esc(typeLabel):"No type"}${facPill}</div>
         <div style="font-size:11px;color:#8b949e;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${unitCount} unit${unitCount!==1?"s":""} &bull; ${pts} pts</div>
         ${cmdAssetLine}
       </div>
