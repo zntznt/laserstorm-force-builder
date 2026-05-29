@@ -119,7 +119,7 @@ input.input-error,textarea.input-error{border-color:#ef535066!important;outline:
 .wtype{color:var(--text-dim);font-weight:normal!important}
 .unit-card-actions{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
 @media(min-width:860px){#lib-list{display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:start}.unit-card{margin-bottom:0}}
-.unit-name{font-weight:bold;color:var(--text-bright);font-size:14px;display:block}
+.unit-name{font-weight:bold;color:var(--text-bright);font-size:14px;display:inline}
 .unit-name-wrap{display:block}
 .unit-desc{display:block;max-height:0;overflow:hidden;font-size:11px;color:#8b949e;line-height:1.5;font-style:italic;transition:max-height .3s ease,opacity .3s ease;opacity:0;margin-top:0}
 .unit-name-wrap:hover .unit-desc{max-height:120px;opacity:1;margin-top:3px}
@@ -1703,12 +1703,9 @@ function unitCardHTML(unit, actions, viewType="unit") {
     <div class="unit-card">
       <div class="unit-card-header">
         <div>
-          <div style="display:flex;align-items:baseline;flex-wrap:wrap;gap:2px">
-            <span class="unit-name-wrap">
-              <span class="unit-name">${esc(unit.name)}</span>${unit.description ? `<span class="unit-desc">${esc(unit.description)}</span>` : ""}
-            </span>
-            ${standsHTML}
-          </div>
+          <span class="unit-name-wrap">
+            <span class="unit-name">${esc(unit.name)}</span>${standsHTML}${unit.description ? `<span class="unit-desc">${esc(unit.description)}</span>` : ""}
+          </span>
           <div style="display:flex;flex-wrap:wrap;align-items:center;gap:4px;margin-top:3px">
             ${classBadge(unit.class, true)}${factionBadge(unit)}
             ${!unit.builtIn?`<span class="badge" style="background:#333;color:#aaa">Custom</span>`:""}
