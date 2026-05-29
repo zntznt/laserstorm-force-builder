@@ -245,7 +245,7 @@ label .trait-edit-btn{margin-left:6px}
     <div class="nav-tab" id="tab-taskforces" onclick="showPage('taskforces')">Task Forces</div>
     <div class="nav-tab" id="tab-armies" onclick="showPage('armies')">Armies</div>
     <div class="nav-tab" id="tab-deploy" onclick="showPage('deploy')">Deploy</div>
-    <div class="nav-tab" id="tab-print" onclick="showPage('print')"><i class="fa-solid fa-print"></i> Print</div>
+    <div class="nav-tab" id="tab-print" onclick="showPage('print')">Print</div>
   </div>
   <a href="https://www.wargamevault.com/product/476399/laserstorm-2nd-edition?affiliate_id=564654" target="_blank" rel="noopener" style="margin-left:auto;margin-right:12px;padding:5px 13px;background:#007eff;color:#fff;border-radius:20px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;text-decoration:none;white-space:nowrap;transition:background .2s" onmouseover="this.style.background='#0066cc'" onmouseout="this.style.background='#007eff'">Buy LaserStorm</a>
 </nav>
@@ -455,7 +455,7 @@ label .trait-edit-btn{margin-left:6px}
     <div>
       <div class="card">
         <div class="card-title">Task Forces
-          <button class="btn btn-primary btn-sm" onclick="openNewTFModal()">+ New Task Force</button>
+          <button class="trait-edit-btn" onclick="openNewTFModal()">New Task Force</button>
         </div>
         <div id="tf-list"></div>
       </div>
@@ -474,15 +474,15 @@ label .trait-edit-btn{margin-left:6px}
     <div>
       <div class="card">
         <div class="card-title">My Armies
-          <button class="btn btn-primary btn-sm" onclick="openNewArmyModal()">+ New Army</button>
+          <button class="trait-edit-btn" onclick="openNewArmyModal()">New Army</button>
         </div>
         <div id="army-list"></div>
       </div>
       <div class="card">
         <div class="card-title"><i class="fa-solid fa-floppy-disk"></i> Save / Load</div>
         <div class="form-row">
-          <button class="btn btn-warning" onclick="exportLibrary()">Export Library</button>
-          <button class="btn btn-secondary" onclick="document.getElementById('import-file').click()">Import Library</button>
+          <button class="trait-edit-btn" onclick="exportLibrary()">Export Library</button>
+          <button class="trait-edit-btn" onclick="document.getElementById('import-file').click()">Import Library</button>
           <input type="file" id="import-file" accept=".json" style="display:none" onchange="importLibrary(event)">
         </div>
         <div style="font-size:11px;color:#8b949e;margin-top:8px">All data is also auto-saved in browser localStorage.</div>
@@ -500,7 +500,7 @@ label .trait-edit-btn{margin-left:6px}
 <div id="page-deploy" class="page">
   <div class="card">
     <div class="card-title">Deployments
-      <button class="btn btn-primary btn-sm" onclick="openNewDeployModal()">+ New Deployment</button>
+      <button class="trait-edit-btn" onclick="openNewDeployModal()">New Deployment</button>
     </div>
     <div id="deploy-list"></div>
   </div>
@@ -509,8 +509,8 @@ label .trait-edit-btn{margin-left:6px}
       <div class="card-title">
         <span id="deploy-editor-title">Edit Deployment</span>
         <div style="display:flex;gap:6px">
-          <button class="btn btn-success btn-sm" onclick="saveDeployment()">Save</button>
-          <button class="btn btn-secondary btn-sm" onclick="closeDeployEditor()">Close</button>
+          <button class="btn btn-primary" onclick="saveDeployment()">Save</button>
+          <button class="trait-edit-btn" onclick="closeDeployEditor()">Close</button>
         </div>
       </div>
       <div class="form-row" style="margin-bottom:10px">
@@ -548,7 +548,7 @@ label .trait-edit-btn{margin-left:6px}
 <!-- ===== PRINT PAGE ===== -->
 <div id="page-print" class="page">
   <div class="no-print card">
-    <div class="card-title"><i class="fa-solid fa-print"></i> Print / Export</div>
+    <div class="card-title">Print / Export</div>
     <div class="form-row">
       <div class="form-group">
         <label>Print Content</label>
@@ -562,7 +562,7 @@ label .trait-edit-btn{margin-left:6px}
         <label>Select</label>
         <select id="print-which" style="width:auto" onchange="renderPrint()"></select>
       </div>
-      <button class="btn btn-primary" onclick="window.print()"><i class="fa-solid fa-print"></i> Print</button>
+      <button class="trait-edit-btn" onclick="window.print()">Print</button>
     </div>
   </div>
   <div id="print-content"></div>
@@ -2727,7 +2727,7 @@ function renderTFList() {
         <div style="font-size:11px;color:#8b949e">${unitCount} unit slot${unitCount!==1?"s":""} &bull; ${pts} pts</div>
       </div>
       <div style="display:flex;gap:4px">
-        <button class="btn btn-danger btn-xs" onclick="event.stopPropagation();deleteTF('${tf.id}')">Del</button>
+        <button class="trait-edit-btn" style="border-color:#8b000066;color:#ef5350;background:#2a0a0a" onclick="event.stopPropagation();deleteTF('${tf.id}')">Del</button>
       </div>
     </div>`;
   }).join("");
@@ -2764,7 +2764,7 @@ function renderTFDetail() {
       ${slots.length===0?`<div style="font-size:12px;color:#444;padding:4px 0">None</div>`:""}
       ${slots.map(slot => {
         const u = unitById(slot.unitId);
-        if(!u) return `<div class="tf-unit-row"><span style="color:#666">[Deleted Unit]</span><button class="btn btn-danger btn-xs" onclick="removeTFSlot('${tf.id}','${slot.id}')">Remove</button></div>`;
+        if(!u) return `<div class="tf-unit-row"><span style="color:#666">[Deleted Unit]</span><button class="trait-edit-btn" style="border-color:#8b000066;color:#ef5350;background:#2a0a0a" onclick="removeTFSlot('${tf.id}','${slot.id}')">Remove</button></div>`;
         const pts = calcPoints(u);
         const unitPts = Math.round(pts.unitPts * (role==="commander"?1.75:role==="command"?1.5:1) * slot.quantity);
         return `<div class="tf-unit-row">
@@ -2781,7 +2781,7 @@ function renderTFDetail() {
           <select style="width:auto;font-size:11px;background:#0d1117;border:1px solid #30363d;color:#e0e0e0;border-radius:4px;padding:3px" onchange="changeTFSlotRole('${tf.id}','${slot.id}',this.value)">
             ${roles.map(r=>`<option value="${r}" ${r===slot.role?"selected":""}>${roleLabels[r]}</option>`).join("")}
           </select>
-          <button class="btn btn-danger btn-xs" onclick="removeTFSlot('${tf.id}','${slot.id}')">X</button>
+          <button class="trait-edit-btn" style="border-color:#8b000066;color:#ef5350;background:#2a0a0a" onclick="removeTFSlot('${tf.id}','${slot.id}')">X</button>
         </div>`;
       }).join("")}
     </div>`;
@@ -2790,8 +2790,8 @@ function renderTFDetail() {
     <div class="card-title">
       ${esc(tf.name)}
       <div style="display:flex;gap:6px">
-        <button class="btn btn-primary btn-sm" onclick="openAddUnitModal('${tf.id}')">+ Add Unit</button>
-        <button class="btn btn-danger btn-sm" onclick="deleteTF('${tf.id}')">Delete TF</button>
+        <button class="trait-edit-btn" onclick="openAddUnitModal('${tf.id}')">Add Unit</button>
+        <button class="trait-edit-btn" style="border-color:#8b000066;color:#ef5350;background:#2a0a0a" onclick="deleteTF('${tf.id}')">Delete TF</button>
       </div>
     </div>
     <div style="margin-bottom:12px">
@@ -2917,7 +2917,7 @@ function renderArmyList() {
         <div style="font-size:11px;color:#8b949e">${tfCount} Task Force${tfCount!==1?"s":""} &bull; ${pts}${a.pointsLimit?` / ${a.pointsLimit}`:""} pts</div>
       </div>
       <div style="display:flex;gap:4px">
-        <button class="btn btn-danger btn-xs" onclick="event.stopPropagation();deleteArmy('${a.id}')">Del</button>
+        <button class="trait-edit-btn" style="border-color:#8b000066;color:#ef5350;background:#2a0a0a" onclick="event.stopPropagation();deleteArmy('${a.id}')">Del</button>
       </div>
     </div>`;
   }).join("");
@@ -2946,8 +2946,8 @@ function renderArmyDetail() {
     <div class="card-title">
       ${esc(army.name)}
       <div style="display:flex;gap:6px">
-        <button class="btn btn-primary btn-sm" onclick="openAddTFModal('${army.id}')">+ Add TF</button>
-        <button class="btn btn-warning btn-sm" onclick="openDeployFromArmy('${army.id}')"><i class="fa-solid fa-chess-rook"></i> Deploy</button>
+        <button class="trait-edit-btn" onclick="openAddTFModal('${army.id}')">Add TF</button>
+        <button class="trait-edit-btn" onclick="openDeployFromArmy('${army.id}')">Deploy</button>
       </div>
     </div>
     <div style="margin-bottom:12px;display:flex;gap:20px;flex-wrap:wrap">
@@ -2963,7 +2963,7 @@ function renderArmyDetail() {
           <div style="font-weight:bold">${esc(tf.name)}</div>
           <div style="font-size:11px;color:#8b949e">${unitCount} units &bull; ${tp} pts</div>
         </div>
-        <button class="btn btn-danger btn-xs" onclick="removeTFFromArmy('${army.id}','${tf.id}')">X</button>
+        <button class="trait-edit-btn" style="border-color:#8b000066;color:#ef5350;background:#2a0a0a" onclick="removeTFFromArmy('${army.id}','${tf.id}')">X</button>
       </div>`;
     }).join("")}
   </div>`;
@@ -3057,9 +3057,9 @@ function renderDeployList() {
         <div style="font-size:11px;color:#8b949e">${bgCount} Battle Group${bgCount!==1?"s":""}</div>
       </div>
       <div style="display:flex;gap:4px">
-        <button class="btn btn-primary btn-xs" onclick="editDeployment('${d.id}')">Edit</button>
-        <button class="btn btn-secondary btn-xs" onclick="printDeployment('${d.id}')">Print</button>
-        <button class="btn btn-danger btn-xs" onclick="deleteDeployment('${d.id}')">Del</button>
+        <button class="trait-edit-btn" onclick="editDeployment('${d.id}')">Edit</button>
+        <button class="trait-edit-btn" onclick="printDeployment('${d.id}')">Print</button>
+        <button class="trait-edit-btn" style="border-color:#8b000066;color:#ef5350;background:#2a0a0a" onclick="deleteDeployment('${d.id}')">Del</button>
       </div>
     </div>`;
   }).join("");
@@ -3229,7 +3229,7 @@ function renderBGEditor() {
           <div style="font-size:11px;color:#8b949e">${bgSize} unit${bgSize!==1?"s":""}${totalUnits>0?` (${pctOfTotal}%)`:""} &bull; ${bgPts} pts ${isValid&&bgSize>0?'<i class="fa-solid fa-circle-check"></i>':""}${!hasCmd&&bgSize>0?'| <i class="fa-solid fa-triangle-exclamation"></i> No Command':""}${bgSize<minAllowed&&maxSize>0?'| <i class="fa-solid fa-triangle-exclamation"></i> Too small (min '+minAllowed+')':""}</div>
         </div>
         <div style="display:flex;gap:6px;align-items:center">
-          <button class="btn btn-primary btn-xs" onclick="openBGUnitModal('${bg.id}')">+ Add Unit</button>
+          <button class="trait-edit-btn" onclick="openBGUnitModal('${bg.id}')">Add Unit</button>
         </div>
       </div>
       <div class="form-group" style="margin-bottom:10px">
@@ -3257,7 +3257,7 @@ function renderBGEditor() {
           <label style="display:flex;align-items:center;gap:4px;font-size:11px;cursor:pointer;text-transform:none">
             <input type="checkbox" ${slot.isCommand?"checked":""} onchange="bg_setCmd('${bg.id}','${slot.id}',this.checked)"> Cmd Stand
           </label>
-          <button class="btn btn-danger btn-xs" onclick="bg_removeUnit('${bg.id}','${slot.id}')">X</button>
+          <button class="trait-edit-btn" style="border-color:#8b000066;color:#ef5350;background:#2a0a0a" onclick="bg_removeUnit('${bg.id}','${slot.id}')">X</button>
         </div>`;
       }).join("")}</div>`:`<div style="font-size:12px;color:#444;text-align:center;padding:8px">No units assigned yet</div>`}
     </div>`;
