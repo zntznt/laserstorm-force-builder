@@ -4239,6 +4239,12 @@ function setBGCount(armyId, n) {
 function openAddTFModal(armyId) {
   addTFTargetArmyId = armyId;
   addTFSelectedId = null;
+  _renderAddTFList();
+  openModal("modal-add-tf");
+}
+
+function _renderAddTFList() {
+  const armyId = addTFTargetArmyId;
   const army = state.armies.find(a=>a.id===armyId);
   const noteEl = document.getElementById("add-tf-faction-note");
   if(army?.faction) {
@@ -4258,7 +4264,7 @@ function openAddTFModal(armyId) {
       const pts = tfPoints(tf);
       const sel = addTFSelectedId===tf.id;
       const overLimit = tfOverLimit(tf);
-      return `<div class="list-row" style="${sel?"border-color:#007eff;background:#0d1e36":overLimit?"border-color:#ef535055":""}" onclick="addTFSelectedId='${tf.id}';openAddTFModal('${armyId}')">
+      return `<div class="list-row" style="${sel?"border-color:#007eff;background:#0d1e36":overLimit?"border-color:#ef535055":""}" onclick="addTFSelectedId='${tf.id}';_renderAddTFList()">
         <div style="min-width:0">
           <div style="font-weight:bold;color:${sel?"#007eff":"#fff"};overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(tf.name)}</div>
           <div style="font-size:11px;color:#8b949e;display:flex;align-items:center;gap:4px;flex-wrap:wrap">
@@ -4270,7 +4276,6 @@ function openAddTFModal(armyId) {
       </div>`;
     }).join("");
   }
-  openModal("modal-add-tf");
 }
 
 function confirmAddTF() {
@@ -4380,25 +4385,30 @@ function openBGTFModal(armyId, bgId) {
   bgTFTargetArmyId = armyId;
   bgTFTargetBgId = bgId;
   bgTFSelectedId = null;
-  const army = state.armies.find(a=>a.id===armyId);
+  _renderBGTFList();
+  openModal("modal-army-bg-tf");
+}
+
+function _renderBGTFList() {
+  const army = state.armies.find(a=>a.id===bgTFTargetArmyId);
   const tfs = (army?.taskForceIds||[]).map(id=>state.taskForces.find(t=>t.id===id)).filter(Boolean);
   const list = document.getElementById("bg-tf-list");
-  if(!tfs.length) { list.innerHTML=`<div class="empty">No task forces in this army's pool.</div>`; }
-  else list.innerHTML = tfs.map(tf => {
+  if(!tfs.length) { list.innerHTML=`<div class="empty">No task forces in this army's pool.</div>`; return; }
+  list.innerHTML = tfs.map(tf => {
     const pts = tfPoints(tf);
     const unitCount = (tf.units||[]).reduce((s,u)=>s+u.quantity,0);
-    return `<div class="list-row" style="${bgTFSelectedId===tf.id?"border-color:#007eff;background:#0d1e36":""}" onclick="bgTFSelectedId='${tf.id}';openBGTFModal('${armyId}','${bgId}')">
+    const sel = bgTFSelectedId===tf.id;
+    return `<div class="list-row" style="${sel?"border-color:#007eff;background:#0d1e36":""}" onclick="bgTFSelectedId='${tf.id}';_renderBGTFList()">
       <div style="min-width:0">
-        <div style="font-weight:bold;color:${bgTFSelectedId===tf.id?"#007eff":"#fff"};overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(tf.name)}</div>
+        <div style="font-weight:bold;color:${sel?"#007eff":"#fff"};overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(tf.name)}</div>
         <div style="font-size:11px;color:#8b949e;display:flex;align-items:center;gap:4px;flex-wrap:wrap">
           ${tf.faction?factionPill(tf.faction):""}
           <span>${unitCount} units &bull; ${pts} pts</span>
         </div>
       </div>
-      ${bgTFSelectedId===tf.id?`<i class="fa-solid fa-check" style="color:#007eff;flex-shrink:0"></i>`:""}
+      ${sel?`<i class="fa-solid fa-check" style="color:#007eff;flex-shrink:0"></i>`:""}
     </div>`;
   }).join("");
-  openModal("modal-army-bg-tf");
 }
 
 function confirmAddTFToBG() {
