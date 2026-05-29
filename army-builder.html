@@ -1690,12 +1690,14 @@ function unitCardHTML(unit, actions) {
   return `
     <div class="unit-card">
       <div class="unit-card-header">
-        <div style="display:flex;flex-wrap:wrap;align-items:center;gap:4px">
+        <div>
           <span class="unit-name-wrap">
             <span class="unit-name">${esc(unit.name)}</span>${unit.description ? `<span class="unit-desc">${esc(unit.description)}</span>` : ""}
           </span>
-          ${classBadge(unit.class, true)}${factionBadge(unit)}
-          ${!unit.builtIn?`<span class="badge" style="background:#333;color:#aaa">Custom</span>`:""}
+          <div style="display:flex;flex-wrap:wrap;align-items:center;gap:4px;margin-top:3px">
+            ${classBadge(unit.class, true)}${factionBadge(unit)}
+            ${!unit.builtIn?`<span class="badge" style="background:#333;color:#aaa">Custom</span>`:""}
+          </div>
         </div>
         <div style="text-align:right;font-size:11px;color:var(--text-muted)">
           ${pts.unitSize} stand${pts.unitSize>1?"s":""}
