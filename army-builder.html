@@ -648,9 +648,14 @@ label .trait-edit-btn{margin-left:6px}
     <div class="modal-header"><span id="addunit-modal-title">Add Unit to Task Force</span> <button class="modal-close" onclick="closeModal('modal-add-unit')"><i class="fa-solid fa-xmark"></i></button></div>
     <input class="search-bar" id="addunit-search" placeholder="Search..." oninput="renderAddUnitList()">
     <div class="scrolllist" id="addunit-list"></div>
+    <div id="addunit-type-selector" style="display:none;margin-top:10px;padding:10px;background:var(--surface-page);border-radius:6px;border:1px solid var(--border-subtle)">
+      <div style="font-size:11px;color:#8b949e;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">Unit Type</div>
+      <div id="addunit-type-options" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+      <div id="addunit-type-warning" style="font-size:11px;color:#ef5350;margin-top:6px;display:none"></div>
+    </div>
     <div style="margin-top:12px;display:flex;justify-content:flex-end;gap:8px">
       <button class="btn btn-secondary" onclick="closeModal('modal-add-unit')">Cancel</button>
-      <button class="btn btn-primary" onclick="confirmAddUnit()">Add</button>
+      <button class="btn btn-primary" id="addunit-confirm-btn" onclick="confirmAddUnit()">Add</button>
     </div>
   </div>
 </div>
@@ -1131,6 +1136,7 @@ let editingCustomAssetId = null;
 let addUnitTargetTFId = null;
 let addUnitTargetRole = "core";
 let addUnitSelectedId = null;
+let addUnitSelectedType = "unit";
 let currentArmyId = null;
 let addTFTargetArmyId = null;
 let addTFSelectedId = null;
@@ -2235,6 +2241,14 @@ const TF_TYPES = {
   recon:        {label:"Recon",         slots:{inf:[0,1],scout:[2,3],cav:[0,3],fg:[0,0],afv:[0,0],sh:[0,0],beh:[0,0],ac:[0,2]}},
   heavy:        {label:"Heavy",         slots:{inf:[0,1],scout:[0,0],cav:[0,0],fg:[1,3],afv:[0,0],sh:[0,3],beh:[0,3],ac:[0,0]}},
 };
+const SECTION_TYPES = {
+  core:       ["unit","independent","hero"],
+  specialist: ["independent","hero"],
+  command:    ["command","cmdHero"],
+  support:    ["unit","independent","hero"],
+};
+const TYPE_LABELS = {unit:"Unit", independent:"Independent", hero:"Hero", command:"Command Stand", cmdHero:"Cmd Hero"};
+
 const FACTION_ICONS = [
   // Combat & military
   "shield","shield-halved","skull","skull-crossbones","crosshairs","gun","bomb","khanda",
@@ -2970,14 +2984,96 @@ function renderTFList() {
   }).join("");
 }
 
+function availableTypesFor(cls, role) {
+  const sectionTypes = SECTION_TYPES[role] || ["unit"];
+  const pr = premiumsFor(cls);
+  const premiumMap = {independent: pr.ind, hero: pr.hero, command: pr.cmd, cmdHero: pr.cmdHero};
+  return sectionTypes.filter(t => t === "unit" || (premiumMap[t] !== null && premiumMap[t] !== undefined));
+}
+
+function slotPointValue(slot) {
+  const u = unitById(slot.unitId);
+  if(!u) return 0;
+  const pts = calcPoints(u);
+  const typeKey = {unit:"unitPts",independent:"indPts",hero:"heroPts",command:"cmdPts",cmdHero:"cmdHeroPts"}[slot.unitType||"unit"];
+  return ((pts[typeKey] != null ? pts[typeKey] : pts.unitPts) || 0) * slot.quantity;
+}
+
+function _getTFTypeSlots(tfType) {
+  if(TF_TYPES[tfType]) return TF_TYPES[tfType].slots;
+  const ct = (state.customTFTypes||[]).find(t=>t.id===tfType);
+  return ct ? ct.slots : null;
+}
+
+function tfSectionLimits(tf) {
+  const units = tf.units || [];
+  const typeSlots = _getTFTypeSlots(tf.tfType);
+  const coreSlots = units.filter(s => s.role === "core");
+  const specSlots = units.filter(s => s.role === "specialist");
+  const cmdSlots  = units.filter(s => s.role === "command");
+  const suppSlots = units.filter(s => s.role === "support");
+
+  const coreLimitsByClass = {};
+  if(typeSlots) {
+    Object.entries(typeSlots).forEach(([cls, [mn, mx]]) => {
+      if(mx > 0 || mn > 0) {
+        const count = coreSlots.filter(s => (unitById(s.unitId)||{}).class === cls).length;
+        coreLimitsByClass[cls] = {count, min:mn, max:mx};
+      }
+    });
+  }
+
+  const coreByClass = {};
+  coreSlots.forEach(s => {
+    const cls = (unitById(s.unitId)||{}).class;
+    if(cls) coreByClass[cls] = (coreByClass[cls]||0) + 1;
+  });
+  const specLimitsByClass = {};
+  Object.keys(coreByClass).forEach(cls => {
+    const specCount = specSlots.filter(s => (unitById(s.unitId)||{}).class === cls).length;
+    specLimitsByClass[cls] = {count: specCount, max: coreByClass[cls]};
+  });
+
+  const cmdMax = Math.floor(coreSlots.length / 2);
+  const suppMax = 3;
+
+  return {coreLimitsByClass, specLimitsByClass, cmdCount: cmdSlots.length, cmdMax, suppCount: suppSlots.length, suppMax, coreSlots};
+}
+
+function canAddToSection(tf, role, unitCls) {
+  const lim = tfSectionLimits(tf);
+  if(role === "core") {
+    const typeSlots = _getTFTypeSlots(tf.tfType);
+    if(!typeSlots) return true;
+    const clsLim = lim.coreLimitsByClass[unitCls];
+    if(!clsLim) {
+      const mx = (typeSlots[unitCls] || [0,0])[1];
+      if(mx === 0) return false;
+      const count = (tf.units||[]).filter(s => s.role==="core" && (unitById(s.unitId)||{}).class===unitCls).length;
+      return count < mx;
+    }
+    return clsLim.count < clsLim.max;
+  }
+  if(role === "specialist") {
+    const avail = availableTypesFor(unitCls, "specialist");
+    if(!avail.length) return false;
+    const specLim = lim.specLimitsByClass[unitCls];
+    if(!specLim) return false; // no core unit of this class
+    return specLim.count < specLim.max;
+  }
+  if(role === "command") {
+    const avail = availableTypesFor(unitCls, "command");
+    if(!avail.length) return false;
+    return lim.cmdCount < lim.cmdMax;
+  }
+  if(role === "support") {
+    return lim.suppCount < lim.suppMax;
+  }
+  return true;
+}
+
 function tfPoints(tf) {
-  return (tf.units||[]).reduce((sum, slot) => {
-    const u = unitById(slot.unitId);
-    if(!u) return sum;
-    const pts = calcPoints(u);
-    const roleMultiplier = slot.role==="command"?1.5 : slot.role==="specialist"?1.3 : 1;
-    return sum + Math.round(pts.perStand * pts.unitSize * roleMultiplier) * slot.quantity;
-  }, 0);
+  return (tf.units||[]).reduce((sum, slot) => sum + slotPointValue(slot), 0);
 }
 
 function selectTF(id) {
@@ -3005,23 +3101,62 @@ function renderTFDetail() {
     ${facColor?`<span style="background:${facColor}22;color:${facColor};border:1px solid ${facColor}55;border-radius:8px;padding:2px 8px">${esc(facLabel)}</span>`:""}
     ${tf.commander?`<span style="color:#8b949e">Cmd: <span style="color:#e0e0e0">${esc(tf.commander)}</span></span>`:""}
   </div>`;
+  const lim = tfSectionLimits(tf);
   let slotsHTML = "";
   sections.forEach(({role, label, shClass}) => {
     const slots = (tf.units||[]).filter(u=>u.role===role||(role==="core"&&u.role==="commander"));
+
+    // Build limit indicator text
+    let limitInfo = "";
+    if(role === "core") {
+      const parts = Object.entries(lim.coreLimitsByClass).map(([cls, li]) => {
+        const warn = li.count < li.min;
+        return `<span style="color:${warn?"#ef5350":"#8b949e"}">${classLabel(cls)}: ${li.count}/${li.max}${li.min>0?` (min ${li.min})`:""}</span>`;
+      });
+      if(parts.length) limitInfo = parts.join(" &bull; ");
+    } else if(role === "specialist") {
+      const total = slots.length;
+      const maxTotal = Object.values(lim.specLimitsByClass).reduce((s,v)=>s+v.max,0);
+      limitInfo = `<span style="color:${total>=maxTotal&&maxTotal>0?"#ef9a9a":"#8b949e"}">${total}/${maxTotal}</span>`;
+    } else if(role === "command") {
+      limitInfo = `<span style="color:${lim.cmdCount>=lim.cmdMax&&lim.cmdMax>0?"#ef9a9a":"#8b949e"}">${lim.cmdCount}/${lim.cmdMax}</span>`;
+    } else if(role === "support") {
+      limitInfo = `<span style="color:${lim.suppCount>=lim.suppMax?"#ef9a9a":"#8b949e"}">${lim.suppCount}/${lim.suppMax}</span>`;
+    }
+
+    // Determine if Add button should be disabled for this section
+    let sectionFull = false;
+    if(role === "specialist") {
+      const maxTotal = Object.values(lim.specLimitsByClass).reduce((s,v)=>s+v.max,0);
+      sectionFull = maxTotal === 0 || slots.length >= maxTotal;
+    } else if(role === "command") {
+      sectionFull = lim.cmdMax === 0 || lim.cmdCount >= lim.cmdMax;
+    } else if(role === "support") {
+      sectionFull = lim.suppCount >= lim.suppMax;
+    }
+    // Core: always allow click, limit enforced per class in modal
+
     slotsHTML += `<div style="margin-bottom:14px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-        <div class="section-header ${shClass}" style="margin-bottom:0">${label}</div>
-        <button class="trait-edit-btn" onclick="openAddUnitModal('${tf.id}','${role}')">Add</button>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="section-header ${shClass}" style="margin-bottom:0">${label}</div>
+          ${limitInfo?`<span style="font-size:11px">${limitInfo}</span>`:""}
+        </div>
+        <button class="trait-edit-btn" onclick="openAddUnitModal('${tf.id}','${role}')" ${sectionFull?"disabled style='opacity:0.4;cursor:not-allowed'":""}>Add</button>
       </div>
       ${slots.length===0?`<div style="font-size:12px;color:#444;padding:4px 0;font-style:italic">None</div>`:""}
       ${slots.map(slot => {
         const u = unitById(slot.unitId);
         if(!u) return `<div class="tf-unit-row"><span style="color:#666">[Deleted Unit]</span><button class="trait-edit-btn" onclick="confirmBtn(this,()=>removeTFSlot('${tf.id}','${slot.id}'))">Remove</button></div>`;
+        const typeLabel_ = TYPE_LABELS[slot.unitType||"unit"] || "Unit";
         const slotActions = `<div style="display:flex;align-items:center;justify-content:space-between;width:100%">
-          <div class="qty-ctrl">
-            <button class="qty-btn" onclick="changeTFSlotQty('${tf.id}','${slot.id}',-1)">−</button>
-            <span class="qty-val">${slot.quantity}</span>
-            <button class="qty-btn" onclick="changeTFSlotQty('${tf.id}','${slot.id}',1)">+</button>
+          <div style="display:flex;align-items:center;gap:8px">
+            <div class="qty-ctrl">
+              <button class="qty-btn" onclick="changeTFSlotQty('${tf.id}','${slot.id}',-1)">−</button>
+              <span class="qty-val">${slot.quantity}</span>
+              <button class="qty-btn" onclick="changeTFSlotQty('${tf.id}','${slot.id}',1)">+</button>
+            </div>
+            <span style="font-size:10px;padding:2px 7px;border-radius:10px;background:#1a2030;color:#7eb3ff;border:1px solid #2a3a5a">${esc(typeLabel_)}</span>
           </div>
           <button class="trait-edit-btn" onclick="confirmBtn(this,()=>removeTFSlot('${tf.id}','${slot.id}'))">Remove</button>
         </div>`;
@@ -3128,36 +3263,81 @@ function openAddUnitModal(tfId, role) {
   if(tfId) addUnitTargetTFId = tfId;
   addUnitTargetRole = role || "core";
   addUnitSelectedId = null;
+  addUnitSelectedType = "unit";
   const labels = {core:"Core Unit",specialist:"Specialist Stand",command:"Command Stand",support:"Support Unit"};
   document.getElementById("addunit-modal-title").textContent = "Add " + (labels[addUnitTargetRole]||"Unit");
   document.getElementById("addunit-search").value = "";
+  document.getElementById("addunit-type-selector").style.display = "none";
+  document.getElementById("addunit-confirm-btn").disabled = false;
   renderAddUnitList();
   openModal("modal-add-unit");
 }
 
 function renderAddUnitList() {
   const search = (document.getElementById("addunit-search")?.value||"").toLowerCase();
+  const tf = state.taskForces.find(t=>t.id===addUnitTargetTFId);
   let units = allUnits();
   if(search) units = units.filter(u=>u.name.toLowerCase().includes(search));
+  // Filter out units that have no valid type for this section
+  units = units.filter(u => availableTypesFor(u.class, addUnitTargetRole).length > 0);
   const list = document.getElementById("addunit-list");
   list.innerHTML = units.map(u => {
     const pts = calcPoints(u);
     const sel = addUnitSelectedId===u.id;
-    return `<div class="list-row" style="${sel?"border-color:#007eff;background:#1a2a4a":""}" onclick="addUnitSelectedId='${u.id}';renderAddUnitList()">
+    const canAdd = !tf || canAddToSection(tf, addUnitTargetRole, u.class);
+    return `<div class="list-row" style="${sel?"border-color:#007eff;background:#1a2a4a":""};${!canAdd?"opacity:0.45":""}" onclick="addUnitSelectedId='${u.id}';addUnitSelectedType='';renderAddUnitList();renderAddUnitTypeSelector()">
       <div>
         ${classBadge(u.class)}
         <span style="font-weight:bold;margin-left:6px;color:${sel?"#007eff":"#fff"}">${esc(u.name)}</span>
-        <div style="font-size:11px;color:#8b949e">${pts.unitPts} pts | ${pts.unitSize} stands</div>
+        <div style="font-size:11px;color:#8b949e">${pts.unitPts} pts | ${pts.unitSize} stands${!canAdd?" &bull; <span style='color:#ef5350'>section full</span>":""}</div>
       </div>
     </div>`;
-  }).join("") || `<div class="empty">No units found</div>`;
+  }).join("") || `<div class="empty">No units available for this section</div>`;
+  if(addUnitSelectedId) renderAddUnitTypeSelector();
+}
+
+function renderAddUnitTypeSelector() {
+  const selectorEl = document.getElementById("addunit-type-selector");
+  const optionsEl = document.getElementById("addunit-type-options");
+  const warningEl = document.getElementById("addunit-type-warning");
+  const confirmBtn = document.getElementById("addunit-confirm-btn");
+  const tf = state.taskForces.find(t=>t.id===addUnitTargetTFId);
+  if(!addUnitSelectedId) { selectorEl.style.display="none"; return; }
+  const u = unitById(addUnitSelectedId);
+  if(!u) { selectorEl.style.display="none"; return; }
+  const types = availableTypesFor(u.class, addUnitTargetRole);
+  if(!types.length) { selectorEl.style.display="none"; return; }
+  // Default to first type if none selected or selected type no longer valid
+  if(!addUnitSelectedType || !types.includes(addUnitSelectedType)) {
+    addUnitSelectedType = types[0];
+  }
+  const canAdd = !tf || canAddToSection(tf, addUnitTargetRole, u.class);
+  const pts = calcPoints(u);
+  const typePtsMap = {unit:pts.unitPts, independent:pts.indPts, hero:pts.heroPts, command:pts.cmdPts, cmdHero:pts.cmdHeroPts};
+  optionsEl.innerHTML = types.map(t => {
+    const ptsVal = typePtsMap[t];
+    const sel = addUnitSelectedType === t;
+    return `<button onclick="addUnitSelectedType='${t}';renderAddUnitTypeSelector()"
+      style="font-family:var(--font-body);font-size:12px;padding:4px 10px;border-radius:12px;border:1px solid ${sel?"#007eff":"#333"};background:${sel?"#1a2a4a":"#111"};color:${sel?"#7eb3ff":"#aaa"};cursor:pointer">
+      ${TYPE_LABELS[t]}${ptsVal!=null?` <span style="color:#8b949e;font-size:10px">${ptsVal}pts</span>`:""}
+    </button>`;
+  }).join("");
+  warningEl.style.display = (!canAdd) ? "block" : "none";
+  warningEl.textContent = (!canAdd) ? "This section is full for this unit type." : "";
+  confirmBtn.disabled = !canAdd;
+  selectorEl.style.display = "block";
 }
 
 function confirmAddUnit() {
   if(!addUnitSelectedId) { alert("Select a unit."); return; }
   const tf = state.taskForces.find(t=>t.id===addUnitTargetTFId);
   if(!tf) { alert("No task force selected."); return; }
-  tf.units.push({id:"slot_"+uid(), unitId:addUnitSelectedId, role:addUnitTargetRole, quantity:1});
+  const u = unitById(addUnitSelectedId);
+  if(!u) return;
+  if(!canAddToSection(tf, addUnitTargetRole, u.class)) { alert("This section is full for that unit class."); return; }
+  const types = availableTypesFor(u.class, addUnitTargetRole);
+  const unitType = types.includes(addUnitSelectedType) ? addUnitSelectedType : (types[0] || "unit");
+  tf.units.push({id:"slot_"+uid(), unitId:addUnitSelectedId, role:addUnitTargetRole, unitType, quantity:1});
   saveState();
   closeModal("modal-add-unit");
   if(currentTFId===addUnitTargetTFId) renderTFDetail();
