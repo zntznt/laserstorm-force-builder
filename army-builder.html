@@ -2914,20 +2914,15 @@ function renderTFDetail() {
       ${slots.map(slot => {
         const u = unitById(slot.unitId);
         if(!u) return `<div class="tf-unit-row"><span style="color:#666">[Deleted Unit]</span><button class="trait-edit-btn" onclick="confirmBtn(this,()=>removeTFSlot('${tf.id}','${slot.id}'))">Remove</button></div>`;
-        const sp = calcPoints(u);
-        return `<div class="tf-unit-row">
-          <div style="flex:1;min-width:0">
-            <span style="font-weight:bold;color:#fff">${esc(u.name)}</span>
-            <span style="margin-left:6px">${classBadge(u.class)}</span>
-            <div style="font-size:11px;color:#8b949e">${sp.unitPts} pts/unit &bull; ${slot.quantity}×</div>
-          </div>
+        const slotActions = `<div style="display:flex;align-items:center;justify-content:space-between;width:100%">
           <div class="qty-ctrl">
-            <button class="qty-btn" onclick="changeTFSlotQty('${tf.id}','${slot.id}',-1)">-</button>
+            <button class="qty-btn" onclick="changeTFSlotQty('${tf.id}','${slot.id}',-1)">−</button>
             <span class="qty-val">${slot.quantity}</span>
             <button class="qty-btn" onclick="changeTFSlotQty('${tf.id}','${slot.id}',1)">+</button>
           </div>
-          <button class="trait-edit-btn" onclick="confirmBtn(this,()=>removeTFSlot('${tf.id}','${slot.id}'))">X</button>
+          <button class="trait-edit-btn" onclick="confirmBtn(this,()=>removeTFSlot('${tf.id}','${slot.id}'))">Remove</button>
         </div>`;
+        return unitCardHTML(u, slotActions);
       }).join("")}
     </div>`;
   });
