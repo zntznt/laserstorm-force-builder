@@ -4316,7 +4316,12 @@ function _renderBGUnitList() {
   const list = document.getElementById("bg-unit-list");
   const countEl = document.getElementById("bg-unit-count");
   if(!army||!bg) return;
-  const alreadyInBG = new Set((bg.entries||[]).map(e=>e.slotId));
+  const inThisBG = new Set((bg.entries||[]).map(e=>e.slotId));
+  // Map slotId → BG name for slots assigned to other groups
+  const assignedTo = {};
+  (army.battleGroups||[]).filter(b=>b.id!==bgUnitTargetBgId).forEach(b => {
+    (b.entries||[]).forEach(e => { assignedTo[e.slotId] = b.name; });
+  });
   const tfs = (army.taskForceIds||[]).map(id=>state.taskForces.find(t=>t.id===id)).filter(Boolean);
   if(!tfs.length) { list.innerHTML=`<div class="empty">No task forces in this army's pool.</div>`; return; }
   list.innerHTML = tfs.map(tf => {
@@ -4330,12 +4335,15 @@ function _renderBGUnitList() {
       ${slots.map(slot => {
         const unit = unitById(slot.unitId);
         if(!unit) return "";
-        const inBG = alreadyInBG.has(slot.id);
+        const inThis = inThisBG.has(slot.id);
+        const otherBG = assignedTo[slot.id];
+        const unavailable = inThis || !!otherBG;
         const sel = bgUnitSelectedItems.has(slot.id);
-        return `<div class="list-row" style="${sel?"border-color:#007eff;background:#0d1e36":inBG?"opacity:.45;cursor:default":""}" onclick="${inBG?"":"toggleBGUnitItem('"+slot.id+"')"}">
+        const note = inThis ? " &bull; already in this group" : otherBG ? ` &bull; assigned to ${esc(otherBG)}` : "";
+        return `<div class="list-row" style="${sel?"border-color:#007eff;background:#0d1e36":unavailable?"opacity:.4;cursor:default":""}" onclick="${unavailable?"":"toggleBGUnitItem('"+slot.id+"')"}">
           <div style="min-width:0">
             <div style="font-weight:bold;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(unit.name)}</div>
-            <div style="font-size:11px;color:#8b949e">${slot.unitType||"unit"} &bull; ×${slot.quantity} &bull; ${slotPointValue(slot)} pts${inBG?" &bull; already in this group":""}</div>
+            <div style="font-size:11px;color:#8b949e">${slot.unitType||"unit"} &bull; ×${slot.quantity} &bull; ${slotPointValue(slot)} pts${note}</div>
           </div>
           ${sel?`<i class="fa-solid fa-check" style="color:#007eff;flex-shrink:0"></i>`:""}
         </div>`;
@@ -4356,8 +4364,9 @@ function confirmAddToBG() {
   const army = state.armies.find(a=>a.id===bgUnitTargetArmyId);
   const bg = army?.battleGroups?.find(b=>b.id===bgUnitTargetBgId);
   if(!army||!bg) return;
+  const assignedAnywhere = new Set((army.battleGroups||[]).flatMap(b=>(b.entries||[]).map(e=>e.slotId)));
   bgUnitSelectedItems.forEach(slotId => {
-    if((bg.entries||[]).some(e=>e.slotId===slotId)) return;
+    if(assignedAnywhere.has(slotId)) return;
     let tfId = null;
     for(const tid of army.taskForceIds) {
       const tf = state.taskForces.find(t=>t.id===tid);
@@ -4417,8 +4426,9 @@ function confirmAddTFToBG() {
   const bg = army?.battleGroups?.find(b=>b.id===bgTFTargetBgId);
   const tf = state.taskForces.find(t=>t.id===bgTFSelectedId);
   if(!army||!bg||!tf) return;
+  const assignedAnywhere = new Set((army.battleGroups||[]).flatMap(b=>(b.entries||[]).map(e=>e.slotId)));
   (tf.units||[]).forEach(slot => {
-    if((bg.entries||[]).some(e=>e.slotId===slot.id)) return;
+    if(assignedAnywhere.has(slot.id)) return;
     if(!bg.entries) bg.entries=[];
     bg.entries.push({id:"bge_"+uid(), tfId:tf.id, slotId:slot.id});
   });
