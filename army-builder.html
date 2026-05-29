@@ -1223,6 +1223,7 @@ let addUnitSelectedId = null;
 let addUnitSelectedType = "unit";
 let currentArmyId = null;
 let editingArmyId = null;
+let tfRemoveBlockedId = null;
 let addTFTargetArmyId = null;
 let addTFSelectedId = null;
 let bgUnitTargetArmyId = null;
@@ -4047,6 +4048,7 @@ function renderArmyList() {
 
 function selectArmy(id) {
   currentArmyId = id;
+  tfRemoveBlockedId = null;
   renderArmyList();
   renderArmyDetail();
 }
@@ -4065,15 +4067,26 @@ function renderArmyDetail() {
     ? `<span style="font-size:11px;color:#444;font-style:italic">None added yet.</span>`
     : tfs.map(tf => {
         const tp = tfPoints(tf);
-        const unitCount = (tf.units||[]).reduce((s,u)=>s+u.quantity,0);
+        const unitCount = (tf.slots||[]).length;
         const overLimit = tfOverLimit(tf);
-        return `<div class="list-row" style="${overLimit?"border-color:#ef535055":""}">
+        const isBlocked = tfRemoveBlockedId === tf.id;
+        const blockedBGNames = isBlocked
+          ? (army.battleGroups||[]).filter(bg=>(bg.entries||[]).some(e=>e.tfId===tf.id)).map(bg=>esc(bg.name))
+          : [];
+        const warningHTML = isBlocked ? `<div style="margin-top:6px;padding:6px 8px;border-radius:4px;background:#3a1a00;border:1px solid #f97316aa;display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
+          <div style="font-size:11px;color:#fb923c;line-height:1.4">
+            <i class="fa-solid fa-triangle-exclamation" style="margin-right:4px"></i>Units from this TF are still in: <strong>${blockedBGNames.join(", ")}</strong>. Remove them first.
+          </div>
+          <button onclick="tfRemoveBlockedId=null;renderArmyDetail()" style="background:none;border:none;color:#fb923c;cursor:pointer;padding:0;font-size:13px;flex-shrink:0;line-height:1"><i class="fa-solid fa-xmark"></i></button>
+        </div>` : "";
+        return `<div class="list-row" style="${overLimit?"border-color:#ef535055":isBlocked?"border-color:#f9731666":""}">
           <div style="min-width:0;flex:1">
             <div style="font-weight:bold;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(tf.name)}</div>
             <div style="font-size:11px;color:#8b949e;display:flex;align-items:center;gap:4px;flex-wrap:wrap">
               ${tf.faction ? factionPill(tf.faction) : ""}
-              <span>${unitCount} units &bull; ${tp} pts${overLimit?" ⚠":""}</span>
+              <span>${unitCount} unit${unitCount!==1?"s":""} &bull; ${tp} pts${overLimit?" ⚠":""}</span>
             </div>
+            ${warningHTML}
           </div>
           <button class="trait-edit-btn" style="border-color:#8b000066;color:#ef5350;background:#2a0a0a;flex-shrink:0" onclick="removeTFFromArmy('${army.id}','${tf.id}')">Remove</button>
         </div>`;
@@ -4278,11 +4291,14 @@ function confirmAddTF() {
 function removeTFFromArmy(armyId, tfId) {
   const army = state.armies.find(a=>a.id===armyId);
   if(!army) return;
+  const blockedBGs = (army.battleGroups||[]).filter(bg=>(bg.entries||[]).some(e=>e.tfId===tfId));
+  if(blockedBGs.length) {
+    tfRemoveBlockedId = tfId;
+    renderArmyDetail();
+    return;
+  }
+  tfRemoveBlockedId = null;
   army.taskForceIds = army.taskForceIds.filter(id=>id!==tfId);
-  // Also clean up BG entries referencing this TF
-  (army.battleGroups||[]).forEach(bg => {
-    bg.entries = (bg.entries||[]).filter(e=>e.tfId!==tfId);
-  });
   saveState();
   renderArmyDetail();
   renderArmyList();
