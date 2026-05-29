@@ -411,7 +411,7 @@ label .trait-edit-btn{margin-left:6px}
     <input class="search-bar" id="lib-search" placeholder="Search units..." oninput="renderLibrary()">
     <div style="display:flex;align-items:flex-start;gap:8px">
       <div class="pill-nav" id="lib-faction-filters" style="flex:1"></div>
-      <button class="btn btn-secondary btn-xs" style="margin-top:4px;white-space:nowrap" onclick="openFactionModal(false)"><i class="fa-solid fa-gear"></i> Custom Factions</button>
+      <button class="btn btn-secondary btn-sm" style="margin-top:4px;white-space:nowrap" onclick="openFactionModal(false)"><i class="fa-solid fa-gear"></i> Custom Factions</button>
     </div>
     <div class="pill-nav" id="lib-filters">
       <div class="pill active" data-filter="all" onclick="setLibFilter(this,'all')">All Classes</div>
@@ -2611,9 +2611,9 @@ function renderLibrary() {
   list.innerHTML = units.map(u => {
     const pts = calcPoints(u);
     const actions = `
-      ${u.builtIn?"":`<button class="btn btn-danger btn-xs" onclick="deleteCustomUnit('${u.id}')">Delete</button>`}
-      ${u.builtIn?"":`<button class="btn btn-secondary btn-xs" onclick="editUnit('${u.id}')">Edit</button>`}
-      <button class="btn btn-primary btn-xs" onclick="quickAddToTF('${u.id}')">+ Add to Task Force</button>`;
+      ${u.builtIn?"":`<button class="btn btn-danger btn-sm" onclick="deleteCustomUnit('${u.id}')">Delete</button>`}
+      ${u.builtIn?"":`<button class="btn btn-secondary btn-sm" onclick="editUnit('${u.id}')">Edit</button>`}
+      <button class="btn btn-primary btn-sm" onclick="quickAddToTF('${u.id}')">+ Add to Task Force</button>`;
     return unitCardHTML(u, actions);
   }).join("");
 }
