@@ -413,7 +413,10 @@ label .trait-edit-btn{margin-left:6px}
 <div id="page-library" class="page">
   <div class="card">
     <div class="card-title">Unit Library
-      <button class="trait-edit-btn" onclick="resetBuilder();showPage('builder')">Create Unit</button>
+      <div style="display:flex;gap:6px">
+        <button class="trait-edit-btn" onclick="openImportUnitModal()">Import Unit</button>
+        <button class="trait-edit-btn" onclick="resetBuilder();showPage('builder')">Create Unit</button>
+      </div>
     </div>
     <input class="search-bar" id="lib-search" placeholder="Search units..." oninput="renderLibrary()">
     <div style="display:flex;align-items:flex-start;gap:8px">
@@ -707,6 +710,33 @@ label .trait-edit-btn{margin-left:6px}
     <div style="display:flex;justify-content:flex-end;gap:8px">
       <button class="btn btn-secondary" id="custom-asset-cancel" onclick="cancelEditCustomAsset()">Close</button>
       <button class="btn btn-primary" id="custom-asset-submit" onclick="saveCustomAsset()" disabled>Add Asset</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== EXPORT UNIT MODAL ===== -->
+<div id="modal-export-unit" class="modal-bg">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-header">Export Unit <button class="modal-close" onclick="closeModal('modal-export-unit')"><i class="fa-solid fa-xmark"></i></button></div>
+    <div style="font-size:12px;color:#8b949e;margin-bottom:8px">Copy this JSON and use <strong style="color:#e0e0e0">Import Unit</strong> on another device or share it with others.</div>
+    <textarea id="export-unit-json" readonly rows="12" style="width:100%;font-family:monospace;font-size:11px;resize:vertical;background:var(--surface-page);border:1px solid var(--border-default);color:#e0e0e0;border-radius:6px;padding:8px"></textarea>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:10px">
+      <button class="btn btn-secondary" onclick="closeModal('modal-export-unit')">Close</button>
+      <button class="btn btn-primary" onclick="copyExportJSON()"><i class="fa-solid fa-copy"></i> Copy</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== IMPORT UNIT MODAL ===== -->
+<div id="modal-import-unit" class="modal-bg">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-header">Import Unit <button class="modal-close" onclick="closeModal('modal-import-unit')"><i class="fa-solid fa-xmark"></i></button></div>
+    <div style="font-size:12px;color:#8b949e;margin-bottom:8px">Paste exported unit JSON below.</div>
+    <textarea id="import-unit-json" rows="12" style="width:100%;font-family:monospace;font-size:11px;resize:vertical;background:var(--surface-page);border:1px solid var(--border-default);color:#e0e0e0;border-radius:6px;padding:8px" placeholder='{"name":"...", "class":"inf", ...}' oninput="validateImportUnit()"></textarea>
+    <div id="import-unit-status" style="min-height:20px;font-size:12px;margin-top:6px"></div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:10px">
+      <button class="btn btn-secondary" onclick="closeModal('modal-import-unit')">Cancel</button>
+      <button class="btn btn-primary" id="import-unit-submit" onclick="importUnit()" disabled>Import</button>
     </div>
   </div>
 </div>
@@ -2760,19 +2790,91 @@ function renderLibrary() {
   list.innerHTML = units.map(u => {
     const pts = calcPoints(u);
     const actions = `
-      ${u.builtIn?"":`<button class="trait-edit-btn" style="border-color:#8b000066;color:#ef5350;background:#2a0a0a" onclick="deleteCustomUnit('${u.id}')">Delete</button>`}
+      ${u.builtIn?"":`<button class="trait-edit-btn" onclick="confirmBtn(this,()=>deleteCustomUnit('${u.id}'))">Delete</button>`}
       ${u.builtIn?"":`<button class="trait-edit-btn" onclick="editUnit('${u.id}')">Edit</button>`}
-      <button class="trait-edit-btn" onclick="quickAddToTF('${u.id}')">Add to Task Force</button>`;
+      <button class="trait-edit-btn" onclick="quickAddToTF('${u.id}')">Add to Task Force</button>
+      <button class="trait-edit-btn" onclick="openExportUnitModal('${u.id}')">Export Unit</button>`;
     return unitCardHTML(u, actions);
   }).join("");
 }
 
 function deleteCustomUnit(id) {
-  if(!confirm("Delete this unit?")) return;
   state.customUnits = state.customUnits.filter(u=>u.id!==id);
-  // remove from task forces too
   state.taskForces.forEach(tf => { tf.units = tf.units.filter(u=>u.unitId!==id); });
   saveState();
+  renderLibrary();
+}
+
+// ---- Export / Import unit ----
+const _UNIT_EXPORT_KEYS = ["name","class","speed","mobility","aim","assault","saveNumber","morale","standTraits","weapons","role","faction"];
+
+function openExportUnitModal(unitId) {
+  const u = unitById(unitId);
+  if(!u) return;
+  const exportObj = {};
+  _UNIT_EXPORT_KEYS.forEach(k => { if(u[k] !== undefined) exportObj[k] = u[k]; });
+  document.getElementById("export-unit-json").value = JSON.stringify(exportObj, null, 2);
+  openModal("modal-export-unit");
+}
+
+function copyExportJSON() {
+  const ta = document.getElementById("export-unit-json");
+  ta.select();
+  navigator.clipboard?.writeText(ta.value).catch(()=>{});
+  document.execCommand("copy");
+  const btn = event.currentTarget;
+  const orig = btn.innerHTML;
+  btn.innerHTML = '<i class="fa-solid fa-check"></i> Copied';
+  setTimeout(()=>{ btn.innerHTML = orig; }, 2000);
+}
+
+function openImportUnitModal() {
+  document.getElementById("import-unit-json").value = "";
+  document.getElementById("import-unit-status").textContent = "";
+  document.getElementById("import-unit-submit").disabled = true;
+  openModal("modal-import-unit");
+}
+
+function validateImportUnit() {
+  const raw = document.getElementById("import-unit-json").value.trim();
+  const status = document.getElementById("import-unit-status");
+  const btn = document.getElementById("import-unit-submit");
+  btn.disabled = true;
+  if(!raw) { status.textContent = ""; return; }
+  let obj;
+  try { obj = JSON.parse(raw); }
+  catch(e) { status.innerHTML = `<span style="color:#ef5350">Invalid JSON — check for missing quotes or brackets.</span>`; return; }
+  if(typeof obj.name !== "string" || !obj.name.trim()) { status.innerHTML = `<span style="color:#ef5350">Missing required field: <strong>name</strong></span>`; return; }
+  if(!obj.class || !["inf","cav","fg","scout","afv","ac","sh","beh"].includes(obj.class)) { status.innerHTML = `<span style="color:#ef5350">Missing or invalid <strong>class</strong> (inf/cav/fg/scout/afv/ac/sh/beh)</span>`; return; }
+  const nameConflict = allUnits().find(u => u.name.trim().toLowerCase() === obj.name.trim().toLowerCase());
+  if(nameConflict) { status.innerHTML = `<span style="color:#ef5350">A unit named "<strong>${esc(obj.name)}</strong>" already exists in the library.</span>`; return; }
+  status.innerHTML = `<span style="color:#4caf50"><i class="fa-solid fa-check"></i> Looks good — <strong>${esc(obj.name)}</strong> (${obj.class}) ready to import.</span>`;
+  btn.disabled = false;
+}
+
+function importUnit() {
+  const raw = document.getElementById("import-unit-json").value.trim();
+  let obj;
+  try { obj = JSON.parse(raw); } catch(e) { return; }
+  const unit = {
+    id: "custom_" + uid(),
+    name: obj.name.trim(),
+    class: obj.class,
+    speed: Number(obj.speed)||4,
+    mobility: obj.mobility||"troop",
+    aim: Number(obj.aim)||5,
+    assault: Number(obj.assault)||0,
+    saveNumber: Number(obj.saveNumber)||6,
+    morale: Number(obj.morale)||4,
+    standTraits: Array.isArray(obj.standTraits) ? obj.standTraits : [],
+    weapons: Array.isArray(obj.weapons) ? obj.weapons : [],
+    role: obj.role||"core",
+    faction: obj.faction||null,
+  };
+  migrateCustomUnit(unit);
+  state.customUnits.push(unit);
+  saveState();
+  closeModal("modal-import-unit");
   renderLibrary();
 }
 
