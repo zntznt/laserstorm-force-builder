@@ -445,6 +445,13 @@ label .trait-edit-btn{margin-left:6px}
       <div class="pill" data-filter="sh" onclick="setLibFilter(this,'sh')">Super Heavy</div>
       <div class="pill" data-filter="beh" onclick="setLibFilter(this,'beh')">Behemoth</div>
     </div>
+    <div class="pill-nav" id="lib-view-filters">
+      <div class="pill active" data-view="unit"        onclick="setLibViewType(this,'unit')">Unit</div>
+      <div class="pill"        data-view="independent" onclick="setLibViewType(this,'independent')">Independent</div>
+      <div class="pill"        data-view="command"     onclick="setLibViewType(this,'command')">Commander</div>
+      <div class="pill"        data-view="hero"        onclick="setLibViewType(this,'hero')">Hero</div>
+      <div class="pill"        data-view="cmdHero"     onclick="setLibViewType(this,'cmdHero')">Hero Cmd</div>
+    </div>
     <div style="display:flex;align-items:center;gap:8px;margin:2px 0 14px">
       <label style="font-size:0.82em;color:var(--text-muted);white-space:nowrap">Sort by</label>
       <select id="lib-sort" onchange="libSort=this.value;renderLibrary()" style="width:auto">
@@ -1169,6 +1176,7 @@ let bgUnitSelectedId = null;
 let libFilterClass = "all";
 let libFilterFaction = "all";
 let libSort = "name-asc";
+let libViewType = "unit";
 let editingUnitId = null;
 
 // ============================================================
@@ -1669,7 +1677,7 @@ function traitTipHTML(traitArr, allTraits) {
   }).join("");
 }
 
-function unitCardHTML(unit, actions) {
+function unitCardHTML(unit, actions, viewType="unit") {
   const pts = calcPoints(unit);
   const traitsHTML = traitTipHTML(unit.standTraits||[], allStandTraits());
   const weaponsHTML = (unit.weapons||[]).length===0
@@ -1681,26 +1689,33 @@ function unitCardHTML(unit, actions) {
         const wName = w.name ? `<strong>${esc(w.name)}</strong> ` : "";
         return `<div class="weapon-row">${wName}<span class="wtype">${w.mode.toUpperCase()}/${w.type.toUpperCase()}</span> | Range <span>${rangeLabel(w.range)}</span> | Shots <span>${w.shots}</span> | Impact <span>+${w.impact}</span>${wtHTML}</div>`;
       }).join("");
-  const fmtPts = v => v ? `${v}` : "—";
-  const cmdStr     = fmtPts(pts.cmdPts);
-  const heroCmdStr = fmtPts(pts.cmdHeroPts);
   const minSpd = unit.mobility === "grav" ? Math.ceil(unit.speed / 2)
                : unit.mobility === "air"  ? Math.ceil(unit.speed * 3 / 4)
                : null;
+  const pKey = VIEW_PTS_KEY[viewType] || "unitPts";
+  const pVal = pts[pKey] != null ? pts[pKey] : "—";
+  const pLabel = VIEW_LABELS[viewType] || "Unit";
+  const standsHTML = viewType === "unit"
+    ? `<span style="font-size:11px;color:var(--text-muted);margin-left:6px">${pts.unitSize} stand${pts.unitSize>1?"s":""}</span>`
+    : "";
   return `
     <div class="unit-card">
       <div class="unit-card-header">
         <div>
-          <span class="unit-name-wrap">
-            <span class="unit-name">${esc(unit.name)}</span>${unit.description ? `<span class="unit-desc">${esc(unit.description)}</span>` : ""}
-          </span>
+          <div style="display:flex;align-items:baseline;flex-wrap:wrap;gap:2px">
+            <span class="unit-name-wrap">
+              <span class="unit-name">${esc(unit.name)}</span>${unit.description ? `<span class="unit-desc">${esc(unit.description)}</span>` : ""}
+            </span>
+            ${standsHTML}
+          </div>
           <div style="display:flex;flex-wrap:wrap;align-items:center;gap:4px;margin-top:3px">
             ${classBadge(unit.class, true)}${factionBadge(unit)}
             ${!unit.builtIn?`<span class="badge" style="background:#333;color:#aaa">Custom</span>`:""}
           </div>
         </div>
-        <div style="text-align:right;font-size:11px;color:var(--text-muted)">
-          ${pts.unitSize} stand${pts.unitSize>1?"s":""}
+        <div class="pts-box" style="flex-shrink:0;min-width:48px;text-align:center">
+          <div class="pts-box-val">${pVal}</div>
+          <div class="pts-box-label">${pLabel}</div>
         </div>
       </div>
       <div class="stat-row">
@@ -1713,18 +1728,6 @@ function unitCardHTML(unit, actions) {
       </div>
       <div class="unit-card-traits"><span class="unit-card-section-label">Stand Traits</span>${traitsHTML}</div>
       ${weaponsHTML}
-      <div class="unit-card-pts">
-        ${[
-          {label:"Unit",   val:fmtPts(pts.unitPts)},
-          {label:"Ind",    val:fmtPts(pts.indPts)},
-          {label:"Cmd",    val:cmdStr},
-          {label:"I.Hero", val:fmtPts(pts.heroPts)},
-          {label:"C.Hero", val:heroCmdStr}
-        ].map(c=>`<div class="pts-box${c.val==="—"?" pts-na":""}">
-          <div class="pts-box-val">${c.val}</div>
-          <div class="pts-box-label">${c.label}</div>
-        </div>`).join("")}
-      </div>
       ${actions ? `<div class="unit-card-actions">${actions}</div>` : ""}
     </div>`;
 }
@@ -2289,6 +2292,8 @@ const SECTION_TYPES = {
   support:    ["unit","independent","hero"],
 };
 const TYPE_LABELS = {unit:"Unit", independent:"Independent", hero:"Hero", command:"Command Stand", cmdHero:"Cmd Hero"};
+const VIEW_PTS_KEY = {unit:"unitPts", independent:"indPts", hero:"heroPts", command:"cmdPts", cmdHero:"cmdHeroPts"};
+const VIEW_LABELS  = {unit:"Unit", independent:"Ind", hero:"I.Hero", command:"Cmd", cmdHero:"C.Hero"};
 
 const FACTION_ICONS = [
   // Combat & military
@@ -2822,6 +2827,13 @@ function setLibFilter(el, cls) {
   renderLibrary();
 }
 
+function setLibViewType(el, type) {
+  document.querySelectorAll("#lib-view-filters .pill").forEach(p=>p.classList.remove("active"));
+  el.classList.add("active");
+  libViewType = type;
+  renderLibrary();
+}
+
 function renderLibrary() {
   renderLibFactionFilters();
   const sortEl = document.getElementById("lib-sort");
@@ -2833,12 +2845,17 @@ function renderLibrary() {
   else if(libFilterFaction!=="all") { units = units.filter(u=>u.faction===libFilterFaction); }
   if(libFilterClass!=="all") units = units.filter(u=>u.class===libFilterClass);
   if(search) units = units.filter(u=>u.name.toLowerCase().includes(search));
+  // Hide units that have no cost for the current view type
+  if(libViewType !== "unit") {
+    const pKey = VIEW_PTS_KEY[libViewType];
+    units = units.filter(u => calcPoints(u)[pKey] != null);
+  }
   const classOrder = ["inf","cav","fg","scout","afv","ac","sh","beh"];
   units.sort((a,b) => {
     switch(libSort) {
       case "name-desc":  return b.name.localeCompare(a.name);
-      case "pts-asc":    return calcPoints(a).perStand - calcPoints(b).perStand;
-      case "pts-desc":   return calcPoints(b).perStand - calcPoints(a).perStand;
+      case "pts-asc":    { const k=VIEW_PTS_KEY[libViewType]; return (calcPoints(a)[k]??calcPoints(a).perStand) - (calcPoints(b)[k]??calcPoints(b).perStand); }
+      case "pts-desc":   { const k=VIEW_PTS_KEY[libViewType]; return (calcPoints(b)[k]??calcPoints(b).perStand) - (calcPoints(a)[k]??calcPoints(a).perStand); }
       case "class":      return (classOrder.indexOf(a.class)-classOrder.indexOf(b.class)) || a.name.localeCompare(b.name);
       case "speed-desc": return (b.speed - a.speed) || a.name.localeCompare(b.name);
       case "speed-asc":  return (a.speed - b.speed) || a.name.localeCompare(b.name);
@@ -2862,7 +2879,7 @@ function renderLibrary() {
       ${u.builtIn?"":`<button class="trait-edit-btn" onclick="editUnit('${u.id}')">Edit</button>`}
       <button class="trait-edit-btn" onclick="quickAddToTF('${u.id}')">Add to Task Force</button>
       <!-- Export Unit hidden pending custom trait/faction handling -->`;
-    return unitCardHTML(u, actions);
+    return unitCardHTML(u, actions, libViewType);
   }).join("");
 }
 
@@ -3293,7 +3310,7 @@ function renderTFDetail() {
           </div>
           <button class="trait-edit-btn" onclick="confirmBtn(this,()=>removeTFSlot('${tf.id}','${slot.id}'))">Remove</button>
         </div>`;
-        return unitCardHTML(u, slotActions);
+        return unitCardHTML(u, slotActions, slot.unitType||"unit");
       }).join("")}
     </div>`;
   });
@@ -4338,9 +4355,11 @@ function printArmyHTML(army) {
             ${slots.map(slot=>{
               const u=unitById(slot.unitId);
               if(!u) return "";
+              const vt=slot.unitType||"unit";
               const p=calcPoints(u);
-              const qtyNote = `<div style="font-size:11px;color:#8b949e;margin:-6px 0 6px;padding:0 12px">Qty: ${slot.quantity} &bull; Total: ${p.unitPts*slot.quantity}pts</div>`;
-              return unitCardHTML(u)+qtyNote;
+              const slotPts=(p[VIEW_PTS_KEY[vt]]??p.unitPts)*slot.quantity;
+              const qtyNote = `<div style="font-size:11px;color:#8b949e;margin:-6px 0 6px;padding:0 12px">Qty: ${slot.quantity} &bull; Total: ${slotPts}pts</div>`;
+              return unitCardHTML(u,null,vt)+qtyNote;
             }).join("")}</div>`;
         }).join("")}
       </div>`;
@@ -4383,8 +4402,10 @@ function printDeployHTML(dep) {
         ${bg.units.map(slot=>{
           const u=unitById(slot.unitId);
           if(!u) return "";
-          return unitCardHTML(u)+`<div style="font-size:11px;color:#8b949e;margin-top:-6px;margin-bottom:6px;padding:0 12px">
-            Qty: ${slot.quantity} &bull; ${slot.isCommand?"Command Stand":""} &bull; Total: ${calcPoints(u).unitPts*slot.quantity}pts
+          const vt=slot.unitType||"unit";
+          const slotPts=(calcPoints(u)[VIEW_PTS_KEY[vt]]??calcPoints(u).unitPts)*slot.quantity;
+          return unitCardHTML(u,null,vt)+`<div style="font-size:11px;color:#8b949e;margin-top:-6px;margin-bottom:6px;padding:0 12px">
+            Qty: ${slot.quantity} &bull; ${slot.isCommand?"Command Stand":""} &bull; Total: ${slotPts}pts
           </div>`;
         }).join("")}
       </div>`;
