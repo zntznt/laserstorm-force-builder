@@ -490,6 +490,7 @@ label .trait-edit-btn{margin-left:6px}
         <div class="card-title">TFs
           <button class="trait-edit-btn" onclick="openNewTFModal()">New TF</button>
         </div>
+        <div id="tf-scale-info"></div>
         <div id="tf-list"></div>
       </div>
     </div>
@@ -3070,6 +3071,24 @@ function _populateFactionSelect(selEl, currentVal) {
 
 function renderTFList() {
   const list = document.getElementById("tf-list");
+  const scaleEl = document.getElementById("tf-scale-info");
+  const slots = tfRankSlots();
+  if(scaleEl) {
+    if(slots.scale === "epic") {
+      scaleEl.innerHTML = `<div style="font-size:10px;color:#ce93d8;background:#7b1fa211;border:1px solid #7b1fa233;border-radius:6px;padding:5px 9px;margin-bottom:8px;display:flex;gap:8px;flex-wrap:wrap">
+        <span style="font-weight:bold;letter-spacing:.5px">EPIC BATTLE</span>
+        <span style="color:#8b949e">Sr. TFC ${slots.usedSenior}/${slots.seniorSlots}</span>
+        <span style="color:#8b949e">Lord ${slots.usedLord}/${slots.lordSlots}</span>
+      </div>`;
+    } else if(slots.scale === "large") {
+      scaleEl.innerHTML = `<div style="font-size:10px;color:#90caf9;background:#1a237e11;border:1px solid #1a237e33;border-radius:6px;padding:5px 9px;margin-bottom:8px;display:flex;gap:8px;flex-wrap:wrap">
+        <span style="font-weight:bold;letter-spacing:.5px">LARGE BATTLE</span>
+        <span style="color:#8b949e">Sr. TFC ${slots.usedSenior}/${slots.seniorSlots}</span>
+      </div>`;
+    } else {
+      scaleEl.innerHTML = "";
+    }
+  }
   if(!state.taskForces.length) {
     list.innerHTML = `<div class="empty"><div class="empty-icon"><i class="fa-solid fa-users"></i></div>No task forces yet</div>`;
     return;
@@ -3082,9 +3101,15 @@ function renderTFList() {
     const typeLabel = tf.tfType ? _tfTypeLabel(tf.tfType) : "";
     const asset = tf.tacAsset ? allAssets.find(a=>a.id===tf.tacAsset) : null;
     const facPill = tf.faction ? factionPill(tf.faction) : "";
-    const cmdAssetLine = (tf.commander || asset) ? `
+    const rankBadge = tf.commanderRank === "lord"
+      ? `<span style="background:#7b1fa222;color:#ce93d8;border:1px solid #7b1fa255;padding:0 5px;border-radius:8px;font-size:9px;font-weight:bold;letter-spacing:.5px">LORD</span>`
+      : tf.commanderRank === "senior"
+      ? `<span style="background:#1a237e22;color:#90caf9;border:1px solid #1a237e55;padding:0 5px;border-radius:8px;font-size:9px;font-weight:bold;letter-spacing:.5px">SR. TFC</span>`
+      : "";
+    const cmdAssetLine = (tf.commander || asset || rankBadge) ? `
       <div style="font-size:11px;color:#6a7a6a;margin-top:2px;display:flex;align-items:center;gap:6px;flex-wrap:wrap">
         ${tf.commander?`<span><i class="fa-solid fa-star" style="color:#ffd54f;font-size:9px;margin-right:3px"></i>${esc(tf.commander)}</span>`:""}
+        ${rankBadge}
         ${tf.commander && asset?`<span style="color:#333">&bull;</span>`:""}
         ${asset?`<span><i class="fa-solid fa-chess-rook" style="color:#ffd54f;font-size:9px;margin-right:3px"></i>${esc(asset.name)}</span>`:""}
       </div>` : "";
@@ -3234,6 +3259,34 @@ function tfPoints(tf) {
   return (tf.units||[]).reduce((sum, slot) => sum + slotPointValue(slot), 0);
 }
 
+function tfRankSlots() {
+  const n = state.taskForces.length;
+  return {
+    n,
+    scale: n >= 10 ? "epic" : n >= 5 ? "large" : "normal",
+    seniorSlots: Math.floor(n / 4),
+    lordSlots:   Math.floor(n / 8),
+    usedSenior:  state.taskForces.filter(t => t.commanderRank === "senior").length,
+    usedLord:    state.taskForces.filter(t => t.commanderRank === "lord").length,
+  };
+}
+
+function setTFCommanderRank(tfId, rank) {
+  const tf = state.taskForces.find(t => t.id === tfId);
+  if(!tf) return;
+  const s = tfRankSlots();
+  if(rank === "senior" && tf.commanderRank !== "senior") {
+    if(s.n < 5 || s.usedSenior >= s.seniorSlots) return;
+  }
+  if(rank === "lord" && tf.commanderRank !== "lord") {
+    if(s.n < 10 || s.usedLord >= s.lordSlots) return;
+  }
+  tf.commanderRank = rank;
+  saveState();
+  renderTFList();
+  renderTFDetail();
+}
+
 function selectTF(id) {
   currentTFId = id;
   renderTFList();
@@ -3258,6 +3311,28 @@ function renderTFDetail() {
   </div>`;
   const allAssets = allTacticalAssets();
   const asset = tf.tacAsset ? allAssets.find(a=>a.id===tf.tacAsset) : null;
+  const _slots = tfRankSlots();
+  const _rank = tf.commanderRank || "regular";
+  const _canSenior = _slots.scale !== "normal" && (_rank === "senior" || _slots.usedSenior < _slots.seniorSlots);
+  const _canLord   = _slots.scale === "epic"   && (_rank === "lord"   || _slots.usedLord   < _slots.lordSlots);
+  function _rankPill(key, label, color, bg, border, canUpgrade) {
+    const active = _rank === key;
+    const disabled = !active && !canUpgrade;
+    const style = active
+      ? `background:${bg};color:${color};border:1px solid ${border};cursor:default;`
+      : disabled
+      ? `background:transparent;color:#333;border:1px solid #333;cursor:not-allowed;opacity:.45;`
+      : `background:transparent;color:${color};border:1px solid ${border}55;cursor:pointer;opacity:.7;`;
+    const onclick = (!active && canUpgrade) ? `onclick="setTFCommanderRank('${tf.id}','${key}')"` : "";
+    const downgrade = active && key !== "regular"
+      ? `<span ${onclick && ""} onclick="setTFCommanderRank('${tf.id}','regular')" style="font-size:9px;color:#555;cursor:pointer;margin-left:4px;text-decoration:underline">remove</span>` : "";
+    return `<span ${onclick} style="display:inline-flex;align-items:center;gap:3px;padding:2px 9px;border-radius:10px;font-size:10px;font-weight:bold;letter-spacing:.5px;${style}">${label}${active?` <i class="fa-solid fa-check" style="font-size:8px"></i>`:""}${downgrade}</span>`;
+  }
+  const rankNote = _slots.scale === "normal"
+    ? `<span style="font-size:10px;color:#555;font-style:italic">Need 5+ TFs for Large Battle upgrades</span>`
+    : _slots.scale === "large"
+    ? `<span style="font-size:10px;color:#8b949e">Large Battle — Sr. TFC ${_slots.usedSenior}/${_slots.seniorSlots} used</span>`
+    : `<span style="font-size:10px;color:#8b949e">Epic Battle — Sr. TFC ${_slots.usedSenior}/${_slots.seniorSlots} &bull; Lord ${_slots.usedLord}/${_slots.lordSlots}</span>`;
   const commanderSection = `<div style="background:#0d1118;border:1px solid #1e2a1e;border-radius:8px;padding:12px;margin-bottom:14px">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
       <div style="display:flex;align-items:center;gap:6px">
@@ -3268,6 +3343,12 @@ function renderTFDetail() {
     </div>
     <div style="font-size:17px;font-family:var(--font-display);letter-spacing:.5px;color:${tf.commander?"#fff":"#333"};margin-bottom:10px">
       ${tf.commander ? esc(tf.commander) : "No commander assigned"}
+    </div>
+    <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:10px">
+      ${_rankPill("regular","Regular TFC","#8b949e","#8b949e22","#8b949e",true)}
+      ${_rankPill("senior","Senior TFC","#90caf9","#1a237e33","#1a237e",_canSenior)}
+      ${_rankPill("lord","Lord","#ce93d8","#7b1fa233","#7b1fa2",_canLord)}
+      ${rankNote}
     </div>
     <div style="border-top:1px solid #1a2a1a;padding-top:10px">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
