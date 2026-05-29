@@ -84,8 +84,9 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);outline:none}
 .field-error.visible{display:block}
 input.input-error,textarea.input-error{border-color:#ef535066!important;outline:none}
 .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid-sidebar{display:grid;grid-template-columns:220px 1fr;gap:16px;align-items:start}
 .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
-@media(max-width:768px){.grid-2,.grid-3{grid-template-columns:1fr}}
+@media(max-width:768px){.grid-2,.grid-3,.grid-sidebar{grid-template-columns:1fr}}
 .stat-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;align-items:flex-start}
 .stat{background:var(--surface-page);border:1px solid var(--border-subtle);border-radius:4px;padding:3px 8px;font-size:11px;text-align:center;min-width:44px}
 .stat-name{color:var(--text-muted);font-size:9px;text-transform:uppercase;display:block}
@@ -478,8 +479,8 @@ label .trait-edit-btn{margin-left:6px}
 
 <!-- ===== TASK FORCES PAGE ===== -->
 <div id="page-taskforces" class="page">
-  <div class="grid-2">
-    <div>
+  <div class="grid-sidebar">
+    <div style="position:sticky;top:16px">
       <div class="card">
         <div class="card-title">Task Forces
           <button class="trait-edit-btn" onclick="openNewTFModal()">New Task Force</button>
