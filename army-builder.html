@@ -1493,7 +1493,7 @@ function traitTipHTML(traitArr, allTraits) {
     const cleanDesc = cleanTraitDesc(entry?.[2] || "");
     const isUT = traitIsUnitTrait(entry);
     const utRule = "Unit Trait — effect applies to the whole Unit. No effect if any stand of the same class lacks this trait. If multiple levels exist, only the least powerful applies.";
-    const fullDesc = isUT ? (cleanDesc ? utRule + " | " + cleanDesc : utRule) : cleanDesc;
+    const fullDesc = isUT ? (cleanDesc ? cleanDesc + " | " + utRule : utRule) : cleanDesc;
     const fac = traitFactionKey(entry);
     const facObj = fac ? (state.customFactions||[]).find(f=>f.id===fac) : null;
     const color = facObj ? facObj.color : (fac ? (FACTION_COLORS[fac]||"#888") : "#555");
