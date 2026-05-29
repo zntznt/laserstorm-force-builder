@@ -583,27 +583,52 @@ label .trait-edit-btn{margin-left:6px}
   </div>
 </div>
 
-<!-- ===== NEW TF MODAL ===== -->
+<!-- ===== NEW / EDIT TF MODAL ===== -->
 <div id="modal-tf" class="modal-bg">
   <div class="modal">
-    <div class="modal-header">New Task Force <button class="modal-close" onclick="closeModal('modal-tf')"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="modal-header"><span id="modal-tf-title">New Task Force</span> <button class="modal-close" onclick="closeModal('modal-tf')"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="form-group" style="margin-bottom:12px">
       <label>Task Force Name</label>
       <input type="text" id="tf-new-name" placeholder="e.g. Alpha Strike Force" style="width:100%">
     </div>
+    <div class="form-group" style="margin-bottom:12px">
+      <label>TF Type</label>
+      <div style="display:flex;gap:6px;align-items:center">
+        <select id="tf-type" style="flex:1"></select>
+        <button class="trait-edit-btn" onclick="openCustomTFTypeModal()">Custom Types</button>
+      </div>
+    </div>
+    <div class="form-group" style="margin-bottom:12px">
+      <label>Commander <span style="font-size:10px;color:#8b949e;font-weight:normal">(flavor name)</span></label>
+      <input type="text" id="tf-commander" placeholder="e.g. Colonel Marcus" style="width:100%">
+    </div>
     <div class="form-group" style="margin-bottom:16px">
-      <label>Template (optional)</label>
-      <select id="tf-template" style="width:100%">
-        <option value="">Custom (no template)</option>
-        <option value="infantry">Infantry Task Force</option>
-        <option value="armor">Armored Task Force</option>
-        <option value="air">Air Assault Task Force</option>
-        <option value="mixed">Mixed Arms Task Force</option>
-      </select>
+      <label>Faction</label>
+      <select id="tf-faction" style="width:100%"></select>
     </div>
     <div style="display:flex;justify-content:flex-end;gap:8px">
       <button class="btn btn-secondary" onclick="closeModal('modal-tf')">Cancel</button>
-      <button class="btn btn-primary" onclick="createTaskForce()">Create</button>
+      <button class="btn btn-primary" id="tf-modal-submit" onclick="createTaskForce()">Create</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== CUSTOM TF TYPES MODAL ===== -->
+<div id="modal-custom-tf-type" class="modal-bg">
+  <div class="modal" style="max-width:500px">
+    <div class="modal-header">Custom TF Types <button class="modal-close" onclick="closeModal('modal-custom-tf-type')"><i class="fa-solid fa-xmark"></i></button></div>
+    <div id="custom-tf-type-list" style="margin-bottom:8px"></div>
+    <hr style="border-color:#30363d;margin:10px 0">
+    <div style="font-weight:bold;color:#fff;font-size:12px;margin-bottom:8px">New Custom Type</div>
+    <div class="form-group" style="margin-bottom:8px">
+      <label>Name</label>
+      <input type="text" id="custom-tf-type-name" placeholder="e.g. Rapid Strike" style="width:100%">
+    </div>
+    <div style="font-size:11px;color:#8b949e;margin-bottom:6px">Set min/max stands per unit class (0–5):</div>
+    <div id="custom-tf-type-slots"></div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px">
+      <button class="btn btn-secondary" onclick="closeModal('modal-custom-tf-type')">Close</button>
+      <button class="btn btn-primary" onclick="saveCustomTFType()">Add Type</button>
     </div>
   </div>
 </div>
@@ -611,28 +636,12 @@ label .trait-edit-btn{margin-left:6px}
 <!-- ===== ADD UNIT TO TF MODAL ===== -->
 <div id="modal-add-unit" class="modal-bg">
   <div class="modal">
-    <div class="modal-header">Add Unit to Task Force <button class="modal-close" onclick="closeModal('modal-add-unit')"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="modal-header"><span id="addunit-modal-title">Add Unit to Task Force</span> <button class="modal-close" onclick="closeModal('modal-add-unit')"><i class="fa-solid fa-xmark"></i></button></div>
     <input class="search-bar" id="addunit-search" placeholder="Search..." oninput="renderAddUnitList()">
-    <div class="form-row" style="margin-bottom:8px">
-      <div class="form-group">
-        <label>Role</label>
-        <select id="addunit-role" style="width:auto">
-          <option value="core">Core</option>
-          <option value="specialist">Specialist</option>
-          <option value="command">Command</option>
-          <option value="support">Support</option>
-          <option value="commander">Commander</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label>Quantity</label>
-        <input type="number" id="addunit-qty" value="1" min="1" max="20">
-      </div>
-    </div>
     <div class="scrolllist" id="addunit-list"></div>
     <div style="margin-top:12px;display:flex;justify-content:flex-end;gap:8px">
       <button class="btn btn-secondary" onclick="closeModal('modal-add-unit')">Cancel</button>
-      <button class="btn btn-primary" onclick="confirmAddUnit()">Add Selected</button>
+      <button class="btn btn-primary" onclick="confirmAddUnit()">Add</button>
     </div>
   </div>
 </div>
@@ -1000,6 +1009,7 @@ let state = {
   customUnits: [],
   customFactions: [],
   customTraits: [],
+  customTFTypes: [],
   taskForces: [],
   armies: [],
   deployments: []
@@ -1016,7 +1026,9 @@ let traitPickerTarget = null;
 let traitPickerStepperCounts = {};
 let traitPickerWeaponIdx = null;
 let currentTFId = null;
+let editingTFId = null;
 let addUnitTargetTFId = null;
+let addUnitTargetRole = "core";
 let addUnitSelectedId = null;
 let currentArmyId = null;
 let addTFTargetArmyId = null;
@@ -1057,6 +1069,7 @@ function loadState() {
       state.customTraits.forEach(t => { if(!t.reqs) t.reqs = t.faction ? [{type:"faction",vals:[t.faction]}] : []; });
       // Migrate old terror/transport traits on custom units
       (state.customUnits||[]).forEach(migrateCustomUnit);
+      state.customTFTypes = saved.customTFTypes || [];
       state.taskForces = saved.taskForces || [];
       state.armies = saved.armies || [];
       state.deployments = saved.deployments || [];
@@ -2093,6 +2106,14 @@ function saveToLibrary() {
 // FACTIONS
 // ============================================================
 const FACTION_COLORS = {standard:"#007eff",precursor:"#9c27b0",soulless:"#607d8b",swarm:"#4caf50",warrior:"#f44336"};
+const TF_TYPES = {
+  infantry:     {label:"Infantry",      slots:{inf:[3,5],scout:[0,1],cav:[0,1],fg:[0,1],afv:[0,1],sh:[0,0],beh:[0,0],ac:[0,0]}},
+  armour:       {label:"Armour",        slots:{inf:[0,1],scout:[0,2],cav:[0,0],fg:[0,0],afv:[3,5],sh:[0,1],beh:[0,0],ac:[0,0]}},
+  combined_arms:{label:"Combined Arms", slots:{inf:[1,3],scout:[0,1],cav:[0,0],fg:[0,0],afv:[1,3],sh:[0,1],beh:[0,0],ac:[0,0]}},
+  line_breaker: {label:"Line Breaker",  slots:{inf:[0,1],scout:[0,0],cav:[0,0],fg:[0,0],afv:[0,1],sh:[1,3],beh:[0,2],ac:[0,0]}},
+  recon:        {label:"Recon",         slots:{inf:[0,1],scout:[2,3],cav:[0,3],fg:[0,0],afv:[0,0],sh:[0,0],beh:[0,0],ac:[0,2]}},
+  heavy:        {label:"Heavy",         slots:{inf:[0,1],scout:[0,0],cav:[0,0],fg:[1,3],afv:[0,0],sh:[0,3],beh:[0,3],ac:[0,0]}},
+};
 const FACTION_ICONS = [
   // Combat & military
   "shield","shield-halved","skull","skull-crossbones","crosshairs","gun","bomb","khanda",
@@ -2693,24 +2714,49 @@ function editUnit(id) {
 function quickAddToTF(unitId) {
   if(!state.taskForces.length) { alert("Create a Task Force first on the Task Forces tab."); return; }
   addUnitTargetTFId = state.taskForces[0].id;
+  addUnitTargetRole = "core";
   addUnitSelectedId = unitId;
   if(state.taskForces.length===1) {
     const tf = state.taskForces[0];
     const u = unitById(unitId);
-    tf.units.push({id:"slot_"+uid(), unitId, role: u?.role||"core", quantity:1});
+    tf.units.push({id:"slot_"+uid(), unitId, role:"core", quantity:1});
     saveState();
     renderTFList();
     if(currentTFId===tf.id) renderTFDetail();
     alert(`Added "${u?.name||"unit"}" to "${tf.name}"`);
   } else {
-    // show picker
-    openAddUnitModal(null);
+    openAddUnitModal(null, "core");
   }
 }
 
 // ============================================================
 // TASK FORCES
 // ============================================================
+function _tfTypeLabel(typeKey) {
+  if(TF_TYPES[typeKey]) return TF_TYPES[typeKey].label;
+  const ct = (state.customTFTypes||[]).find(t=>t.id===typeKey);
+  return ct ? ct.name : (typeKey||"");
+}
+
+function _populateTFTypeSelect(selEl, currentVal) {
+  const builtIn = Object.entries(TF_TYPES).map(([k,v])=>`<option value="${k}"${currentVal===k?" selected":""}>${esc(v.label)}</option>`).join("");
+  const custom = (state.customTFTypes||[]).map(t=>`<option value="${t.id}"${currentVal===t.id?" selected":""}>${esc(t.name)}</option>`).join("");
+  selEl.innerHTML = builtIn + (custom ? `<optgroup label="Custom">${custom}</optgroup>` : "");
+}
+
+function _populateFactionSelect(selEl, currentVal) {
+  const builtins = [
+    {val:"",     label:"-- Any --",      color:null},
+    {val:"standard",  label:"Standard",  color:FACTION_COLORS.standard},
+    {val:"precursor", label:"Precursor", color:FACTION_COLORS.precursor},
+    {val:"soulless",  label:"Soulless",  color:FACTION_COLORS.soulless},
+    {val:"swarm",     label:"Swarm",     color:FACTION_COLORS.swarm},
+    {val:"warrior",   label:"Warrior",   color:FACTION_COLORS.warrior},
+  ];
+  const custom = (state.customFactions||[]).map(f=>({val:f.id, label:f.name, color:f.color}));
+  selEl.innerHTML = [...builtins,...custom].map(f=>`<option value="${f.val}"${currentVal===f.val?" selected":""}>${esc(f.label)}</option>`).join("");
+}
+
 function renderTFList() {
   const list = document.getElementById("tf-list");
   if(!state.taskForces.length) {
@@ -2719,12 +2765,13 @@ function renderTFList() {
   }
   list.innerHTML = state.taskForces.map(tf => {
     const pts = tfPoints(tf);
-    const unitCount = tf.units.reduce((s,u)=>s+u.quantity,0);
+    const unitCount = (tf.units||[]).reduce((s,u)=>s+u.quantity,0);
     const isCurrent = tf.id === currentTFId;
+    const typeLabel = tf.tfType ? _tfTypeLabel(tf.tfType) : "";
     return `<div class="list-row" style="${isCurrent?"border-color:#007eff":""}" onclick="selectTF('${tf.id}')">
       <div>
         <div style="font-weight:bold;color:${isCurrent?"#007eff":"#fff"}">${esc(tf.name)}</div>
-        <div style="font-size:11px;color:#8b949e">${unitCount} unit slot${unitCount!==1?"s":""} &bull; ${pts} pts</div>
+        <div style="font-size:11px;color:#8b949e">${typeLabel?`<span style="color:#7986cb">${esc(typeLabel)}</span> &bull; `:""}${unitCount} unit slot${unitCount!==1?"s":""} &bull; ${pts} pts</div>
       </div>
       <div style="display:flex;gap:4px">
         <button class="trait-edit-btn" style="border-color:#8b000066;color:#ef5350;background:#2a0a0a" onclick="event.stopPropagation();deleteTF('${tf.id}')">Del</button>
@@ -2738,7 +2785,7 @@ function tfPoints(tf) {
     const u = unitById(slot.unitId);
     if(!u) return sum;
     const pts = calcPoints(u);
-    const roleMultiplier = slot.role==="commander"?1.75 : slot.role==="command"?1.5 : slot.role==="specialist"?1.3 : 1;
+    const roleMultiplier = slot.role==="command"?1.5 : slot.role==="specialist"?1.3 : 1;
     return sum + Math.round(pts.perStand * pts.unitSize * roleMultiplier) * slot.quantity;
   }, 0);
 }
@@ -2754,33 +2801,44 @@ function renderTFDetail() {
   const tf = state.taskForces.find(t=>t.id===currentTFId);
   if(!tf) { panel.innerHTML = `<div class="card"><div class="empty">Select a Task Force</div></div>`; return; }
   const pts = tfPoints(tf);
-  const roles = ["commander","core","specialist","command","support"];
-  const roleLabels = {commander:"Commander",core:"Core Units",specialist:"Specialist Stands",command:"Command Units",support:"Support Units"};
+  const sections = [
+    {role:"core",       label:"Core Units",       shClass:"sh-core"},
+    {role:"specialist", label:"Specialist Stands", shClass:"sh-specialist"},
+    {role:"command",    label:"Command Stands",    shClass:"sh-command"},
+    {role:"support",    label:"Support Units",     shClass:"sh-support"},
+  ];
+  const typeLabel = tf.tfType ? _tfTypeLabel(tf.tfType) : "";
+  const facColor = tf.faction ? (FACTION_COLORS[tf.faction] || ((state.customFactions||[]).find(f=>f.id===tf.faction)||{}).color || "#888") : null;
+  const facLabel = tf.faction ? (tf.faction.charAt(0).toUpperCase()+tf.faction.slice(1)) : "";
+  const metaHTML = `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;font-size:12px">
+    ${typeLabel?`<span style="background:#1a1a3a;color:#7986cb;border:1px solid #3949ab55;border-radius:8px;padding:2px 8px">${esc(typeLabel)}</span>`:""}
+    ${facColor?`<span style="background:${facColor}22;color:${facColor};border:1px solid ${facColor}55;border-radius:8px;padding:2px 8px">${esc(facLabel)}</span>`:""}
+    ${tf.commander?`<span style="color:#8b949e">Cmd: <span style="color:#e0e0e0">${esc(tf.commander)}</span></span>`:""}
+  </div>`;
   let slotsHTML = "";
-  roles.forEach(role => {
-    const slots = tf.units.filter(u=>u.role===role);
-    slotsHTML += `<div style="margin-bottom:12px">
-      <div class="section-header sh-${role}">${roleLabels[role]}</div>
-      ${slots.length===0?`<div style="font-size:12px;color:#444;padding:4px 0">None</div>`:""}
+  sections.forEach(({role, label, shClass}) => {
+    const slots = (tf.units||[]).filter(u=>u.role===role||(role==="core"&&u.role==="commander"));
+    slotsHTML += `<div style="margin-bottom:14px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <div class="section-header ${shClass}" style="margin-bottom:0">${label}</div>
+        <button class="trait-edit-btn" onclick="openAddUnitModal('${tf.id}','${role}')">Add</button>
+      </div>
+      ${slots.length===0?`<div style="font-size:12px;color:#444;padding:4px 0;font-style:italic">None</div>`:""}
       ${slots.map(slot => {
         const u = unitById(slot.unitId);
         if(!u) return `<div class="tf-unit-row"><span style="color:#666">[Deleted Unit]</span><button class="trait-edit-btn" style="border-color:#8b000066;color:#ef5350;background:#2a0a0a" onclick="removeTFSlot('${tf.id}','${slot.id}')">Remove</button></div>`;
-        const pts = calcPoints(u);
-        const unitPts = Math.round(pts.unitPts * (role==="commander"?1.75:role==="command"?1.5:1) * slot.quantity);
+        const sp = calcPoints(u);
         return `<div class="tf-unit-row">
-          <div style="flex:1">
+          <div style="flex:1;min-width:0">
             <span style="font-weight:bold;color:#fff">${esc(u.name)}</span>
-            <span style="font-size:11px;color:#8b949e;margin-left:6px">${classBadge(u.class)}</span>
-            <div style="font-size:11px;color:#8b949e">${pts.unitPts}pts/unit &bull; ${unitPts}pts total</div>
+            <span style="margin-left:6px">${classBadge(u.class)}</span>
+            <div style="font-size:11px;color:#8b949e">${sp.unitPts} pts/unit &bull; ${slot.quantity}×</div>
           </div>
           <div class="qty-ctrl">
             <button class="qty-btn" onclick="changeTFSlotQty('${tf.id}','${slot.id}',-1)">-</button>
             <span class="qty-val">${slot.quantity}</span>
             <button class="qty-btn" onclick="changeTFSlotQty('${tf.id}','${slot.id}',1)">+</button>
           </div>
-          <select style="width:auto;font-size:11px;background:#0d1117;border:1px solid #30363d;color:#e0e0e0;border-radius:4px;padding:3px" onchange="changeTFSlotRole('${tf.id}','${slot.id}',this.value)">
-            ${roles.map(r=>`<option value="${r}" ${r===slot.role?"selected":""}>${roleLabels[r]}</option>`).join("")}
-          </select>
           <button class="trait-edit-btn" style="border-color:#8b000066;color:#ef5350;background:#2a0a0a" onclick="removeTFSlot('${tf.id}','${slot.id}')">X</button>
         </div>`;
       }).join("")}
@@ -2788,35 +2846,62 @@ function renderTFDetail() {
   });
   panel.innerHTML = `<div class="card">
     <div class="card-title">
-      ${esc(tf.name)}
+      <span>${esc(tf.name)}</span>
       <div style="display:flex;gap:6px">
-        <button class="trait-edit-btn" onclick="openAddUnitModal('${tf.id}')">Add Unit</button>
-        <button class="trait-edit-btn" style="border-color:#8b000066;color:#ef5350;background:#2a0a0a" onclick="deleteTF('${tf.id}')">Delete TF</button>
+        <button class="trait-edit-btn" onclick="openEditTFModal('${tf.id}')">Edit</button>
+        <button class="trait-edit-btn" style="border-color:#8b000066;color:#ef5350;background:#2a0a0a" onclick="deleteTF('${tf.id}')">Delete</button>
       </div>
     </div>
-    <div style="margin-bottom:12px">
-      <div class="points-big" style="font-size:22px">${pts}</div>
-      <div class="points-label">Task Force Points</div>
+    ${metaHTML}
+    <div style="margin-bottom:14px">
+      <span class="points-big" style="font-size:22px">${pts}</span>
+      <span class="points-label" style="margin-left:6px">pts</span>
     </div>
     ${slotsHTML}
-    <hr>
-    <div style="font-size:11px;color:#8b949e">
-      <strong style="color:#fff">Tip:</strong> Task Forces are organizational units.
-      Assign them to Battle Groups during deployment.
-    </div>
   </div>`;
 }
 
-function openNewTFModal() { document.getElementById("tf-new-name").value=""; openModal("modal-tf"); }
+function openNewTFModal() {
+  editingTFId = null;
+  document.getElementById("tf-new-name").value = "";
+  document.getElementById("tf-commander").value = "";
+  document.getElementById("modal-tf-title").textContent = "New Task Force";
+  document.getElementById("tf-modal-submit").textContent = "Create";
+  _populateTFTypeSelect(document.getElementById("tf-type"), "infantry");
+  _populateFactionSelect(document.getElementById("tf-faction"), "");
+  openModal("modal-tf");
+}
+
+function openEditTFModal(id) {
+  const tf = state.taskForces.find(t=>t.id===id);
+  if(!tf) return;
+  editingTFId = id;
+  document.getElementById("tf-new-name").value = tf.name || "";
+  document.getElementById("tf-commander").value = tf.commander || "";
+  document.getElementById("modal-tf-title").textContent = "Edit Task Force";
+  document.getElementById("tf-modal-submit").textContent = "Save";
+  _populateTFTypeSelect(document.getElementById("tf-type"), tf.tfType || "infantry");
+  _populateFactionSelect(document.getElementById("tf-faction"), tf.faction || "");
+  openModal("modal-tf");
+}
 
 function createTaskForce() {
   const name = document.getElementById("tf-new-name").value.trim();
   if(!name) { alert("Enter a name."); return; }
-  const tf = { id:"tf_"+uid(), name, units:[] };
-  state.taskForces.push(tf);
+  const tfType = document.getElementById("tf-type").value;
+  const commander = document.getElementById("tf-commander").value.trim();
+  const faction = document.getElementById("tf-faction").value;
+  if(editingTFId) {
+    const tf = state.taskForces.find(t=>t.id===editingTFId);
+    if(tf) { tf.name = name; tf.tfType = tfType; tf.commander = commander; tf.faction = faction; }
+    editingTFId = null;
+  } else {
+    const tf = { id:"tf_"+uid(), name, tfType, commander, faction, units:[] };
+    state.taskForces.push(tf);
+    currentTFId = tf.id;
+  }
   saveState();
   closeModal("modal-tf");
-  currentTFId = tf.id;
   renderTFList();
   renderTFDetail();
 }
@@ -2831,9 +2916,13 @@ function deleteTF(id) {
   renderTFDetail();
 }
 
-function openAddUnitModal(tfId) {
+function openAddUnitModal(tfId, role) {
   if(tfId) addUnitTargetTFId = tfId;
+  addUnitTargetRole = role || "core";
   addUnitSelectedId = null;
+  const labels = {core:"Core Unit",specialist:"Specialist Stand",command:"Command Stand",support:"Support Unit"};
+  document.getElementById("addunit-modal-title").textContent = "Add " + (labels[addUnitTargetRole]||"Unit");
+  document.getElementById("addunit-search").value = "";
   renderAddUnitList();
   openModal("modal-add-unit");
 }
@@ -2860,10 +2949,7 @@ function confirmAddUnit() {
   if(!addUnitSelectedId) { alert("Select a unit."); return; }
   const tf = state.taskForces.find(t=>t.id===addUnitTargetTFId);
   if(!tf) { alert("No task force selected."); return; }
-  const u = unitById(addUnitSelectedId);
-  const role = document.getElementById("addunit-role").value;
-  const qty = parseInt(document.getElementById("addunit-qty").value)||1;
-  tf.units.push({id:"slot_"+uid(), unitId:addUnitSelectedId, role, quantity:qty});
+  tf.units.push({id:"slot_"+uid(), unitId:addUnitSelectedId, role:addUnitTargetRole, quantity:1});
   saveState();
   closeModal("modal-add-unit");
   if(currentTFId===addUnitTargetTFId) renderTFDetail();
@@ -2899,6 +2985,62 @@ function changeTFSlotRole(tfId, slotId, role) {
   saveState();
   renderTFList();
   renderTFDetail();
+}
+
+// ---- Custom TF Types ----
+function openCustomTFTypeModal() {
+  document.getElementById("custom-tf-type-name").value = "";
+  _renderCustomTFTypeSlots();
+  _renderCustomTFTypeList();
+  openModal("modal-custom-tf-type");
+}
+
+const _TF_CLASS_KEYS = ["inf","scout","cav","fg","afv","sh","beh","ac"];
+const _TF_CLASS_NAMES = {inf:"Infantry",scout:"Scout",cav:"Cavalry",fg:"Field Gun",afv:"AFV",sh:"Super Heavy",beh:"Behemoth",ac:"Aircraft"};
+
+function _renderCustomTFTypeSlots() {
+  const el = document.getElementById("custom-tf-type-slots");
+  const nums = [0,1,2,3,4,5];
+  el.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:12px">
+    <thead><tr style="color:#8b949e"><th style="text-align:left;padding:3px 6px">Class</th><th style="padding:3px 6px">Min</th><th style="padding:3px 6px">Max</th></tr></thead>
+    <tbody>${_TF_CLASS_KEYS.map(k=>`<tr>
+      <td style="padding:3px 6px;color:#e0e0e0">${_TF_CLASS_NAMES[k]}</td>
+      <td style="padding:3px 6px"><select id="ctft-min-${k}" style="background:#0d1117;border:1px solid #30363d;color:#e0e0e0;border-radius:4px;padding:2px 4px">${nums.map(n=>`<option>${n}</option>`).join("")}</select></td>
+      <td style="padding:3px 6px"><select id="ctft-max-${k}" style="background:#0d1117;border:1px solid #30363d;color:#e0e0e0;border-radius:4px;padding:2px 4px">${nums.map(n=>`<option>${n}</option>`).join("")}</select></td>
+    </tr>`).join("")}</tbody>
+  </table>`;
+}
+
+function _renderCustomTFTypeList() {
+  const el = document.getElementById("custom-tf-type-list");
+  if(!state.customTFTypes.length) { el.innerHTML = `<div style="font-size:12px;color:#555;font-style:italic">No custom types yet</div>`; return; }
+  el.innerHTML = state.customTFTypes.map(t=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid #21262d">
+    <div style="font-size:12px;color:#e0e0e0;font-weight:bold">${esc(t.name)}</div>
+    <button class="trait-edit-btn" style="border-color:#8b000066;color:#ef5350;background:#2a0a0a" onclick="deleteCustomTFType('${t.id}')">Del</button>
+  </div>`).join("");
+}
+
+function saveCustomTFType() {
+  const name = document.getElementById("custom-tf-type-name").value.trim();
+  if(!name) { alert("Enter a name."); return; }
+  const slots = {};
+  _TF_CLASS_KEYS.forEach(k => {
+    const mn = parseInt(document.getElementById(`ctft-min-${k}`).value)||0;
+    const mx = parseInt(document.getElementById(`ctft-max-${k}`).value)||0;
+    slots[k] = [mn, Math.max(mn,mx)];
+  });
+  state.customTFTypes.push({id:"ctft_"+uid(), name, slots});
+  saveState();
+  document.getElementById("custom-tf-type-name").value = "";
+  _renderCustomTFTypeList();
+  _populateTFTypeSelect(document.getElementById("tf-type"), document.getElementById("tf-type").value);
+}
+
+function deleteCustomTFType(id) {
+  state.customTFTypes = state.customTFTypes.filter(t=>t.id!==id);
+  saveState();
+  _renderCustomTFTypeList();
+  _populateTFTypeSelect(document.getElementById("tf-type"), document.getElementById("tf-type").value);
 }
 
 // ============================================================
