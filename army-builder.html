@@ -771,6 +771,15 @@ label .trait-edit-btn{margin-left:6px}
           <input type="number" id="ct-stackcap" min="2" step="1" placeholder="Unlimited" style="width:120px">
         </div>
       </div>
+      <div id="ct-unit-trait-row" style="background:var(--surface-raised);border:1px solid var(--border-default);border-radius:6px;padding:10px 14px;margin-bottom:16px">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer" onclick="document.getElementById('ct-unit-trait').click()">
+          <div>
+            <div style="font-size:12px;font-weight:bold;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em">Unit Trait</div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:3px">Effect applies to the whole Unit. No effect if any stand of the same class lacks this trait. If multiple levels exist, only the least powerful applies.</div>
+          </div>
+          <input type="checkbox" id="ct-unit-trait" style="width:16px;height:16px;flex-shrink:0;margin:0;cursor:pointer" onclick="event.stopPropagation()">
+        </div>
+      </div>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
         <button id="ct-save-btn" class="btn btn-primary" onclick="saveCustomTrait()">Create</button>
         <button id="ct-cancel-edit-btn" class="btn btn-secondary btn-xs" onclick="cancelEditCustomTrait()" style="display:none">Cancel</button>
@@ -785,40 +794,40 @@ label .trait-edit-btn{margin-left:6px}
 // ============================================================
 const STAND_TRAITS = {
   ad:       ["Active Defenses",3,    "Always counts as in Cover when fired upon. Does not apply to Assault combat."],
-  aggLoop:  ["Aggression Loop",1,   "[Soulless][Unit] When subject to Push Back, may choose to advance 3\" toward the attacker instead."],
+  aggLoop:  ["Aggression Loop",1,   "[Soulless][Unit] When subject to Push Back, may choose to advance 3\" toward the attacker instead.",{unitTrait:true}],
   av:       ["Assault Vehicle",1,   "This AFV may initiate Assaults. No Damage Save dice penalty in Assaults."],
-  bCry:     ["Battle Cry",2,        "[Warrior][Unit][Troop] If this Unit destroys an enemy stand in close combat, treat that enemy's Morale as 6+ for the subsequent Morale test."],
+  bCry:     ["Battle Cry",2,        "[Warrior][Unit][Troop] If this Unit destroys an enemy stand in close combat, treat that enemy's Morale as 6+ for the subsequent Morale test.",{unitTrait:true}],
   bTide:    ["BattleTide",1,        "[Precursor] +1 to shoot and +2 Impact while total Victory Points is an odd number, but -1 to shoot while Victory Points are even. No effect if total VP is 0."],
-  bNet:     ["Bot-Net",1,           "[Soulless][Unit] Stands that are out of coherency may still fire, but all fire is Inaccurate."],
+  bNet:     ["Bot-Net",1,           "[Soulless][Unit] Stands that are out of coherency may still fire, but all fire is Inaccurate.",{unitTrait:true}],
   charge:   ["Charge",0.5,          "+1 to Assault rolls if the Unit initiated the combat."],
   dFighter: ["Dogfighter",1,        "[Aircraft] Minimum movement is half of maximum Speed (instead of 3/4)."],
   emplace:  ["Emplacement",0,       "Gains the Emplacement mobility type. Cannot move or be moved under any circumstances. Does not test Morale."],
   feroc:    ["Ferocious",1,         "[Swarm] If this Unit initiated the Assault, the target Stands retreat 3\" after the combat, even if the target wins."],
   frenzy:   ["Frenzy",1,            "[Swarm] This Stand can Follow On 3\" after close combat, but it must be toward the nearest enemy, and into contact if possible."],
-  glory:    ["Glory",1,             "[Warrior][Unit][Infantry] When this Unit wins a close combat it initiated against a higher Assault target, the target makes a Damage Save with one fewer dice."],
+  glory:    ["Glory",1,             "[Warrior][Unit][Infantry] When this Unit wins a close combat it initiated against a higher Assault target, the target makes a Damage Save with one fewer dice.",{unitTrait:true}],
   guard:    ["Guard",1,             "When attacked in Assault, may fire one weapon system at the attacker. All shots must be directed at stands in contact. All shots are Inaccurate."],
-  horde:    ["Horde",0,             "[Unit] This Unit is subject to Horde Morale."],
+  horde:    ["Horde",0,             "[Unit] This Unit is subject to Horde Morale.",{unitTrait:true}],
   hover:    ["Hover",1,             "[Aircraft] Can change facings freely when moving. Has no minimum movement. Can be targeted by AT or GP with Snap fire."],
   inWalls:  ["In the Walls",2,      "[Swarm] If the roll to Regroup this Unit is a Natural 6, it may be placed in or in contact with any building terrain on the table."],
   infest:   ["Infest",1,            "+1 to Assault rolls and immune to Push Back while in a terrain feature. Has no effect outside of terrain features."],
-  infil:    ["Infiltrate",1,        "[Unit] This Unit may move up to 6\" after Armies have been deployed."],
+  infil:    ["Infiltrate",1,        "[Unit] This Unit may move up to 6\" after Armies have been deployed.",{unitTrait:true}],
   inspir:   ["Inspiration",3,       "When Units within 2\" fail a Morale Test, this Stand may issue a 'Follow Me' order as if it was a Command Stand. Does not confer any other Command abilities."],
   jTroop:   ["Jump Troops",0.5,     "Ignore terrain while moving if all movement is in a straight line."],
   mWeap:    ["Melee Weapons",0.5,   "Re-roll 1s in Assaults."],
   minSpeed: ["Minimum Speed",-1,    "[Grav] This Stand must always move at least half of its maximum Speed if it uses its activation to move."],
   moveOut:  ["Move Out",1,          "+3\" to movement if the Stand does not fire or enter Assault."],
-  oClock:   ["Overclocked",1,       "[Soulless][Unit][Infantry] May move and shoot as a Snap Action."],
+  oClock:   ["Overclocked",1,       "[Soulless][Unit][Infantry] May move and shoot as a Snap Action.",{unitTrait:true}],
   pFire:    ["Precise Fire",1,      "Aim reduced by 1 if the Stand does not move when activated."],
   relic:    ["Relic Bearer",1,      "[Precursor][Hero][Troop] May reroll any one die during activation. On a 6, roll again and add results (repeat until non-6). If any reroll is a 1, send this Stand to Reserves."],
-  spawn:    ["Spawn",2,             "[Swarm][Unit] Instead of shooting or Assaulting, roll 1D6. On 4+, add a destroyed Stand of the same Class to this Unit."],
-  stealth:  ["Stealth",2,           "[Unit] When fired upon, roll 1D6 (−1 in Concealment) and multiply by 10. If the result is less than the range to this target, all shots from that attack are ignored."],
+  spawn:    ["Spawn",2,             "[Swarm][Unit] Instead of shooting or Assaulting, roll 1D6. On 4+, add a destroyed Stand of the same Class to this Unit.",{unitTrait:true}],
+  stealth:  ["Stealth",2,           "[Unit] When fired upon, roll 1D6 (−1 in Concealment) and multiply by 10. If the result is less than the range to this target, all shots from that attack are ignored.",{unitTrait:true}],
   stub:     ["Stubborn",1,          "Ignores Push Back."],
   tDep:     ["Tactical Deployment",1,"+ 1 to regrouping rolls when in Reserve."],
   tHunt:    ["Tank Hunter",1,       "+1 to hit when firing at AFVs or Super Heavies. +1 to Assault against AFVs and Super Heavies."],
-  terror:   ["Terror",1,            "[Unit] This Unit inflicts 2 Terror dice per stack. Can be taken multiple times.",{stackable:true}],
+  terror:   ["Terror",1,            "[Unit] This Unit inflicts 2 Terror dice per stack. Can be taken multiple times.",{stackable:true,unitTrait:true}],
   tFate:    ["Third Fate",3,        "[Precursor][Hero][Infantry] If this Stand hits an enemy Hero, that Hero makes a Damage Save with one fewer dice. If no dice remain, roll twice and keep the lower value."],
   trans:    ["Transport",1.5,       "This unit can carry Infantry or Cavalry stands. Each stack adds 1 transport slot.",{stackable:true,max:6}],
-  vSworn:   ["Vowsworn",1,          "[Warrior][Unit] The Stand & Die morale option automatically succeeds without a die roll."],
+  vSworn:   ["Vowsworn",1,          "[Warrior][Unit] The Stand & Die morale option automatically succeeds without a die roll.",{unitTrait:true}],
   vtol:     ["VTOL",1,              "[Aircraft] Can land in open terrain. Can be targeted with AT and GP weapons while Landed."]
 };
 
@@ -1392,7 +1401,10 @@ function allStandTraits() {
   const custom = {};
   (state.customTraits||[]).filter(t=>t.type==="stand"||t.type==="both").forEach(t=>{
     const fac = _customTraitPrimaryFaction(t);
-    const opts = t.stackable ? {stackable:true, ...(t.stackCap ? {max:t.stackCap} : {})} : null;
+    const optsObj = {};
+    if(t.stackable) { optsObj.stackable = true; if(t.stackCap) optsObj.max = t.stackCap; }
+    if(t.unitTrait) optsObj.unitTrait = true;
+    const opts = Object.keys(optsObj).length ? optsObj : null;
     custom["custom_"+t.id] = opts ? (fac ? [t.name,t.cost,t.description,fac,opts] : [t.name,t.cost,t.description,opts]) : [t.name,t.cost,t.description,fac];
   });
   return Object.assign({}, STAND_TRAITS, custom);
@@ -1426,6 +1438,11 @@ function traitIsStackable(entry) {
   if (!entry) return false;
   const last = entry[entry.length - 1];
   return typeof last === 'object' && last !== null && last.stackable === true;
+}
+function traitIsUnitTrait(entry) {
+  if (!entry) return false;
+  const last = entry[entry.length - 1];
+  return typeof last === 'object' && last !== null && !!last.unitTrait;
 }
 function traitCount(t) { return typeof t[3] === 'number' ? t[3] : 1; }
 function traitStackMax(entry) {
@@ -1478,6 +1495,9 @@ function traitTipHTML(traitArr, allTraits) {
     const cnt = traitCount(t);
     const [key, entry] = Object.entries(allTraits).find(([,v])=>v[0]===name) || [null, null];
     const cleanDesc = cleanTraitDesc(entry?.[2] || "");
+    const isUT = traitIsUnitTrait(entry);
+    const utRule = "Unit Trait — effect applies to the whole Unit. No effect if any stand of the same class lacks this trait. If multiple levels exist, only the least powerful applies.";
+    const fullDesc = isUT ? (cleanDesc ? utRule + " | " + cleanDesc : utRule) : cleanDesc;
     const fac = traitFactionKey(entry);
     const facObj = fac ? (state.customFactions||[]).find(f=>f.id===fac) : null;
     const color = facObj ? facObj.color : (fac ? (FACTION_COLORS[fac]||"#888") : "#555");
@@ -1485,8 +1505,9 @@ function traitTipHTML(traitArr, allTraits) {
     const border = fac ? `${color}55` : "#30363d";
     const textColor = fac ? color : "#8b949e";
     const displayName = cnt > 1 ? `${name} ${cnt}` : name;
-    const tipAttr = cleanDesc ? ` class="trait-badge tip" data-tip="${cleanDesc.replace(/"/g,"&quot;")}"` : ` class="trait-badge"`;
-    return `<span${tipAttr} style="background:${bg};color:${textColor};border-color:${border}">${displayName}</span>`;
+    const tipAttr = fullDesc ? ` class="trait-badge tip" data-tip="${fullDesc.replace(/"/g,"&quot;")}"` : ` class="trait-badge"`;
+    const utMark = isUT ? `<sup style="font-size:7px;color:#7986cb;vertical-align:super;margin-left:1px;font-style:italic">U</sup>` : "";
+    return `<span${tipAttr} style="background:${bg};color:${textColor};border-color:${border}">${displayName}${utMark}</span>`;
   }).join("");
 }
 
@@ -1799,7 +1820,8 @@ function refreshTraitPickerList() {
       const nameEl = document.createElement("div");
       nameEl.className = "trait-row-name";
       const costStr = val[1]===0 ? "free" : (val[1]>0?"+":"")+val[1]+" pts";
-      nameEl.innerHTML = esc(val[0]) + `<span class="trait-cost">${costStr}</span>`;
+      const utBadge = traitIsUnitTrait(val) ? `<span style="font-size:9px;background:#3949ab22;color:#7986cb;border:1px solid #3949ab55;border-radius:8px;padding:0 4px;margin-left:4px;vertical-align:middle;font-weight:normal">Unit</span>` : "";
+      nameEl.innerHTML = esc(val[0]) + `<span class="trait-cost">${costStr}</span>` + utBadge;
       info.appendChild(nameEl);
 
       if(reqs.length) {
@@ -2380,6 +2402,10 @@ function openCustomTraitModal() {
   document.getElementById("ct-cost").value = "1";
   document.getElementById("ct-type").value = "stand";
   document.getElementById("ct-description").value = "";
+  document.getElementById("ct-stackable").checked = false;
+  document.getElementById("ct-stackcap").value = "";
+  document.getElementById("ct-stackcap-row").style.display = "none";
+  document.getElementById("ct-unit-trait").checked = false;
   document.getElementById("ct-save-btn").textContent = "Create";
   document.getElementById("ct-form-header").textContent = "New Trait";
   document.getElementById("ct-cancel-edit-btn").style.display = "none";
@@ -2402,6 +2428,8 @@ function updateReqTraitDropdown() {
         .map(([key, val]) => `<option value="${esc(key)}">${esc(val[0])}</option>`)
         .join("");
   if([...sel.options].some(o => o.value === current)) sel.value = current;
+  const utRow = document.getElementById("ct-unit-trait-row");
+  if(utRow) utRow.style.display = type === "weapon" ? "none" : "";
 }
 
 function toggleStackCap() {
@@ -2422,6 +2450,9 @@ function editCustomTrait(id) {
   document.getElementById("ct-stackable").checked = !!t.stackable;
   document.getElementById("ct-stackcap").value = t.stackCap||"";
   document.getElementById("ct-stackcap-row").style.display = t.stackable ? "" : "none";
+  document.getElementById("ct-unit-trait").checked = !!t.unitTrait;
+  const utRowE = document.getElementById("ct-unit-trait-row");
+  if(utRowE) utRowE.style.display = t.type === "weapon" ? "none" : "";
   renderCustomTraitReqPills();
   const reqs = t.reqs && t.reqs.length ? t.reqs : (t.faction ? [{type:"faction",vals:[t.faction]}] : []);
   setCustomTraitReqPills(reqs);
@@ -2440,6 +2471,7 @@ function cancelEditCustomTrait() {
   document.getElementById("ct-stackable").checked = false;
   document.getElementById("ct-stackcap").value = "";
   document.getElementById("ct-stackcap-row").style.display = "none";
+  document.getElementById("ct-unit-trait").checked = false;
   updateReqTraitDropdown();
   document.getElementById("ct-save-btn").textContent = "Create";
   document.getElementById("ct-form-header").textContent = "New Trait";
@@ -2464,7 +2496,7 @@ function renderCustomTraitList() {
         <div style="flex:1;min-width:0">
           <div style="font-weight:bold;color:var(--text-primary);font-size:13px">${esc(t.name)} <span style="font-size:10px;color:var(--text-faint);font-weight:normal">(${t.cost >= 0 ? '+' : ''}${t.cost} pts)</span></div>
           <div style="margin-top:2px">${reqBadges}</div>
-          <div style="font-size:10px;color:var(--text-faint);margin-top:1px">${typeLabel[t.type]||t.type}${t.stackable ? ` — stackable${t.stackCap ? `, max ${t.stackCap}` : ""}` : ""}${t.description ? ` — ${esc(t.description)}` : ""}</div>
+          <div style="font-size:10px;color:var(--text-faint);margin-top:1px">${typeLabel[t.type]||t.type}${t.unitTrait ? " — <span style=\"color:#7986cb\">Unit Trait</span>" : ""}${t.stackable ? ` — stackable${t.stackCap ? `, max ${t.stackCap}` : ""}` : ""}${t.description ? ` — ${esc(t.description)}` : ""}</div>
         </div>
         <button class="trait-edit-btn" onclick="editCustomTrait('${t.id}')">Edit</button>
         <button class="trait-edit-btn" onclick="confirmBtn(this,()=>deleteCustomTrait('${t.id}'))">Delete</button>
@@ -2485,11 +2517,12 @@ function saveCustomTrait() {
   const stackable = document.getElementById("ct-stackable").checked;
   const stackCapRaw = parseInt(document.getElementById("ct-stackcap").value);
   const stackCap = (stackable && stackCapRaw >= 2) ? stackCapRaw : null;
+  const unitTrait = type !== "weapon" && document.getElementById("ct-unit-trait").checked;
   if(editingCustomTraitId) {
     const idx = state.customTraits.findIndex(t=>t.id===editingCustomTraitId);
     if(idx !== -1) {
       const oldName = state.customTraits[idx].name;
-      state.customTraits[idx] = {id:editingCustomTraitId, name, cost, description, faction, type, reqs, stackable, stackCap};
+      state.customTraits[idx] = {id:editingCustomTraitId, name, cost, description, faction, type, reqs, stackable, stackCap, unitTrait};
       if(oldName !== name) {
         state.customUnits.forEach(u => {
           (u.standTraits||[]).forEach(t => { if(t[0]===oldName) t[0]=name; });
@@ -2502,7 +2535,7 @@ function saveCustomTrait() {
     document.getElementById("ct-form-header").textContent = "New Trait";
     document.getElementById("ct-cancel-edit-btn").style.display = "none";
   } else {
-    state.customTraits.push({id:uid(), name, cost, description, faction, type, reqs, stackable, stackCap});
+    state.customTraits.push({id:uid(), name, cost, description, faction, type, reqs, stackable, stackCap, unitTrait});
   }
   saveState();
   renderCustomTraitList();
@@ -2513,6 +2546,7 @@ function saveCustomTrait() {
   document.getElementById("ct-stackable").checked = false;
   document.getElementById("ct-stackcap").value = "";
   document.getElementById("ct-stackcap-row").style.display = "none";
+  document.getElementById("ct-unit-trait").checked = false;
   updateReqTraitDropdown();
   document.querySelectorAll("#ct-reqs-container .req-pill").forEach(p=>p.classList.remove("req-pill-on"));
   if(document.getElementById("modal-traits").classList.contains("open")) {
