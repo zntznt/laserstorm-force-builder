@@ -850,33 +850,29 @@ const WEAPON_TRAITS = {
 //   type "faction"  → must belong to this faction
 //   type "class"    → must be this class key, or "troop" (inf/cav/fg)
 //   type "mobility" → must use this mobility key
-//   type "role"     → "unit"=multi-stand, "hero", "independent", "troop"=non-vehicle
+//   type "role"     → "hero", "independent", "troop"=non-vehicle (unit role removed — Unit Traits are unrestricted)
 //   type "traitr"   → weapon must also carry this weapon-trait key
 const TRAIT_REQS = {
   // Stand traits
-  aggLoop:  [{type:"faction",vals:["soulless"]}, {type:"role",vals:["unit"]}],
+  aggLoop:  [{type:"faction",vals:["soulless"]}],
   av:       [{type:"class",vals:["afv"]}],
-  bCry:     [{type:"faction",vals:["warrior"]},  {type:"role",vals:["unit"]},  {type:"role",vals:["troop"]}],
-  bNet:     [{type:"faction",vals:["soulless"]}, {type:"role",vals:["unit"]}],
+  bCry:     [{type:"faction",vals:["warrior"]},  {type:"role",vals:["troop"]}],
+  bNet:     [{type:"faction",vals:["soulless"]}],
   bTide:    [{type:"faction",vals:["precursor"]}],
   dFighter: [{type:"class",vals:["ac"]}],
   emplace:  [{type:"role",vals:["independent"]}, {type:"class",vals:["afv","sh"]}],
   feroc:    [{type:"faction",vals:["swarm"]}],
   frenzy:   [{type:"faction",vals:["swarm"]}],
-  glory:    [{type:"faction",vals:["warrior"]},  {type:"role",vals:["unit"]},  {type:"class",vals:["inf"]}],
-  horde:    [{type:"role",vals:["unit"]}],
+  glory:    [{type:"faction",vals:["warrior"]},  {type:"class",vals:["inf"]}],
   hover:    [{type:"class",vals:["ac"]}],
   inWalls:  [{type:"faction",vals:["swarm"]}],
-  infil:    [{type:"role",vals:["unit"]}],
   minSpeed: [{type:"mobility",vals:["grav"]}],
-  oClock:   [{type:"faction",vals:["soulless"]}, {type:"role",vals:["unit"]},  {type:"class",vals:["inf"]}],
+  oClock:   [{type:"faction",vals:["soulless"]}, {type:"class",vals:["inf"]}],
   relic:    [{type:"faction",vals:["precursor"]},{type:"role",vals:["hero"]},  {type:"role",vals:["troop"]}],
-  spawn:    [{type:"faction",vals:["swarm"]},    {type:"role",vals:["unit"]}],
-  stealth:  [{type:"role",vals:["unit"]}],
+  spawn:    [{type:"faction",vals:["swarm"]}],
   tFate:    [{type:"faction",vals:["precursor"]},{type:"role",vals:["hero"]},  {type:"class",vals:["inf"]}],
-  terror:   [{type:"role",vals:["unit"]}],
   trans:    [{type:"class",vals:["afv","ac"]}],
-  vSworn:   [{type:"faction",vals:["warrior"]},  {type:"role",vals:["unit"]}],
+  vSworn:   [{type:"faction",vals:["warrior"]}],
   vtol:     [{type:"class",vals:["ac"]}],
   // Weapon traits
   aiGuide:  [{type:"faction",vals:["soulless"]}, {type:"traitr",vals:["indir"]}],
