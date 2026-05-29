@@ -2611,9 +2611,9 @@ function renderLibrary() {
   list.innerHTML = units.map(u => {
     const pts = calcPoints(u);
     const actions = `
-      ${u.builtIn?"":`<button class="btn btn-danger btn-sm" onclick="deleteCustomUnit('${u.id}')">Delete</button>`}
-      ${u.builtIn?"":`<button class="btn btn-secondary btn-sm" onclick="editUnit('${u.id}')">Edit</button>`}
-      <button class="btn btn-primary btn-sm" onclick="quickAddToTF('${u.id}')">+ Add to Task Force</button>`;
+      ${u.builtIn?"":`<button class="trait-edit-btn" style="border-color:#8b000066;color:#ef5350;background:#2a0a0a" onclick="deleteCustomUnit('${u.id}')">Delete</button>`}
+      ${u.builtIn?"":`<button class="trait-edit-btn" onclick="editUnit('${u.id}')">Edit</button>`}
+      <button class="trait-edit-btn" onclick="quickAddToTF('${u.id}')">+ Add to Task Force</button>`;
     return unitCardHTML(u, actions);
   }).join("");
 }
