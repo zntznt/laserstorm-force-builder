@@ -698,7 +698,7 @@ label .trait-edit-btn{margin-left:6px}
       <div class="form-group" style="margin-bottom:10px">
         <label>Icon</label>
         <div id="faction-icon-picker" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:6px"></div>
-        <input type="hidden" id="faction-icon" value="lorc/megabot">
+        <input type="hidden" id="faction-icon" value="shield">
       </div>
       <div class="form-group" style="margin-bottom:14px">
         <label>Color</label>
@@ -1057,25 +1057,6 @@ function loadState() {
       (state.customFactions||[]).forEach(f => {
         if(f.icon && _ICON_MIG[f.icon]) f.icon = _ICON_MIG[f.icon];
       });
-      // Migration: FA name → game-icons "author/id"
-      const _FA_TO_GI = {
-        "robot":"lorc/vintage-robot","skull":"lorc/android-mask","rocket":"lorc/rocket",
-        "shield":"delapouite/mecha-head","shield-halved":"delapouite/mecha-mask",
-        "gem":"lorc/double-ringed-orb","star":"lorc/sputnik","bolt":"lorc/laser-blast",
-        "virus":"lorc/alien-stare","satellite":"lorc/satellite","satellite-dish":"lorc/radar-dish",
-        "microchip":"lorc/techno-heart","dragon":"lorc/robot-golem","gun":"lorc/ray-gun",
-        "bomb":"lorc/missile-pod","crosshairs":"lorc/targeting","fire":"lorc/laser-blast",
-        "eye":"lorc/android-mask","crown":"delapouite/mecha-head","jet-fighter":"delapouite/jet-fighter",
-        "radiation":"lorc/sinusoidal-beam","atom":"delapouite/solar-system","anchor":"delapouite/airtight-hatch",
-        "flag":"lorc/forward-field","heart":"lorc/techno-heart","infinity":"lorc/sinusoidal-beam",
-        "ankh":"lorc/eclipse","moon":"lorc/ringed-planet","sun":"lorc/eclipse",
-        "snowflake":"lorc/bubble-field","leaf":"lorc/metal-scales","mountain":"lorc/sentry-gun",
-        "tornado":"lorc/strafe","biohazard":"lorc/alien-stare","hand-fist":"lorc/megabot",
-        "chess-rook":"lorc/sentry-gun",
-      };
-      (state.customFactions||[]).forEach(f => {
-        if(f.icon && !f.icon.includes("/")) f.icon = _FA_TO_GI[f.icon] || "lorc/megabot";
-      });
     } catch(e) {}
   }
 }
@@ -1377,7 +1358,7 @@ function factionBadge(unit) {
   }
   if(f) {
     const cf = (state.customFactions||[]).find(x=>x.id===f);
-    if(cf) return badge(`${gameIconImg(cf.icon||FACTION_ICONS_DEFAULT,13,"margin-right:3px")}${cf.name}`, cf.color);
+    if(cf) return badge(`<i class="fa-solid fa-${cf.icon}"></i> ${cf.name}`, cf.color);
   }
   if(!unit.builtIn) return badge("No Faction","#888");
   return "";
@@ -2075,55 +2056,26 @@ function saveToLibrary() {
 // FACTIONS
 // ============================================================
 const FACTION_COLORS = {standard:"#007eff",precursor:"#9c27b0",soulless:"#607d8b",swarm:"#4caf50",warrior:"#f44336"};
-// game-icons.net sci-fi icons — served via jsDelivr, stored as "author/id"
 const FACTION_ICONS = [
-  // lorc
-  {id:"afterburn",       author:"lorc"},{id:"alien-stare",     author:"lorc"},
-  {id:"android-mask",    author:"lorc"},{id:"autogun",         author:"lorc"},
-  {id:"bolter-gun",      author:"lorc"},{id:"bubble-field",    author:"lorc"},
-  {id:"canister",        author:"lorc"},{id:"double-ringed-orb",author:"lorc"},
-  {id:"eclipse",         author:"lorc"},{id:"energise",        author:"lorc"},
-  {id:"forward-field",   author:"lorc"},{id:"jetpack",         author:"lorc"},
-  {id:"laser-blast",     author:"lorc"},{id:"mechanical-arm",  author:"lorc"},
-  {id:"megabot",         author:"lorc"},{id:"metal-scales",    author:"lorc"},
-  {id:"missile-mech",    author:"lorc"},{id:"missile-pod",     author:"lorc"},
-  {id:"missile-swarm",   author:"lorc"},{id:"radar-dish",      author:"lorc"},
-  {id:"ray-gun",         author:"lorc"},{id:"ringed-planet",   author:"lorc"},
-  {id:"robot-golem",     author:"lorc"},{id:"rocket-flight",   author:"lorc"},
-  {id:"rocket",          author:"lorc"},{id:"satellite",       author:"lorc"},
-  {id:"sentry-gun",      author:"lorc"},{id:"sinusoidal-beam", author:"lorc"},
-  {id:"space-suit",      author:"lorc"},{id:"sputnik",         author:"lorc"},
-  {id:"strafe",          author:"lorc"},{id:"targeting",       author:"lorc"},
-  {id:"techno-heart",    author:"lorc"},{id:"tesla-turret",    author:"lorc"},
-  {id:"vintage-robot",   author:"lorc"},
-  // delapouite
-  {id:"airtight-hatch",  author:"delapouite"},{id:"alien-bug",       author:"delapouite"},
-  {id:"alien-egg",       author:"delapouite"},{id:"astronaut-helmet", author:"delapouite"},
-  {id:"cryo-chamber",    author:"delapouite"},{id:"cyborg-face",      author:"delapouite"},
-  {id:"defense-satellite",author:"delapouite"},{id:"energy-tank",     author:"delapouite"},
-  {id:"habitat-dome",    author:"delapouite"},{id:"hazmat-suit",      author:"delapouite"},
-  {id:"jet-fighter",     author:"delapouite"},{id:"klingon",          author:"delapouite"},
-  {id:"laser-turret",    author:"delapouite"},{id:"light-sabers",     author:"delapouite"},
-  {id:"lunar-module",    author:"delapouite"},{id:"mecha-head",       author:"delapouite"},
-  {id:"mecha-mask",      author:"delapouite"},{id:"metroid",          author:"delapouite"},
-  {id:"mono-wheel-robot",author:"delapouite"},{id:"observatory",      author:"delapouite"},
-  {id:"power-generator", author:"delapouite"},{id:"robot-leg",        author:"delapouite"},
-  {id:"rocket-thruster", author:"delapouite"},{id:"round-silo",       author:"delapouite"},
-  {id:"solar-system",    author:"delapouite"},{id:"spaceship",        author:"delapouite"},
-  {id:"star-gate",       author:"delapouite"},{id:"starfighter",      author:"delapouite"},
-  {id:"ufo",             author:"delapouite"},{id:"walking-scout",    author:"delapouite"},
-  {id:"zat-gun",         author:"delapouite"},
+  // Combat & military
+  "shield","shield-halved","skull","skull-crossbones","crosshairs","gun","bomb","khanda",
+  "chess-rook","chess-king","chess-knight","medal","flag","rocket","jet-fighter","helicopter",
+  "anchor","hand-fist","person-rifle","bullseye",
+  // Sci-fi & tech
+  "robot","atom","radiation","biohazard","microchip","satellite","satellite-dish",
+  "bolt","wifi","eye","fingerprint","dna","flask","magnet","tower-broadcast","syringe",
+  // Fantasy & mystical
+  "dragon","crown","gem","ankh","infinity","yin-yang","moon","sun","star",
+  "star-of-david","cross","place-of-worship","hat-wizard","wand-magic-sparkles","staff-snake",
+  // Nature & elements
+  "fire","snowflake","leaf","mountain","tornado","wind","cloud-bolt","tree",
+  "paw","feather","spider","crow","dove","horse","fish",
+  // Biological
+  "virus","worm","bugs","mosquito","locust","pills","brain",
+  // People & symbols
+  "users","user-secret","ghost","masks-theater","handshake","hand-peace","hand-rock",
+  "hands-praying","heart","eye-slash","circle-radiation",
 ];
-const FACTION_ICONS_DEFAULT = "lorc/megabot";
-function gameIconUrl(iconStr) {
-  const [author, id] = (iconStr||FACTION_ICONS_DEFAULT).split("/");
-  return `https://cdn.jsdelivr.net/gh/game-icons/icons@master/${author}/${id}.svg`;
-}
-function gameIconImg(iconStr, size, extraStyle) {
-  size = size||16;
-  const style = `filter:invert(1);vertical-align:middle;display:inline-block;${extraStyle||""}`;
-  return `<img src="${gameIconUrl(iconStr)}" width="${size}" height="${size}" style="${style}" onerror="this.style.display='none'">`;
-}
 
 function rebuildFactionSelect(selectValue) {
   const sel = document.getElementById("b-faction");
@@ -2204,7 +2156,7 @@ function openFactionModal(fromBuilder) {
   window._factionModalFromBuilder = !!fromBuilder;
   editingCustomFactionId = null;
   document.getElementById("faction-name").value = "";
-  document.getElementById("faction-icon").value = FACTION_ICONS_DEFAULT;
+  document.getElementById("faction-icon").value = "shield";
   document.getElementById("faction-color").value = "#ff6600";
   document.getElementById("faction-save-btn").textContent = "Create";
   document.getElementById("faction-form-header").textContent = "New Faction";
@@ -2218,7 +2170,7 @@ function editCustomFaction(id) {
   if(!f) return;
   editingCustomFactionId = id;
   document.getElementById("faction-name").value = f.name;
-  document.getElementById("faction-icon").value = f.icon||FACTION_ICONS_DEFAULT;
+  document.getElementById("faction-icon").value = f.icon||"shield";
   document.getElementById("faction-color").value = f.color||"#ff6600";
   document.getElementById("faction-save-btn").textContent = "Save Changes";
   document.getElementById("faction-form-header").textContent = "Edit Faction";
@@ -2230,7 +2182,7 @@ function editCustomFaction(id) {
 function cancelEditCustomFaction() {
   editingCustomFactionId = null;
   document.getElementById("faction-name").value = "";
-  document.getElementById("faction-icon").value = FACTION_ICONS_DEFAULT;
+  document.getElementById("faction-icon").value = "shield";
   document.getElementById("faction-color").value = "#ff6600";
   document.getElementById("faction-save-btn").textContent = "Create";
   document.getElementById("faction-form-header").textContent = "New Faction";
@@ -2245,7 +2197,7 @@ function renderFactionModalContent() {
     ? `<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:4px">`
       + facs.map(f=>`
         <div class="custom-trait-item">
-          <span style="display:inline-flex;align-items:center">${gameIconImg(f.icon||FACTION_ICONS_DEFAULT,22)}</span>
+          <span style="font-size:18px;color:${f.color}"><i class="fa-solid fa-${f.icon}"></i></span>
           <span style="flex:1;font-weight:bold;color:${f.color}">${esc(f.name)}</span>
           <button class="trait-edit-btn" onclick="editCustomFaction('${f.id}')">Edit</button>
           <button class="trait-edit-btn" onclick="confirmBtn(this,()=>deleteCustomFaction('${f.id}'))">Delete</button>
@@ -2255,11 +2207,10 @@ function renderFactionModalContent() {
 
   const selIcon = document.getElementById("faction-icon").value;
   document.getElementById("faction-icon-picker").innerHTML = FACTION_ICONS.map(ic=>{
-    const iconStr = `${ic.author}/${ic.id}`;
-    const sel = iconStr===selIcon;
-    return `<button type="button" onclick="selectFactionIcon(this,'${iconStr}')"
-      title="${ic.id.replace(/-/g,' ')}"
-      style="width:38px;height:38px;padding:5px;border-radius:6px;cursor:pointer;border:2px solid ${sel?"var(--accent)":"var(--border-default)"};background:var(--surface-page);transition:border-color .12s">${gameIconImg(iconStr,22)}</button>`;
+    const sel = ic===selIcon;
+    return `<button type="button" onclick="selectFactionIcon(this,'${ic}')"
+      title="${ic.replace(/-/g,' ')}"
+      style="width:34px;height:34px;font-size:16px;border-radius:6px;cursor:pointer;border:2px solid ${sel?"var(--accent)":"var(--border-default)"};background:var(--surface-page);color:var(--text-primary);transition:border-color .12s"><i class="fa-solid fa-${ic}"></i></button>`;
   }).join("");
 }
 
@@ -2272,7 +2223,7 @@ function selectFactionIcon(btn, icon) {
 function saveCustomFaction() {
   const name = document.getElementById("faction-name").value.trim();
   if(!name) { alert("Enter a faction name."); return; }
-  const icon = document.getElementById("faction-icon").value || FACTION_ICONS_DEFAULT;
+  const icon = document.getElementById("faction-icon").value || "shield";
   const color = document.getElementById("faction-color").value || "#ff6600";
   let selectId;
   if(editingCustomFactionId) {
@@ -2288,7 +2239,7 @@ function saveCustomFaction() {
     selectId = window._factionModalFromBuilder ? id : undefined;
   }
   document.getElementById("faction-name").value = "";
-  document.getElementById("faction-icon").value = FACTION_ICONS_DEFAULT;
+  document.getElementById("faction-icon").value = "shield";
   document.getElementById("faction-color").value = "#ff6600";
   saveState();
   rebuildFactionSelect(selectId);
@@ -2332,7 +2283,7 @@ function _ctReqSections() {
         {val:"soulless", label:'<i class="fa-solid fa-robot"></i> Soulless', color:FACTION_COLORS.soulless},
         {val:"swarm",    label:'<i class="fa-solid fa-virus"></i> Swarm',    color:FACTION_COLORS.swarm},
         {val:"warrior",  label:'<i class="fa-solid fa-hand-fist"></i> Warrior',  color:FACTION_COLORS.warrior},
-        ...(state.customFactions||[]).map(f=>({val:f.id,label:`${gameIconImg(f.icon||FACTION_ICONS_DEFAULT,13,"margin-right:2px")}${esc(f.name)}`,color:f.color}))
+        ...(state.customFactions||[]).map(f=>({val:f.id,label:`<i class="fa-solid fa-${f.icon}"></i> ${esc(f.name)}`,color:f.color}))
       ]
     },
     {
@@ -2588,7 +2539,7 @@ function renderLibFactionFilters() {
     {v:"swarm",     l:'<i class="fa-solid fa-virus"></i> Swarm',     c:"#4caf50"},
     {v:"warrior",   l:'<i class="fa-solid fa-hand-fist"></i> Warrior',   c:"#f44336"},
   ];
-  const customs = (state.customFactions||[]).map(f=>({v:f.id, l:`${gameIconImg(f.icon||FACTION_ICONS_DEFAULT,13,"margin-right:2px")}${esc(f.name)}`, c:f.color}));
+  const customs = (state.customFactions||[]).map(f=>({v:f.id, l:`<i class="fa-solid fa-${f.icon}"></i> ${esc(f.name)}`, c:f.color}));
   const extras = [
     {v:"none",   l:"&mdash; No Faction", c:"#888"},
     {v:"custom", l:'<i class="fa-solid fa-pen"></i> Custom',     c:"#ffd700"},
