@@ -638,6 +638,10 @@ label .trait-edit-btn{margin-left:6px}
       <select id="tf-faction" style="width:100%"></select>
     </div>
     <div class="form-group" style="margin-bottom:16px">
+      <label>Points Limit <span style="font-size:10px;color:#8b949e;font-weight:normal">(optional — warn when exceeded)</span></label>
+      <input type="number" id="tf-points-limit" min="0" step="5" placeholder="e.g. 500" style="width:140px">
+    </div>
+    <div class="form-group" style="margin-bottom:16px">
       <label>Notes <span style="font-size:10px;color:#8b949e;font-weight:normal">(optional — lore, composition notes, etc.)</span></label>
       <textarea id="tf-notes" placeholder="e.g. Veteran unit tasked with holding the northern flank..." style="width:100%;min-height:72px;resize:vertical;background:var(--surface-raised);border:1px solid var(--border-subtle);border-radius:6px;color:#e0e0e0;padding:8px;font-family:var(--font-body);font-size:13px;line-height:1.5"></textarea>
     </div>
@@ -3057,11 +3061,14 @@ function renderTFList() {
         ${tf.commander && asset?`<span style="color:#333">&bull;</span>`:""}
         ${asset?`<span><i class="fa-solid fa-chess-rook" style="color:#ffd54f;font-size:9px;margin-right:3px"></i>${esc(asset.name)}</span>`:""}
       </div>` : "";
-    return `<div class="list-row" style="${isCurrent?"border-color:#007eff":""}" onclick="selectTF('${tf.id}')">
+    const overLimit = tf.pointsLimit && pts > tf.pointsLimit;
+    const ptsColor = overLimit ? "#ef5350" : "#8b949e";
+    const ptsText = tf.pointsLimit ? `${pts} / ${tf.pointsLimit} pts${overLimit?" ⚠":""}` : `${pts} pts`;
+    return `<div class="list-row" style="${isCurrent?"border-color:#007eff":overLimit?"border-color:#ef535055":""}" onclick="selectTF('${tf.id}')">
       <div>
         <div style="font-weight:bold;color:${isCurrent?"#007eff":"#fff"};overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(tf.name)}</div>
         <div style="font-size:11px;color:#7986cb;margin-top:1px;display:flex;align-items:center;gap:5px;flex-wrap:wrap">${typeLabel?esc(typeLabel):"No type"}${facPill}</div>
-        <div style="font-size:11px;color:#8b949e;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${unitCount} unit${unitCount!==1?"s":""} &bull; ${pts} pts</div>
+        <div style="font-size:11px;color:${ptsColor};overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${unitCount} unit${unitCount!==1?"s":""} &bull; ${ptsText}</div>
         ${cmdAssetLine}
       </div>
     </div>`;
@@ -3190,6 +3197,10 @@ function maxQtyForSlot(tf, slot) {
     return lim.suppMax - otherQty;
   }
   return Infinity;
+}
+
+function tfOverLimit(tf) {
+  return tf.pointsLimit && tfPoints(tf) > tf.pointsLimit;
 }
 
 function tfPoints(tf) {
@@ -3324,9 +3335,10 @@ function renderTFDetail() {
       <button class="trait-edit-btn" onclick="confirmBtn(this,()=>deleteTF('${tf.id}'))">Delete</button>
     </div>
     ${metaHTML}
-    <div style="margin-bottom:14px">
-      <span class="points-big" style="font-size:22px">${pts}</span>
-      <span class="points-label" style="margin-left:6px">pts</span>
+    <div style="margin-bottom:14px;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap">
+      <span class="points-big" style="font-size:22px;color:${tf.pointsLimit&&pts>tf.pointsLimit?"#ef5350":"var(--gold)"}">${pts}</span>
+      <span class="points-label">${tf.pointsLimit ? `/ ${tf.pointsLimit} pts` : "pts"}</span>
+      ${tf.pointsLimit&&pts>tf.pointsLimit ? `<span style="font-size:12px;color:#ef5350;font-weight:bold"><i class="fa-solid fa-triangle-exclamation"></i> Over limit by ${pts-tf.pointsLimit} pts — ineligible for armies &amp; deployments</span>` : ""}
     </div>
     ${commanderSection}
     ${tf.notes ? `<div style="background:#0d0f14;border:1px solid #1e2530;border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:13px;color:#8b949e;line-height:1.6;font-style:italic">${esc(tf.notes).replace(/\n/g,"<br>")}</div>` : ""}
@@ -3339,6 +3351,7 @@ function openNewTFModal() {
   document.getElementById("tf-new-name").value = "";
   document.getElementById("tf-commander").value = "";
   document.getElementById("tf-notes").value = "";
+  document.getElementById("tf-points-limit").value = "";
   clearFieldErr("tf-new-name"); clearFieldErr("tf-commander");
   document.getElementById("modal-tf-title").textContent = "New Task Force";
   document.getElementById("tf-modal-submit").textContent = "Create";
@@ -3354,6 +3367,7 @@ function openEditTFModal(id) {
   document.getElementById("tf-new-name").value = tf.name || "";
   document.getElementById("tf-commander").value = tf.commander || "";
   document.getElementById("tf-notes").value = tf.notes || "";
+  document.getElementById("tf-points-limit").value = tf.pointsLimit || "";
   clearFieldErr("tf-new-name"); clearFieldErr("tf-commander");
   document.getElementById("modal-tf-title").textContent = "Edit Task Force";
   document.getElementById("tf-modal-submit").textContent = "Save";
@@ -3394,12 +3408,14 @@ function createTaskForce() {
   const tfType = document.getElementById("tf-type").value;
   const faction = document.getElementById("tf-faction").value;
   const notes = document.getElementById("tf-notes").value.trim();
+  const pointsLimitRaw = parseInt(document.getElementById("tf-points-limit").value, 10);
+  const pointsLimit = (!isNaN(pointsLimitRaw) && pointsLimitRaw > 0) ? pointsLimitRaw : null;
   if(editingTFId) {
     const tf = state.taskForces.find(t=>t.id===editingTFId);
-    if(tf) { tf.name = name; tf.tfType = tfType; tf.commander = commander; tf.faction = faction; tf.notes = notes; }
+    if(tf) { tf.name = name; tf.tfType = tfType; tf.commander = commander; tf.faction = faction; tf.notes = notes; tf.pointsLimit = pointsLimit; }
     editingTFId = null;
   } else {
-    const tf = { id:"tf_"+uid(), name, tfType, commander, faction, notes, units:[] };
+    const tf = { id:"tf_"+uid(), name, tfType, commander, faction, notes, pointsLimit, units:[] };
     state.taskForces.push(tf);
     currentTFId = tf.id;
   }
