@@ -108,7 +108,7 @@ input.input-error,textarea.input-error{border-color:#ef535066!important;outline:
 .badge-commander{background:#3a0a0a;color:#ef5350}
 .unit-card{background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:6px;padding:12px;margin-bottom:8px;transition:border-color .2s}
 .unit-card:hover{border-color:var(--accent)}
-.unit-card-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;gap:8px}
+.unit-card-header{display:grid;grid-template-columns:1fr auto;align-items:start;margin-bottom:8px;gap:8px}
 .unit-card-section-label{font-size:10px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.05em;white-space:nowrap;flex-shrink:0}
 .unit-card-traits{margin-top:6px;display:flex;align-items:baseline;gap:4px;flex-wrap:wrap}
 .unit-card-pts{display:flex;gap:4px;flex-wrap:wrap;margin-top:8px;padding-top:8px;border-top:1px solid var(--border-subtle)}
@@ -1703,9 +1703,9 @@ function unitCardHTML(unit, actions, viewType="unit") {
   return `
     <div class="unit-card">
       <div class="unit-card-header">
-        <div style="min-width:0;flex:1">
+        <div style="min-width:0">
           <div style="display:flex;align-items:baseline;gap:6px;min-width:0">
-            <span class="unit-name-wrap" style="min-width:0;flex:0 1 auto;overflow:hidden">
+            <span class="unit-name-wrap" style="min-width:0;flex:1">
               <span class="unit-name">${esc(unit.name)}</span>${unit.description ? `<span class="unit-desc">${esc(unit.description)}</span>` : ""}
             </span>
             ${standsHTML}
