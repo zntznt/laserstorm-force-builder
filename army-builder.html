@@ -270,7 +270,8 @@ label .trait-edit-btn{margin-left:6px}
         <div class="form-row">
           <div class="form-group" style="flex:2">
             <label>Unit Name</label>
-            <input type="text" id="b-name" placeholder="e.g. Line Infantry" style="width:100%" oninput="calculateBuilder()">
+            <input type="text" id="b-name" placeholder="e.g. Line Infantry" style="width:100%" oninput="calculateBuilder();clearFieldErr('b-name')">
+            <span class="field-error" id="b-name-err"></span>
           </div>
           <div class="form-group">
             <label>Class</label>
@@ -601,7 +602,7 @@ label .trait-edit-btn{margin-left:6px}
     <div class="modal-header"><span id="modal-tf-title">New Task Force</span> <button class="modal-close" onclick="closeModal('modal-tf')"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="form-group" style="margin-bottom:12px">
       <label>Task Force Name</label>
-      <input type="text" id="tf-new-name" placeholder="e.g. Alpha Strike Force" style="width:100%" oninput="tfClearErr('tf-new-name')">
+      <input type="text" id="tf-new-name" placeholder="e.g. Alpha Strike Force" style="width:100%" oninput="clearFieldErr('tf-new-name')">
       <span class="field-error" id="tf-new-name-err"></span>
     </div>
     <div class="form-group" style="margin-bottom:12px">
@@ -613,7 +614,7 @@ label .trait-edit-btn{margin-left:6px}
     </div>
     <div class="form-group" style="margin-bottom:12px">
       <label>Commander</label>
-      <input type="text" id="tf-commander" placeholder="e.g. Colonel Marcus" style="width:100%" oninput="tfClearErr('tf-commander')">
+      <input type="text" id="tf-commander" placeholder="e.g. Colonel Marcus" style="width:100%" oninput="clearFieldErr('tf-commander')">
       <span class="field-error" id="tf-commander-err"></span>
     </div>
     <div class="form-group" style="margin-bottom:16px">
@@ -823,7 +824,8 @@ end hidden -->
       <div id="faction-form-header" class="modal-sub-header">New Faction</div>
       <div class="form-group" style="margin-bottom:10px">
         <label>Name</label>
-        <input type="text" id="faction-name" placeholder="e.g. Iron Brotherhood" style="width:100%">
+        <input type="text" id="faction-name" placeholder="e.g. Iron Brotherhood" style="width:100%" oninput="clearFieldErr('faction-name')">
+        <span class="field-error" id="faction-name-err"></span>
       </div>
       <div class="form-group" style="margin-bottom:10px">
         <label>Icon</label>
@@ -851,7 +853,8 @@ end hidden -->
       <div class="form-row" style="gap:8px;margin-bottom:12px">
         <div class="form-group" style="flex:2">
           <label>Name</label>
-          <input type="text" id="ct-name" placeholder="e.g. Battle Hardened" style="width:100%">
+          <input type="text" id="ct-name" placeholder="e.g. Battle Hardened" style="width:100%" oninput="clearFieldErr('ct-name')">
+          <span class="field-error" id="ct-name-err"></span>
         </div>
         <div class="form-group" style="flex:0 0 80px">
           <label>Cost (pts)</label>
@@ -2177,17 +2180,15 @@ function saveAsNewUnit() {
   const nameEl = document.getElementById("b-name");
   let name = nameEl.value.trim();
   const nameTaken = n => state.customUnits.some(u => u.name === n);
-  if (!name || name === "Unnamed Unit" || nameTaken(name)) {
-    const suggestion = name && name !== "Unnamed Unit" ? name + " copy" : "";
-    const msg = nameTaken(name)
-      ? `"${name}" already exists. Enter a different name for the new unit:`
-      : "Enter a name for the new unit:";
-    const newName = prompt(msg, suggestion);
-    if (newName === null) return;
-    const trimmed = newName.trim();
-    if (!trimmed) { alert("Please enter a name."); return; }
-    if (nameTaken(trimmed)) { alert(`"${trimmed}" already exists. Please choose a different name.`); return; }
-    nameEl.value = trimmed;
+  if (!name || name === "Unnamed Unit") {
+    showFieldErr("b-name", "Give your unit a name before saving as new.");
+    return;
+  }
+  if (nameTaken(name)) {
+    showFieldErr("b-name", `"${name}" already exists — change the name to save as a new unit.`);
+    return;
+  }
+  {
   }
   editingUnitId = null;
   setEditMode(null);
@@ -2196,9 +2197,9 @@ function saveAsNewUnit() {
 
 function saveToLibrary() {
   const unit = gatherBuilderUnit();
-  if(!unit.name || unit.name==="Unnamed Unit") { alert("Give your unit a name first."); return; }
+  if(!unit.name || unit.name==="Unnamed Unit") { showFieldErr("b-name","Give your unit a name first."); return; }
   const duplicate = state.customUnits.find(u => u.name === unit.name && u.id !== editingUnitId);
-  if (duplicate) { alert(`A unit named "${unit.name}" already exists. Please choose a different name.`); return; }
+  if(duplicate) { showFieldErr("b-name",`"${unit.name}" already exists — choose a different name.`); return; }
   calculateBuilder();
   unit.builtIn = false;
   if(editingUnitId) {
@@ -2208,7 +2209,7 @@ function saveToLibrary() {
       state.customUnits[idx] = unit;
       saveState();
       renderAll();
-      alert(`"${unit.name}" updated.`);
+      flashBtn("b-save-btn","Saved!");
       return;
     }
   }
@@ -2216,7 +2217,7 @@ function saveToLibrary() {
   state.customUnits.push(unit);
   setEditMode(unit);
   saveState();
-  alert(`"${unit.name}" saved to library!`);
+  flashBtn("b-save-btn","Saved to Library!");
 }
 
 // ============================================================
@@ -2363,6 +2364,7 @@ function openFactionModal(fromBuilder) {
   document.getElementById("faction-save-btn").textContent = "Create";
   document.getElementById("faction-form-header").textContent = "New Faction";
   document.getElementById("faction-cancel-edit-btn").style.display = "none";
+  clearFieldErr("faction-name");
   renderFactionModalContent();
   openModal("modal-faction");
 }
@@ -2386,6 +2388,7 @@ function cancelEditCustomFaction() {
   document.getElementById("faction-name").value = "";
   document.getElementById("faction-icon").value = "shield";
   document.getElementById("faction-color").value = "#ff6600";
+  clearFieldErr("faction-name");
   document.getElementById("faction-save-btn").textContent = "Create";
   document.getElementById("faction-form-header").textContent = "New Faction";
   document.getElementById("faction-cancel-edit-btn").style.display = "none";
@@ -2424,7 +2427,7 @@ function selectFactionIcon(btn, icon) {
 
 function saveCustomFaction() {
   const name = document.getElementById("faction-name").value.trim();
-  if(!name) { alert("Enter a faction name."); return; }
+  if(!name) { showFieldErr("faction-name","Enter a faction name."); return; }
   const icon = document.getElementById("faction-icon").value || "shield";
   const color = document.getElementById("faction-color").value || "#ff6600";
   let selectId;
@@ -2443,6 +2446,7 @@ function saveCustomFaction() {
   document.getElementById("faction-name").value = "";
   document.getElementById("faction-icon").value = "shield";
   document.getElementById("faction-color").value = "#ff6600";
+  clearFieldErr("faction-name");
   saveState();
   rebuildFactionSelect(selectId);
   renderLibFactionFilters();
@@ -2562,6 +2566,7 @@ function setCustomTraitReqPills(reqs) {
 
 function openCustomTraitModal() {
   editingCustomTraitId = null;
+  clearFieldErr("ct-name");
   document.getElementById("ct-name").value = "";
   document.getElementById("ct-cost").value = "1";
   document.getElementById("ct-type").value = "stand";
@@ -2628,6 +2633,7 @@ function editCustomTrait(id) {
 
 function cancelEditCustomTrait() {
   editingCustomTraitId = null;
+  clearFieldErr("ct-name");
   document.getElementById("ct-name").value = "";
   document.getElementById("ct-cost").value = "1";
   document.getElementById("ct-type").value = "stand";
@@ -2671,7 +2677,7 @@ function renderCustomTraitList() {
 
 function saveCustomTrait() {
   const name = document.getElementById("ct-name").value.trim();
-  if(!name) { alert("Enter a trait name."); return; }
+  if(!name) { showFieldErr("ct-name","Enter a trait name."); return; }
   const cost = parseFloat(document.getElementById("ct-cost").value)||0;
   const type = document.getElementById("ct-type").value;
   const description = document.getElementById("ct-description").value.trim();
@@ -2703,6 +2709,7 @@ function saveCustomTrait() {
   }
   saveState();
   renderCustomTraitList();
+  clearFieldErr("ct-name");
   document.getElementById("ct-name").value = "";
   document.getElementById("ct-cost").value = "1";
   document.getElementById("ct-type").value = "stand";
@@ -3276,7 +3283,7 @@ function openNewTFModal() {
   document.getElementById("tf-new-name").value = "";
   document.getElementById("tf-commander").value = "";
   document.getElementById("tf-notes").value = "";
-  tfClearErr("tf-new-name"); tfClearErr("tf-commander");
+  clearFieldErr("tf-new-name"); clearFieldErr("tf-commander");
   document.getElementById("modal-tf-title").textContent = "New Task Force";
   document.getElementById("tf-modal-submit").textContent = "Create";
   _populateTFTypeSelect(document.getElementById("tf-type"), "infantry");
@@ -3291,7 +3298,7 @@ function openEditTFModal(id) {
   document.getElementById("tf-new-name").value = tf.name || "";
   document.getElementById("tf-commander").value = tf.commander || "";
   document.getElementById("tf-notes").value = tf.notes || "";
-  tfClearErr("tf-new-name"); tfClearErr("tf-commander");
+  clearFieldErr("tf-new-name"); clearFieldErr("tf-commander");
   document.getElementById("modal-tf-title").textContent = "Edit Task Force";
   document.getElementById("tf-modal-submit").textContent = "Save";
   _populateTFTypeSelect(document.getElementById("tf-type"), tf.tfType || "infantry");
@@ -3299,13 +3306,22 @@ function openEditTFModal(id) {
   openModal("modal-tf");
 }
 
-function tfClearErr(id) {
+function flashBtn(id, msg, ms=2000) {
+  const btn = document.getElementById(id);
+  if(!btn) return;
+  const orig = btn.textContent;
+  btn.textContent = msg;
+  btn.disabled = true;
+  setTimeout(() => { btn.textContent = orig; btn.disabled = false; }, ms);
+}
+
+function clearFieldErr(id) {
   const el = document.getElementById(id);
   const err = document.getElementById(id+"-err");
   if(el) el.classList.remove("input-error");
   if(err) { err.textContent=""; err.classList.remove("visible"); }
 }
-function tfShowErr(id, msg) {
+function showFieldErr(id, msg) {
   const el = document.getElementById(id);
   const err = document.getElementById(id+"-err");
   if(el) { el.classList.add("input-error"); el.focus(); }
@@ -3316,8 +3332,8 @@ function createTaskForce() {
   const name = document.getElementById("tf-new-name").value.trim();
   const commander = document.getElementById("tf-commander").value.trim();
   let invalid = false;
-  if(!name)      { tfShowErr("tf-new-name","Task force name is required."); invalid=true; }
-  if(!commander) { tfShowErr("tf-commander","Commander name is required."); invalid=true; }
+  if(!name)      { showFieldErr("tf-new-name","Task force name is required."); invalid=true; }
+  if(!commander) { showFieldErr("tf-commander","Commander name is required."); invalid=true; }
   if(invalid) { if(!name) document.getElementById("tf-new-name").focus(); return; }
   const tfType = document.getElementById("tf-type").value;
   const faction = document.getElementById("tf-faction").value;
