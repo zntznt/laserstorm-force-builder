@@ -165,6 +165,12 @@ hr{border:none;border-top:1px solid var(--border-subtle);margin:12px 0}
 .ref-table th{background:var(--surface-raised);color:var(--accent);text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.5px;padding:4px 8px;border:1px solid var(--border-default)}
 .ref-table td{padding:3px 8px;border:1px solid var(--border-subtle);font-size:11px;color:var(--text-secondary);vertical-align:top}
 .ref-table td:first-child{color:var(--text-muted);white-space:nowrap;font-weight:bold;width:34%}
+.use-pill{display:inline-block;font-size:10px;font-weight:bold;border-radius:8px;padding:1px 7px;margin-right:3px;text-transform:uppercase;letter-spacing:.5px}
+.use-activation{background:#0a2a1a;color:#4caf50;border:1px solid #4caf5055}
+.use-deployment{background:#0a1a3a;color:#64b5f6;border:1px solid #64b5f655}
+.use-reinforcements{background:#2a1a0a;color:#ffb74d;border:1px solid #ffb74d55}
+.asset-card{background:var(--surface-page);border:1px solid var(--border-subtle);border-radius:6px;padding:10px 12px;margin-bottom:6px}
+.asset-card:hover{border-color:var(--border-default)}
 .tf-unit-row{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:var(--surface-page);border:1px solid var(--border-subtle);border-radius:4px;margin-bottom:5px;gap:8px}
 .tf-unit-row:hover{border-color:var(--border-default)}
 .qty-ctrl{display:flex;align-items:center;gap:4px}
@@ -646,6 +652,65 @@ label .trait-edit-btn{margin-left:6px}
   </div>
 </div>
 
+<!-- ===== TACTICAL ASSET PICKER MODAL ===== -->
+<div id="modal-asset-picker" class="modal-bg">
+  <div class="modal">
+    <div class="modal-header">Select Tactical Asset <button class="modal-close" onclick="closeModal('modal-asset-picker')"><i class="fa-solid fa-xmark"></i></button></div>
+    <input class="search-bar" id="asset-picker-search" placeholder="Search assets..." oninput="renderAssetPickerList()">
+    <div class="scrolllist" id="asset-picker-list"></div>
+    <div style="margin-top:12px;display:flex;justify-content:space-between;align-items:center;gap:8px">
+      <button class="trait-edit-btn" onclick="openCustomAssetsModal()"><i class="fa-solid fa-gear"></i> Custom Assets</button>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-secondary" onclick="closeModal('modal-asset-picker')">Cancel</button>
+        <button class="btn btn-primary" onclick="confirmAssetPick()">Select</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== CUSTOM TACTICAL ASSETS MODAL ===== -->
+<div id="modal-custom-assets" class="modal-bg">
+  <div class="modal" style="max-width:540px">
+    <div class="modal-header">Custom Tactical Assets <button class="modal-close" onclick="closeModal('modal-custom-assets')"><i class="fa-solid fa-xmark"></i></button></div>
+    <div id="custom-asset-list" style="margin-bottom:8px"></div>
+    <hr style="border-color:#30363d;margin:10px 0">
+    <div style="font-weight:bold;color:#fff;font-size:12px;margin-bottom:10px" id="custom-asset-form-title">New Custom Asset</div>
+    <div class="form-group" style="margin-bottom:8px">
+      <label>Asset Name</label>
+      <input type="text" id="custom-asset-name" placeholder="e.g. Suppressive Fire" style="width:100%" oninput="_updateCustomAssetSaveBtn()">
+    </div>
+    <div class="form-row" style="margin-bottom:8px">
+      <div class="form-group" style="flex:1">
+        <label>Faction Requirement <span style="font-size:10px;color:#8b949e;font-weight:normal">(optional)</span></label>
+        <select id="custom-asset-faction" style="width:100%">
+          <option value="">None (any faction)</option>
+          <option value="standard">Standard</option>
+          <option value="precursor">Precursor</option>
+          <option value="soulless">Soulless</option>
+          <option value="swarm">Swarm</option>
+          <option value="warrior">Warrior</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group" style="margin-bottom:8px">
+      <label>Use</label>
+      <div style="display:flex;gap:12px;margin-top:4px">
+        <label style="display:flex;align-items:center;gap:5px;font-size:12px;text-transform:none;letter-spacing:0;font-weight:normal;color:#e0e0e0"><input type="checkbox" id="ca-use-activation" onchange="_updateCustomAssetSaveBtn()"> Activation</label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:12px;text-transform:none;letter-spacing:0;font-weight:normal;color:#e0e0e0"><input type="checkbox" id="ca-use-deployment" onchange="_updateCustomAssetSaveBtn()"> Deployment</label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:12px;text-transform:none;letter-spacing:0;font-weight:normal;color:#e0e0e0"><input type="checkbox" id="ca-use-reinforcements" onchange="_updateCustomAssetSaveBtn()"> Reinforcements</label>
+      </div>
+    </div>
+    <div class="form-group" style="margin-bottom:12px">
+      <label>Game Function</label>
+      <textarea id="custom-asset-fn" rows="3" style="width:100%;resize:vertical" placeholder="Describe what this asset does..." oninput="_updateCustomAssetSaveBtn()"></textarea>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px">
+      <button class="btn btn-secondary" id="custom-asset-cancel" onclick="cancelEditCustomAsset()">Close</button>
+      <button class="btn btn-primary" id="custom-asset-submit" onclick="saveCustomAsset()" disabled>Add Asset</button>
+    </div>
+  </div>
+</div>
+
 <!-- ===== NEW ARMY MODAL ===== -->
 <div id="modal-army" class="modal-bg">
   <div class="modal">
@@ -1010,6 +1075,7 @@ let state = {
   customFactions: [],
   customTraits: [],
   customTFTypes: [],
+  customTacticalAssets: [],
   taskForces: [],
   armies: [],
   deployments: []
@@ -1028,6 +1094,9 @@ let traitPickerWeaponIdx = null;
 let currentTFId = null;
 let editingTFId = null;
 let editingCustomTFTypeId = null;
+let assetPickerTFId = null;
+let assetPickerSelectedId = null;
+let editingCustomAssetId = null;
 let addUnitTargetTFId = null;
 let addUnitTargetRole = "core";
 let addUnitSelectedId = null;
@@ -1071,6 +1140,7 @@ function loadState() {
       // Migrate old terror/transport traits on custom units
       (state.customUnits||[]).forEach(migrateCustomUnit);
       state.customTFTypes = saved.customTFTypes || [];
+      state.customTacticalAssets = saved.customTacticalAssets || [];
       state.taskForces = saved.taskForces || [];
       state.armies = saved.armies || [];
       state.deployments = saved.deployments || [];
@@ -2107,6 +2177,25 @@ function saveToLibrary() {
 // FACTIONS
 // ============================================================
 const FACTION_COLORS = {standard:"#007eff",precursor:"#9c27b0",soulless:"#607d8b",swarm:"#4caf50",warrior:"#f44336"};
+const TACTICAL_ASSETS = [
+  {id:"area_denial",     name:"Area Denial",        faction:null,       use:["Activation"],                              fn:`Select an objective. All enemy stands within 8" must retreat 3" towards their own table edge.`},
+  {id:"camouflage",      name:"Camouflage",          faction:null,       use:["Deployment"],                              fn:`The unit may not be targeted by pre-game bombardment fire. It is not considered to be the nearest target for any enemy command stand during the bombardment phase.`},
+  {id:"deception",       name:"Deception",           faction:null,       use:["Deployment"],                              fn:`After all forces have been deployed, the unit may be redeployed anywhere that would be a valid deployment location.`},
+  {id:"drop_troops",     name:"Drop Troops",         faction:null,       use:["Reinforcements"],                          fn:`The unit may drop anywhere on the table that is at least 8" from enemy forces, but may not take any actions this turn.`},
+  {id:"entrenchments",   name:"Entrenchments",       faction:null,       use:["Deployment"],                              fn:`The unit may set up in Entrenchments. These do not block line of sight but provide cover from fire. Each Entrenchment is exactly the size of the stand placed in it. Entrenchments may be abandoned and occupied by other units.`},
+  {id:"fire_support",    name:"Fire Support",        faction:null,       use:["Activation"],                              fn:`One stand in the unit may target any enemy unit in sight. Roll 8 attack dice, hitting on a 4+, with a -2 saving throw modifier or 3 shots with a -6 saving throw modifier.`},
+  {id:"flank_attack",    name:"Flank Attack",        faction:null,       use:["Reinforcements"],                          fn:`The unit may arrive from either of the "neutral" table edges, from any point up to half way across the table.`},
+  {id:"follow_on_forces",name:"Follow-on Forces",    faction:null,       use:["Activation"],                              fn:`One unit that was regrouped may be placed within 4" of any objective currently controlled. No stands may be placed within 8" of enemy forces.`},
+  {id:"forward_deploy",  name:"Forward Deployment",  faction:null,       use:["Deployment"],                              fn:`The unit may be deployed up to 6" forward of the normal deployment area.`},
+  {id:"good_day_to_die", name:"Good Day to Die",     faction:"warrior",  use:["Activation"],                              fn:`This Battle Group counts as Morale 1+ for the remainder of the round.`},
+  {id:"heuristic_plan",  name:"Heuristic Planning",  faction:"soulless", use:["Activation","Deployment","Reinforcements"],fn:`When used, select any other valid Tactical Asset that Soulless can use from the list and roll 1D6. If the result is 1, this Asset is lost and there is no effect.`},
+  {id:"infiltration",    name:"Infiltration",        faction:null,       use:["Deployment"],                              fn:`The unit may set up in any terrain feature within 10" of the deployment area.`},
+  {id:"prophecy",        name:"Prophecy",            faction:"precursor",use:["Activation"],                              fn:`Look through the Initiative Deck and remove a card. Shuffle the remainder and then place the chosen card on the top or bottom of the Deck.`},
+  {id:"rallying_point",  name:"Rallying Point",      faction:null,       use:["Activation"],                              fn:`One unit may be regrouped automatically.`},
+  {id:"reserves",        name:"Reserves",            faction:null,       use:["Deployment"],                              fn:`The Unit may arrive from the friendly table edge during the Battle Group's first activation or may be placed in Reserve at that time.`},
+  {id:"wave_attack",     name:"Wave Attack",         faction:null,       use:["Activation"],                              fn:`After finishing the unit movement, for every stand that reached close combat, all remaining stands may move an additional 1".`},
+];
+
 const TF_TYPES = {
   infantry:     {label:"Infantry",      slots:{inf:[3,5],scout:[0,1],cav:[0,1],fg:[0,1],afv:[0,1],sh:[0,0],beh:[0,0],ac:[0,0]}},
   armour:       {label:"Armour",        slots:{inf:[0,1],scout:[0,2],cav:[0,0],fg:[0,0],afv:[3,5],sh:[0,1],beh:[0,0],ac:[0,0]}},
@@ -2842,6 +2931,29 @@ function renderTFDetail() {
       }).join("")}
     </div>`;
   });
+  // Tactical Asset section
+  const allAssets = allTacticalAssets();
+  const asset = tf.tacAsset ? allAssets.find(a=>a.id===tf.tacAsset) : null;
+  const assetSection = `<div style="margin-bottom:14px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+      <div class="section-header" style="background:#1a1a0a;color:#ffd54f;border:1px solid #ffd54f33;margin-bottom:0">Tactical Asset</div>
+      <button class="trait-edit-btn" onclick="openAssetPickerModal('${tf.id}')"><i class="fa-solid fa-${asset?'rotate':'plus'}"></i> ${asset?"Change":"Assign"}</button>
+    </div>
+    ${asset ? `<div class="asset-card">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:bold;color:#fff;margin-bottom:3px">
+            ${esc(asset.name)}
+            ${asset.faction ? `<span style="font-size:10px;background:${(FACTION_COLORS[asset.faction]||'#888')}22;color:${(FACTION_COLORS[asset.faction]||'#888')};border:1px solid ${(FACTION_COLORS[asset.faction]||'#888')}55;border-radius:8px;padding:1px 6px;margin-left:4px">${asset.faction.charAt(0).toUpperCase()+asset.faction.slice(1)}</span>` : ""}
+          </div>
+          <div style="margin-bottom:5px">${(asset.use||[]).map(u=>`<span class="use-pill use-${u.toLowerCase()}">${esc(u)}</span>`).join("")}</div>
+          <div style="font-size:11px;color:#8b949e;line-height:1.5">${esc(asset.fn)}</div>
+        </div>
+        <button class="trait-edit-btn" onclick="confirmBtn(this,()=>removeTFAsset('${tf.id}'))">Remove</button>
+      </div>
+    </div>`
+    : `<div style="font-size:12px;color:#444;padding:4px 0;font-style:italic">No tactical asset assigned</div>`}
+  </div>`;
   panel.innerHTML = `<div class="card">
     <div class="card-title">
       <span>${esc(tf.name)}</span>
@@ -2855,6 +2967,7 @@ function renderTFDetail() {
       <span class="points-big" style="font-size:22px">${pts}</span>
       <span class="points-label" style="margin-left:6px">pts</span>
     </div>
+    ${assetSection}
     ${slotsHTML}
   </div>`;
 }
@@ -3089,6 +3202,189 @@ function deleteCustomTFType(id) {
   _renderCustomTFTypeList();
   _updateCustomTFTypeSaveBtn();
   _populateTFTypeSelect(document.getElementById("tf-type"), document.getElementById("tf-type").value);
+}
+
+// ============================================================
+// TACTICAL ASSETS
+// ============================================================
+function allTacticalAssets() {
+  const custom = (state.customTacticalAssets||[]).map(a=>({...a, id:"custom_"+a.id, custom:true}));
+  return [...TACTICAL_ASSETS, ...custom];
+}
+
+function _assetUsePills(useArr) {
+  return (useArr||[]).map(u=>`<span class="use-pill use-${u.toLowerCase()}">${esc(u)}</span>`).join("");
+}
+
+function _assetFactionPill(faction) {
+  if(!faction) return "";
+  const color = FACTION_COLORS[faction] || "#888";
+  return `<span style="font-size:10px;background:${color}22;color:${color};border:1px solid ${color}55;border-radius:8px;padding:1px 6px;margin-left:4px">${faction.charAt(0).toUpperCase()+faction.slice(1)}</span>`;
+}
+
+function openAssetPickerModal(tfId) {
+  assetPickerTFId = tfId;
+  const tf = state.taskForces.find(t=>t.id===tfId);
+  assetPickerSelectedId = tf?.tacAsset || null;
+  document.getElementById("asset-picker-search").value = "";
+  renderAssetPickerList();
+  openModal("modal-asset-picker");
+}
+
+function renderAssetPickerList() {
+  const search = (document.getElementById("asset-picker-search")?.value||"").toLowerCase();
+  const tf = state.taskForces.find(t=>t.id===assetPickerTFId);
+  const tfFaction = tf?.faction || null;
+  let assets = allTacticalAssets().filter(a => {
+    // Filter by faction: faction-locked assets only available when TF faction matches
+    if(a.faction && a.faction !== tfFaction) return false;
+    if(search && !a.name.toLowerCase().includes(search) && !a.fn.toLowerCase().includes(search)) return false;
+    return true;
+  });
+  const list = document.getElementById("asset-picker-list");
+  if(!assets.length) { list.innerHTML = `<div class="empty">No assets available for this faction</div>`; return; }
+  list.innerHTML = assets.map(a => {
+    const sel = assetPickerSelectedId === a.id;
+    return `<div class="list-row" style="${sel?"border-color:#007eff;background:#1a2a1a":""}" onclick="assetPickerSelectedId='${a.id}';renderAssetPickerList()">
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:bold;color:${sel?"#4caf50":"#fff"};margin-bottom:2px">${esc(a.name)}${_assetFactionPill(a.faction)}${a.custom?`<span style="font-size:10px;color:#7986cb;margin-left:4px">Custom</span>`:""}</div>
+        <div style="margin-bottom:3px">${_assetUsePills(a.use)}</div>
+        <div style="font-size:11px;color:#8b949e;line-height:1.4">${esc(a.fn)}</div>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function confirmAssetPick() {
+  if(!assetPickerSelectedId) { alert("Select an asset."); return; }
+  const tf = state.taskForces.find(t=>t.id===assetPickerTFId);
+  if(!tf) return;
+  tf.tacAsset = assetPickerSelectedId;
+  saveState();
+  closeModal("modal-asset-picker");
+  if(currentTFId===assetPickerTFId) renderTFDetail();
+}
+
+function removeTFAsset(tfId) {
+  const tf = state.taskForces.find(t=>t.id===tfId);
+  if(!tf) return;
+  tf.tacAsset = null;
+  saveState();
+  if(currentTFId===tfId) renderTFDetail();
+}
+
+// ---- Custom Tactical Assets ----
+function openCustomAssetsModal() {
+  editingCustomAssetId = null;
+  // Rebuild faction select with custom factions
+  const sel = document.getElementById("custom-asset-faction");
+  const custom = (state.customFactions||[]).map(f=>`<option value="${f.id}">${esc(f.name)}</option>`).join("");
+  sel.innerHTML = `<option value="">None (any faction)</option>
+    <option value="standard">Standard</option>
+    <option value="precursor">Precursor</option>
+    <option value="soulless">Soulless</option>
+    <option value="swarm">Swarm</option>
+    <option value="warrior">Warrior</option>
+    ${custom}`;
+  _resetCustomAssetForm();
+  _renderCustomAssetList();
+  openModal("modal-custom-assets");
+}
+
+function _resetCustomAssetForm() {
+  document.getElementById("custom-asset-name").value = "";
+  document.getElementById("custom-asset-faction").value = "";
+  document.getElementById("ca-use-activation").checked = false;
+  document.getElementById("ca-use-deployment").checked = false;
+  document.getElementById("ca-use-reinforcements").checked = false;
+  document.getElementById("custom-asset-fn").value = "";
+  document.getElementById("custom-asset-form-title").textContent = "New Custom Asset";
+  document.getElementById("custom-asset-submit").textContent = "Add Asset";
+  document.getElementById("custom-asset-cancel").textContent = "Close";
+  _updateCustomAssetSaveBtn();
+}
+
+function _updateCustomAssetSaveBtn() {
+  const btn = document.getElementById("custom-asset-submit");
+  if(!btn) return;
+  const name = (document.getElementById("custom-asset-name")?.value||"").trim();
+  const hasUse = document.getElementById("ca-use-activation")?.checked
+    || document.getElementById("ca-use-deployment")?.checked
+    || document.getElementById("ca-use-reinforcements")?.checked;
+  const hasFn = (document.getElementById("custom-asset-fn")?.value||"").trim();
+  btn.disabled = !name || !hasUse || !hasFn;
+}
+
+function _renderCustomAssetList() {
+  const el = document.getElementById("custom-asset-list");
+  const assets = state.customTacticalAssets||[];
+  if(!assets.length) { el.innerHTML = `<div style="font-size:12px;color:#555;font-style:italic">No custom assets yet</div>`; return; }
+  el.innerHTML = `<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:4px">`
+    + assets.map(a=>`<div class="custom-trait-item">
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:bold;color:var(--text-primary);font-size:13px">${esc(a.name)}${_assetFactionPill(a.faction)}</div>
+        <div style="margin-top:2px">${_assetUsePills(a.use)}</div>
+      </div>
+      <button class="trait-edit-btn" onclick="editCustomAsset('${a.id}')">Edit</button>
+      <button class="trait-edit-btn" onclick="confirmBtn(this,()=>deleteCustomAsset('${a.id}'))">Delete</button>
+    </div>`).join("")
+    + `</div>`;
+}
+
+function editCustomAsset(id) {
+  const a = (state.customTacticalAssets||[]).find(x=>x.id===id);
+  if(!a) return;
+  editingCustomAssetId = id;
+  document.getElementById("custom-asset-name").value = a.name;
+  document.getElementById("custom-asset-faction").value = a.faction||"";
+  document.getElementById("ca-use-activation").checked = (a.use||[]).includes("Activation");
+  document.getElementById("ca-use-deployment").checked = (a.use||[]).includes("Deployment");
+  document.getElementById("ca-use-reinforcements").checked = (a.use||[]).includes("Reinforcements");
+  document.getElementById("custom-asset-fn").value = a.fn||"";
+  document.getElementById("custom-asset-form-title").textContent = "Edit Custom Asset";
+  document.getElementById("custom-asset-submit").textContent = "Save";
+  document.getElementById("custom-asset-cancel").textContent = "Cancel";
+  _updateCustomAssetSaveBtn();
+}
+
+function cancelEditCustomAsset() {
+  if(editingCustomAssetId) { editingCustomAssetId = null; _resetCustomAssetForm(); }
+  else closeModal("modal-custom-assets");
+}
+
+function saveCustomAsset() {
+  const name = document.getElementById("custom-asset-name").value.trim();
+  if(!name) return;
+  const faction = document.getElementById("custom-asset-faction").value||null;
+  const use = [];
+  if(document.getElementById("ca-use-activation").checked) use.push("Activation");
+  if(document.getElementById("ca-use-deployment").checked) use.push("Deployment");
+  if(document.getElementById("ca-use-reinforcements").checked) use.push("Reinforcements");
+  const fn = document.getElementById("custom-asset-fn").value.trim();
+  if(editingCustomAssetId) {
+    const a = (state.customTacticalAssets||[]).find(x=>x.id===editingCustomAssetId);
+    if(a) { a.name=name; a.faction=faction; a.use=use; a.fn=fn; }
+    editingCustomAssetId = null;
+  } else {
+    state.customTacticalAssets.push({id:uid(), name, faction, use, fn});
+  }
+  saveState();
+  _resetCustomAssetForm();
+  _renderCustomAssetList();
+  // Refresh picker list if open
+  if(document.getElementById("modal-asset-picker")?.classList.contains("open")) renderAssetPickerList();
+}
+
+function deleteCustomAsset(id) {
+  state.customTacticalAssets = (state.customTacticalAssets||[]).filter(a=>a.id!==id);
+  // Clear from any TF that used it
+  const fullId = "custom_"+id;
+  state.taskForces.forEach(tf=>{ if(tf.tacAsset===fullId) tf.tacAsset=null; });
+  if(editingCustomAssetId===id) { editingCustomAssetId=null; _resetCustomAssetForm(); }
+  saveState();
+  _renderCustomAssetList();
+  if(document.getElementById("modal-asset-picker")?.classList.contains("open")) renderAssetPickerList();
+  if(currentTFId) renderTFDetail();
 }
 
 // ============================================================
