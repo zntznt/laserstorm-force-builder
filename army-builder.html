@@ -1501,8 +1501,9 @@ function unitCardHTML(unit, actions) {
         const wName = w.name ? `<strong>${esc(w.name)}</strong> ` : "";
         return `<div class="weapon-row">${wName}<span class="wtype">${w.mode.toUpperCase()}/${w.type.toUpperCase()}</span> | Range <span>${rangeLabel(w.range)}</span> | Shots <span>${w.shots}</span> | Impact <span>+${w.impact}</span>${wtHTML}</div>`;
       }).join("");
-  const cmdStr = pts.cmdPts ? `${pts.cmdPts}` : "—";
-  const heroCmdStr = pts.cmdHeroPts ? `${pts.cmdHeroPts}` : "—";
+  const fmtPts = v => v ? `${v}` : "—";
+  const cmdStr     = fmtPts(pts.cmdPts);
+  const heroCmdStr = fmtPts(pts.cmdHeroPts);
   return `
     <div class="unit-card">
       <div class="unit-card-header">
@@ -1527,10 +1528,10 @@ function unitCardHTML(unit, actions) {
       ${weaponsHTML}
       <div class="unit-card-pts">
         ${[
-          {label:"Unit",   val:pts.unitPts},
-          {label:"Ind",    val:pts.indPts},
+          {label:"Unit",   val:fmtPts(pts.unitPts)},
+          {label:"Ind",    val:fmtPts(pts.indPts)},
           {label:"Cmd",    val:cmdStr},
-          {label:"I.Hero", val:pts.heroPts},
+          {label:"I.Hero", val:fmtPts(pts.heroPts)},
           {label:"C.Hero", val:heroCmdStr}
         ].map(c=>`<div class="pts-box${c.val==="—"?" pts-na":""}">
           <div class="pts-box-val">${c.val}</div>
