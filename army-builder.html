@@ -118,7 +118,10 @@ input.input-error,textarea.input-error{border-color:#ef535066!important;outline:
 .wtype{color:var(--text-dim);font-weight:normal!important}
 .unit-card-actions{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
 @media(min-width:860px){#lib-list{display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:start}.unit-card{margin-bottom:0}}
-.unit-name{font-weight:bold;color:var(--text-bright);font-size:14px}
+.unit-name{font-weight:bold;color:var(--text-bright);font-size:14px;display:block;margin-top:4px}
+.unit-name-wrap{display:block}
+.unit-desc{display:block;max-height:0;overflow:hidden;font-size:11px;color:#8b949e;line-height:1.5;font-style:italic;transition:max-height .3s ease,opacity .3s ease;opacity:0;margin-top:0}
+.unit-name-wrap:hover .unit-desc{max-height:120px;opacity:1;margin-top:3px}
 .unit-pts{color:var(--gold);font-weight:bold;font-size:13px}
 .weapon-row{background:var(--surface-page);border-radius:4px;padding:5px 8px;margin-top:4px;font-size:11px;color:var(--text-muted)}
 .weapon-row span{color:var(--text-bright);font-weight:bold}
@@ -298,6 +301,10 @@ label .trait-edit-btn{margin-left:6px}
               <option value="__new__">+ New Faction…</option>
             </select>
           </div>
+        </div>
+        <div class="form-group" style="margin-top:10px">
+          <label>Description <span style="font-size:10px;color:#8b949e;font-weight:normal">(optional — hover reveal on cards)</span></label>
+          <textarea id="b-description" placeholder="e.g. Elite shock troops specialising in close-quarters breaching..." style="width:100%;min-height:56px;resize:vertical;background:var(--surface-raised);border:1px solid var(--border-subtle);border-radius:6px;color:#e0e0e0;padding:8px;font-family:var(--font-body);font-size:13px;line-height:1.5"></textarea>
         </div>
         <div id="b-class-profile" class="class-profile"></div>
         <div class="stand-stats-grid" style="display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;margin-top:14px;margin-bottom:14px">
@@ -1668,7 +1675,9 @@ function unitCardHTML(unit, actions) {
         <div>
           ${classBadge(unit.class, true)}${factionBadge(unit)}
           ${!unit.builtIn?`<span class="badge" style="background:#333;color:#aaa">Custom</span>`:""}
-          <span class="unit-name" style="display:block;margin-top:4px">${esc(unit.name)}</span>
+          <span class="unit-name-wrap">
+            <span class="unit-name">${esc(unit.name)}</span>${unit.description ? `<span class="unit-desc">${esc(unit.description)}</span>` : ""}
+          </span>
         </div>
         <div style="text-align:right;font-size:11px;color:var(--text-muted)">
           ${pts.unitSize} stand${pts.unitSize>1?"s":""}
@@ -1750,6 +1759,7 @@ function setEditMode(unit) {
 
 function resetBuilder() {
   document.getElementById("b-name").value = "";
+  document.getElementById("b-description").value = "";
   document.getElementById("b-class").value = "inf";
   document.getElementById("b-faction").value = "";
   builderFactionPrev = "";
@@ -2081,6 +2091,7 @@ function gatherBuilderUnit() {
   const weapons = builderWeapons.map(w => ({...w, traits:(w.traits||[]).slice()}));
   const unit = {
     name: document.getElementById("b-name").value || "Unnamed Unit",
+    description: document.getElementById("b-description").value.trim() || "",
     class: document.getElementById("b-class").value,
     faction: document.getElementById("b-faction").value || "",
     speed: parseInt(document.getElementById("b-speed").value)||4,
@@ -2913,6 +2924,7 @@ function editUnit(id) {
   const unit = state.customUnits.find(u=>u.id===id);
   if(!unit) return;
   document.getElementById("b-name").value = unit.name;
+  document.getElementById("b-description").value = unit.description || "";
   document.getElementById("b-class").value = unit.class;
   document.getElementById("b-faction").value = unit.faction||"";
   builderFactionPrev = unit.faction||"";
