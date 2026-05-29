@@ -843,6 +843,10 @@ end hidden -->
         <label>Color</label>
         <input type="color" id="faction-color" value="#ff6600" style="width:54px;height:32px;padding:2px 4px;border-radius:6px;border:1px solid var(--border-default);background:var(--surface-page);cursor:pointer">
       </div>
+      <div class="form-group" style="margin-bottom:14px">
+        <label>Description <span style="font-size:10px;color:#8b949e;font-weight:normal">(optional — tooltip on faction badges)</span></label>
+        <textarea id="faction-description" rows="2" placeholder="e.g. A splinter group from the outer colonies..." style="width:100%;resize:vertical"></textarea>
+      </div>
       <div style="display:flex;gap:8px">
         <button id="faction-save-btn" class="btn btn-primary" onclick="saveCustomFaction()">Create</button>
         <button id="faction-cancel-edit-btn" class="btn btn-secondary btn-xs" onclick="cancelEditCustomFaction()" style="display:none">Cancel</button>
@@ -1504,22 +1508,36 @@ function classBadge(c, noTip) {
 }
 function roleBadge(r) { return `<span class="badge badge-${r}">${r}</span>`; }
 
+const BUILTIN_FACTION_ICONS = {standard:"shield",precursor:"gem",soulless:"robot",swarm:"virus",warrior:"hand-fist"};
+const BUILTIN_FACTION_LABELS = {standard:"Standard",precursor:"Precursor",soulless:"Soulless",swarm:"Swarm",warrior:"Warrior"};
+
+function factionPill(factionId, opts={}) {
+  if(!factionId) return "";
+  const {marginLeft=false, marginRight=false, small=false} = opts;
+  const pad = small ? "1px 6px" : "1px 7px";
+  const size = "10px";
+  const ml = marginLeft ? "margin-left:4px;" : "";
+  const mr = marginRight ? "margin-right:3px;" : "";
+  const base = (label, color, tipAttr="") =>
+    `<span class="${tipAttr?"tip":""}" ${tipAttr} style="display:inline-block;padding:${pad};border-radius:10px;font-size:${size};font-weight:bold;background:${color}22;color:${color};border:1px solid ${color}55;${ml}${mr}">${label}</span>`;
+  if(FACTION_COLORS[factionId]) {
+    const icon = BUILTIN_FACTION_ICONS[factionId];
+    const label = icon ? `<i class="fa-solid fa-${icon}"></i> ${BUILTIN_FACTION_LABELS[factionId]||factionId}` : (BUILTIN_FACTION_LABELS[factionId]||factionId);
+    return base(label, FACTION_COLORS[factionId]);
+  }
+  const cf = (state.customFactions||[]).find(x=>x.id===factionId);
+  if(cf) {
+    const label = `<i class="fa-solid fa-${cf.icon}"></i> ${esc(cf.name)}`;
+    const tipAttr = cf.description ? `data-tip="${esc(cf.description)}"` : "";
+    return base(label, cf.color, tipAttr);
+  }
+  return "";
+}
+
 function factionBadge(unit) {
   const f = unit.faction;
-  const badge = (label, color) =>
-    `<span style="display:inline-block;padding:1px 7px;border-radius:10px;font-size:10px;font-weight:bold;background:${color}22;color:${color};border:1px solid ${color}55;margin-right:3px">${label}</span>`;
-  if(f && FACTION_COLORS[f]) {
-    const BUILTIN_FACTION_ICONS = {standard:"shield",precursor:"gem",soulless:"robot",swarm:"virus",warrior:"hand-fist"};
-    const labels = {standard:"Standard",precursor:"Precursor",soulless:"Soulless",swarm:"Swarm",warrior:"Warrior"};
-    const icon = BUILTIN_FACTION_ICONS[f];
-    const label = icon ? `<i class="fa-solid fa-${icon}"></i> ${labels[f]||f}` : (labels[f]||f);
-    return badge(label, FACTION_COLORS[f]);
-  }
-  if(f) {
-    const cf = (state.customFactions||[]).find(x=>x.id===f);
-    if(cf) return badge(`<i class="fa-solid fa-${cf.icon}"></i> ${cf.name}`, cf.color);
-  }
-  if(!unit.builtIn) return badge("No Faction","#888");
+  if(f) return factionPill(f, {marginRight:true});
+  if(!unit.builtIn) return `<span style="display:inline-block;padding:1px 7px;border-radius:10px;font-size:10px;font-weight:bold;background:#88888822;color:#888;border:1px solid #88888855;margin-right:3px">No Faction</span>`;
   return "";
 }
 
@@ -2372,6 +2390,7 @@ function openFactionModal(fromBuilder) {
   document.getElementById("faction-name").value = "";
   document.getElementById("faction-icon").value = "shield";
   document.getElementById("faction-color").value = "#ff6600";
+  document.getElementById("faction-description").value = "";
   document.getElementById("faction-save-btn").textContent = "Create";
   document.getElementById("faction-form-header").textContent = "New Faction";
   document.getElementById("faction-cancel-edit-btn").style.display = "none";
@@ -2387,6 +2406,7 @@ function editCustomFaction(id) {
   document.getElementById("faction-name").value = f.name;
   document.getElementById("faction-icon").value = f.icon||"shield";
   document.getElementById("faction-color").value = f.color||"#ff6600";
+  document.getElementById("faction-description").value = f.description||"";
   document.getElementById("faction-save-btn").textContent = "Save Changes";
   document.getElementById("faction-form-header").textContent = "Edit Faction";
   document.getElementById("faction-cancel-edit-btn").style.display = "";
@@ -2399,6 +2419,7 @@ function cancelEditCustomFaction() {
   document.getElementById("faction-name").value = "";
   document.getElementById("faction-icon").value = "shield";
   document.getElementById("faction-color").value = "#ff6600";
+  document.getElementById("faction-description").value = "";
   clearFieldErr("faction-name");
   document.getElementById("faction-save-btn").textContent = "Create";
   document.getElementById("faction-form-header").textContent = "New Faction";
@@ -2412,10 +2433,11 @@ function renderFactionModalContent() {
   list.innerHTML = facs.length
     ? `<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:4px">`
       + facs.map(f=>`
-        <div class="custom-trait-item">
+        <div class="custom-trait-item" style="flex-wrap:wrap">
           <span style="font-size:18px;color:${f.color}"><i class="fa-solid fa-${f.icon}"></i></span>
           <span style="flex:1;font-weight:bold;color:${f.color}">${esc(f.name)}</span>
           <button class="trait-edit-btn" onclick="editCustomFaction('${f.id}')">Edit</button>
+          ${f.description?`<div style="width:100%;font-size:10px;color:#8b949e;font-style:italic;padding-left:28px;margin-top:2px">${esc(f.description)}</div>`:""}
           <button class="trait-edit-btn" onclick="confirmBtn(this,()=>deleteCustomFaction('${f.id}'))">Delete</button>
         </div>`).join("")
       + `</div>`
@@ -2441,22 +2463,24 @@ function saveCustomFaction() {
   if(!name) { showFieldErr("faction-name","Enter a faction name."); return; }
   const icon = document.getElementById("faction-icon").value || "shield";
   const color = document.getElementById("faction-color").value || "#ff6600";
+  const description = document.getElementById("faction-description").value.trim();
   let selectId;
   if(editingCustomFactionId) {
     const idx = (state.customFactions||[]).findIndex(f=>f.id===editingCustomFactionId);
-    if(idx !== -1) state.customFactions[idx] = {...state.customFactions[idx], name, icon, color};
+    if(idx !== -1) state.customFactions[idx] = {...state.customFactions[idx], name, icon, color, description};
     editingCustomFactionId = null;
     document.getElementById("faction-save-btn").textContent = "Create";
     document.getElementById("faction-form-header").textContent = "New Faction";
     document.getElementById("faction-cancel-edit-btn").style.display = "none";
   } else {
     const id = "fac_" + uid();
-    state.customFactions.push({id, name, icon, color});
+    state.customFactions.push({id, name, icon, color, description});
     selectId = window._factionModalFromBuilder ? id : undefined;
   }
   document.getElementById("faction-name").value = "";
   document.getElementById("faction-icon").value = "shield";
   document.getElementById("faction-color").value = "#ff6600";
+  document.getElementById("faction-description").value = "";
   clearFieldErr("faction-name");
   saveState();
   rebuildFactionSelect(selectId);
@@ -3167,11 +3191,9 @@ function renderTFDetail() {
     {role:"support",    label:"Support Units",     shClass:"sh-support"},
   ];
   const typeLabel = tf.tfType ? _tfTypeLabel(tf.tfType) : "";
-  const facColor = tf.faction ? (FACTION_COLORS[tf.faction] || ((state.customFactions||[]).find(f=>f.id===tf.faction)||{}).color || "#888") : null;
-  const facLabel = tf.faction ? (tf.faction.charAt(0).toUpperCase()+tf.faction.slice(1)) : "";
-  const metaHTML = `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;font-size:12px">
+  const metaHTML = `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;font-size:12px;align-items:center">
     ${typeLabel?`<span style="background:#1a1a3a;color:#7986cb;border:1px solid #3949ab55;border-radius:8px;padding:2px 8px">${esc(typeLabel)}</span>`:""}
-    ${facColor?`<span style="background:${facColor}22;color:${facColor};border:1px solid ${facColor}55;border-radius:8px;padding:2px 8px">${esc(facLabel)}</span>`:""}
+    ${tf.faction ? factionPill(tf.faction) : ""}
   </div>`;
   const allAssets = allTacticalAssets();
   const asset = tf.tacAsset ? allAssets.find(a=>a.id===tf.tacAsset) : null;
@@ -3198,8 +3220,7 @@ function renderTFDetail() {
         <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
           <div style="flex:1;min-width:0">
             <div style="font-weight:bold;color:#fff;margin-bottom:3px">
-              ${esc(asset.name)}
-              ${asset.faction ? `<span style="font-size:10px;background:${(FACTION_COLORS[asset.faction]||'#888')}22;color:${(FACTION_COLORS[asset.faction]||'#888')};border:1px solid ${(FACTION_COLORS[asset.faction]||'#888')}55;border-radius:8px;padding:1px 6px;margin-left:4px">${asset.faction.charAt(0).toUpperCase()+asset.faction.slice(1)}</span>` : ""}
+              ${esc(asset.name)}${_assetFactionPill(asset.faction)}
             </div>
             <div style="margin-bottom:5px">${(asset.use||[]).map(u=>`<span class="use-pill use-${u.toLowerCase()}">${esc(u)}</span>`).join("")}</div>
             <div style="font-size:11px;color:#8b949e;line-height:1.5">${esc(asset.fn)}</div>
@@ -3613,9 +3634,7 @@ function _assetUsePills(useArr) {
 }
 
 function _assetFactionPill(faction) {
-  if(!faction) return "";
-  const color = FACTION_COLORS[faction] || "#888";
-  return `<span style="font-size:10px;background:${color}22;color:${color};border:1px solid ${color}55;border-radius:8px;padding:1px 6px;margin-left:4px">${faction.charAt(0).toUpperCase()+faction.slice(1)}</span>`;
+  return factionPill(faction, {marginLeft:true, small:true});
 }
 
 function openAssetPickerModal(tfId) {
