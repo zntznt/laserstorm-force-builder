@@ -406,12 +406,12 @@ label .trait-edit-btn{margin-left:6px}
 <div id="page-library" class="page">
   <div class="card">
     <div class="card-title">Unit Library
-      <button class="btn btn-primary btn-sm" onclick="resetBuilder();showPage('builder')">+ Create Unit</button>
+      <button class="btn btn-primary" onclick="resetBuilder();showPage('builder')">+ Create Unit</button>
     </div>
     <input class="search-bar" id="lib-search" placeholder="Search units..." oninput="renderLibrary()">
     <div style="display:flex;align-items:flex-start;gap:8px">
       <div class="pill-nav" id="lib-faction-filters" style="flex:1"></div>
-      <button class="btn btn-secondary btn-sm" style="margin-top:4px;white-space:nowrap" onclick="openFactionModal(false)"><i class="fa-solid fa-gear"></i> Custom Factions</button>
+      <button class="trait-edit-btn" style="margin-top:4px;white-space:nowrap;flex-shrink:0" onclick="openFactionModal(false)"><i class="fa-solid fa-gear"></i> Custom Factions</button>
     </div>
     <div class="pill-nav" id="lib-filters">
       <div class="pill active" data-filter="all" onclick="setLibFilter(this,'all')">All Classes</div>
