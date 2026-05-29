@@ -144,8 +144,8 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);outline:none}
 .empty-icon{font-size:40px;margin-bottom:8px}
 .list-row{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--surface-page);border:1px solid var(--border-subtle);border-radius:4px;margin-bottom:6px;gap:8px}
 .list-row:hover{border-color:var(--accent)}
-.pill-nav{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
-.pill{padding:5px 12px;border-radius:20px;cursor:pointer;font-size:11px;font-weight:bold;text-transform:uppercase;background:var(--surface-raised);color:var(--text-inactive);border:1px solid transparent;transition:all .2s}
+.pill-nav{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;row-gap:6px}
+.pill{padding:6px 14px;border-radius:20px;cursor:pointer;font-size:11px;font-weight:bold;text-transform:uppercase;background:var(--surface-raised);color:var(--text-inactive);border:1px solid transparent;transition:all .2s}
 .pill:hover{color:var(--accent);border-color:var(--accent)}
 .pill.active{background:var(--accent);color:var(--text-bright);border-color:var(--accent)}
 .search-bar{width:100%;padding:7px 14px;background:var(--surface-page);border:1px solid var(--border-default);border-radius:20px;color:var(--text-primary);font-size:13px;margin-bottom:12px}
@@ -424,7 +424,7 @@ label .trait-edit-btn{margin-left:6px}
       <div class="pill" data-filter="sh" onclick="setLibFilter(this,'sh')">Super Heavy</div>
       <div class="pill" data-filter="beh" onclick="setLibFilter(this,'beh')">Behemoth</div>
     </div>
-    <div style="display:flex;align-items:center;gap:8px;margin:6px 0 2px">
+    <div style="display:flex;align-items:center;gap:8px;margin:2px 0 14px">
       <label style="font-size:0.82em;color:var(--text-muted);white-space:nowrap">Sort by</label>
       <select id="lib-sort" onchange="libSort=this.value;renderLibrary()" style="width:auto">
         <option value="name-asc">Name A → Z</option>
@@ -1347,9 +1347,9 @@ function rangeLabel(rv) {
   return {0:"10\"",2:"20\"",5:"30\"",10:"40\"",20:"50\""}[rv] || rv+"\"";
 }
 function classLabel(c) { return (CLASS_INFO[c]||{}).label||c; }
-function classBadge(c) {
+function classBadge(c, noTip) {
   const cp = CLASS_PROFILE[c], ci = CLASS_INFO[c]||{};
-  if(!cp) return `<span class="badge badge-${c}">${classLabel(c)}</span>`;
+  if(!cp || noTip) return `<span class="badge badge-${c}">${classLabel(c)}</span>`;
   const tip = `${ci.label} — ${cp.cat}. Save ${cp.save} | Assault ${cp.assault} | Vulnerable ${cp.vuln} | Snap ${cp.snap} | Transport ${cp.transport}.`;
   return `<span class="badge badge-${c} tip" data-tip="${esc(tip)}">${classLabel(c)}</span>`;
 }
@@ -1508,7 +1508,7 @@ function unitCardHTML(unit, actions) {
     <div class="unit-card">
       <div class="unit-card-header">
         <div>
-          ${classBadge(unit.class)}${factionBadge(unit)}
+          ${classBadge(unit.class, true)}${factionBadge(unit)}
           ${!unit.builtIn?`<span class="badge" style="background:#333;color:#aaa">Custom</span>`:""}
           <span class="unit-name" style="display:block;margin-top:4px">${esc(unit.name)}</span>
         </div>
