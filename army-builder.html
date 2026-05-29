@@ -3013,31 +3013,41 @@ function tfSectionLimits(tf) {
   const cmdSlots  = units.filter(s => s.role === "command");
   const suppSlots = units.filter(s => s.role === "support");
 
+  // Sum quantities by class
+  const qtyByClass = (slotArr) => {
+    const m = {};
+    slotArr.forEach(s => {
+      const cls = (unitById(s.unitId)||{}).class;
+      if(cls) m[cls] = (m[cls]||0) + s.quantity;
+    });
+    return m;
+  };
+
+  const coreQtyByClass = qtyByClass(coreSlots);
+  const specQtyByClass = qtyByClass(specSlots);
+  const cmdQty  = cmdSlots.reduce((s,sl)=>s+sl.quantity,0);
+  const suppQty = suppSlots.reduce((s,sl)=>s+sl.quantity,0);
+  const coreTotalQty = coreSlots.reduce((s,sl)=>s+sl.quantity,0);
+
   const coreLimitsByClass = {};
   if(typeSlots) {
     Object.entries(typeSlots).forEach(([cls, [mn, mx]]) => {
       if(mx > 0 || mn > 0) {
-        const count = coreSlots.filter(s => (unitById(s.unitId)||{}).class === cls).length;
-        coreLimitsByClass[cls] = {count, min:mn, max:mx};
+        coreLimitsByClass[cls] = {count: coreQtyByClass[cls]||0, min:mn, max:mx};
       }
     });
   }
 
-  const coreByClass = {};
-  coreSlots.forEach(s => {
-    const cls = (unitById(s.unitId)||{}).class;
-    if(cls) coreByClass[cls] = (coreByClass[cls]||0) + 1;
-  });
+  // Specialist: max per class = core quantity of same class
   const specLimitsByClass = {};
-  Object.keys(coreByClass).forEach(cls => {
-    const specCount = specSlots.filter(s => (unitById(s.unitId)||{}).class === cls).length;
-    specLimitsByClass[cls] = {count: specCount, max: coreByClass[cls]};
+  Object.keys(coreQtyByClass).forEach(cls => {
+    specLimitsByClass[cls] = {count: specQtyByClass[cls]||0, max: coreQtyByClass[cls]};
   });
 
-  const cmdMax = Math.floor(coreSlots.length / 2);
+  const cmdMax  = Math.floor(coreTotalQty / 2);
   const suppMax = 3;
 
-  return {coreLimitsByClass, specLimitsByClass, cmdCount: cmdSlots.length, cmdMax, suppCount: suppSlots.length, suppMax, coreSlots};
+  return {coreLimitsByClass, specLimitsByClass, coreQtyByClass, cmdCount: cmdQty, cmdMax, suppCount: suppQty, suppMax};
 }
 
 function canAddToSection(tf, role, unitCls) {
@@ -3045,20 +3055,15 @@ function canAddToSection(tf, role, unitCls) {
   if(role === "core") {
     const typeSlots = _getTFTypeSlots(tf.tfType);
     if(!typeSlots) return true;
-    const clsLim = lim.coreLimitsByClass[unitCls];
-    if(!clsLim) {
-      const mx = (typeSlots[unitCls] || [0,0])[1];
-      if(mx === 0) return false;
-      const count = (tf.units||[]).filter(s => s.role==="core" && (unitById(s.unitId)||{}).class===unitCls).length;
-      return count < mx;
-    }
-    return clsLim.count < clsLim.max;
+    const mx = (typeSlots[unitCls] || [0,0])[1];
+    if(mx === 0) return false;
+    return (lim.coreQtyByClass[unitCls]||0) < mx;
   }
   if(role === "specialist") {
     const avail = availableTypesFor(unitCls, "specialist");
     if(!avail.length) return false;
     const specLim = lim.specLimitsByClass[unitCls];
-    if(!specLim) return false; // no core unit of this class
+    if(!specLim) return false;
     return specLim.count < specLim.max;
   }
   if(role === "command") {
@@ -3070,6 +3075,37 @@ function canAddToSection(tf, role, unitCls) {
     return lim.suppCount < lim.suppMax;
   }
   return true;
+}
+
+// Returns the maximum quantity this slot can reach given section limits
+function maxQtyForSlot(tf, slot) {
+  const u = unitById(slot.unitId);
+  if(!u) return slot.quantity;
+  const lim = tfSectionLimits(tf);
+  const role = slot.role;
+  if(role === "core") {
+    const typeSlots = _getTFTypeSlots(tf.tfType);
+    if(!typeSlots) return Infinity;
+    const mx = (typeSlots[u.class] || [0,0])[1];
+    if(mx === 0) return slot.quantity;
+    const otherQty = (lim.coreQtyByClass[u.class]||0) - slot.quantity;
+    return mx - otherQty;
+  }
+  if(role === "specialist") {
+    const specLim = lim.specLimitsByClass[u.class];
+    if(!specLim) return slot.quantity;
+    const otherQty = specLim.count - slot.quantity;
+    return specLim.max - otherQty;
+  }
+  if(role === "command") {
+    const otherQty = lim.cmdCount - slot.quantity;
+    return lim.cmdMax - otherQty;
+  }
+  if(role === "support") {
+    const otherQty = lim.suppCount - slot.quantity;
+    return lim.suppMax - otherQty;
+  }
+  return Infinity;
 }
 
 function tfPoints(tf) {
@@ -3115,9 +3151,9 @@ function renderTFDetail() {
       });
       if(parts.length) limitInfo = parts.join(" &bull; ");
     } else if(role === "specialist") {
-      const total = slots.length;
-      const maxTotal = Object.values(lim.specLimitsByClass).reduce((s,v)=>s+v.max,0);
-      limitInfo = `<span style="color:${total>=maxTotal&&maxTotal>0?"#ef9a9a":"#8b949e"}">${total}/${maxTotal}</span>`;
+      const specTotal = Object.values(lim.specLimitsByClass).reduce((s,v)=>s+v.count,0);
+      const maxTotal  = Object.values(lim.specLimitsByClass).reduce((s,v)=>s+v.max,0);
+      limitInfo = `<span style="color:${specTotal>=maxTotal&&maxTotal>0?"#ef9a9a":"#8b949e"}">${specTotal}/${maxTotal}</span>`;
     } else if(role === "command") {
       limitInfo = `<span style="color:${lim.cmdCount>=lim.cmdMax&&lim.cmdMax>0?"#ef9a9a":"#8b949e"}">${lim.cmdCount}/${lim.cmdMax}</span>`;
     } else if(role === "support") {
@@ -3127,8 +3163,9 @@ function renderTFDetail() {
     // Determine if Add button should be disabled for this section
     let sectionFull = false;
     if(role === "specialist") {
-      const maxTotal = Object.values(lim.specLimitsByClass).reduce((s,v)=>s+v.max,0);
-      sectionFull = maxTotal === 0 || slots.length >= maxTotal;
+      const specTotal = Object.values(lim.specLimitsByClass).reduce((s,v)=>s+v.count,0);
+      const maxTotal  = Object.values(lim.specLimitsByClass).reduce((s,v)=>s+v.max,0);
+      sectionFull = maxTotal === 0 || specTotal >= maxTotal;
     } else if(role === "command") {
       sectionFull = lim.cmdMax === 0 || lim.cmdCount >= lim.cmdMax;
     } else if(role === "support") {
@@ -3358,7 +3395,8 @@ function changeTFSlotQty(tfId, slotId, delta) {
   if(!tf) return;
   const slot = tf.units.find(u=>u.id===slotId);
   if(!slot) return;
-  slot.quantity = Math.max(1, slot.quantity+delta);
+  const maxQty = maxQtyForSlot(tf, slot);
+  slot.quantity = Math.min(Math.max(1, slot.quantity+delta), maxQty);
   saveState();
   renderTFList();
   renderTFDetail();
