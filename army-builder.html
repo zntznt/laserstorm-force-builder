@@ -87,6 +87,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);outline:none}
 .stat{background:var(--surface-page);border:1px solid var(--border-subtle);border-radius:4px;padding:3px 8px;font-size:11px;text-align:center;min-width:44px}
 .stat-name{color:var(--text-muted);font-size:9px;text-transform:uppercase;display:block}
 .stat-val{color:var(--text-bright);font-weight:bold;font-size:13px}
+.stat-sub{color:var(--text-dim);font-size:9px;display:block;margin-top:1px}
 .badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:bold;text-transform:uppercase}
 .badge-inf{background:#1a3a1a;color:#4caf50}
 .badge-cav{background:#1a2a4a;color:#64b5f6}
@@ -1504,6 +1505,9 @@ function unitCardHTML(unit, actions) {
   const fmtPts = v => v ? `${v}` : "—";
   const cmdStr     = fmtPts(pts.cmdPts);
   const heroCmdStr = fmtPts(pts.cmdHeroPts);
+  const minSpd = unit.mobility === "grav" ? Math.ceil(unit.speed / 2)
+               : unit.mobility === "air"  ? Math.ceil(unit.speed * 3 / 4)
+               : null;
   return `
     <div class="unit-card">
       <div class="unit-card-header">
@@ -1517,7 +1521,7 @@ function unitCardHTML(unit, actions) {
         </div>
       </div>
       <div class="stat-row">
-        <div class="stat"><span class="stat-name">Spd</span><span class="stat-val">${unit.speed}"</span></div>
+        <div class="stat"><span class="stat-name">Spd</span><span class="stat-val">${unit.speed}"</span>${minSpd!==null?`<span class="stat-sub">min ${minSpd}"</span>`:""}</div>
         <div class="stat"><span class="stat-name">Mob</span><span class="stat-val">${unit.mobility}</span></div>
         <div class="stat"><span class="stat-name">Aim</span><span class="stat-val">${unit.aim}+</span></div>
         <div class="stat"><span class="stat-name">Assault</span><span class="stat-val">+${unit.assault}</span></div>
