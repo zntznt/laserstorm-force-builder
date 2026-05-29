@@ -2970,15 +2970,24 @@ function renderTFList() {
     list.innerHTML = `<div class="empty"><div class="empty-icon"><i class="fa-solid fa-users"></i></div>No task forces yet</div>`;
     return;
   }
+  const allAssets = allTacticalAssets();
   list.innerHTML = state.taskForces.map(tf => {
     const pts = tfPoints(tf);
     const unitCount = (tf.units||[]).reduce((s,u)=>s+u.quantity,0);
     const isCurrent = tf.id === currentTFId;
     const typeLabel = tf.tfType ? _tfTypeLabel(tf.tfType) : "";
+    const asset = tf.tacAsset ? allAssets.find(a=>a.id===tf.tacAsset) : null;
+    const cmdAssetLine = (tf.commander || asset) ? `
+      <div style="font-size:11px;color:#6a7a6a;margin-top:2px;display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+        ${tf.commander?`<span><i class="fa-solid fa-star" style="color:#ffd54f;font-size:9px;margin-right:3px"></i>${esc(tf.commander)}</span>`:""}
+        ${tf.commander && asset?`<span style="color:#333">&bull;</span>`:""}
+        ${asset?`<span><i class="fa-solid fa-chess-rook" style="color:#ffd54f;font-size:9px;margin-right:3px"></i>${esc(asset.name)}</span>`:""}
+      </div>` : "";
     return `<div class="list-row" style="${isCurrent?"border-color:#007eff":""}" onclick="selectTF('${tf.id}')">
       <div>
         <div style="font-weight:bold;color:${isCurrent?"#007eff":"#fff"}">${esc(tf.name)}</div>
-        <div style="font-size:11px;color:#8b949e">${typeLabel?`<span style="color:#7986cb">${esc(typeLabel)}</span> &bull; `:""}${unitCount} unit slot${unitCount!==1?"s":""} &bull; ${pts} pts</div>
+        <div style="font-size:11px;color:#8b949e">${typeLabel?`<span style="color:#7986cb">${esc(typeLabel)}</span> &bull; `:""}${unitCount} unit${unitCount!==1?"s":""} &bull; ${pts} pts</div>
+        ${cmdAssetLine}
       </div>
     </div>`;
   }).join("");
@@ -3135,7 +3144,43 @@ function renderTFDetail() {
   const metaHTML = `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;font-size:12px">
     ${typeLabel?`<span style="background:#1a1a3a;color:#7986cb;border:1px solid #3949ab55;border-radius:8px;padding:2px 8px">${esc(typeLabel)}</span>`:""}
     ${facColor?`<span style="background:${facColor}22;color:${facColor};border:1px solid ${facColor}55;border-radius:8px;padding:2px 8px">${esc(facLabel)}</span>`:""}
-    ${tf.commander?`<span style="color:#8b949e">Cmd: <span style="color:#e0e0e0">${esc(tf.commander)}</span></span>`:""}
+  </div>`;
+  const allAssets = allTacticalAssets();
+  const asset = tf.tacAsset ? allAssets.find(a=>a.id===tf.tacAsset) : null;
+  const commanderSection = `<div style="background:#0d1118;border:1px solid #1e2a1e;border-radius:8px;padding:12px;margin-bottom:14px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+      <div style="display:flex;align-items:center;gap:6px">
+        <i class="fa-solid fa-star" style="color:#ffd54f;font-size:10px"></i>
+        <span style="font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:#8b949e;font-weight:bold">Task Force Commander</span>
+      </div>
+      <button class="trait-edit-btn" onclick="openEditTFModal('${tf.id}')"><i class="fa-solid fa-pen"></i> Edit</button>
+    </div>
+    <div style="font-size:17px;font-family:var(--font-display);letter-spacing:.5px;color:${tf.commander?"#fff":"#333"};margin-bottom:10px">
+      ${tf.commander ? esc(tf.commander) : "No commander assigned"}
+    </div>
+    <div style="border-top:1px solid #1a2a1a;padding-top:10px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <div style="display:flex;align-items:center;gap:6px">
+          <i class="fa-solid fa-chess-rook" style="color:#ffd54f;font-size:10px"></i>
+          <span style="font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:#8b949e;font-weight:bold">Tactical Asset Provided</span>
+        </div>
+        <button class="trait-edit-btn" onclick="openAssetPickerModal('${tf.id}')"><i class="fa-solid fa-${asset?'rotate':'plus'}"></i> ${asset?"Change":"Assign"}</button>
+      </div>
+      ${asset ? `<div>
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:bold;color:#fff;margin-bottom:3px">
+              ${esc(asset.name)}
+              ${asset.faction ? `<span style="font-size:10px;background:${(FACTION_COLORS[asset.faction]||'#888')}22;color:${(FACTION_COLORS[asset.faction]||'#888')};border:1px solid ${(FACTION_COLORS[asset.faction]||'#888')}55;border-radius:8px;padding:1px 6px;margin-left:4px">${asset.faction.charAt(0).toUpperCase()+asset.faction.slice(1)}</span>` : ""}
+            </div>
+            <div style="margin-bottom:5px">${(asset.use||[]).map(u=>`<span class="use-pill use-${u.toLowerCase()}">${esc(u)}</span>`).join("")}</div>
+            <div style="font-size:11px;color:#8b949e;line-height:1.5">${esc(asset.fn)}</div>
+          </div>
+          <button class="trait-edit-btn" onclick="confirmBtn(this,()=>removeTFAsset('${tf.id}'))">Remove</button>
+        </div>
+      </div>`
+      : `<div style="font-size:12px;color:#444;font-style:italic">No tactical asset assigned</div>`}
+    </div>
   </div>`;
   const lim = tfSectionLimits(tf);
   let slotsHTML = "";
@@ -3201,43 +3246,17 @@ function renderTFDetail() {
       }).join("")}
     </div>`;
   });
-  // Tactical Asset section
-  const allAssets = allTacticalAssets();
-  const asset = tf.tacAsset ? allAssets.find(a=>a.id===tf.tacAsset) : null;
-  const assetSection = `<div style="margin-bottom:14px">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-      <div class="section-header" style="background:#1a1a0a;color:#ffd54f;border:1px solid #ffd54f33;margin-bottom:0">Tactical Asset</div>
-      <button class="trait-edit-btn" onclick="openAssetPickerModal('${tf.id}')"><i class="fa-solid fa-${asset?'rotate':'plus'}"></i> ${asset?"Change":"Assign"}</button>
-    </div>
-    ${asset ? `<div class="asset-card">
-      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
-        <div style="flex:1;min-width:0">
-          <div style="font-weight:bold;color:#fff;margin-bottom:3px">
-            ${esc(asset.name)}
-            ${asset.faction ? `<span style="font-size:10px;background:${(FACTION_COLORS[asset.faction]||'#888')}22;color:${(FACTION_COLORS[asset.faction]||'#888')};border:1px solid ${(FACTION_COLORS[asset.faction]||'#888')}55;border-radius:8px;padding:1px 6px;margin-left:4px">${asset.faction.charAt(0).toUpperCase()+asset.faction.slice(1)}</span>` : ""}
-          </div>
-          <div style="margin-bottom:5px">${(asset.use||[]).map(u=>`<span class="use-pill use-${u.toLowerCase()}">${esc(u)}</span>`).join("")}</div>
-          <div style="font-size:11px;color:#8b949e;line-height:1.5">${esc(asset.fn)}</div>
-        </div>
-        <button class="trait-edit-btn" onclick="confirmBtn(this,()=>removeTFAsset('${tf.id}'))">Remove</button>
-      </div>
-    </div>`
-    : `<div style="font-size:12px;color:#444;padding:4px 0;font-style:italic">No tactical asset assigned</div>`}
-  </div>`;
   panel.innerHTML = `<div class="card">
     <div class="card-title">
       <span>${esc(tf.name)}</span>
-      <div style="display:flex;gap:6px">
-        <button class="trait-edit-btn" onclick="openEditTFModal('${tf.id}')">Edit</button>
-        <button class="trait-edit-btn" onclick="confirmBtn(this,()=>deleteTF('${tf.id}'))">Delete</button>
-      </div>
+      <button class="trait-edit-btn" onclick="confirmBtn(this,()=>deleteTF('${tf.id}'))">Delete</button>
     </div>
     ${metaHTML}
     <div style="margin-bottom:14px">
       <span class="points-big" style="font-size:22px">${pts}</span>
       <span class="points-label" style="margin-left:6px">pts</span>
     </div>
-    ${assetSection}
+    ${commanderSection}
     ${slotsHTML}
   </div>`;
 }
