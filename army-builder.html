@@ -141,6 +141,8 @@ input.input-error,textarea.input-error{border-color:#ef535066!important;outline:
 .modal-close{cursor:pointer;background:var(--surface-raised);border:none;color:var(--text-mid);width:26px;height:26px;border-radius:50%;font-size:16px;line-height:26px;text-align:center}
 .modal-close:hover{color:var(--text-bright);background:#444}
 .bg-card{background:var(--surface-card);border:2px solid var(--border-subtle);border-radius:8px;padding:14px;margin-bottom:14px}
+.army-bg-card{background:var(--surface-page);border:1px solid var(--border-subtle);border-radius:8px;padding:10px;flex:1;min-width:180px}
+.army-bg-entry{display:flex;align-items:flex-start;justify-content:space-between;gap:6px;padding:5px 7px;background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:4px;margin-bottom:4px}
 .bg-card.valid{border-color:#2ea043}
 .bg-card.invalid{border-color:var(--danger)}
 .bg-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
@@ -504,22 +506,13 @@ label .trait-edit-btn{margin-left:6px}
 
 <!-- ===== ARMIES PAGE ===== -->
 <div id="page-armies" class="page">
-  <div class="grid-2">
-    <div>
+  <div class="grid-sidebar">
+    <div style="position:sticky;top:16px;display:flex;flex-direction:column;gap:12px">
       <div class="card">
-        <div class="card-title">My Armies
+        <div class="card-title">Armies
           <button class="trait-edit-btn" onclick="openNewArmyModal()">New Army</button>
         </div>
         <div id="army-list"></div>
-      </div>
-      <div class="card">
-        <div class="card-title"><i class="fa-solid fa-floppy-disk"></i> Save / Load</div>
-        <div class="form-row">
-          <button class="trait-edit-btn" onclick="exportLibrary()">Export Library</button>
-          <button class="trait-edit-btn" onclick="document.getElementById('import-file').click()">Import Library</button>
-          <input type="file" id="import-file" accept=".json" style="display:none" onchange="importLibrary(event)">
-        </div>
-        <div style="font-size:11px;color:#8b949e;margin-top:8px">All data is also auto-saved in browser localStorage.</div>
       </div>
     </div>
     <div id="army-detail-panel">
@@ -782,21 +775,42 @@ label .trait-edit-btn{margin-left:6px}
 </div>
 end hidden -->
 
-<!-- ===== NEW ARMY MODAL ===== -->
+<!-- ===== NEW/EDIT ARMY MODAL ===== -->
 <div id="modal-army" class="modal-bg">
   <div class="modal">
-    <div class="modal-header">New Army <button class="modal-close" onclick="closeModal('modal-army')"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="modal-header" id="army-modal-title">New Army <button class="modal-close" onclick="closeModal('modal-army')"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="form-group" style="margin-bottom:12px">
       <label>Army Name</label>
       <input type="text" id="army-new-name" placeholder="e.g. Iron Legion" style="width:100%">
     </div>
-    <div class="form-group" style="margin-bottom:16px">
-      <label>Points Limit (optional)</label>
-      <input type="number" id="army-points-limit" value="1500" min="0" style="width:100px">
+    <div class="form-row" style="margin-bottom:12px">
+      <div class="form-group">
+        <label>Faction Restriction <span style="font-size:10px;color:#8b949e;font-weight:normal">(optional)</span></label>
+        <select id="army-faction" style="width:auto">
+          <option value="">Any Faction</option>
+          <option value="standard">Standard</option>
+          <option value="precursor">Precursor</option>
+          <option value="soulless">Soulless</option>
+          <option value="swarm">Swarm</option>
+          <option value="warrior">Warrior</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Battle Groups</label>
+        <select id="army-bg-count" style="width:auto">
+          <option value="3">3</option>
+          <option value="4">4</option>
+          <option value="5">5</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Points Limit <span style="font-size:10px;color:#8b949e;font-weight:normal">(optional)</span></label>
+        <input type="number" id="army-points-limit" min="0" step="50" placeholder="e.g. 1500" style="width:100px">
+      </div>
     </div>
     <div style="display:flex;justify-content:flex-end;gap:8px">
       <button class="btn btn-secondary" onclick="closeModal('modal-army')">Cancel</button>
-      <button class="btn btn-primary" onclick="createArmy()">Create</button>
+      <button class="btn btn-primary" id="army-modal-save-btn" onclick="saveArmy()">Create</button>
     </div>
   </div>
 </div>
@@ -804,11 +818,40 @@ end hidden -->
 <!-- ===== ADD TF TO ARMY MODAL ===== -->
 <div id="modal-add-tf" class="modal-bg">
   <div class="modal">
-    <div class="modal-header">Add Task Force to Army <button class="modal-close" onclick="closeModal('modal-add-tf')"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="modal-header">Add Task Force <button class="modal-close" onclick="closeModal('modal-add-tf')"><i class="fa-solid fa-xmark"></i></button></div>
+    <div id="add-tf-faction-note" style="display:none;font-size:11px;margin-bottom:8px"></div>
     <div class="scrolllist" id="add-tf-list"></div>
     <div style="margin-top:12px;display:flex;justify-content:flex-end;gap:8px">
       <button class="btn btn-secondary" onclick="closeModal('modal-add-tf')">Cancel</button>
-      <button class="btn btn-primary" onclick="confirmAddTF()">Add Selected</button>
+      <button class="btn btn-primary" onclick="confirmAddTF()">Add</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ARMY: ADD UNIT TO BG MODAL ===== -->
+<div id="modal-army-bg-unit" class="modal-bg">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-header">Add Units to Battle Group <button class="modal-close" onclick="closeModal('modal-army-bg-unit')"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="scrolllist" id="bg-unit-list"></div>
+    <div style="margin-top:12px;display:flex;justify-content:space-between;align-items:center;gap:8px">
+      <span id="bg-unit-count" style="font-size:11px;color:#8b949e"></span>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-secondary" onclick="closeModal('modal-army-bg-unit')">Cancel</button>
+        <button class="btn btn-primary" onclick="confirmAddToBG()">Add Selected</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ARMY: ADD TF TO BG MODAL ===== -->
+<div id="modal-army-bg-tf" class="modal-bg">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header">Add Entire Task Force <button class="modal-close" onclick="closeModal('modal-army-bg-tf')"><i class="fa-solid fa-xmark"></i></button></div>
+    <div style="font-size:11px;color:#8b949e;margin-bottom:8px">All units from the selected task force will be added to this battle group.</div>
+    <div class="scrolllist" id="bg-tf-list"></div>
+    <div style="margin-top:12px;display:flex;justify-content:flex-end;gap:8px">
+      <button class="btn btn-secondary" onclick="closeModal('modal-army-bg-tf')">Cancel</button>
+      <button class="btn btn-primary" onclick="confirmAddTFToBG()">Add All Units</button>
     </div>
   </div>
 </div>
@@ -1179,8 +1222,15 @@ let addUnitTargetRole = "core";
 let addUnitSelectedId = null;
 let addUnitSelectedType = "unit";
 let currentArmyId = null;
+let editingArmyId = null;
 let addTFTargetArmyId = null;
 let addTFSelectedId = null;
+let bgUnitTargetArmyId = null;
+let bgUnitTargetBgId = null;
+let bgUnitSelectedItems = new Set();
+let bgTFTargetArmyId = null;
+let bgTFTargetBgId = null;
+let bgTFSelectedId = null;
 let currentDeployId = null;
 let bgUnitTargetBGId = null;
 let bgUnitSelectedId = null;
@@ -3952,30 +4002,47 @@ function deleteCustomAsset(id) {
 // ============================================================
 // ARMIES
 // ============================================================
-function renderArmyList() {
-  const list = document.getElementById("army-list");
-  if(!state.armies.length) { list.innerHTML=`<div class="empty"><div class="empty-icon"><i class="fa-solid fa-chess-rook"></i></div>No armies yet</div>`; return; }
-  list.innerHTML = state.armies.map(a => {
-    const pts = armyPoints(a);
-    const tfCount = a.taskForceIds.length;
-    const isCurrent = a.id===currentArmyId;
-    return `<div class="list-row" style="${isCurrent?"border-color:#007eff":""}" onclick="selectArmy('${a.id}')">
-      <div>
-        <div style="font-weight:bold;color:${isCurrent?"#007eff":"#fff"}">${esc(a.name)}</div>
-        <div style="font-size:11px;color:#8b949e">${tfCount} Task Force${tfCount!==1?"s":""} &bull; ${pts}${a.pointsLimit?` / ${a.pointsLimit}`:""} pts</div>
-      </div>
-      <div style="display:flex;gap:4px">
-        <button class="trait-edit-btn" style="border-color:#8b000066;color:#ef5350;background:#2a0a0a" onclick="event.stopPropagation();deleteArmy('${a.id}')">Del</button>
-      </div>
-    </div>`;
-  }).join("");
-}
+function romanNumeral(n) { return ["","I","II","III","IV","V"][n]||String(n); }
 
 function armyPoints(a) {
   return (a.taskForceIds||[]).reduce((sum,tfId) => {
     const tf = state.taskForces.find(t=>t.id===tfId);
     return sum + (tf?tfPoints(tf):0);
   },0);
+}
+
+function bgPoints(bg) {
+  return (bg.entries||[]).reduce((sum,e) => {
+    const tf = state.taskForces.find(t=>t.id===e.tfId);
+    const slot = tf ? (tf.units||[]).find(s=>s.id===e.slotId) : null;
+    return sum + (slot ? slotPointValue(slot) : 0);
+  }, 0);
+}
+
+function _ensureBGs(army) {
+  const n = army.bgCount || 3;
+  if(!army.battleGroups) army.battleGroups = [];
+  while(army.battleGroups.length < n)
+    army.battleGroups.push({id:"bg_"+uid(), name:`Battle Group ${romanNumeral(army.battleGroups.length+1)}`, entries:[]});
+}
+
+function renderArmyList() {
+  const list = document.getElementById("army-list");
+  if(!state.armies.length) { list.innerHTML=`<div class="empty"><div class="empty-icon"><i class="fa-solid fa-chess-rook"></i></div>No armies yet</div>`; return; }
+  list.innerHTML = state.armies.map(a => {
+    const pts = armyPoints(a);
+    const tfCount = (a.taskForceIds||[]).length;
+    const isCurrent = a.id===currentArmyId;
+    return `<div class="list-row" style="${isCurrent?"border-color:#007eff":""}" onclick="selectArmy('${a.id}')">
+      <div style="min-width:0">
+        <div style="font-weight:bold;color:${isCurrent?"#007eff":"#fff"};overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(a.name)}</div>
+        <div style="font-size:11px;color:#8b949e;display:flex;align-items:center;gap:5px;flex-wrap:wrap">
+          ${a.faction ? factionPill(a.faction) : ""}
+          <span>${tfCount} TF${tfCount!==1?"s":""} &bull; ${a.bgCount||3} BGs &bull; ${pts}${a.pointsLimit?` / ${a.pointsLimit}`:""} pts</span>
+        </div>
+      </div>
+    </div>`;
+  }).join("");
 }
 
 function selectArmy(id) {
@@ -3987,53 +4054,169 @@ function selectArmy(id) {
 function renderArmyDetail() {
   const panel = document.getElementById("army-detail-panel");
   const army = state.armies.find(a=>a.id===currentArmyId);
-  if(!army) { panel.innerHTML=`<div class="card"><div class="empty">Select an army to view</div></div>`; return; }
+  if(!army) { panel.innerHTML=`<div class="card"><div class="empty"><div class="empty-icon"><i class="fa-solid fa-chess-rook"></i></div>Select an army to view</div></div>`; return; }
+  _ensureBGs(army);
   const pts = armyPoints(army);
-  const tfs = army.taskForceIds.map(id=>state.taskForces.find(t=>t.id===id)).filter(Boolean);
+  const bgCount = army.bgCount || 3;
+  const tfs = (army.taskForceIds||[]).map(id=>state.taskForces.find(t=>t.id===id)).filter(Boolean);
+
+  // TF pool panel
+  const tfPoolHTML = tfs.length === 0
+    ? `<div style="font-size:12px;color:#444;font-style:italic;padding:6px 0">No task forces added yet.</div>`
+    : tfs.map(tf => {
+        const tp = tfPoints(tf);
+        const unitCount = (tf.units||[]).reduce((s,u)=>s+u.quantity,0);
+        const overLimit = tfOverLimit(tf);
+        return `<div class="list-row" style="${overLimit?"border-color:#ef535055":""}">
+          <div style="min-width:0;flex:1">
+            <div style="font-weight:bold;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(tf.name)}</div>
+            <div style="font-size:11px;color:#8b949e;display:flex;align-items:center;gap:4px;flex-wrap:wrap">
+              ${tf.faction ? factionPill(tf.faction) : ""}
+              <span>${unitCount} units &bull; ${tp} pts${overLimit?" ⚠":""}</span>
+            </div>
+          </div>
+          <button class="trait-edit-btn" style="border-color:#8b000066;color:#ef5350;background:#2a0a0a;flex-shrink:0" onclick="removeTFFromArmy('${army.id}','${tf.id}')">Remove</button>
+        </div>`;
+      }).join("");
+
+  // BG count pill-nav
+  const bgNav = [3,4,5].map(n =>
+    `<div class="pill${bgCount===n?" active":""}" style="font-size:11px;padding:4px 12px" onclick="setBGCount('${army.id}',${n})">${n}</div>`
+  ).join("");
+
+  // Battle group cards
+  const bgCardsHTML = army.battleGroups.slice(0, bgCount).map(bg => {
+    const bPts = bgPoints(bg);
+    const entriesHTML = (bg.entries||[]).map(e => {
+      const tf = state.taskForces.find(t=>t.id===e.tfId);
+      if(!tf) return "";
+      const slot = (tf.units||[]).find(s=>s.id===e.slotId);
+      if(!slot) return "";
+      const unit = unitById(slot.unitId);
+      if(!unit) return "";
+      const tfColor = FACTION_COLORS[tf.faction] || "#555";
+      return `<div class="army-bg-entry">
+        <div style="min-width:0;flex:1">
+          <div style="font-size:12px;font-weight:bold;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(unit.name)}</div>
+          <div style="display:flex;align-items:center;gap:4px;margin-top:2px;flex-wrap:wrap">
+            <span style="font-size:9px;font-weight:bold;padding:0 5px;border-radius:8px;background:${tfColor}18;color:${tfColor};border:1px solid ${tfColor}44;white-space:nowrap;flex-shrink:0">${esc(tf.name)}</span>
+            <span style="font-size:10px;color:var(--text-dim)">×${slot.quantity} &bull; ${slotPointValue(slot)} pts</span>
+          </div>
+        </div>
+        <button class="trait-edit-btn" style="border-color:#8b000066;color:#ef5350;background:#2a0a0a;padding:0 5px;flex-shrink:0;line-height:1.4" onclick="removeFromBG('${army.id}','${bg.id}','${e.id}')">×</button>
+      </div>`;
+    }).join("");
+
+    return `<div class="army-bg-card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:6px">
+        <div>
+          <div style="font-family:var(--font-display);font-size:16px;letter-spacing:.5px;color:var(--accent)">${esc(bg.name)}</div>
+          <div style="font-size:10px;color:var(--text-muted)">${bPts} pts &bull; ${(bg.entries||[]).length} unit${(bg.entries||[]).length!==1?"s":""}</div>
+        </div>
+        <div style="display:flex;gap:4px;flex-shrink:0">
+          <button class="trait-edit-btn" onclick="openArmyBGUnitModal('${army.id}','${bg.id}')">Add Unit</button>
+          <button class="trait-edit-btn" onclick="openBGTFModal('${army.id}','${bg.id}')">Add TF</button>
+        </div>
+      </div>
+      ${entriesHTML || `<div style="font-size:11px;color:#444;font-style:italic;padding:4px 0">No units yet</div>`}
+    </div>`;
+  }).join("");
+
   panel.innerHTML = `<div class="card">
     <div class="card-title">
       ${esc(army.name)}
       <div style="display:flex;gap:6px">
-        <button class="trait-edit-btn" onclick="openAddTFModal('${army.id}')">Add TF</button>
-        <button class="trait-edit-btn" onclick="openDeployFromArmy('${army.id}')">Deploy</button>
+        <button class="trait-edit-btn" onclick="openEditArmyModal('${army.id}')">Edit</button>
+        <button class="trait-edit-btn" style="border-color:#8b000066;color:#ef5350;background:#2a0a0a" onclick="confirmBtn(this,()=>deleteArmy('${army.id}'))">Delete</button>
       </div>
     </div>
-    <div style="margin-bottom:12px;display:flex;gap:20px;flex-wrap:wrap">
-      <div><div class="points-big" style="font-size:22px">${pts}</div><div class="points-label">Total Points</div></div>
-      ${army.pointsLimit?`<div><div class="points-big" style="font-size:22px;color:${pts>army.pointsLimit?"#ef5350":"#4caf50"}">${army.pointsLimit-pts}</div><div class="points-label">Remaining</div></div>`:""}
+    <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:16px;flex-wrap:wrap">
+      <span class="points-big" style="font-size:20px">${pts}</span>
+      <span class="points-label">${army.pointsLimit?`/ ${army.pointsLimit} pts`:"pts"}</span>
+      <span style="font-size:11px;color:var(--text-muted)">${tfs.length} task force${tfs.length!==1?"s":""}</span>
+      ${army.faction ? factionPill(army.faction) : ""}
     </div>
-    ${tfs.length===0?`<div class="empty">No task forces added</div>`:""}
-    ${tfs.map(tf => {
-      const tp = tfPoints(tf);
-      const unitCount = tf.units.reduce((s,u)=>s+u.quantity,0);
-      return `<div class="list-row">
-        <div>
-          <div style="font-weight:bold">${esc(tf.name)}</div>
-          <div style="font-size:11px;color:#8b949e">${unitCount} units &bull; ${tp} pts</div>
+    <div style="display:grid;grid-template-columns:220px 1fr;gap:16px;align-items:start">
+      <div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <span style="font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--text-muted);font-weight:bold">Task Force Pool</span>
+          <button class="trait-edit-btn" onclick="openAddTFModal('${army.id}')">Add TF</button>
         </div>
-        <button class="trait-edit-btn" style="border-color:#8b000066;color:#ef5350;background:#2a0a0a" onclick="removeTFFromArmy('${army.id}','${tf.id}')">X</button>
-      </div>`;
-    }).join("")}
+        ${tfPoolHTML}
+      </div>
+      <div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <span style="font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--text-muted);font-weight:bold">Battle Groups</span>
+          <div class="pill-nav" style="gap:4px">${bgNav}</div>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:start">
+          ${bgCardsHTML}
+        </div>
+      </div>
+    </div>
   </div>`;
 }
 
-function openNewArmyModal() { document.getElementById("army-new-name").value=""; document.getElementById("army-points-limit").value="1500"; openModal("modal-army"); }
+function openNewArmyModal() {
+  editingArmyId = null;
+  document.getElementById("army-modal-title").childNodes[0].textContent = "New Army ";
+  document.getElementById("army-modal-save-btn").textContent = "Create";
+  document.getElementById("army-new-name").value = "";
+  document.getElementById("army-faction").value = "";
+  document.getElementById("army-bg-count").value = "3";
+  document.getElementById("army-points-limit").value = "";
+  // Populate custom factions in the faction dropdown
+  _refreshArmyFactionSelect();
+  openModal("modal-army");
+}
 
-function createArmy() {
+function openEditArmyModal(id) {
+  const army = state.armies.find(a=>a.id===id);
+  if(!army) return;
+  editingArmyId = id;
+  document.getElementById("army-modal-title").childNodes[0].textContent = "Edit Army ";
+  document.getElementById("army-modal-save-btn").textContent = "Save";
+  document.getElementById("army-new-name").value = army.name;
+  document.getElementById("army-faction").value = army.faction || "";
+  document.getElementById("army-bg-count").value = String(army.bgCount || 3);
+  document.getElementById("army-points-limit").value = army.pointsLimit || "";
+  _refreshArmyFactionSelect();
+  openModal("modal-army");
+}
+
+function _refreshArmyFactionSelect() {
+  const sel = document.getElementById("army-faction");
+  const builtIn = [["","Any Faction"],["standard","Standard"],["precursor","Precursor"],["soulless","Soulless"],["swarm","Swarm"],["warrior","Warrior"]];
+  const custom = (state.customFactions||[]).map(cf=>[cf.id, cf.name]);
+  const cur = sel.value;
+  sel.innerHTML = [...builtIn,...custom].map(([v,l])=>`<option value="${v}">${esc(l)}</option>`).join("");
+  sel.value = cur;
+}
+
+function saveArmy() {
   const name = document.getElementById("army-new-name").value.trim();
   if(!name) { alert("Enter a name."); return; }
-  const limit = parseInt(document.getElementById("army-points-limit").value)||0;
-  const army = {id:"army_"+uid(), name, pointsLimit:limit, taskForceIds:[]};
-  state.armies.push(army);
+  const faction = document.getElementById("army-faction").value || null;
+  const bgCount = parseInt(document.getElementById("army-bg-count").value) || 3;
+  const limitRaw = parseInt(document.getElementById("army-points-limit").value);
+  const pointsLimit = (!isNaN(limitRaw) && limitRaw > 0) ? limitRaw : null;
+  if(editingArmyId) {
+    const army = state.armies.find(a=>a.id===editingArmyId);
+    if(army) { army.name=name; army.faction=faction; army.bgCount=bgCount; army.pointsLimit=pointsLimit; _ensureBGs(army); }
+    editingArmyId = null;
+  } else {
+    const battleGroups = Array.from({length:bgCount},(_,i)=>({id:"bg_"+uid(),name:`Battle Group ${romanNumeral(i+1)}`,entries:[]}));
+    const army = {id:"army_"+uid(), name, faction, bgCount, pointsLimit, taskForceIds:[], battleGroups};
+    state.armies.push(army);
+    currentArmyId = army.id;
+  }
   saveState();
   closeModal("modal-army");
-  currentArmyId = army.id;
   renderArmyList();
   renderArmyDetail();
 }
 
 function deleteArmy(id) {
-  if(!confirm("Delete this army?")) return;
   state.armies = state.armies.filter(a=>a.id!==id);
   if(currentArmyId===id) currentArmyId=null;
   saveState();
@@ -4041,23 +4224,52 @@ function deleteArmy(id) {
   renderArmyDetail();
 }
 
+function setBGCount(armyId, n) {
+  const army = state.armies.find(a=>a.id===armyId);
+  if(!army) return;
+  army.bgCount = n;
+  _ensureBGs(army);
+  // Trim trailing empty BGs beyond n
+  while(army.battleGroups.length > n && !(army.battleGroups[army.battleGroups.length-1].entries||[]).length)
+    army.battleGroups.pop();
+  saveState();
+  renderArmyDetail();
+}
+
 function openAddTFModal(armyId) {
   addTFTargetArmyId = armyId;
   addTFSelectedId = null;
   const army = state.armies.find(a=>a.id===armyId);
+  const noteEl = document.getElementById("add-tf-faction-note");
+  if(army?.faction) {
+    noteEl.style.display = "block";
+    noteEl.innerHTML = `<i class="fa-solid fa-filter" style="margin-right:4px"></i>Showing only ${factionPill(army.faction)} task forces.`;
+  } else { noteEl.style.display = "none"; }
   const list = document.getElementById("add-tf-list");
-  const available = state.taskForces.filter(tf=>!army?.taskForceIds.includes(tf.id));
-  if(!available.length) { list.innerHTML=`<div class="empty">All task forces already added, or none exist</div>`; }
-  else list.innerHTML = available.map(tf => {
-    const pts = tfPoints(tf);
-    const sel = addTFSelectedId===tf.id;
-    return `<div class="list-row" style="${sel?"border-color:#007eff;background:#1a2a4a":""}" onclick="addTFSelectedId='${tf.id}';openAddTFModal('${armyId}')">
-      <div>
-        <span style="font-weight:bold;color:${sel?"#007eff":"#fff"}">${esc(tf.name)}</span>
-        <div style="font-size:11px;color:#8b949e">${tf.units.reduce((s,u)=>s+u.quantity,0)} units &bull; ${pts} pts</div>
-      </div>
-    </div>`;
-  }).join("");
+  const available = state.taskForces.filter(tf => {
+    if((army?.taskForceIds||[]).includes(tf.id)) return false;
+    if(army?.faction && tf.faction !== army.faction) return false;
+    return true;
+  });
+  if(!available.length) {
+    list.innerHTML=`<div class="empty">${army?.faction?"No task forces match the faction restriction, or all are already added.":"All task forces already added, or none exist."}</div>`;
+  } else {
+    list.innerHTML = available.map(tf => {
+      const pts = tfPoints(tf);
+      const sel = addTFSelectedId===tf.id;
+      const overLimit = tfOverLimit(tf);
+      return `<div class="list-row" style="${sel?"border-color:#007eff;background:#0d1e36":overLimit?"border-color:#ef535055":""}" onclick="addTFSelectedId='${tf.id}';openAddTFModal('${armyId}')">
+        <div style="min-width:0">
+          <div style="font-weight:bold;color:${sel?"#007eff":"#fff"};overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(tf.name)}</div>
+          <div style="font-size:11px;color:#8b949e;display:flex;align-items:center;gap:4px;flex-wrap:wrap">
+            ${tf.faction?factionPill(tf.faction):""}
+            <span>${(tf.units||[]).reduce((s,u)=>s+u.quantity,0)} units &bull; ${pts} pts${overLimit?" ⚠ over limit":""}</span>
+          </div>
+        </div>
+        ${sel?`<i class="fa-solid fa-check" style="color:#007eff;flex-shrink:0"></i>`:""}
+      </div>`;
+    }).join("");
+  }
   openModal("modal-add-tf");
 }
 
@@ -4076,9 +4288,133 @@ function removeTFFromArmy(armyId, tfId) {
   const army = state.armies.find(a=>a.id===armyId);
   if(!army) return;
   army.taskForceIds = army.taskForceIds.filter(id=>id!==tfId);
+  // Also clean up BG entries referencing this TF
+  (army.battleGroups||[]).forEach(bg => {
+    bg.entries = (bg.entries||[]).filter(e=>e.tfId!==tfId);
+  });
   saveState();
   renderArmyDetail();
   renderArmyList();
+}
+
+function openArmyBGUnitModal(armyId, bgId) {
+  bgUnitTargetArmyId = armyId;
+  bgUnitTargetBgId = bgId;
+  bgUnitSelectedItems = new Set();
+  _renderBGUnitList();
+  openModal("modal-army-bg-unit");
+}
+
+function _renderBGUnitList() {
+  const army = state.armies.find(a=>a.id===bgUnitTargetArmyId);
+  const bg = army?.battleGroups?.find(b=>b.id===bgUnitTargetBgId);
+  const list = document.getElementById("bg-unit-list");
+  const countEl = document.getElementById("bg-unit-count");
+  if(!army||!bg) return;
+  const alreadyInBG = new Set((bg.entries||[]).map(e=>e.slotId));
+  const tfs = (army.taskForceIds||[]).map(id=>state.taskForces.find(t=>t.id===id)).filter(Boolean);
+  if(!tfs.length) { list.innerHTML=`<div class="empty">No task forces in this army's pool.</div>`; return; }
+  list.innerHTML = tfs.map(tf => {
+    const slots = (tf.units||[]).filter(s=>s.quantity>0);
+    if(!slots.length) return "";
+    const tfColor = FACTION_COLORS[tf.faction] || "#555";
+    return `<div>
+      <div style="font-size:10px;text-transform:uppercase;letter-spacing:.8px;font-weight:bold;padding:8px 0 5px;display:flex;align-items:center;gap:6px;border-top:1px solid var(--border-subtle);margin-top:4px">
+        <span style="color:${tfColor}">${esc(tf.name)}</span>${tf.faction?factionPill(tf.faction):""}
+      </div>
+      ${slots.map(slot => {
+        const unit = unitById(slot.unitId);
+        if(!unit) return "";
+        const inBG = alreadyInBG.has(slot.id);
+        const sel = bgUnitSelectedItems.has(slot.id);
+        return `<div class="list-row" style="${sel?"border-color:#007eff;background:#0d1e36":inBG?"opacity:.45;cursor:default":""}" onclick="${inBG?"":"toggleBGUnitItem('"+slot.id+"')"}">
+          <div style="min-width:0">
+            <div style="font-weight:bold;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(unit.name)}</div>
+            <div style="font-size:11px;color:#8b949e">${slot.unitType||"unit"} &bull; ×${slot.quantity} &bull; ${slotPointValue(slot)} pts${inBG?" &bull; already in this group":""}</div>
+          </div>
+          ${sel?`<i class="fa-solid fa-check" style="color:#007eff;flex-shrink:0"></i>`:""}
+        </div>`;
+      }).join("")}
+    </div>`;
+  }).join("");
+  if(countEl) countEl.textContent = bgUnitSelectedItems.size ? `${bgUnitSelectedItems.size} selected` : "";
+}
+
+function toggleBGUnitItem(slotId) {
+  if(bgUnitSelectedItems.has(slotId)) bgUnitSelectedItems.delete(slotId);
+  else bgUnitSelectedItems.add(slotId);
+  _renderBGUnitList();
+}
+
+function confirmAddToBG() {
+  if(!bgUnitSelectedItems.size) { closeModal("modal-army-bg-unit"); return; }
+  const army = state.armies.find(a=>a.id===bgUnitTargetArmyId);
+  const bg = army?.battleGroups?.find(b=>b.id===bgUnitTargetBgId);
+  if(!army||!bg) return;
+  bgUnitSelectedItems.forEach(slotId => {
+    if((bg.entries||[]).some(e=>e.slotId===slotId)) return;
+    let tfId = null;
+    for(const tid of army.taskForceIds) {
+      const tf = state.taskForces.find(t=>t.id===tid);
+      if(tf && (tf.units||[]).some(s=>s.id===slotId)) { tfId=tid; break; }
+    }
+    if(!tfId) return;
+    if(!bg.entries) bg.entries=[];
+    bg.entries.push({id:"bge_"+uid(), tfId, slotId});
+  });
+  saveState();
+  closeModal("modal-army-bg-unit");
+  renderArmyDetail();
+}
+
+function removeFromBG(armyId, bgId, entryId) {
+  const army = state.armies.find(a=>a.id===armyId);
+  const bg = army?.battleGroups?.find(b=>b.id===bgId);
+  if(!bg) return;
+  bg.entries = (bg.entries||[]).filter(e=>e.id!==entryId);
+  saveState();
+  renderArmyDetail();
+}
+
+function openBGTFModal(armyId, bgId) {
+  bgTFTargetArmyId = armyId;
+  bgTFTargetBgId = bgId;
+  bgTFSelectedId = null;
+  const army = state.armies.find(a=>a.id===armyId);
+  const tfs = (army?.taskForceIds||[]).map(id=>state.taskForces.find(t=>t.id===id)).filter(Boolean);
+  const list = document.getElementById("bg-tf-list");
+  if(!tfs.length) { list.innerHTML=`<div class="empty">No task forces in this army's pool.</div>`; }
+  else list.innerHTML = tfs.map(tf => {
+    const pts = tfPoints(tf);
+    const unitCount = (tf.units||[]).reduce((s,u)=>s+u.quantity,0);
+    return `<div class="list-row" style="${bgTFSelectedId===tf.id?"border-color:#007eff;background:#0d1e36":""}" onclick="bgTFSelectedId='${tf.id}';openBGTFModal('${armyId}','${bgId}')">
+      <div style="min-width:0">
+        <div style="font-weight:bold;color:${bgTFSelectedId===tf.id?"#007eff":"#fff"};overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(tf.name)}</div>
+        <div style="font-size:11px;color:#8b949e;display:flex;align-items:center;gap:4px;flex-wrap:wrap">
+          ${tf.faction?factionPill(tf.faction):""}
+          <span>${unitCount} units &bull; ${pts} pts</span>
+        </div>
+      </div>
+      ${bgTFSelectedId===tf.id?`<i class="fa-solid fa-check" style="color:#007eff;flex-shrink:0"></i>`:""}
+    </div>`;
+  }).join("");
+  openModal("modal-army-bg-tf");
+}
+
+function confirmAddTFToBG() {
+  if(!bgTFSelectedId) { alert("Select a task force."); return; }
+  const army = state.armies.find(a=>a.id===bgTFTargetArmyId);
+  const bg = army?.battleGroups?.find(b=>b.id===bgTFTargetBgId);
+  const tf = state.taskForces.find(t=>t.id===bgTFSelectedId);
+  if(!army||!bg||!tf) return;
+  (tf.units||[]).forEach(slot => {
+    if((bg.entries||[]).some(e=>e.slotId===slot.id)) return;
+    if(!bg.entries) bg.entries=[];
+    bg.entries.push({id:"bge_"+uid(), tfId:tf.id, slotId:slot.id});
+  });
+  saveState();
+  closeModal("modal-army-bg-tf");
+  renderArmyDetail();
 }
 
 function openDeployFromArmy(armyId) {
