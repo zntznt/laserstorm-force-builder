@@ -4300,20 +4300,31 @@ function _renderBGTFList() {
   }
   list.innerHTML = tfs.map(tf => {
     const pts = tfPoints(tf);
-    const unitCount = (tf.units||[]).reduce((s,u)=>s+u.quantity,0);
-    const sel = bgTFSelectedId===tf.id;
-    return `<div class="list-row" style="${sel?"border-color:#007eff;background:#0d1e36":""}" onclick="bgTFSelectedId='${tf.id}';_renderBGTFList()">
+    const totalQty = (tf.units||[]).reduce((s,u)=>s+u.quantity,0);
+    const remainingQty = (tf.units||[]).reduce((s,slot)=>s+slotRemainingQty(army,slot),0);
+    const fullyAssigned = remainingQty === 0;
+    const partial = remainingQty < totalQty && !fullyAssigned;
+    const sel = bgTFSelectedId===tf.id && !fullyAssigned;
+    const qtyNote = fullyAssigned
+      ? ` &bull; <span style="color:#666">fully assigned</span>`
+      : partial
+        ? ` &bull; <span style="color:#66bb6a">${remainingQty} / ${totalQty} remaining</span>`
+        : ` &bull; ${totalQty} unit${totalQty!==1?"s":""}`;
+    return `<div class="list-row" style="${sel?"border-color:#007eff;background:#0d1e36":fullyAssigned?"opacity:.4;cursor:default":""}" onclick="${fullyAssigned?"":"bgTFSelectedId='"+tf.id+"';_renderBGTFList()"}">
       <div style="min-width:0">
         <div style="font-weight:bold;color:${sel?"#007eff":"#fff"};overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(tf.name)}</div>
         <div style="font-size:11px;color:#8b949e;display:flex;align-items:center;gap:4px;flex-wrap:wrap">
           ${tf.faction?factionPill(tf.faction):""}
-          <span>${unitCount} units &bull; ${pts} pts</span>
+          <span>${pts} pts${qtyNote}</span>
         </div>
       </div>
       ${sel?`<i class="fa-solid fa-check" style="color:#007eff;flex-shrink:0"></i>`:""}
     </div>`;
   }).join("");
-  if(confBtn) confBtn.disabled = !bgTFSelectedId;
+  // Disable confirm if nothing is selected, or the selected TF has no remaining capacity
+  const selTF = bgTFSelectedId && tfs.find(t=>t.id===bgTFSelectedId);
+  const selHasRemaining = selTF && (selTF.units||[]).some(slot=>slotRemainingQty(army,slot)>0);
+  if(confBtn) confBtn.disabled = !selHasRemaining;
 }
 
 function confirmAddTFToBG() {
