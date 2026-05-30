@@ -4308,13 +4308,106 @@ function renderArmyDetail() {
     </div>
   </div>` : "";
 
-  // Battle group tabs + card
+  // Battle group tabs + card (equal-width grid)
   const bgList = army.battleGroups.slice(0, bgCount);
   const bgIds = bgList.map(b => b.id);
   if(!activeBGTabId || !bgIds.includes(activeBGTabId)) activeBGTabId = bgIds[0] || null;
 
   let bgCardBodyHTML = "";
-  const bgTabsHTML = `<div style="display:flex;gap:2px;border-bottom:2px solid var(--border-subtle);overflow-x:auto;align-items:flex-end">
+  // Compute card body for the active BG
+  {
+    const bg = bgList.find(b => b.id === activeBGTabId);
+    if(bg) {
+      const bPts = bgPoints(bg);
+      const bgSize = bgUnitCount(bg);
+      const bgUndersize = bgViol.violatingIds.has(bg.id);
+      const bgMode = army.bgIconMode || "custom";
+      const symDef = bgDesignation(army, bg);
+      // Symbol picker
+      const pickerOpen = bgMode === "custom" && bgSymbolPickerBgId === bg.id;
+      const usedByOthers = new Set((army.battleGroups||[]).slice(0,bgCount).filter(b=>b.id!==bg.id).map(b=>b.symbol).filter(Boolean));
+      const sym = bg.symbol || ICON_SYMBOL_KEYS[0];
+      const pickerHTML = pickerOpen ? `<div style="margin-bottom:10px;padding:8px 10px;border-radius:6px;background:var(--surface-raised);border:1px solid var(--border-subtle)">
+        ${BG_SYMBOL_GROUPS.map(grp => `
+          <div style="margin-bottom:6px">
+            <div style="font-size:9px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.7px;margin-bottom:4px">${grp.label}</div>
+            <div style="display:flex;gap:4px;flex-wrap:wrap">
+              ${grp.keys.map(s => {
+                const sd = _bgSymLookup(s);
+                const isCurrent = s === sym;
+                const isUsed = usedByOthers.has(s);
+                return `<button onclick="${isUsed&&!isCurrent?"":"setBGSymbol('"+army.id+"','"+bg.id+"','"+s+"')"}" title="${sd.label}${isUsed&&!isCurrent?" (used by another group)":""}" style="min-width:30px;height:30px;border-radius:6px;padding:0 5px;border:${isCurrent?"2px solid "+sd.color:"1px solid "+sd.color+(isUsed&&!isCurrent?"22":"44")};background:${isCurrent?sd.color+"2a":"transparent"};color:${isUsed&&!isCurrent?"#333":sd.color};cursor:${isUsed&&!isCurrent?"default":"pointer"};display:inline-flex;align-items:center;justify-content:center">${_bgSymInner(sd)}</button>`;
+              }).join("")}
+            </div>
+          </div>`).join("")}
+      </div>` : "";
+      const bgWarnStripHTML = bgUndersize ? `<div style="margin-bottom:8px;padding:5px 8px;border-radius:4px;background:#1a0505;border:1px solid #ef535055;font-size:11px;color:#ef9a9a;display:flex;align-items:flex-start;gap:6px">
+        <i class="fa-solid fa-triangle-exclamation" style="color:#ef5350;flex-shrink:0;margin-top:1px"></i>
+        <span>Has ${bgSize} unit${bgSize!==1?"s":""} — needs at least <strong style="color:#ef5350">${bgViol.minAllowed}</strong> (half of ${esc(bgViol.largestName)}'s ${bgViol.largest}, rounded up)</span>
+      </div>` : "";
+      const entriesHTML = fp
+        ? (bg.entries||[]).map(e => {
+            const u = unitById(e.unitId);
+            if(!u) return "";
+            const pts = entryPointValue(e);
+            const eqty = e.qty||1;
+            const offFac = fpViol.has(e.id);
+            const stepBtn = (lbl, d, dis) => `<button onclick="changeFPEntryQty('${army.id}','${bg.id}','${e.id}',${d})" ${dis?"disabled":""} style="width:20px;height:20px;border-radius:50%;border:none;background:var(--surface-raised);color:var(--text-bright);font-size:13px;line-height:20px;text-align:center;cursor:${dis?"default":"pointer"};opacity:${dis?".3":"1"}">${lbl}</button>`;
+            const stepper = `<span style="display:inline-flex;align-items:center;gap:4px">${stepBtn("&minus;",-1,eqty<=1)}<span style="font-weight:bold;font-size:12px;min-width:18px;text-align:center">&times;${eqty}</span>${stepBtn("+",1,false)}</span>`;
+            const offFacStrip = offFac ? `<div style="padding:4px 8px;border-radius:4px;background:#1a0505;border:1px solid #ef535066;font-size:10px;color:#ef9a9a;margin-bottom:4px"><i class="fa-solid fa-triangle-exclamation" style="color:#ef5350;margin-right:3px"></i>Faction doesn't match the army restriction.</div>` : "";
+            const actions = `${offFacStrip}<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+              <span style="display:flex;align-items:center;gap:8px">${stepper}<span style="font-size:10px;color:var(--text-muted)">${pts} pts</span></span>
+              <button class="trait-edit-btn" style="border-color:#8b000066;color:#ef5350;background:#2a0a0a" onclick="removeFPEntry('${army.id}','${bg.id}','${e.id}')">Remove</button>
+            </div>`;
+            return unitCardHTML(u, actions, e.unitType||"unit");
+          }).join("")
+        : (bg.entries||[]).map(e => {
+            const tf = state.taskForces.find(t=>t.id===e.tfId);
+            if(!tf) return "";
+            const slot = (tf.units||[]).find(s=>s.id===e.slotId);
+            if(!slot) return "";
+            const unit = unitById(slot.unitId);
+            if(!unit) return "";
+            const tfColor = FACTION_COLORS[tf.faction] || "#555";
+            const tfBadge = `<span style="font-size:9px;font-weight:bold;padding:1px 6px;border-radius:8px;background:${tfColor}18;color:${tfColor};border:1px solid ${tfColor}44">${esc(tf.name)}</span>`;
+            const eqty = e.qty || slot.quantity;
+            const canInc = slotRemainingQty(army, slot) > 0;
+            const stepBtn = (lbl, d, dis) => `<button onclick="changeBGEntryQty('${army.id}','${bg.id}','${e.id}',${d})" ${dis?"disabled":""} style="width:20px;height:20px;border-radius:50%;border:none;background:var(--surface-raised);color:var(--text-bright);font-size:13px;line-height:20px;text-align:center;cursor:${dis?"default":"pointer"};opacity:${dis?".3":"1"}">${lbl}</button>`;
+            const stepper = slot.quantity > 1
+              ? `<span style="display:inline-flex;align-items:center;gap:4px" title="Split this stack across battle groups">${stepBtn("&minus;",-1,eqty<=1)}<span style="font-weight:bold;font-size:12px;min-width:18px;text-align:center">&times;${eqty}</span>${stepBtn("+",1,!canInc)}</span>`
+              : "";
+            const actions = `<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+              <span style="font-size:10px;color:var(--text-muted);display:flex;align-items:center;gap:6px">from ${tfBadge}</span>
+              <span style="display:flex;align-items:center;gap:8px">${stepper}<span style="font-size:10px;color:var(--text-muted)">${entryPointValue(e)} pts</span>
+                <button class="trait-edit-btn" style="border-color:#8b000066;color:#ef5350;background:#2a0a0a" onclick="removeFromBG('${army.id}','${bg.id}','${e.id}')">Remove</button>
+              </span>
+            </div>`;
+            return unitCardHTML(unit, actions, slot.unitType || "unit");
+          }).join("");
+      // Toolbar: rename inline + action buttons
+      const isEditingName = editingBGId === bg.id;
+      const nameSection = isEditingName
+        ? `<input id="bg-name-inp-${bg.id}" type="text" value="${esc(bg.name)}" maxlength="40"
+             style="font-family:var(--font-display);font-size:14px;letter-spacing:.5px;color:var(--accent);background:transparent;border:none;border-bottom:1px solid var(--accent);outline:none;min-width:0;flex:1;padding:0"
+             onblur="saveBGName('${army.id}','${bg.id}')"
+             onkeydown="if(event.key==='Enter')this.blur();if(event.key==='Escape')cancelBGNameEdit()">`
+        : `<span style="font-family:var(--font-display);font-size:14px;letter-spacing:.6px;color:var(--text-bright);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(bg.name)}</span>
+           <button onclick="startBGNameEdit('${bg.id}')" title="Rename battle group" style="background:none;border:none;color:#555;cursor:pointer;padding:0 4px;font-size:10px;line-height:1;flex-shrink:0;transition:color .15s" onmouseover="this.style.color='#aaa'" onmouseout="this.style.color='#555'"><i class="fa-solid fa-pencil"></i></button>`;
+      const toolbarHTML = `<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border-subtle)">
+        <div style="flex:1;display:flex;align-items:center;gap:5px;min-width:0;overflow:hidden">${nameSection}</div>
+        <div style="display:flex;gap:4px;flex-shrink:0">
+          ${fp
+            ? `<button class="trait-edit-btn" onclick="openFPBGUnitModal('${army.id}','${bg.id}')">Add Unit</button>`
+            : `<button class="trait-edit-btn" onclick="openArmyBGUnitModal('${army.id}','${bg.id}')">Add Unit</button>
+               <button class="trait-edit-btn" onclick="openBGTFModal('${army.id}','${bg.id}')">Add Task Force</button>`}
+        </div>
+      </div>`;
+      bgCardBodyHTML = `${toolbarHTML}${pickerHTML}${bgWarnStripHTML}${entriesHTML || `<div style="font-size:11px;color:#555;font-style:italic;padding:10px 0;text-align:center"><i class="fa-solid fa-circle-plus" style="color:#333;margin-right:5px"></i>No units assigned</div>`}`;
+    }
+  }
+
+  // Equal-width grid tabs — each 1/N of total width
+  const bgTabsHTML = `<div style="display:grid;grid-template-columns:repeat(${bgList.length},1fr);gap:2px">
     ${bgList.map(bg => {
       const isActive = activeBGTabId === bg.id;
       const bPts = bgPoints(bg);
@@ -4323,106 +4416,35 @@ function renderArmyDetail() {
       const bgMode = army.bgIconMode || "custom";
       const symDef = bgDesignation(army, bg);
       const hasWarn = bgUndersize;
-
+      const symInner = _bgSymInner(symDef, 10);
+      const symStyle = `width:22px;height:22px;border-radius:5px;background:${symDef.color}${isActive?"22":"14"};border:1.5px solid ${symDef.color}${isActive?"99":"44"};color:${symDef.color};display:inline-flex;align-items:center;justify-content:center;flex-shrink:0`;
+      const warnIcon = hasWarn ? `<i class="fa-solid fa-triangle-exclamation" style="color:#ef5350;font-size:8px;flex-shrink:0;margin-left:auto"></i>` : "";
       if(isActive) {
-        // Compute card body while we have all the data
-        const symBadge = bgMode === "custom"
-          ? `<button onclick="openBGSymbolPicker('${army.id}','${bg.id}')" title="${symDef.label} — click to change" style="width:28px;height:28px;border-radius:6px;background:${symDef.color}1a;border:1.5px solid ${symDef.color}99;color:${symDef.color};cursor:pointer;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;padding:0;transition:background .15s" onmouseover="this.style.background='${symDef.color}33'" onmouseout="this.style.background='${symDef.color}1a'">${_bgSymInner(symDef)}</button>`
-          : `<div style="width:28px;height:28px;border-radius:6px;background:${symDef.color}1a;border:1.5px solid ${symDef.color}99;color:${symDef.color};display:inline-flex;align-items:center;justify-content:center;flex-shrink:0">${_bgSymInner(symDef)}</div>`;
-        const pickerOpen = bgMode === "custom" && bgSymbolPickerBgId === bg.id;
-        const usedByOthers = new Set((army.battleGroups||[]).slice(0,bgCount).filter(b=>b.id!==bg.id).map(b=>b.symbol).filter(Boolean));
-        const sym = bg.symbol || ICON_SYMBOL_KEYS[0];
-        const pickerHTML = pickerOpen ? `<div style="margin-bottom:10px;padding:8px 10px;border-radius:6px;background:var(--surface-raised);border:1px solid var(--border-subtle)">
-          ${BG_SYMBOL_GROUPS.map(grp => `
-            <div style="margin-bottom:6px">
-              <div style="font-size:9px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.7px;margin-bottom:4px">${grp.label}</div>
-              <div style="display:flex;gap:4px;flex-wrap:wrap">
-                ${grp.keys.map(s => {
-                  const sd = _bgSymLookup(s);
-                  const isCurrent = s === sym;
-                  const isUsed = usedByOthers.has(s);
-                  return `<button onclick="${isUsed&&!isCurrent?"":"setBGSymbol('"+army.id+"','"+bg.id+"','"+s+"')"}" title="${sd.label}${isUsed&&!isCurrent?" (used by another group)":""}" style="min-width:30px;height:30px;border-radius:6px;padding:0 5px;border:${isCurrent?"2px solid "+sd.color:"1px solid "+sd.color+(isUsed&&!isCurrent?"22":"44")};background:${isCurrent?sd.color+"2a":"transparent"};color:${isUsed&&!isCurrent?"#333":sd.color};cursor:${isUsed&&!isCurrent?"default":"pointer"};display:inline-flex;align-items:center;justify-content:center">${_bgSymInner(sd)}</button>`;
-                }).join("")}
-              </div>
-            </div>`).join("")}
-        </div>` : "";
-        const bgWarnStrip = bgUndersize ? `<div style="margin-bottom:8px;padding:5px 8px;border-radius:4px;background:#1a0505;border:1px solid #ef535055;font-size:11px;color:#ef9a9a;display:flex;align-items:flex-start;gap:6px">
-          <i class="fa-solid fa-triangle-exclamation" style="color:#ef5350;flex-shrink:0;margin-top:1px"></i>
-          <span>Has ${bgSize} unit${bgSize!==1?"s":""} — needs at least <strong style="color:#ef5350">${bgViol.minAllowed}</strong> (half of ${esc(bgViol.largestName)}'s ${bgViol.largest}, rounded up)</span>
-        </div>` : "";
-        const entriesHTML = fp
-          ? (bg.entries||[]).map(e => {
-              const u = unitById(e.unitId);
-              if(!u) return "";
-              const pts = entryPointValue(e);
-              const eqty = e.qty||1;
-              const offFac = fpViol.has(e.id);
-              const stepBtn = (lbl, d, dis) => `<button onclick="changeFPEntryQty('${army.id}','${bg.id}','${e.id}',${d})" ${dis?"disabled":""} style="width:20px;height:20px;border-radius:50%;border:none;background:var(--surface-raised);color:var(--text-bright);font-size:13px;line-height:20px;text-align:center;cursor:${dis?"default":"pointer"};opacity:${dis?".3":"1"}">${lbl}</button>`;
-              const stepper = `<span style="display:inline-flex;align-items:center;gap:4px">${stepBtn("&minus;",-1,eqty<=1)}<span style="font-weight:bold;font-size:12px;min-width:18px;text-align:center">&times;${eqty}</span>${stepBtn("+",1,false)}</span>`;
-              const offFacStrip = offFac ? `<div style="padding:4px 8px;border-radius:4px;background:#1a0505;border:1px solid #ef535066;font-size:10px;color:#ef9a9a;margin-bottom:4px"><i class="fa-solid fa-triangle-exclamation" style="color:#ef5350;margin-right:3px"></i>Faction doesn't match the army restriction.</div>` : "";
-              const actions = `${offFacStrip}<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
-                <span style="display:flex;align-items:center;gap:8px">${stepper}<span style="font-size:10px;color:var(--text-muted)">${pts} pts</span></span>
-                <button class="trait-edit-btn" style="border-color:#8b000066;color:#ef5350;background:#2a0a0a" onclick="removeFPEntry('${army.id}','${bg.id}','${e.id}')">Remove</button>
-              </div>`;
-              return unitCardHTML(u, actions, e.unitType||"unit");
-            }).join("")
-          : (bg.entries||[]).map(e => {
-              const tf = state.taskForces.find(t=>t.id===e.tfId);
-              if(!tf) return "";
-              const slot = (tf.units||[]).find(s=>s.id===e.slotId);
-              if(!slot) return "";
-              const unit = unitById(slot.unitId);
-              if(!unit) return "";
-              const tfColor = FACTION_COLORS[tf.faction] || "#555";
-              const tfBadge = `<span style="font-size:9px;font-weight:bold;padding:1px 6px;border-radius:8px;background:${tfColor}18;color:${tfColor};border:1px solid ${tfColor}44">${esc(tf.name)}</span>`;
-              const eqty = e.qty || slot.quantity;
-              const canInc = slotRemainingQty(army, slot) > 0;
-              const stepBtn = (lbl, d, dis) => `<button onclick="changeBGEntryQty('${army.id}','${bg.id}','${e.id}',${d})" ${dis?"disabled":""} style="width:20px;height:20px;border-radius:50%;border:none;background:var(--surface-raised);color:var(--text-bright);font-size:13px;line-height:20px;text-align:center;cursor:${dis?"default":"pointer"};opacity:${dis?".3":"1"}">${lbl}</button>`;
-              const stepper = slot.quantity > 1
-                ? `<span style="display:inline-flex;align-items:center;gap:4px" title="Split this stack across battle groups">${stepBtn("&minus;",-1,eqty<=1)}<span style="font-weight:bold;font-size:12px;min-width:18px;text-align:center">&times;${eqty}</span>${stepBtn("+",1,!canInc)}</span>`
-                : "";
-              const actions = `<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
-                <span style="font-size:10px;color:var(--text-muted);display:flex;align-items:center;gap:6px">from ${tfBadge}</span>
-                <span style="display:flex;align-items:center;gap:8px">${stepper}<span style="font-size:10px;color:var(--text-muted)">${entryPointValue(e)} pts</span>
-                  <button class="trait-edit-btn" style="border-color:#8b000066;color:#ef5350;background:#2a0a0a" onclick="removeFromBG('${army.id}','${bg.id}','${e.id}')">Remove</button>
-                </span>
-              </div>`;
-              return unitCardHTML(unit, actions, slot.unitType || "unit");
-            }).join("");
-        bgCardBodyHTML = `${pickerHTML}${bgWarnStrip}${entriesHTML || `<div style="font-size:11px;color:#555;font-style:italic;padding:10px 0;text-align:center"><i class="fa-solid fa-circle-plus" style="color:#333;margin-right:5px"></i>No units assigned</div>`}`;
-
-        // Active tab — full width, acts as the card header
-        const isEditingName = editingBGId === bg.id;
-        const nameEl = isEditingName
-          ? `<input id="bg-name-inp-${bg.id}" type="text" value="${esc(bg.name)}" maxlength="40"
-               style="font-family:var(--font-display);font-size:16px;letter-spacing:.5px;color:var(--accent);background:transparent;border:none;border-bottom:1px solid var(--accent);outline:none;width:100%;max-width:200px;padding:0"
-               onblur="saveBGName('${army.id}','${bg.id}')"
-               onkeydown="if(event.key==='Enter')this.blur();if(event.key==='Escape')cancelBGNameEdit()">`
-          : `<span style="font-family:var(--font-display);font-size:17px;letter-spacing:.8px;color:${hasWarn?"#ef5350":"var(--accent)"}">${esc(bg.name)}</span>
-             <button onclick="startBGNameEdit('${bg.id}')" title="Rename" style="background:none;border:none;color:#555;cursor:pointer;padding:0 4px;font-size:10px;line-height:1;transition:color .15s" onmouseover="this.style.color='#aaa'" onmouseout="this.style.color='#555'"><i class="fa-solid fa-pencil"></i></button>`;
-        return `<div style="flex:1;min-width:0;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 14px 11px;border-radius:6px 6px 0 0;border:1px solid var(--border-default);border-bottom:2px solid var(--surface-page);margin-bottom:-2px;background:var(--surface-page);overflow:hidden">
-          <div style="display:flex;align-items:center;gap:8px;min-width:0;flex:1">
-            ${symBadge}
-            <div style="min-width:0">
-              <div style="display:flex;align-items:center;gap:3px;flex-wrap:wrap">${nameEl}</div>
-              <div style="font-size:10px;color:var(--text-muted);margin-top:1px">${bPts} pts &bull; ${bgSize} unit${bgSize!==1?"s":""}${hasWarn?` <i class="fa-solid fa-triangle-exclamation" style="color:#ef5350;margin-left:3px"></i>`:""}
-              </div>
-            </div>
+        // Active: div, accent top border, clickable symbol opens picker
+        const symEl = bgMode === "custom"
+          ? `<button onclick="openBGSymbolPicker('${army.id}','${bg.id}')" title="${symDef.label} — click to change" style="${symStyle};cursor:pointer;padding:0;border:1.5px solid ${symDef.color}99;transition:background .15s" onmouseover="this.style.background='${symDef.color}33'" onmouseout="this.style.background='${symDef.color}22'">${symInner}</button>`
+          : `<div style="${symStyle}">${symInner}</div>`;
+        return `<div style="padding:8px 9px 9px;border-radius:6px 6px 0 0;border:1px solid var(--border-default);border-top:2px solid var(--accent);border-bottom:none;background:var(--surface-page);overflow:hidden;min-width:0">
+          <div style="display:flex;align-items:center;gap:5px;margin-bottom:4px;min-width:0">
+            ${symEl}
+            <span style="font-family:var(--font-display);font-size:12px;letter-spacing:.5px;color:var(--accent);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1" title="${esc(bg.name)}">${esc(bg.name)}</span>
+            ${warnIcon}
           </div>
-          <div style="display:flex;gap:4px;flex-shrink:0">
-            ${fp
-              ? `<button class="trait-edit-btn" onclick="openFPBGUnitModal('${army.id}','${bg.id}')">Add Unit</button>`
-              : `<button class="trait-edit-btn" onclick="openArmyBGUnitModal('${army.id}','${bg.id}')">Add Unit</button>
-                 <button class="trait-edit-btn" onclick="openBGTFModal('${army.id}','${bg.id}')">Add Task Force</button>`}
-          </div>
+          <div style="font-size:9px;color:var(--text-muted);line-height:1.3;padding-left:27px">${bPts} pts &bull; ${bgSize} unit${bgSize!==1?"s":""}</div>
         </div>`;
       } else {
-        // Inactive tab — compact button
+        // Inactive: full-width button, same height
+        const symEl = `<div style="${symStyle}">${symInner}</div>`;
         return `<button onclick="selectBGTab('${army.id}','${bg.id}')"
-          style="display:inline-flex;align-items:center;gap:5px;padding:7px 13px;border-radius:6px 6px 0 0;flex-shrink:0;border:1px solid var(--border-subtle);border-bottom:2px solid transparent;margin-bottom:-2px;background:var(--surface-raised);color:var(--text-muted);cursor:pointer;white-space:nowrap;font-family:var(--font-display);font-size:13px;letter-spacing:.5px;transition:color .12s,background .12s" onmouseover="this.style.background='var(--surface-page)';this.style.color='var(--text-primary)'" onmouseout="this.style.background='var(--surface-raised)';this.style.color='var(--text-muted)'">
-          <span style="display:inline-flex;width:18px;height:18px;border-radius:4px;background:${symDef.color}1a;border:1px solid ${symDef.color}55;color:${symDef.color};align-items:center;justify-content:center;flex-shrink:0;font-size:9px">${_bgSymInner(symDef,9)}</span>
-          ${esc(bg.name)}
-          ${hasWarn?`<i class="fa-solid fa-triangle-exclamation" style="color:#ef5350;font-size:9px"></i>`:""}
+          style="padding:8px 9px 9px;border-radius:6px 6px 0 0;border:1px solid var(--border-subtle);border-top:2px solid transparent;border-bottom:none;background:var(--surface-raised);cursor:pointer;text-align:left;overflow:hidden;min-width:0;width:100%;transition:background .12s,border-top-color .12s"
+          onmouseover="this.style.background='var(--surface-page)';this.style.borderTopColor='var(--border-default)'"
+          onmouseout="this.style.background='var(--surface-raised)';this.style.borderTopColor='transparent'">
+          <div style="display:flex;align-items:center;gap:5px;margin-bottom:4px;min-width:0">
+            ${symEl}
+            <span style="font-family:var(--font-display);font-size:12px;letter-spacing:.5px;color:var(--text-primary);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1" title="${esc(bg.name)}">${esc(bg.name)}</span>
+            ${warnIcon}
+          </div>
+          <div style="font-size:9px;color:var(--text-faint);line-height:1.3;padding-left:27px">${bPts} pts &bull; ${bgSize}</div>
         </button>`;
       }
     }).join("")}
