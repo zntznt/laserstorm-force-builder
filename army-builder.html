@@ -2489,9 +2489,9 @@ function renderFactionModalContent() {
         <div class="custom-trait-item" style="flex-wrap:wrap">
           <span style="font-size:18px;color:${f.color}"><i class="fa-solid fa-${f.icon}"></i></span>
           <span style="flex:1;font-weight:bold;color:${f.color}">${esc(f.name)}</span>
-          <button class="trait-edit-btn" onclick="editCustomFaction('${f.id}')">Edit</button>
+          <button class="trait-edit-btn" onclick="editCustomFaction('${f.id}')"><i class="fa-solid fa-pencil"></i> Edit</button>
           ${f.description?`<div style="width:100%;font-size:10px;color:#8b949e;font-style:italic;padding-left:28px;margin-top:2px">${esc(f.description)}</div>`:""}
-          <button class="trait-edit-btn" onclick="confirmBtn(this,()=>deleteCustomFaction('${f.id}'))">Delete</button>
+          <button class="trait-edit-btn" style="border-color:#8b000066;color:#ef5350;background:#2a0a0a" onclick="confirmBtn(this,()=>deleteCustomFaction('${f.id}'))"><i class="fa-solid fa-trash"></i> Delete</button>
         </div>`).join("")
       + `</div>`
     : `<div style="color:var(--text-inactive);font-size:12px;margin-bottom:4px">No custom factions yet.</div>`;
@@ -2767,8 +2767,8 @@ function renderCustomTraitList() {
           <div style="margin-top:2px">${reqBadges}</div>
           <div style="font-size:10px;color:var(--text-faint);margin-top:1px">${typeLabel[t.type]||t.type}${t.unitTrait ? " — <span style=\"color:#7986cb\">Unit Trait</span>" : ""}${t.stackable ? ` — stackable${t.stackCap ? `, max ${t.stackCap}` : ""}` : ""}${t.description ? ` — ${esc(t.description)}` : ""}</div>
         </div>
-        <button class="trait-edit-btn" onclick="editCustomTrait('${t.id}')">Edit</button>
-        <button class="trait-edit-btn" onclick="confirmBtn(this,()=>deleteCustomTrait('${t.id}'))">Delete</button>
+        <button class="trait-edit-btn" onclick="editCustomTrait('${t.id}')"><i class="fa-solid fa-pencil"></i> Edit</button>
+        <button class="trait-edit-btn" style="border-color:#8b000066;color:#ef5350;background:#2a0a0a" onclick="confirmBtn(this,()=>deleteCustomTrait('${t.id}'))"><i class="fa-solid fa-trash"></i> Delete</button>
       </div>`;
     }).join("")
     + `</div>`;
@@ -3691,8 +3691,8 @@ function _renderCustomTFTypeList() {
   el.innerHTML = `<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:4px">`
     + state.customTFTypes.map(t=>`<div class="custom-trait-item">
       <span style="flex:1;font-weight:bold;color:var(--text-primary)">${esc(t.name)}</span>
-      <button class="trait-edit-btn" onclick="editCustomTFType('${t.id}')">Edit</button>
-      <button class="trait-edit-btn" onclick="confirmBtn(this,()=>deleteCustomTFType('${t.id}'))">Delete</button>
+      <button class="trait-edit-btn" onclick="editCustomTFType('${t.id}')"><i class="fa-solid fa-pencil"></i> Edit</button>
+      <button class="trait-edit-btn" style="border-color:#8b000066;color:#ef5350;background:#2a0a0a" onclick="confirmBtn(this,()=>deleteCustomTFType('${t.id}'))"><i class="fa-solid fa-trash"></i> Delete</button>
     </div>`).join("")
     + `</div>`;
 }
@@ -3877,8 +3877,8 @@ function _renderCustomAssetList() {
         <div style="font-weight:bold;color:var(--text-primary);font-size:13px">${esc(a.name)}${_assetFactionPill(a.faction)}</div>
         <div style="margin-top:2px">${_assetUsePills(a.use)}</div>
       </div>
-      <button class="trait-edit-btn" onclick="editCustomAsset('${a.id}')">Edit</button>
-      <button class="trait-edit-btn" onclick="confirmBtn(this,()=>deleteCustomAsset('${a.id}'))">Delete</button>
+      <button class="trait-edit-btn" onclick="editCustomAsset('${a.id}')"><i class="fa-solid fa-pencil"></i> Edit</button>
+      <button class="trait-edit-btn" style="border-color:#8b000066;color:#ef5350;background:#2a0a0a" onclick="confirmBtn(this,()=>deleteCustomAsset('${a.id}'))"><i class="fa-solid fa-trash"></i> Delete</button>
     </div>`).join("")
     + `</div>`;
 }
