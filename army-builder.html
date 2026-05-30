@@ -140,16 +140,7 @@ input.input-error,textarea.input-error{border-color:#ef535066!important;outline:
 .modal-header{font-family:var(--font-display);display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;color:var(--accent);font-size:20px;letter-spacing:1.5px}
 .modal-close{cursor:pointer;background:var(--surface-raised);border:none;color:var(--text-mid);width:26px;height:26px;border-radius:50%;font-size:16px;line-height:26px;text-align:center}
 .modal-close:hover{color:var(--text-bright);background:#444}
-.bg-card{background:var(--surface-card);border:2px solid var(--border-subtle);border-radius:8px;padding:14px;margin-bottom:14px}
 .army-bg-card{background:var(--surface-page);border:1px solid var(--border-subtle);border-radius:8px;padding:10px;flex:1;min-width:180px}
-.army-bg-entry{display:flex;align-items:flex-start;justify-content:space-between;gap:6px;padding:5px 7px;background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:4px;margin-bottom:4px}
-.bg-card.valid{border-color:#2ea043}
-.bg-card.invalid{border-color:var(--danger)}
-.bg-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
-.bg-title{font-family:var(--font-display);font-size:20px;letter-spacing:1px;color:var(--accent)}
-.validation-ok{background:#0a2a0a;border:1px solid #2ea043;color:#4caf50;padding:6px 10px;border-radius:4px;font-size:12px;margin-top:8px}
-.validation-warn{background:#2a1a0a;border:1px solid #ff8800;color:#ffb74d;padding:6px 10px;border-radius:4px;font-size:12px;margin-top:8px}
-.validation-err{background:#2a0a0a;border:1px solid #8b0000;color:#ef5350;padding:6px 10px;border-radius:4px;font-size:12px;margin-top:8px}
 .empty{text-align:center;padding:40px;color:#444;font-size:14px}
 .empty-icon{font-size:40px;margin-bottom:8px}
 .list-row{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--surface-page);border:1px solid var(--border-subtle);border-radius:4px;margin-bottom:6px;gap:8px}
@@ -233,23 +224,6 @@ label .trait-edit-btn{margin-left:6px}
 .trait-cost{font-size:10px;font-weight:600;color:var(--accent-light);background:var(--accent-tint);border:1px solid #1f6feb44;border-radius:8px;padding:0 5px;margin-left:5px;vertical-align:middle}
 .custom-trait-item{display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:6px;background:var(--surface-page);border:1px solid var(--border-default)}
 .modal-sub-header{font-family:var(--font-display);font-size:15px;letter-spacing:1px;color:var(--text-muted);margin-bottom:10px;padding-top:14px;margin-top:4px;border-top:1px solid var(--border-default)}
-@media print{
-  nav,.no-print,.btn{display:none!important}
-  .page{display:block!important;max-width:100%;padding:10px}
-  body{background:#fff;color:#000}
-  .card{background:#fff;border:1px solid #ccc}
-  .unit-card{background:#f9f9f9;border:1px solid #999}
-  .stat{background:#f0f0f0;border:1px solid #ccc}
-  .stat-name{color:#666}
-  .stat-val,.unit-name,.unit-pts{color:#000}
-  .points-big{color:#333}
-  .weapon-row{background:#f0f0f0}
-  .weapon-row span{color:#000}
-  .bg-card{border:2px solid #333!important;background:#fff}
-  .print-break{page-break-after:always}
-  .print-section{margin-bottom:20px}
-  #page-print{display:block!important}
-}
 </style>
 </head>
 <body>
@@ -521,78 +495,6 @@ label .trait-edit-btn{margin-left:6px}
   </div>
 </div>
 
-<!-- ===== DEPLOY PAGE ===== -->
-<div id="page-deploy" class="page">
-  <div class="card">
-    <div class="card-title">Deployments
-      <button class="trait-edit-btn" onclick="openNewDeployModal()">New Deployment</button>
-    </div>
-    <div id="deploy-list"></div>
-  </div>
-  <div id="deploy-editor" style="display:none">
-    <div class="card">
-      <div class="card-title">
-        <span id="deploy-editor-title">Edit Deployment</span>
-        <div style="display:flex;gap:6px">
-          <button class="btn btn-primary" onclick="saveDeployment()">Save</button>
-          <button class="trait-edit-btn" onclick="closeDeployEditor()">Close</button>
-        </div>
-      </div>
-      <div class="form-row" style="margin-bottom:10px">
-        <div class="form-group" style="flex:2">
-          <label>Deployment Name</label>
-          <input type="text" id="dep-name" style="width:100%">
-        </div>
-        <div class="form-group">
-          <label>Battle Groups <span class="tip ttip" data-tip="Each side splits its army into 3-5 roughly equal Battle Groups for activation. No Battle Group may have fewer than half the Units of the largest (min % shown). Aim for at least one Command Stand in each."><i class="fa-solid fa-circle-info"></i></span></label>
-          <select id="dep-bg-count" onchange="rebuildBGEditor()">
-            <option value="3">3 Battle Groups</option>
-            <option value="4">4 Battle Groups</option>
-            <option value="5">5 Battle Groups</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Army (Optional) <span class="tip ttip tip-left" data-tip="Limit available units to one army's Task Forces. With 3+ Task Forces, assign one per Battle Group; extras spread evenly."><i class="fa-solid fa-circle-info"></i></span></label>
-          <select id="dep-army" style="width:auto" onchange="rebuildBGEditor()">
-            <option value="">-- All Task Forces --</option>
-          </select>
-        </div>
-      </div>
-      <div style="font-size:11px;color:#8b949e;margin-bottom:12px;padding:6px 10px;background:#0d1117;border:1px solid #21262d;border-radius:6px">
-        <strong style="color:#c9d1d9">Battle Group rules:</strong>
-        min size <span id="dep-minpct" style="color:#007eff">20%</span> of total units
-        (no group below half the largest, rounded up) &bull; each group should hold &ge;1 Command Stand.
-        <span class="tip" data-tip="When counting Units for minimum size, every 3 Independent Stands count as one Unit.">Independent Stands note <i class="fa-solid fa-circle-info"></i></span>
-      </div>
-      <div id="dep-validation" style="margin-bottom:12px"></div>
-      <div id="dep-bgs"></div>
-    </div>
-  </div>
-</div>
-
-<!-- ===== PRINT PAGE ===== -->
-<div id="page-print" class="page">
-  <div class="no-print card">
-    <div class="card-title">Print / Export</div>
-    <div class="form-row">
-      <div class="form-group">
-        <label>Print Content</label>
-        <select id="print-select" style="width:auto" onchange="renderPrint()">
-          <option value="army">Army Roster</option>
-          <option value="deploy">Deployment Sheet</option>
-          <option value="units">Unit Cards</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label>Select</label>
-        <select id="print-which" style="width:auto" onchange="renderPrint()"></select>
-      </div>
-      <button class="trait-edit-btn" onclick="window.print()">Print</button>
-    </div>
-  </div>
-  <div id="print-content"></div>
-</div>
-
 <!-- ===== TRAIT PICKER MODAL ===== -->
 <div id="modal-traits" class="modal-bg">
   <div class="modal">
@@ -745,34 +647,6 @@ label .trait-edit-btn{margin-left:6px}
   </div>
 </div>
 
-<!-- Export/Import unit modals hidden pending custom trait/faction handling
-<!-- ===== EXPORT UNIT MODAL =====
-<div id="modal-export-unit" class="modal-bg">
-  <div class="modal" style="max-width:560px">
-    <div class="modal-header">Export Unit <button class="modal-close" onclick="closeModal('modal-export-unit')"><i class="fa-solid fa-xmark"></i></button></div>
-    <div style="font-size:12px;color:#8b949e;margin-bottom:8px">Copy this JSON and use <strong style="color:#e0e0e0">Import Unit</strong> on another device or share it with others.</div>
-    <textarea id="export-unit-json" readonly rows="12" style="width:100%;font-family:monospace;font-size:11px;resize:vertical;background:var(--surface-page);border:1px solid var(--border-default);color:#e0e0e0;border-radius:6px;padding:8px"></textarea>
-    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:10px">
-      <button class="btn btn-secondary" onclick="closeModal('modal-export-unit')">Close</button>
-      <button class="btn btn-primary" onclick="copyExportJSON()"><i class="fa-solid fa-copy"></i> Copy</button>
-    </div>
-  </div>
-</div>
-===== IMPORT UNIT MODAL =====
-<div id="modal-import-unit" class="modal-bg">
-  <div class="modal" style="max-width:560px">
-    <div class="modal-header">Import Unit <button class="modal-close" onclick="closeModal('modal-import-unit')"><i class="fa-solid fa-xmark"></i></button></div>
-    <div style="font-size:12px;color:#8b949e;margin-bottom:8px">Paste exported unit JSON below.</div>
-    <textarea id="import-unit-json" rows="12" style="width:100%;font-family:monospace;font-size:11px;resize:vertical;background:var(--surface-page);border:1px solid var(--border-default);color:#e0e0e0;border-radius:6px;padding:8px" placeholder='{"name":"...", "class":"inf", ...}' oninput="validateImportUnit()"></textarea>
-    <div id="import-unit-status" style="min-height:20px;font-size:12px;margin-top:6px"></div>
-    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:10px">
-      <button class="btn btn-secondary" onclick="closeModal('modal-import-unit')">Cancel</button>
-      <button class="btn btn-primary" id="import-unit-submit" onclick="importUnit()" disabled>Import</button>
-    </div>
-  </div>
-</div>
-end hidden -->
-
 <!-- ===== NEW/EDIT ARMY MODAL ===== -->
 <div id="modal-army" class="modal-bg">
   <div class="modal">
@@ -853,34 +727,6 @@ end hidden -->
     <div style="margin-top:12px;display:flex;justify-content:flex-end;gap:8px">
       <button class="btn btn-secondary" onclick="closeModal('modal-army-bg-tf')">Cancel</button>
       <button class="btn btn-primary" id="bg-tf-confirm-btn" onclick="confirmAddTFToBG()" disabled>Add All Units</button>
-    </div>
-  </div>
-</div>
-
-<!-- ===== NEW DEPLOY MODAL ===== -->
-<div id="modal-deploy" class="modal-bg">
-  <div class="modal">
-    <div class="modal-header">New Deployment <button class="modal-close" onclick="closeModal('modal-deploy')"><i class="fa-solid fa-xmark"></i></button></div>
-    <div class="form-group" style="margin-bottom:12px">
-      <label>Deployment Name</label>
-      <input type="text" id="dep-new-name" placeholder="e.g. Operation Thunder" style="width:100%">
-    </div>
-    <div style="display:flex;justify-content:flex-end;gap:8px">
-      <button class="btn btn-secondary" onclick="closeModal('modal-deploy')">Cancel</button>
-      <button class="btn btn-primary" onclick="createDeployment()">Create</button>
-    </div>
-  </div>
-</div>
-
-<!-- ===== ADD UNIT TO BG MODAL ===== -->
-<div id="modal-bg-unit" class="modal-bg">
-  <div class="modal">
-    <div class="modal-header">Add Units to Battle Group <button class="modal-close" onclick="closeModal('modal-bg-unit')"><i class="fa-solid fa-xmark"></i></button></div>
-    <input class="search-bar" id="bgunit-search" placeholder="Search..." oninput="renderBGUnitList()">
-    <div class="scrolllist" id="bgunit-list"></div>
-    <div style="margin-top:12px;display:flex;justify-content:flex-end;gap:8px">
-      <button class="btn btn-secondary" onclick="closeModal('modal-bg-unit')">Cancel</button>
-      <button class="btn btn-primary" onclick="confirmBGUnit()">Add</button>
     </div>
   </div>
 </div>
@@ -1235,9 +1081,6 @@ let bgUnitSelectedItems = new Set();
 let bgTFTargetArmyId = null;
 let bgTFTargetBgId = null;
 let bgTFSelectedId = null;
-let currentDeployId = null;
-let bgUnitTargetBGId = null;
-let bgUnitSelectedId = null;
 let libFilterClass = "all";
 let libFilterFaction = "all";
 let libSort = "name-asc";
@@ -1295,117 +1138,6 @@ function loadState() {
       });
     } catch(e) {}
   }
-}
-function exportLibrary() {
-  const payload = {
-    type: "laserstorm-library",
-    version: 1,
-    customFactions: state.customFactions || [],
-    customTraits:   state.customTraits   || [],
-    customUnits:    state.customUnits    || []
-  };
-  const blob = new Blob([JSON.stringify(payload, null, 2)], {type:"application/json"});
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = "laserstorm-library.json";
-  a.click();
-}
-function importLibrary(evt) {
-  const file = evt.target.files[0];
-  if (!file) return;
-  evt.target.value = "";
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    try {
-      const data = JSON.parse(e.target.result);
-      const impFactions = data.customFactions || [];
-      const impTraits   = data.customTraits   || [];
-      const impUnits    = data.customUnits    || [];
-      if (!impFactions.length && !impTraits.length && !impUnits.length) {
-        alert("No library content found in this file."); return;
-      }
-      const added   = {factions:0, traits:0, units:0};
-      const skipped = {factions:[], traits:[], units:[]};
-
-      // Factions — deduplicate by name; remap IDs to avoid collisions
-      const factionIdMap = {};
-      impFactions.forEach(f => {
-        const existing = (state.customFactions||[]).find(x => x.name === f.name);
-        if (existing) {
-          factionIdMap[f.id] = existing.id;
-          skipped.factions.push(f.name);
-        } else {
-          const idTaken = (state.customFactions||[]).some(x => x.id === f.id);
-          const newId = idTaken ? "f_"+uid() : f.id;
-          factionIdMap[f.id] = newId;
-          state.customFactions.push({...f, id: newId});
-          added.factions++;
-        }
-      });
-
-      // Traits — deduplicate by name; remap faction refs and IDs
-      const traitIdMap = {};
-      impTraits.forEach(raw => {
-        let t = {...raw};
-        if (!t.reqs) t.reqs = t.faction ? [{type:"faction",vals:[t.faction]}] : [];
-        t.reqs = t.reqs.map(r => r.type==="faction"
-          ? {...r, vals: r.vals.map(v => factionIdMap[v] ?? v)}
-          : r);
-        const existing = (state.customTraits||[]).find(x => x.name === t.name);
-        if (existing) {
-          traitIdMap[t.id] = existing.id;
-          skipped.traits.push(t.name);
-        } else {
-          const idTaken = (state.customTraits||[]).some(x => x.id === t.id);
-          const newId = idTaken ? "t_"+uid() : t.id;
-          traitIdMap[t.id] = newId;
-          state.customTraits.push({...t, id: newId});
-          added.traits++;
-        }
-      });
-
-      // Units — deduplicate by name; remap faction ID and unit ID
-      impUnits.forEach(u => {
-        const existing = (state.customUnits||[]).find(x => x.name === u.name);
-        if (existing) {
-          skipped.units.push(u.name);
-        } else {
-          const faction = u.faction ? (factionIdMap[u.faction] ?? u.faction) : u.faction;
-          const idTaken = (state.customUnits||[]).some(x => x.id === u.id);
-          const newId = idTaken ? "u_"+uid() : u.id;
-          const imported = {...u, id: newId, faction};
-          migrateCustomUnit(imported);
-          state.customUnits.push(imported);
-          added.units++;
-        }
-      });
-
-      saveState();
-      rebuildFactionSelect();
-      renderLibFactionFilters();
-      renderCustomTraitList();
-      renderAll();
-
-      const addedParts = [];
-      if (added.factions) addedParts.push(`${added.factions} faction${added.factions>1?"s":""}`);
-      if (added.traits)   addedParts.push(`${added.traits} trait${added.traits>1?"s":""}`);
-      if (added.units)    addedParts.push(`${added.units} unit${added.units>1?"s":""}`);
-      let msg = addedParts.length ? `Imported: ${addedParts.join(", ")}.` : "Nothing new to import.";
-
-      const allSkipped = [
-        ...skipped.factions.map(n=>`Faction: ${n}`),
-        ...skipped.traits.map(n=>`Trait: ${n}`),
-        ...skipped.units.map(n=>`Unit: ${n}`)
-      ];
-      if (allSkipped.length) {
-        const shown = allSkipped.slice(0, 20);
-        msg += `\n\nAlready exist — skipped:\n${shown.map(n=>`• ${n}`).join("\n")}`;
-        if (allSkipped.length > 20) msg += `\n…and ${allSkipped.length-20} more.`;
-      }
-      alert(msg);
-    } catch(err) { alert("Invalid or unreadable file."); }
-  };
-  reader.readAsText(file);
 }
 
 // ============================================================
@@ -1817,8 +1549,6 @@ function showPage(p) {
   if(p==="library") renderLibrary();
   if(p==="taskforces") renderTFList();
   if(p==="armies") renderArmyList();
-  if(p==="deploy") renderDeployList();
-  if(p==="print") renderPrintOptions();
 }
 
 function closeModal(id) { document.getElementById(id).classList.remove("open"); }
@@ -2308,8 +2038,6 @@ function saveAsNewUnit() {
   if (nameTaken(name)) {
     showFieldErr("b-name", `"${name}" already exists — change the name to save as a new unit.`);
     return;
-  }
-  {
   }
   editingUnitId = null;
   setEditMode(null);
@@ -2983,79 +2711,6 @@ function deleteCustomUnit(id) {
   if(currentArmyId) renderArmyDetail();
 }
 
-// ---- Export / Import unit ----
-const _UNIT_EXPORT_KEYS = ["name","class","speed","mobility","aim","assault","saveNumber","morale","standTraits","weapons","role","faction"];
-
-function openExportUnitModal(unitId) {
-  const u = unitById(unitId);
-  if(!u) return;
-  const exportObj = {};
-  _UNIT_EXPORT_KEYS.forEach(k => { if(u[k] !== undefined) exportObj[k] = u[k]; });
-  document.getElementById("export-unit-json").value = JSON.stringify(exportObj, null, 2);
-  openModal("modal-export-unit");
-}
-
-function copyExportJSON() {
-  const ta = document.getElementById("export-unit-json");
-  ta.select();
-  navigator.clipboard?.writeText(ta.value).catch(()=>{});
-  document.execCommand("copy");
-  const btn = event.currentTarget;
-  const orig = btn.innerHTML;
-  btn.innerHTML = '<i class="fa-solid fa-check"></i> Copied';
-  setTimeout(()=>{ btn.innerHTML = orig; }, 2000);
-}
-
-function openImportUnitModal() {
-  document.getElementById("import-unit-json").value = "";
-  document.getElementById("import-unit-status").textContent = "";
-  document.getElementById("import-unit-submit").disabled = true;
-  openModal("modal-import-unit");
-}
-
-function validateImportUnit() {
-  const raw = document.getElementById("import-unit-json").value.trim();
-  const status = document.getElementById("import-unit-status");
-  const btn = document.getElementById("import-unit-submit");
-  btn.disabled = true;
-  if(!raw) { status.textContent = ""; return; }
-  let obj;
-  try { obj = JSON.parse(raw); }
-  catch(e) { status.innerHTML = `<span style="color:#ef5350">Invalid JSON — check for missing quotes or brackets.</span>`; return; }
-  if(typeof obj.name !== "string" || !obj.name.trim()) { status.innerHTML = `<span style="color:#ef5350">Missing required field: <strong>name</strong></span>`; return; }
-  if(!obj.class || !["inf","cav","fg","scout","afv","ac","sh","beh"].includes(obj.class)) { status.innerHTML = `<span style="color:#ef5350">Missing or invalid <strong>class</strong> (inf/cav/fg/scout/afv/ac/sh/beh)</span>`; return; }
-  const nameConflict = allUnits().find(u => u.name.trim().toLowerCase() === obj.name.trim().toLowerCase());
-  if(nameConflict) { status.innerHTML = `<span style="color:#ef5350">A unit named "<strong>${esc(obj.name)}</strong>" already exists in the library.</span>`; return; }
-  status.innerHTML = `<span style="color:#4caf50"><i class="fa-solid fa-check"></i> Looks good — <strong>${esc(obj.name)}</strong> (${obj.class}) ready to import.</span>`;
-  btn.disabled = false;
-}
-
-function importUnit() {
-  const raw = document.getElementById("import-unit-json").value.trim();
-  let obj;
-  try { obj = JSON.parse(raw); } catch(e) { return; }
-  const unit = {
-    id: "custom_" + uid(),
-    name: obj.name.trim(),
-    class: obj.class,
-    speed: Number(obj.speed)||4,
-    mobility: obj.mobility||"troop",
-    aim: Number(obj.aim)||5,
-    assault: Number(obj.assault)||0,
-    saveNumber: Number(obj.saveNumber)||6,
-    morale: Number(obj.morale)||4,
-    standTraits: Array.isArray(obj.standTraits) ? obj.standTraits : [],
-    weapons: Array.isArray(obj.weapons) ? obj.weapons : [],
-    role: obj.role||"core",
-    faction: obj.faction||null,
-  };
-  migrateCustomUnit(unit);
-  state.customUnits.push(unit);
-  saveState();
-  closeModal("modal-import-unit");
-  renderLibrary();
-}
-
 function editUnit(id) {
   const unit = state.customUnits.find(u=>u.id===id);
   if(!unit) return;
@@ -3084,24 +2739,6 @@ function editUnit(id) {
   setEditMode(unit);
   calculateBuilder();
   showPage("builder");
-}
-
-function quickAddToTF(unitId) {
-  if(!state.taskForces.length) { alert("Create a Task Force first on the Task Forces tab."); return; }
-  addUnitTargetTFId = state.taskForces[0].id;
-  addUnitTargetRole = "core";
-  addUnitSelectedId = unitId;
-  if(state.taskForces.length===1) {
-    const tf = state.taskForces[0];
-    const u = unitById(unitId);
-    tf.units.push({id:"slot_"+uid(), unitId, role:"core", quantity:1});
-    saveState();
-    renderTFList();
-    if(currentTFId===tf.id) renderTFDetail();
-    alert(`Added "${u?.name||"unit"}" to "${tf.name}"`);
-  } else {
-    openAddUnitModal(null, "core");
-  }
 }
 
 // ============================================================
@@ -4389,7 +4026,6 @@ function deleteArmy(id) {
   renderArmyDetail();
 }
 
-
 function openAddTFModal(armyId) {
   addTFTargetArmyId = armyId;
   addTFSelectedId = null;
@@ -4612,476 +4248,6 @@ function confirmAddTFToBG() {
   renderArmyDetail();
 }
 
-function openDeployFromArmy(armyId) {
-  showPage("deploy");
-  setTimeout(()=>openNewDeployModal(armyId),100);
-}
-
-// ============================================================
-// DEPLOYMENTS
-// ============================================================
-let currentDeployment = null;
-
-function renderDeployList() {
-  const list = document.getElementById("deploy-list");
-  if(!state.deployments.length) {
-    list.innerHTML=`<div class="empty"><div class="empty-icon"><i class="fa-solid fa-chess-rook"></i></div>No deployments yet. Create one to assign units to Battle Groups.</div>`;
-    return;
-  }
-  list.innerHTML = state.deployments.map(d => {
-    const bgCount = d.battleGroups.length;
-    return `<div class="list-row">
-      <div>
-        <div style="font-weight:bold;color:#fff">${esc(d.name)}</div>
-        <div style="font-size:11px;color:#8b949e">${bgCount} Battle Group${bgCount!==1?"s":""}</div>
-      </div>
-      <div style="display:flex;gap:4px">
-        <button class="trait-edit-btn" onclick="editDeployment('${d.id}')">Edit</button>
-        <button class="trait-edit-btn" onclick="printDeployment('${d.id}')">Print</button>
-        <button class="trait-edit-btn" style="border-color:#8b000066;color:#ef5350;background:#2a0a0a" onclick="deleteDeployment('${d.id}')">Del</button>
-      </div>
-    </div>`;
-  }).join("");
-}
-
-function openNewDeployModal(armyId) {
-  document.getElementById("dep-new-name").value = "";
-  openModal("modal-deploy");
-  if(armyId) setTimeout(()=>{ closeModal("modal-deploy"); createDeploymentForArmy(armyId); },0);
-}
-
-function createDeployment(armyId) {
-  const name = document.getElementById("dep-new-name").value.trim();
-  if(!name) { alert("Enter a name."); return; }
-  const dep = {
-    id:"dep_"+uid(),
-    name,
-    armyId: armyId||"",
-    battleGroups:[
-      {id:"bg_"+uid(),name:"Battle Group Alpha",taskForceIds:[],units:[]},
-      {id:"bg_"+uid(),name:"Battle Group Bravo",taskForceIds:[],units:[]},
-      {id:"bg_"+uid(),name:"Battle Group Charlie",taskForceIds:[],units:[]}
-    ]
-  };
-  state.deployments.push(dep);
-  saveState();
-  closeModal("modal-deploy");
-  editDeployment(dep.id);
-  renderDeployList();
-}
-
-function createDeploymentForArmy(armyId) {
-  const army = state.armies.find(a=>a.id===armyId);
-  const name = army ? `${army.name} - Deployment` : "New Deployment";
-  const dep = {
-    id:"dep_"+uid(), name, armyId,
-    battleGroups:[
-      {id:"bg_"+uid(),name:"Battle Group Alpha",taskForceIds:[],units:[]},
-      {id:"bg_"+uid(),name:"Battle Group Bravo",taskForceIds:[],units:[]},
-      {id:"bg_"+uid(),name:"Battle Group Charlie",taskForceIds:[],units:[]}
-    ]
-  };
-  state.deployments.push(dep);
-  saveState();
-  editDeployment(dep.id);
-  renderDeployList();
-}
-
-function editDeployment(id) {
-  currentDeployment = state.deployments.find(d=>d.id===id);
-  if(!currentDeployment) return;
-  document.getElementById("dep-name").value = currentDeployment.name;
-  document.getElementById("dep-bg-count").value = currentDeployment.battleGroups.length;
-  // Populate army dropdown
-  const armySel = document.getElementById("dep-army");
-  armySel.innerHTML = `<option value="">-- All Task Forces --</option>` +
-    state.armies.map(a => {
-      const viol = armyBGSizeViolations(a);
-      const warn = !viol.ok ? " ⚠ Not deployable" : "";
-      return `<option value="${a.id}" ${currentDeployment.armyId===a.id?"selected":""}${!viol.ok?" style='color:#ef5350'":""}>${esc(a.name)}${warn}</option>`;
-    }).join("");
-  document.getElementById("deploy-editor-title").textContent = currentDeployment.name;
-  document.getElementById("deploy-editor").style.display="block";
-  rebuildBGEditor();
-}
-
-function closeDeployEditor() {
-  document.getElementById("deploy-editor").style.display="none";
-  currentDeployment = null;
-}
-
-function saveDeployment() {
-  if(!currentDeployment) return;
-  currentDeployment.name = document.getElementById("dep-name").value || currentDeployment.name;
-  currentDeployment.armyId = document.getElementById("dep-army").value;
-  document.getElementById("deploy-editor-title").textContent = currentDeployment.name;
-  saveState();
-  renderDeployList();
-  alert("Deployment saved!");
-}
-
-function deleteDeployment(id) {
-  if(!confirm("Delete this deployment?")) return;
-  state.deployments = state.deployments.filter(d=>d.id!==id);
-  if(currentDeployment?.id===id) { closeDeployEditor(); }
-  saveState();
-  renderDeployList();
-}
-
-function rebuildBGEditor() {
-  if(!currentDeployment) return;
-  const count = parseInt(document.getElementById("dep-bg-count").value)||3;
-  // Sync BG count
-  while(currentDeployment.battleGroups.length < count) {
-    const names = ["Alpha","Bravo","Charlie","Delta","Echo"];
-    currentDeployment.battleGroups.push({id:"bg_"+uid(),name:"Battle Group "+names[currentDeployment.battleGroups.length],taskForceIds:[],units:[]});
-  }
-  while(currentDeployment.battleGroups.length > count) {
-    currentDeployment.battleGroups.pop();
-  }
-  currentDeployment.armyId = document.getElementById("dep-army").value;
-  saveState();
-  renderBGEditor();
-}
-
-function getAvailableTFs() {
-  const armyId = currentDeployment?.armyId;
-  if(armyId) {
-    const army = state.armies.find(a=>a.id===armyId);
-    if(army) return army.taskForceIds.map(id=>state.taskForces.find(t=>t.id===id)).filter(Boolean);
-  }
-  return state.taskForces;
-}
-
-function validateDeployment(dep) {
-  const msgs = [];
-  // Count units per BG
-  const bgSizes = dep.battleGroups.map(bg => bg.units.reduce((s,u)=>s+u.quantity,0));
-  const maxSize = Math.max(...bgSizes, 0);
-  const minAllowed = Math.ceil(maxSize/2);
-  let hasCommandIssue = false;
-  dep.battleGroups.forEach((bg,i)=>{
-    const sz = bgSizes[i];
-    if(sz < minAllowed && maxSize>0) msgs.push(`${esc(bg.name)} has ${sz} unit${sz!==1?"s":""} (min: ${minAllowed})`);
-    const hasCmd = bg.units.some(u=>{
-      const unit = unitById(u.unitId);
-      return unit && (u.isCommand || (unit.standTraits||[]).some(t=>t[0]==="Inspiration")||unit.role==="command"||unit.role==="commander");
-    });
-    if(!hasCmd && sz>0) { msgs.push(`${esc(bg.name)} has no Command Stand`); hasCommandIssue=true; }
-  });
-  return msgs;
-}
-
-function renderBGEditor() {
-  if(!currentDeployment) return;
-  const availTFs = getAvailableTFs();
-  const bgCount = currentDeployment.battleGroups.length;
-  const minPct = bgCount===3?"20%":bgCount===4?"14.28%":"11.11%";
-  const minPctEl = document.getElementById("dep-minpct");
-  if(minPctEl) minPctEl.textContent = minPct;
-  const totalUnits = currentDeployment.battleGroups.reduce((s,b)=>s+b.units.reduce((a,u)=>a+u.quantity,0),0);
-  const validMsgs = validateDeployment(currentDeployment);
-  const valEl = document.getElementById("dep-validation");
-  if(validMsgs.length) {
-    valEl.innerHTML = validMsgs.map(m=>`<div class="validation-warn"><i class="fa-solid fa-triangle-exclamation"></i> ${m}</div>`).join("");
-  } else if(currentDeployment.battleGroups.some(bg=>bg.units.length>0)) {
-    valEl.innerHTML = `<div class="validation-ok"><i class="fa-solid fa-circle-check"></i> Deployment valid — all Battle Groups meet requirements</div>`;
-  } else {
-    valEl.innerHTML = "";
-  }
-  document.getElementById("dep-bgs").innerHTML = currentDeployment.battleGroups.map(bg => {
-    const bgSize = bg.units.reduce((s,u)=>s+u.quantity,0);
-    const allBGSizes = currentDeployment.battleGroups.map(b=>b.units.reduce((s,u)=>s+u.quantity,0));
-    const maxSize = Math.max(...allBGSizes,0);
-    const minAllowed = Math.ceil(maxSize/2);
-    const pctOfTotal = totalUnits>0 ? Math.round(bgSize/totalUnits*100) : 0;
-    const hasCmd = bg.units.some(u=>{
-      const unit = unitById(u.unitId);
-      return unit && (u.isCommand||(unit.standTraits||[]).some(t=>t[0]==="Inspiration")||unit.role==="command"||unit.role==="commander");
-    });
-    const isValid = bgSize>=minAllowed && (hasCmd||bgSize===0);
-    const bgPts = bg.units.reduce((s,u)=>{
-      const unit=unitById(u.unitId);
-      return s+(unit?calcPoints(unit).unitPts*u.quantity:0);
-    },0);
-    const tfOptions = availTFs.map(tf=>`<option value="${tf.id}" ${bg.taskForceIds.includes(tf.id)?"selected":""}>${esc(tf.name)}</option>`).join("");
-    return `<div class="bg-card ${bgSize>0?(isValid?"valid":"invalid"):""}">
-      <div class="bg-header">
-        <div>
-          <input type="text" value="${esc(bg.name)}" style="background:transparent;border:none;color:#007eff;font-size:16px;font-weight:bold;width:220px;padding:0" onchange="bg_rename('${bg.id}',this.value)">
-          <div style="font-size:11px;color:#8b949e">${bgSize} unit${bgSize!==1?"s":""}${totalUnits>0?` (${pctOfTotal}%)`:""} &bull; ${bgPts} pts ${isValid&&bgSize>0?'<i class="fa-solid fa-circle-check"></i>':""}${!hasCmd&&bgSize>0?'| <i class="fa-solid fa-triangle-exclamation"></i> No Command':""}${bgSize<minAllowed&&maxSize>0?'| <i class="fa-solid fa-triangle-exclamation"></i> Too small (min '+minAllowed+')':""}</div>
-        </div>
-        <div style="display:flex;gap:6px;align-items:center">
-          <button class="trait-edit-btn" onclick="openBGUnitModal('${bg.id}')">Add Unit</button>
-        </div>
-      </div>
-      <div class="form-group" style="margin-bottom:10px">
-        <label>Assigned Task Forces</label>
-        <select multiple style="height:60px;background:#0d1117;border:1px solid #30363d;color:#e0e0e0;border-radius:4px;width:100%" onchange="bg_setTFs('${bg.id}',this)">
-          ${availTFs.length?tfOptions:`<option disabled>No task forces available</option>`}
-        </select>
-        <div style="font-size:10px;color:#666;margin-top:2px">Hold Ctrl/Cmd to select multiple</div>
-      </div>
-      ${bg.units.length?`<div>${bg.units.map(slot=>{
-        const u=unitById(slot.unitId);
-        if(!u) return "";
-        const pts=calcPoints(u);
-        return `<div class="tf-unit-row" style="margin-bottom:4px">
-          <div style="flex:1">
-            <span style="font-weight:bold;color:#fff">${esc(u.name)}</span>
-            ${classBadge(u.class)}
-            <div style="font-size:11px;color:#8b949e">${pts.unitPts}pts/unit</div>
-          </div>
-          <div class="qty-ctrl">
-            <button class="qty-btn" onclick="bg_changeQty('${bg.id}','${slot.id}',-1)">-</button>
-            <span class="qty-val">${slot.quantity}</span>
-            <button class="qty-btn" onclick="bg_changeQty('${bg.id}','${slot.id}',1)">+</button>
-          </div>
-          <label style="display:flex;align-items:center;gap:4px;font-size:11px;cursor:pointer;text-transform:none">
-            <input type="checkbox" ${slot.isCommand?"checked":""} onchange="bg_setCmd('${bg.id}','${slot.id}',this.checked)"> Cmd Stand
-          </label>
-          <button class="trait-edit-btn" style="border-color:#8b000066;color:#ef5350;background:#2a0a0a" onclick="bg_removeUnit('${bg.id}','${slot.id}')">X</button>
-        </div>`;
-      }).join("")}</div>`:`<div style="font-size:12px;color:#444;text-align:center;padding:8px">No units assigned yet</div>`}
-    </div>`;
-  }).join("");
-}
-
-function bg_rename(bgId,name) {
-  if(!currentDeployment) return;
-  const bg=currentDeployment.battleGroups.find(b=>b.id===bgId);
-  if(bg) { bg.name=name; saveState(); }
-}
-
-function bg_setTFs(bgId, sel) {
-  if(!currentDeployment) return;
-  const bg=currentDeployment.battleGroups.find(b=>b.id===bgId);
-  if(!bg) return;
-  bg.taskForceIds = Array.from(sel.selectedOptions).map(o=>o.value);
-  saveState();
-}
-
-function bg_changeQty(bgId,slotId,delta) {
-  if(!currentDeployment) return;
-  const bg=currentDeployment.battleGroups.find(b=>b.id===bgId);
-  if(!bg) return;
-  const slot=bg.units.find(u=>u.id===slotId);
-  if(slot) { slot.quantity=Math.max(1,slot.quantity+delta); saveState(); renderBGEditor(); }
-}
-
-function bg_setCmd(bgId,slotId,val) {
-  if(!currentDeployment) return;
-  const bg=currentDeployment.battleGroups.find(b=>b.id===bgId);
-  if(!bg) return;
-  const slot=bg.units.find(u=>u.id===slotId);
-  if(slot) { slot.isCommand=val; saveState(); renderBGEditor(); }
-}
-
-function bg_removeUnit(bgId,slotId) {
-  if(!currentDeployment) return;
-  const bg=currentDeployment.battleGroups.find(b=>b.id===bgId);
-  if(!bg) return;
-  bg.units=bg.units.filter(u=>u.id!==slotId);
-  saveState();
-  renderBGEditor();
-}
-
-function openBGUnitModal(bgId) {
-  bgUnitTargetBGId = bgId;
-  bgUnitSelectedId = null;
-  // Determine available units from TF assignment
-  const bg = currentDeployment?.battleGroups.find(b=>b.id===bgId);
-  renderBGUnitList();
-  openModal("modal-bg-unit");
-}
-
-function renderBGUnitList() {
-  const search=(document.getElementById("bgunit-search")?.value||"").toLowerCase();
-  const bg = currentDeployment?.battleGroups.find(b=>b.id===bgUnitTargetBGId);
-  let units;
-  // If BG has assigned TFs, show units from those TFs first, then all
-  if(bg?.taskForceIds?.length) {
-    const tfUnits = [];
-    bg.taskForceIds.forEach(tfId=>{
-      const tf=state.taskForces.find(t=>t.id===tfId);
-      if(tf) tf.units.forEach(slot=>{
-        const u=unitById(slot.unitId);
-        if(u&&!tfUnits.find(x=>x.id===u.id)) tfUnits.push(u);
-      });
-    });
-    const otherUnits = allUnits().filter(u=>!tfUnits.find(x=>x.id===u.id));
-    units = [...tfUnits, ...otherUnits];
-  } else {
-    units = allUnits();
-  }
-  if(search) units=units.filter(u=>u.name.toLowerCase().includes(search));
-  const list=document.getElementById("bgunit-list");
-  list.innerHTML=units.map(u=>{
-    const pts=calcPoints(u);
-    const sel=bgUnitSelectedId===u.id;
-    const inTF = bg?.taskForceIds?.length && (() => {
-      return bg.taskForceIds.some(tfId=>{
-        const tf=state.taskForces.find(t=>t.id===tfId);
-        return tf?.units.some(slot=>slot.unitId===u.id);
-      });
-    })();
-    return `<div class="list-row" style="${sel?"border-color:#007eff;background:#1a2a4a":""}" onclick="bgUnitSelectedId='${u.id}';renderBGUnitList()">
-      <div>
-        ${inTF?`<span style="font-size:10px;color:#4caf50;margin-right:4px"><i class="fa-solid fa-star"></i> In TF</span>`:""}
-        ${classBadge(u.class)}
-        <span style="font-weight:bold;margin-left:6px;color:${sel?"#007eff":"#fff"}">${esc(u.name)}</span>
-        <div style="font-size:11px;color:#8b949e">${pts.unitPts}pts | ${pts.unitSize} stands</div>
-      </div>
-    </div>`;
-  }).join("")||`<div class="empty">No units found</div>`;
-}
-
-function confirmBGUnit() {
-  if(!bgUnitSelectedId) { alert("Select a unit."); return; }
-  if(!currentDeployment) return;
-  const bg=currentDeployment.battleGroups.find(b=>b.id===bgUnitTargetBGId);
-  if(!bg) return;
-  bg.units.push({id:"bgu_"+uid(), unitId:bgUnitSelectedId, quantity:1, isCommand:false});
-  saveState();
-  closeModal("modal-bg-unit");
-  renderBGEditor();
-}
-
-// ============================================================
-// PRINT
-// ============================================================
-function renderPrintOptions() {
-  const typeSel = document.getElementById("print-select");
-  const whichSel = document.getElementById("print-which");
-  const type = typeSel.value;
-  whichSel.innerHTML = "";
-  if(type==="army") {
-    state.armies.forEach(a=>whichSel.innerHTML+=`<option value="${a.id}">${esc(a.name)}</option>`);
-    if(!state.armies.length) whichSel.innerHTML=`<option>No armies</option>`;
-  } else if(type==="deploy") {
-    state.deployments.forEach(d=>whichSel.innerHTML+=`<option value="${d.id}">${esc(d.name)}</option>`);
-    if(!state.deployments.length) whichSel.innerHTML=`<option>No deployments</option>`;
-  } else {
-    whichSel.innerHTML=`<option value="all">All Units</option>`;
-    state.taskForces.forEach(tf=>whichSel.innerHTML+=`<option value="tf_${tf.id}">TF: ${esc(tf.name)}</option>`);
-  }
-  renderPrint();
-}
-
-function printDeployment(id) {
-  showPage("print");
-  setTimeout(()=>{
-    document.getElementById("print-select").value="deploy";
-    renderPrintOptions();
-    document.getElementById("print-which").value=id;
-    renderPrint();
-  },100);
-}
-
-function renderPrint() {
-  const type = document.getElementById("print-select").value;
-  const which = document.getElementById("print-which").value;
-  const content = document.getElementById("print-content");
-  if(type==="army") {
-    const army = state.armies.find(a=>a.id===which);
-    if(!army) { content.innerHTML=""; return; }
-    content.innerHTML = printArmyHTML(army);
-  } else if(type==="deploy") {
-    const dep = state.deployments.find(d=>d.id===which);
-    if(!dep) { content.innerHTML=""; return; }
-    content.innerHTML = printDeployHTML(dep);
-  } else {
-    let units = allUnits();
-    if(which&&which.startsWith("tf_")) {
-      const tfId=which.slice(3);
-      const tf=state.taskForces.find(t=>t.id===tfId);
-      if(tf) units=tf.units.map(s=>unitById(s.unitId)).filter(Boolean);
-    }
-    content.innerHTML = `<div class="print-section">${units.map(u=>unitCardHTML(u)).join("")}</div>`;
-  }
-}
-
-function printArmyHTML(army) {
-  const pts = armyPoints(army);
-  const tfs = army.taskForceIds.map(id=>state.taskForces.find(t=>t.id===id)).filter(Boolean);
-  return `<div class="print-section">
-    <h1 style="font-size:24px;margin-bottom:4px">${esc(army.name)}</h1>
-    <div style="color:#8b949e;margin-bottom:16px">Total: ${pts}pts${army.pointsLimit?" / "+army.pointsLimit+"pts":""}</div>
-    ${tfs.map(tf=>{
-      const tp=tfPoints(tf);
-      return `<div class="card print-section">
-        <div class="card-title">${esc(tf.name)} — ${tp}pts</div>
-        ${["commander","core","specialist","command","support"].map(role=>{
-          const slots=tf.units.filter(u=>u.role===role);
-          if(!slots.length) return "";
-          return `<div style="margin-bottom:8px"><div class="section-header sh-${role}" style="margin-bottom:6px">${role}</div>
-            ${slots.map(slot=>{
-              const u=unitById(slot.unitId);
-              if(!u) return "";
-              const vt=slot.unitType||"unit";
-              const p=calcPoints(u);
-              const slotPts=(p[VIEW_PTS_KEY[vt]]??p.unitPts)*slot.quantity;
-              const qtyNote = `<div style="font-size:11px;color:#8b949e;margin:-6px 0 6px;padding:0 12px">Qty: ${slot.quantity} &bull; Total: ${slotPts}pts</div>`;
-              return unitCardHTML(u,null,vt)+qtyNote;
-            }).join("")}</div>`;
-        }).join("")}
-      </div>`;
-    }).join("")}
-  </div>`;
-}
-
-function printDeployHTML(dep) {
-  const bgCount = dep.battleGroups.length;
-  const allSizes = dep.battleGroups.map(bg=>bg.units.reduce((s,u)=>s+u.quantity,0));
-  const maxSize = Math.max(...allSizes,0);
-  const minSize = Math.ceil(maxSize/2);
-  return `<div class="print-section">
-    <h1 style="font-size:24px;margin-bottom:4px">${esc(dep.name)}</h1>
-    <div style="color:#8b949e;margin-bottom:4px">
-      ${bgCount} Battle Groups &bull; Min BG size: ${minSize} units
-      (${bgCount===3?"20%":bgCount===4?"14.28%":"11.11%"} of total)
-    </div>
-    <hr style="margin-bottom:16px">
-    ${dep.battleGroups.map((bg,i)=>{
-      const bgSize=bg.units.reduce((s,u)=>s+u.quantity,0);
-      const bgPts=bg.units.reduce((s,u)=>{
-        const unit=unitById(u.unitId);
-        return s+(unit?calcPoints(unit).unitPts*u.quantity:0);
-      },0);
-      const tfs=bg.taskForceIds.map(id=>state.taskForces.find(t=>t.id===id)).filter(Boolean);
-      return `<div class="bg-card print-section" style="margin-bottom:16px">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-          <div>
-            <div style="font-size:18px;font-weight:bold">${esc(bg.name)}</div>
-            <div style="font-size:12px;color:#8b949e">
-              ${bgSize} units &bull; ${bgPts}pts
-              ${tfs.length?` &bull; TF: ${tfs.map(t=>esc(t.name)).join(", ")}`:""}
-            </div>
-          </div>
-          <div style="text-align:right;font-size:12px;color:${bgSize>=minSize||maxSize===0?"#4caf50":"#ef5350"}">
-            ${bgSize>=minSize||maxSize===0?'<i class="fa-solid fa-circle-check"></i> Valid size':'<i class="fa-solid fa-triangle-exclamation"></i> Below minimum'}
-          </div>
-        </div>
-        ${bg.units.map(slot=>{
-          const u=unitById(slot.unitId);
-          if(!u) return "";
-          const vt=slot.unitType||"unit";
-          const slotPts=(calcPoints(u)[VIEW_PTS_KEY[vt]]??calcPoints(u).unitPts)*slot.quantity;
-          return unitCardHTML(u,null,vt)+`<div style="font-size:11px;color:#8b949e;margin-top:-6px;margin-bottom:6px;padding:0 12px">
-            Qty: ${slot.quantity} &bull; ${slot.isCommand?"Command Stand":""} &bull; Total: ${slotPts}pts
-          </div>`;
-        }).join("")}
-      </div>`;
-    }).join("")}
-    <div style="font-size:11px;color:#8b949e;margin-top:8px;border-top:1px solid #ccc;padding-top:8px">
-      <strong>Min BG Size Rules:</strong>
-      3 BGs: 20% | 4 BGs: 14.28% | 5 BGs: 11.11% of total units.
-      No BG may have fewer than half the units of the largest BG (rounded up).
-      Each BG must have at least 1 Command Stand.
-    </div>
-  </div>`;
-}
-
 // ============================================================
 // INIT
 // ============================================================
@@ -5091,7 +4257,6 @@ function renderAll() {
   if(currentTFId) renderTFDetail();
   renderArmyList();
   if(currentArmyId) renderArmyDetail();
-  renderDeployList();
 }
 
 loadState();
