@@ -4191,8 +4191,9 @@ function _renderBGUnitList() {
   if(!army||!bg) return;
   const inThisBG = new Set((bg.entries||[]).map(e=>e.slotId));
   const tfs = (army.taskForceIds||[]).map(id=>state.taskForces.find(t=>t.id===id)).filter(Boolean);
-  if(!tfs.length) { list.innerHTML=`<div class="empty">No task forces in this army's pool.</div>`; return; }
-  list.innerHTML = tfs.map(tf => {
+  if(!tfs.length) { list.innerHTML=`<div class="empty">No task forces in this army's pool.</div>`; if(countEl) countEl.textContent=""; return; }
+  let selectable = 0, totalSlots = 0;
+  const bodyHTML = tfs.map(tf => {
     const slots = (tf.units||[]).filter(s=>s.quantity>0);
     if(!slots.length) return "";
     const tfColor = FACTION_COLORS[tf.faction] || "#555";
@@ -4203,10 +4204,12 @@ function _renderBGUnitList() {
       ${slots.map(slot => {
         const unit = unitById(slot.unitId);
         if(!unit) return "";
+        totalSlots++;
         const inThis = inThisBG.has(slot.id);
         const remaining = slotRemainingQty(army, slot);
         const assigned = slot.quantity - remaining;
         const unavailable = inThis || remaining === 0;
+        if(!unavailable) selectable++;
         const sel = bgUnitSelectedItems.has(slot.id);
         const note = inThis ? " &bull; already in this group"
                    : remaining === 0 ? " &bull; fully assigned"
@@ -4223,6 +4226,13 @@ function _renderBGUnitList() {
       }).join("")}
     </div>`;
   }).join("");
+  // Explain why nothing can be picked rather than showing a wall of dimmed rows.
+  const infoHTML = (totalSlots === 0)
+    ? `<div class="empty">No units in this army's task forces yet — add some to a task force first.</div>`
+    : (selectable === 0)
+      ? `<div style="padding:9px 11px;border-radius:5px;background:#0d1620;border:1px solid var(--border-subtle);color:#8b949e;font-size:11px;line-height:1.5;display:flex;align-items:flex-start;gap:7px;margin-bottom:4px"><i class="fa-solid fa-circle-info" style="margin-top:1px;flex-shrink:0;color:#58a6ff"></i><div>Every unit is already placed in a battle group or fully assigned elsewhere. Use the <strong>&minus;/+</strong> steppers on the battle group cards to move quantities between groups.</div></div>`
+      : "";
+  list.innerHTML = infoHTML + bodyHTML;
   if(countEl) countEl.textContent = bgUnitSelectedItems.size ? `${bgUnitSelectedItems.size} selected` : "";
 }
 
