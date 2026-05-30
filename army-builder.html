@@ -4391,7 +4391,7 @@ function renderArmyDetail() {
           ${fp
             ? `<button class="trait-edit-btn" onclick="openFPBGUnitModal('${army.id}','${bg.id}')">Add Unit</button>`
             : `<button class="trait-edit-btn" onclick="openArmyBGUnitModal('${army.id}','${bg.id}')">Add Unit</button>
-          <button class="trait-edit-btn" onclick="openBGTFModal('${army.id}','${bg.id}')">Add TF</button>`}
+          <button class="trait-edit-btn" onclick="openBGTFModal('${army.id}','${bg.id}')">Add Task Force</button>`}
         </div>
       </div>
       ${pickerHTML}${bgWarnStrip}
@@ -4445,7 +4445,7 @@ function renderArmyDetail() {
     ${!fp?`<div style="margin-bottom:16px">
       <div class="sub-divider" style="margin-top:0">
         <div class="sub-divider-label"><i class="fa-solid fa-layer-group" style="color:#7986cb;font-size:9px"></i> Task Force Pool</div>
-        <button class="trait-edit-btn" onclick="openAddTFModal('${army.id}')"><i class="fa-solid fa-plus"></i> Add TF</button>
+        <button class="trait-edit-btn" onclick="openAddTFModal('${army.id}')"><i class="fa-solid fa-plus"></i> Add Task Force</button>
       </div>
       ${tfPoolHTML}
     </div>`:""}
