@@ -3806,10 +3806,12 @@ function armyBGSizeViolations(army) {
   const bgs = (army.battleGroups||[]).slice(0, army.bgCount||3);
   const sizes = bgs.map(bg => bgUnitCount(bg));
   const largest = Math.max(...sizes, 0);
-  if(largest === 0) return { violatingIds: new Set(), minAllowed: 0, largest: 0, ok: true };
+  if(largest === 0) return { violatingIds: new Set(), minAllowed: 0, largest: 0, largestName: "", ok: true };
   const minAllowed = Math.ceil(largest / 2);
+  const largestBG = bgs.find(bg => bgUnitCount(bg) === largest);
+  const largestName = largestBG ? largestBG.name : "";
   const violatingIds = new Set(bgs.filter(bg => bgUnitCount(bg) < minAllowed).map(bg => bg.id));
-  return { violatingIds, minAllowed, largest, ok: violatingIds.size === 0 };
+  return { violatingIds, minAllowed, largest, largestName, ok: violatingIds.size === 0 };
 }
 
 // Pooled TFs that no longer satisfy the army's faction restriction (e.g. after
@@ -3918,7 +3920,15 @@ function renderArmyDetail() {
   // Unified non-deployable banner (warn, never block — invalid armies are fine here).
   const deployIssues = [];
   if(overPtsLimit) deployIssues.push(`Deployed cost <strong>${deployedPts} pts</strong> exceeds the army's <strong>${army.pointsLimit} pt</strong> limit by ${deployedPts-army.pointsLimit}.`);
-  if(!bgViol.ok) deployIssues.push(`Battle Groups must be reasonably equal — no group may hold fewer than <strong>${bgViol.minAllowed}</strong> unit${bgViol.minAllowed!==1?"s":""} (half the largest, ${bgViol.largest}, rounded up).`);
+  if(!bgViol.ok) {
+    const offenders = (army.battleGroups||[]).slice(0,bgCount)
+      .filter(bg => bgViol.violatingIds.has(bg.id))
+      .map(bg => `<strong>${esc(bg.name)}</strong> (${bgUnitCount(bg)})`);
+    const offenderList = offenders.length>1
+      ? offenders.slice(0,-1).join(", ") + " and " + offenders[offenders.length-1]
+      : offenders[0];
+    deployIssues.push(`${offenderList} ${offenders.length>1?"are":"is"} too small — each Battle Group needs at least <strong>${bgViol.minAllowed}</strong> unit${bgViol.minAllowed!==1?"s":""}, half of the largest group <strong>${esc(bgViol.largestName)}</strong> (${bgViol.largest}) rounded up.`);
+  }
   if(facViol.size) deployIssues.push(`<strong>${facViol.size}</strong> task force${facViol.size>1?"s":""} in the pool ${facViol.size>1?"don't":"doesn't"} match the ${esc(factionName(army.faction))} faction restriction.`);
   const deployBannerHTML = deployIssues.length ? `<div style="margin-bottom:14px;padding:8px 12px;border-radius:6px;background:#1a0505;border:1px solid #ef535066;display:flex;align-items:flex-start;gap:10px">
     <i class="fa-solid fa-triangle-exclamation" style="color:#ef5350;margin-top:1px;flex-shrink:0"></i>
@@ -3957,9 +3967,9 @@ function renderArmyDetail() {
       return unitCardHTML(unit, actions, slot.unitType || "unit");
     }).join("");
 
-    const bgWarnStrip = bgUndersize ? `<div style="margin-bottom:8px;padding:5px 8px;border-radius:4px;background:#1a0505;border:1px solid #ef535055;font-size:11px;color:#ef9a9a;display:flex;align-items:center;gap:6px">
-      <i class="fa-solid fa-triangle-exclamation" style="color:#ef5350;flex-shrink:0"></i>
-      Too small — needs at least <strong style="color:#ef5350">${bgViol.minAllowed}</strong> unit${bgViol.minAllowed!==1?"s":""} (has ${bgSize})
+    const bgWarnStrip = bgUndersize ? `<div style="margin-bottom:8px;padding:5px 8px;border-radius:4px;background:#1a0505;border:1px solid #ef535055;font-size:11px;color:#ef9a9a;display:flex;align-items:flex-start;gap:6px">
+      <i class="fa-solid fa-triangle-exclamation" style="color:#ef5350;flex-shrink:0;margin-top:1px"></i>
+      <span>Has ${bgSize} unit${bgSize!==1?"s":""} — needs at least <strong style="color:#ef5350">${bgViol.minAllowed}</strong> (half of ${esc(bgViol.largestName)}'s ${bgViol.largest}, rounded up)</span>
     </div>` : "";
     return `<div class="army-bg-card" style="${bgUndersize?"border-color:#ef535044":""}">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:6px">
