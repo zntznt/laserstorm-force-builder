@@ -4407,7 +4407,7 @@ function renderArmyDetail() {
   }
 
   // Equal-width grid tabs — each 1/N of total width
-  const bgTabsHTML = `<div style="display:grid;grid-template-columns:repeat(${bgList.length},1fr);gap:2px">
+  const bgTabsHTML = `<div style="display:grid;grid-template-columns:repeat(${bgList.length},1fr);gap:1px;background:var(--border-subtle)">
     ${bgList.map(bg => {
       const isActive = activeBGTabId === bg.id;
       const bPts = bgPoints(bg);
@@ -4420,11 +4420,11 @@ function renderArmyDetail() {
       const symStyle = `width:22px;height:22px;border-radius:5px;background:${symDef.color}${isActive?"22":"14"};border:1.5px solid ${symDef.color}${isActive?"99":"44"};color:${symDef.color};display:inline-flex;align-items:center;justify-content:center;flex-shrink:0`;
       const warnIcon = hasWarn ? `<i class="fa-solid fa-triangle-exclamation" style="color:#ef5350;font-size:8px;flex-shrink:0;margin-left:auto"></i>` : "";
       if(isActive) {
-        // Active: div, accent top border, clickable symbol opens picker
+        // Active: div, accent top border, no individual side borders
         const symEl = bgMode === "custom"
           ? `<button onclick="openBGSymbolPicker('${army.id}','${bg.id}')" title="${symDef.label} — click to change" style="${symStyle};cursor:pointer;padding:0;border:1.5px solid ${symDef.color}99;transition:background .15s" onmouseover="this.style.background='${symDef.color}33'" onmouseout="this.style.background='${symDef.color}22'">${symInner}</button>`
           : `<div style="${symStyle}">${symInner}</div>`;
-        return `<div style="padding:8px 9px 9px;border-radius:6px 6px 0 0;border:none;border-top:2px solid var(--accent);background:var(--surface-page);overflow:hidden;min-width:0">
+        return `<div style="padding:8px 9px 9px;border:none;border-top:2px solid var(--accent);background:var(--surface-page);overflow:hidden;min-width:0">
           <div style="display:flex;align-items:center;gap:5px;margin-bottom:4px;min-width:0">
             ${symEl}
             <span style="font-family:var(--font-display);font-size:12px;letter-spacing:.5px;color:var(--accent);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1" title="${esc(bg.name)}">${esc(bg.name)}</span>
@@ -4433,10 +4433,10 @@ function renderArmyDetail() {
           <div style="font-size:9px;color:var(--text-muted);line-height:1.3;padding-left:27px">${bPts} pts &bull; ${bgSize} unit${bgSize!==1?"s":""}</div>
         </div>`;
       } else {
-        // Inactive: full-width button, same height
+        // Inactive: no borders — outer wrapper provides border, gap:1px shows as divider
         const symEl = `<div style="${symStyle}">${symInner}</div>`;
         return `<button onclick="selectBGTab('${army.id}','${bg.id}')"
-          style="padding:8px 9px 9px;border-radius:6px 6px 0 0;border:1px solid var(--border-subtle);border-top:2px solid transparent;border-bottom:none;background:var(--surface-raised);cursor:pointer;text-align:left;overflow:hidden;min-width:0;width:100%;transition:background .12s,border-top-color .12s"
+          style="padding:8px 9px 9px;border:none;border-top:2px solid transparent;background:var(--surface-raised);cursor:pointer;text-align:left;overflow:hidden;min-width:0;width:100%;transition:background .12s,border-top-color .12s"
           onmouseover="this.style.background='var(--surface-page)';this.style.borderTopColor='var(--border-default)'"
           onmouseout="this.style.background='var(--surface-raised)';this.style.borderTopColor='transparent'">
           <div style="display:flex;align-items:center;gap:5px;margin-bottom:4px;min-width:0">
@@ -4449,7 +4449,8 @@ function renderArmyDetail() {
       }
     }).join("")}
   </div>`;
-  const bgCardHTML = `<div class="army-bg-card" style="border-top:none;border-radius:0 0 8px 8px;${bgViol.violatingIds.has(activeBGTabId||"")?"border-color:#ef535044":""}">
+  const bgViolActive = bgViol.violatingIds.has(activeBGTabId||"");
+  const bgCardHTML = `<div style="padding:12px 14px;background:var(--surface-card);border-top:1px solid var(--border-subtle)">
     ${bgCardBodyHTML}
   </div>`;
 
@@ -4507,8 +4508,8 @@ function renderArmyDetail() {
     <div class="sub-divider">
       <div class="sub-divider-label"><i class="fa-solid fa-chess-board" style="color:var(--accent);font-size:9px"></i> Battle Groups</div>
     </div>
-    ${bgTabsHTML}
-    <div style="padding-top:12px">
+    <div style="border:1px solid ${bgViolActive?"#ef535066":"var(--border-default)"};border-radius:8px;overflow:hidden">
+      ${bgTabsHTML}
       ${bgCardHTML}
     </div>
   </div>`;
