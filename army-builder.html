@@ -1046,8 +1046,7 @@ let state = {
   customTFTypes: [],
   customTacticalAssets: [],
   taskForces: [],
-  armies: [],
-  deployments: []
+  armies: []
 };
 
 let currentBuilderTraits = [];
@@ -1119,10 +1118,8 @@ function loadState() {
       state.customTacticalAssets = saved.customTacticalAssets || [];
       state.taskForces = saved.taskForces || [];
       state.armies = saved.armies || [];
-      state.deployments = saved.deployments || [];
       // Migration: ensure every slot has a stable id (older data may lack one)
       state.taskForces.forEach(tf => (tf.units||[]).forEach(s=>{ if(!s.id) s.id="slot_"+uid(); }));
-      state.deployments.forEach(d => (d.battleGroups||[]).forEach(bg=>(bg.units||[]).forEach(s=>{ if(!s.id) s.id="bgu_"+uid(); })));
       // Cleanup: drop any army BG entries left dangling by earlier deletions
       pruneOrphanedBGEntries();
       // Migration: BG entries pre-dated split support — give each the full
