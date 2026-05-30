@@ -1155,6 +1155,7 @@ let bgTFSelectedId = null;
 let bgSymbolPickerBgId = null;
 let editingBGId = null;
 let armyIconPickerOpen = false;
+let activeBGTabId = null;
 let fpUnitTargetArmyId = null;
 let fpUnitTargetBgId = null;
 let fpUnitAddedCount = 0;
@@ -4118,6 +4119,13 @@ function _ensureBGs(army) {
     army.battleGroups.forEach(bg => { if(!bg.symbol) _autoAssignBGSymbol(army, bg); });
 }
 
+function selectBGTab(armyId, bgId) {
+  activeBGTabId = bgId;
+  bgSymbolPickerBgId = null;
+  editingBGId = null;
+  renderArmyDetail();
+}
+
 function openBGSymbolPicker(armyId, bgId) {
   bgSymbolPickerBgId = bgSymbolPickerBgId === bgId ? null : bgId;
   renderArmyDetail();
@@ -4225,6 +4233,7 @@ function selectArmy(id) {
   bgSymbolPickerBgId = null;
   editingBGId = null;
   armyIconPickerOpen = false;
+  activeBGTabId = null;
   renderArmyList();
   renderArmyDetail();
 }
@@ -4299,8 +4308,30 @@ function renderArmyDetail() {
     </div>
   </div>` : "";
 
-  // Battle group cards
-  const bgCardsHTML = army.battleGroups.slice(0, bgCount).map(bg => {
+  // Battle group tabs
+  const bgList = army.battleGroups.slice(0, bgCount);
+  const bgIds = bgList.map(b => b.id);
+  if(!activeBGTabId || !bgIds.includes(activeBGTabId)) activeBGTabId = bgIds[0] || null;
+  const bgTabsHTML = `<div style="display:flex;gap:2px;border-bottom:2px solid var(--border-subtle);margin-bottom:0;overflow-x:auto;padding-bottom:0">
+    ${bgList.map(bg => {
+      const symDef = bgDesignation(army, bg);
+      const isActive = activeBGTabId === bg.id;
+      const hasWarn = bgViol.violatingIds.has(bg.id);
+      const tabPts = bgPoints(bg);
+      return `<button onclick="selectBGTab('${army.id}','${bg.id}')"
+        style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:6px 6px 0 0;flex-shrink:0;border:1px solid ${isActive?"var(--border-default)":"transparent"};border-bottom:2px solid ${isActive?"var(--surface-page)":"transparent"};margin-bottom:-2px;background:${isActive?"var(--surface-page)":"transparent"};color:${isActive?"var(--text-bright)":"var(--text-muted)"};cursor:pointer;white-space:nowrap;font-family:var(--font-display);font-size:14px;letter-spacing:.5px;transition:color .12s,background .12s">
+        <span style="display:inline-flex;width:20px;height:20px;border-radius:5px;background:${symDef.color}1a;border:1px solid ${symDef.color}55;color:${symDef.color};align-items:center;justify-content:center;flex-shrink:0;font-size:10px">${_bgSymInner(symDef,10)}</span>
+        ${esc(bg.name)}
+        <span style="font-size:10px;font-family:var(--font-body);font-weight:normal;color:${isActive?"var(--text-muted)":"#444"};letter-spacing:0">${tabPts}p</span>
+        ${hasWarn?`<i class="fa-solid fa-triangle-exclamation" style="color:#ef5350;font-size:9px"></i>`:""}
+      </button>`;
+    }).join("")}
+  </div>`;
+
+  // Render only the active BG's card
+  const bgCardHTML = (() => {
+    const bg = bgList.find(b => b.id === activeBGTabId);
+    if(!bg) return "";
     const bPts = bgPoints(bg);
     const bgSize = bgUnitCount(bg);
     const bgUndersize = bgViol.violatingIds.has(bg.id);
@@ -4397,7 +4428,7 @@ function renderArmyDetail() {
       ${pickerHTML}${bgWarnStrip}
       ${entriesHTML || `<div style="font-size:11px;color:#555;font-style:italic;padding:6px 0;text-align:center"><i class="fa-solid fa-circle-plus" style="color:#333;margin-right:5px"></i>No units assigned</div>`}
     </div>`;
-  }).join("");
+  })();
 
   const fpTag = fp ? `<span style="font-size:9px;font-weight:bold;padding:1px 6px;border-radius:8px;background:#1a2a1a;color:#66bb6a;border:1px solid #66bb6a44;letter-spacing:.5px">FREE PICK</span>` : "";
   // Army icon badge
@@ -4453,8 +4484,9 @@ function renderArmyDetail() {
     <div class="sub-divider">
       <div class="sub-divider-label"><i class="fa-solid fa-chess-board" style="color:var(--accent);font-size:9px"></i> Battle Groups</div>
     </div>
-    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;align-items:start">
-      ${bgCardsHTML}
+    ${bgTabsHTML}
+    <div style="padding-top:12px">
+      ${bgCardHTML}
     </div>
   </div>`;
 }
