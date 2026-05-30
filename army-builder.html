@@ -4050,13 +4050,23 @@ function bgPoints(bg) {
   }, 0);
 }
 
+// Count actual Units in a battle group: each entry references a TF slot,
+// whose quantity is the number of Units of that profile.
+function bgUnitCount(bg) {
+  return (bg.entries||[]).reduce((sum,e) => {
+    const tf = state.taskForces.find(t=>t.id===e.tfId);
+    const slot = tf ? (tf.units||[]).find(s=>s.id===e.slotId) : null;
+    return sum + (slot ? slot.quantity : 0);
+  }, 0);
+}
+
 function armyBGSizeViolations(army) {
   const bgs = (army.battleGroups||[]).slice(0, army.bgCount||3);
-  const sizes = bgs.map(bg => (bg.entries||[]).length);
+  const sizes = bgs.map(bg => bgUnitCount(bg));
   const largest = Math.max(...sizes, 0);
   if(largest === 0) return { violatingIds: new Set(), minAllowed: 0, largest: 0, ok: true };
   const minAllowed = Math.ceil(largest / 2);
-  const violatingIds = new Set(bgs.filter(bg => (bg.entries||[]).length < minAllowed).map(bg => bg.id));
+  const violatingIds = new Set(bgs.filter(bg => bgUnitCount(bg) < minAllowed).map(bg => bg.id));
   return { violatingIds, minAllowed, largest, ok: violatingIds.size === 0 };
 }
 
@@ -4110,7 +4120,7 @@ function renderArmyDetail() {
     ? `<span style="font-size:11px;color:#444;font-style:italic">None added yet.</span>`
     : tfs.map(tf => {
         const tp = tfPoints(tf);
-        const unitCount = (tf.slots||[]).length;
+        const unitCount = (tf.units||[]).reduce((s,u)=>s+u.quantity,0);
         const overLimit = tfOverLimit(tf);
         const isBlocked = tfRemoveBlockedId === tf.id;
         const blockedBGNames = isBlocked
@@ -4146,7 +4156,7 @@ function renderArmyDetail() {
   // Battle group cards
   const bgCardsHTML = army.battleGroups.slice(0, bgCount).map(bg => {
     const bPts = bgPoints(bg);
-    const bgSize = (bg.entries||[]).length;
+    const bgSize = bgUnitCount(bg);
     const bgUndersize = bgViol.violatingIds.has(bg.id);
     const entriesHTML = (bg.entries||[]).map(e => {
       const tf = state.taskForces.find(t=>t.id===e.tfId);
@@ -4157,8 +4167,9 @@ function renderArmyDetail() {
       if(!unit) return "";
       const tfColor = FACTION_COLORS[tf.faction] || "#555";
       const tfBadge = `<span style="font-size:9px;font-weight:bold;padding:1px 6px;border-radius:8px;background:${tfColor}18;color:${tfColor};border:1px solid ${tfColor}44">${esc(tf.name)}</span>`;
+      const qtyBadge = slot.quantity > 1 ? `<span style="font-size:10px;font-weight:bold;color:var(--accent-light)">×${slot.quantity}</span>` : "";
       const actions = `<div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
-        <span style="font-size:10px;color:var(--text-muted)">from ${tfBadge}</span>
+        <span style="font-size:10px;color:var(--text-muted);display:flex;align-items:center;gap:6px">from ${tfBadge}${qtyBadge}</span>
         <button class="trait-edit-btn" style="border-color:#8b000066;color:#ef5350;background:#2a0a0a" onclick="removeFromBG('${army.id}','${bg.id}','${e.id}')">Remove</button>
       </div>`;
       return unitCardHTML(unit, actions, slot.unitType || "unit");
