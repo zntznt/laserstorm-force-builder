@@ -4121,6 +4121,23 @@ function armyBGSizeViolations(army) {
   return { violatingIds, minAllowed, largest, ok: violatingIds.size === 0 };
 }
 
+// Pooled TFs that no longer satisfy the army's faction restriction (e.g. after
+// the restriction was changed). Returns a Set of TF ids; empty if unrestricted.
+// Used to warn the user — armies are never blocked, just flagged non-deployable.
+function armyFactionViolations(army) {
+  if(!army || !army.faction) return new Set();
+  return new Set((army.taskForceIds||[])
+    .map(id => state.taskForces.find(t=>t.id===id))
+    .filter(tf => tf && !tfMatchesArmyFaction(tf, army))
+    .map(tf => tf.id));
+}
+
+// Plain display name for a faction id (built-in or custom).
+function factionName(id) {
+  if(!id) return "";
+  return BUILTIN_FACTION_LABELS[id] || (state.customFactions||[]).find(f=>f.id===id)?.name || id;
+}
+
 function _ensureBGs(army) {
   const n = army.bgCount || 3;
   if(!army.battleGroups) army.battleGroups = [];
@@ -4136,7 +4153,9 @@ function renderArmyList() {
     const tfCount = (a.taskForceIds||[]).length;
     const isCurrent = a.id===currentArmyId;
     const viol = armyBGSizeViolations(a);
-    return `<div class="list-row" style="${isCurrent?"border-color:#007eff":!viol.ok?"border-color:#ef535044":""}" onclick="selectArmy('${a.id}')">
+    const facViol = armyFactionViolations(a);
+    const notDeployable = !viol.ok || facViol.size > 0;
+    return `<div class="list-row" style="${isCurrent?"border-color:#007eff":notDeployable?"border-color:#ef535044":""}" onclick="selectArmy('${a.id}')">
       <div style="min-width:0;flex:1">
         <div style="font-weight:bold;color:${isCurrent?"#007eff":"#fff"};overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(a.name)}</div>
         <div style="font-size:11px;color:#8b949e;display:flex;align-items:center;gap:5px;flex-wrap:wrap">
@@ -4144,7 +4163,7 @@ function renderArmyList() {
           <span>${tfCount} TF${tfCount!==1?"s":""} &bull; ${a.bgCount||3} BGs &bull; ${pts}${a.pointsLimit?` / ${a.pointsLimit}`:""} pts</span>
         </div>
       </div>
-      ${!viol.ok?`<span title="Battle Group size imbalance — not deployable" style="color:#ef5350;font-size:12px;flex-shrink:0"><i class="fa-solid fa-triangle-exclamation"></i></span>`:""}
+      ${notDeployable?`<span title="Has rule violations — not deployable" style="color:#ef5350;font-size:12px;flex-shrink:0"><i class="fa-solid fa-triangle-exclamation"></i></span>`:""}
     </div>`;
   }).join("");
 }
@@ -4165,6 +4184,7 @@ function renderArmyDetail() {
   const bgCount = army.bgCount || 3;
   const tfs = (army.taskForceIds||[]).map(id=>state.taskForces.find(t=>t.id===id)).filter(Boolean);
   const bgViol = armyBGSizeViolations(army);
+  const facViol = armyFactionViolations(army);
 
   // Compact TF pool rows
   const tfPoolHTML = tfs.length === 0
@@ -4174,6 +4194,7 @@ function renderArmyDetail() {
         const unitCount = (tf.units||[]).reduce((s,u)=>s+u.quantity,0);
         const overLimit = tfOverLimit(tf);
         const isBlocked = tfRemoveBlockedId === tf.id;
+        const offFaction = facViol.has(tf.id);
         const blockedBGNames = isBlocked
           ? (army.battleGroups||[]).filter(bg=>(bg.entries||[]).some(e=>e.tfId===tf.id)).map(bg=>esc(bg.name))
           : [];
@@ -4183,24 +4204,31 @@ function renderArmyDetail() {
           </div>
           <button onclick="tfRemoveBlockedId=null;renderArmyDetail()" style="background:none;border:none;color:#fb923c;cursor:pointer;padding:0;font-size:13px;flex-shrink:0;line-height:1"><i class="fa-solid fa-xmark"></i></button>
         </div>` : "";
-        return `<div class="list-row" style="${overLimit?"border-color:#ef535055":isBlocked?"border-color:#f9731666":""}">
+        const offFactionHTML = (offFaction && !isBlocked) ? `<div style="margin-top:6px;padding:6px 8px;border-radius:4px;background:#1a0505;border:1px solid #ef535066;font-size:11px;color:#ef9a9a;line-height:1.4">
+          <i class="fa-solid fa-triangle-exclamation" style="margin-right:4px;color:#ef5350"></i>Doesn't match this army's ${factionPill(army.faction)} restriction — remove it, or change the restriction.
+        </div>` : "";
+        return `<div class="list-row" style="${offFaction?"border-color:#ef535066":overLimit?"border-color:#ef535055":isBlocked?"border-color:#f9731666":""}">
           <div style="min-width:0;flex:1">
             <div style="font-weight:bold;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(tf.name)}</div>
             <div style="font-size:11px;color:#8b949e;display:flex;align-items:center;gap:4px;flex-wrap:wrap">
-              ${tf.faction ? factionPill(tf.faction) : ""}
+              ${tf.faction ? factionPill(tf.faction) : `<span style="font-size:10px;color:#666">No Faction</span>`}
               <span>${unitCount} unit${unitCount!==1?"s":""} &bull; ${tp} pts${overLimit?" ⚠":""}</span>
             </div>
-            ${warningHTML}
+            ${warningHTML}${offFactionHTML}
           </div>
           <button class="trait-edit-btn" style="border-color:#8b000066;color:#ef5350;background:#2a0a0a;flex-shrink:0" onclick="removeTFFromArmy('${army.id}','${tf.id}')">Remove</button>
         </div>`;
       }).join("");
 
-  const deployBannerHTML = !bgViol.ok ? `<div style="margin-bottom:14px;padding:8px 12px;border-radius:6px;background:#1a0505;border:1px solid #ef535066;display:flex;align-items:flex-start;gap:10px">
+  // Unified non-deployable banner (warn, never block — invalid armies are fine here).
+  const deployIssues = [];
+  if(!bgViol.ok) deployIssues.push(`Battle Groups must be reasonably equal — no group may hold fewer than <strong>${bgViol.minAllowed}</strong> unit${bgViol.minAllowed!==1?"s":""} (half the largest, ${bgViol.largest}, rounded up).`);
+  if(facViol.size) deployIssues.push(`<strong>${facViol.size}</strong> task force${facViol.size>1?"s":""} in the pool ${facViol.size>1?"don't":"doesn't"} match the ${esc(factionName(army.faction))} faction restriction.`);
+  const deployBannerHTML = deployIssues.length ? `<div style="margin-bottom:14px;padding:8px 12px;border-radius:6px;background:#1a0505;border:1px solid #ef535066;display:flex;align-items:flex-start;gap:10px">
     <i class="fa-solid fa-triangle-exclamation" style="color:#ef5350;margin-top:1px;flex-shrink:0"></i>
     <div style="font-size:12px;color:#ef9a9a;line-height:1.5">
-      <strong style="color:#ef5350">Not deployable</strong> — Battle Groups must be reasonably equal in size.
-      No BG may have fewer than <strong>${bgViol.minAllowed}</strong> unit${bgViol.minAllowed!==1?"s":""} (half of the largest, ${bgViol.largest}, rounded up).
+      <strong style="color:#ef5350">Not deployable</strong>
+      <ul style="margin:3px 0 0 16px;padding:0">${deployIssues.map(i=>`<li style="margin-top:1px">${i}</li>`).join("")}</ul>
     </div>
   </div>` : "";
 
