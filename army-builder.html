@@ -3040,7 +3040,7 @@ function renderTFList() {
         ${tf.commander?`<span><i class="fa-solid fa-person-military-pointing" style="color:#ffd54f;font-size:9px;margin-right:3px"></i>${esc(tf.commander)}</span>`:""}
         ${rankBadge}
         ${tf.commander && asset?`<span style="color:#333">&bull;</span>`:""}
-        ${asset?`<span><i class="fa-solid fa-chess-rook" style="color:#ffd54f;font-size:9px;margin-right:3px"></i>${esc(asset.name)}</span>`:""}
+        ${asset?`<span><i class="fa-solid fa-chess" style="color:#ffd54f;font-size:9px;margin-right:3px"></i>${esc(asset.name)}</span>`:""}
       </div>` : "";
     const overLimit = tf.pointsLimit && pts > tf.pointsLimit;
     const ptsColor = overLimit ? "#ef5350" : "#8b949e";
