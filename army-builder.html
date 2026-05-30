@@ -2896,23 +2896,7 @@ function _populateFactionSelect(selEl, currentVal) {
 function renderTFList() {
   const list = document.getElementById("tf-list");
   const scaleEl = document.getElementById("tf-scale-info");
-  const slots = tfRankSlots();
-  if(scaleEl) {
-    if(slots.scale === "epic") {
-      scaleEl.innerHTML = `<div style="font-size:10px;color:#ce93d8;background:#7b1fa211;border:1px solid #7b1fa233;border-radius:6px;padding:5px 9px;margin-bottom:8px;display:flex;gap:8px;flex-wrap:wrap">
-        <span style="font-weight:bold;letter-spacing:.5px">EPIC BATTLE</span>
-        <span style="color:#8b949e">Sr. TFC ${slots.usedSenior}/${slots.seniorSlots}</span>
-        <span style="color:#8b949e">Lord ${slots.usedLord}/${slots.lordSlots}</span>
-      </div>`;
-    } else if(slots.scale === "large") {
-      scaleEl.innerHTML = `<div style="font-size:10px;color:#90caf9;background:#1a237e11;border:1px solid #1a237e33;border-radius:6px;padding:5px 9px;margin-bottom:8px;display:flex;gap:8px;flex-wrap:wrap">
-        <span style="font-weight:bold;letter-spacing:.5px">LARGE BATTLE</span>
-        <span style="color:#8b949e">Sr. TFC ${slots.usedSenior}/${slots.seniorSlots}</span>
-      </div>`;
-    } else {
-      scaleEl.innerHTML = "";
-    }
-  }
+  if(scaleEl) scaleEl.innerHTML = "";
   if(!state.taskForces.length) {
     list.innerHTML = `<div class="empty"><div class="empty-icon"><i class="fa-solid fa-users"></i></div>No task forces yet</div>`;
     return;
@@ -3086,22 +3070,31 @@ function tfPoints(tf) {
   return (tf.units||[]).reduce((sum, slot) => sum + slotPointValue(slot), 0);
 }
 
-function tfRankSlots() {
-  const n = state.taskForces.length;
+function armyOfTF(tfId) {
+  return state.armies.find(a => !isFreePick(a) && (a.taskForceIds||[]).includes(tfId)) || null;
+}
+
+function tfRankSlots(tfId) {
+  const army = tfId ? armyOfTF(tfId) : null;
+  const tfs = army
+    ? (army.taskForceIds||[]).map(id => state.taskForces.find(t=>t.id===id)).filter(Boolean)
+    : state.taskForces;
+  const n = tfs.length;
   return {
     n,
+    army,
     scale: n >= 10 ? "epic" : n >= 5 ? "large" : "normal",
     seniorSlots: Math.floor(n / 4),
     lordSlots:   Math.floor(n / 8),
-    usedSenior:  state.taskForces.filter(t => t.commanderRank === "senior").length,
-    usedLord:    state.taskForces.filter(t => t.commanderRank === "lord").length,
+    usedSenior:  tfs.filter(t => t.commanderRank === "senior").length,
+    usedLord:    tfs.filter(t => t.commanderRank === "lord").length,
   };
 }
 
 function setTFCommanderRank(tfId, rank) {
   const tf = state.taskForces.find(t => t.id === tfId);
   if(!tf) return;
-  const s = tfRankSlots();
+  const s = tfRankSlots(tfId);
   if(rank === "senior" && tf.commanderRank !== "senior") {
     if(s.n < 5 || s.usedSenior >= s.seniorSlots) return;
   }
@@ -3134,7 +3127,7 @@ function renderTFDetail() {
   const typeLabel = tf.tfType ? _tfTypeLabel(tf.tfType) : "";
   const allAssets = allTacticalAssets();
   const asset = tf.tacAsset ? allAssets.find(a=>a.id===tf.tacAsset) : null;
-  const _slots = tfRankSlots();
+  const _slots = tfRankSlots(tf.id);
   const _rank = tf.commanderRank || "regular";
   const _canSenior = _slots.scale !== "normal" && (_rank === "senior" || _slots.usedSenior < _slots.seniorSlots);
   const _canLord   = _slots.scale === "epic"   && (_rank === "lord"   || _slots.usedLord   < _slots.lordSlots);
@@ -3151,11 +3144,12 @@ function renderTFDetail() {
       ? `<span ${onclick && ""} onclick="setTFCommanderRank('${tf.id}','regular')" style="font-size:9px;color:#555;cursor:pointer;margin-left:4px;text-decoration:underline">remove</span>` : "";
     return `<span ${onclick} style="display:inline-flex;align-items:center;gap:3px;padding:2px 9px;border-radius:10px;font-size:10px;font-weight:bold;letter-spacing:.5px;${style}">${label}${active?` <i class="fa-solid fa-check" style="font-size:8px"></i>`:""}${downgrade}</span>`;
   }
+  const _scope = _slots.army ? "in this army" : "total";
   const rankNote = _slots.scale === "normal"
-    ? `<span style="font-size:10px;color:#555;font-style:italic">Need 5+ TFs for Large Battle upgrades</span>`
+    ? `<span style="font-size:10px;color:#555;font-style:italic">Need 5+ TFs ${_slots.army ? "in this army" : ""} for Large Battle upgrades</span>`
     : _slots.scale === "large"
-    ? `<span style="font-size:10px;color:#8b949e">Large Battle — Sr. TFC ${_slots.usedSenior}/${_slots.seniorSlots} used</span>`
-    : `<span style="font-size:10px;color:#8b949e">Epic Battle — Sr. TFC ${_slots.usedSenior}/${_slots.seniorSlots} &bull; Lord ${_slots.usedLord}/${_slots.lordSlots}</span>`;
+    ? `<span style="font-size:10px;color:#8b949e">Large Battle (${_slots.n} TFs ${_scope}) — Sr. TFC ${_slots.usedSenior}/${_slots.seniorSlots} used</span>`
+    : `<span style="font-size:10px;color:#8b949e">Epic Battle (${_slots.n} TFs ${_scope}) — Sr. TFC ${_slots.usedSenior}/${_slots.seniorSlots} &bull; Lord ${_slots.usedLord}/${_slots.lordSlots}</span>`;
   const commanderSection = `<div style="background:#0d1118;border:1px solid #1e2a1e;border-radius:8px;padding:12px;margin-bottom:16px">
     <div class="sub-divider" style="margin-top:0;margin-bottom:10px">
       <div class="sub-divider-label"><i class="fa-solid fa-star" style="color:#ffd54f;font-size:9px"></i> Task Force Commander</div>
