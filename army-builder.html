@@ -3927,11 +3927,10 @@ function renderArmyDetail() {
         const tp = tfPoints(tf);
         const unitCount = (tf.units||[]).reduce((s,u)=>s+u.quantity,0);
         const overLimit = tfOverLimit(tf);
-        const isBlocked = tfRemoveBlockedId === tf.id;
         const offFaction = facViol.has(tf.id);
-        const blockedBGNames = isBlocked
-          ? (army.battleGroups||[]).filter(bg=>(bg.entries||[]).some(e=>e.tfId===tf.id)).map(bg=>esc(bg.name))
-          : [];
+        const blockedBGNames = (army.battleGroups||[]).filter(bg=>(bg.entries||[]).some(e=>e.tfId===tf.id)).map(bg=>esc(bg.name));
+        // Only show the block warning if the TF was flagged AND entries actually remain
+        const isBlocked = tfRemoveBlockedId === tf.id && blockedBGNames.length > 0;
         const warningHTML = isBlocked ? `<div style="margin-top:6px;padding:6px 8px;border-radius:4px;background:#3a1a00;border:1px solid #f97316aa;display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
           <div style="font-size:11px;color:#fb923c;line-height:1.4">
             <i class="fa-solid fa-triangle-exclamation" style="margin-right:4px"></i>Units from this TF are still in: <strong>${blockedBGNames.join(", ")}</strong>. Remove them first.
