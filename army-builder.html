@@ -4369,22 +4369,32 @@ function openAddTFModal(armyId) {
   openModal("modal-add-tf");
 }
 
+// Whether a task force may join an army given its faction restriction.
+// No restriction → any TF. A restricted army accepts TFs of the matching
+// faction plus generic "No Faction" (unaligned) TFs; it excludes TFs locked
+// to a different faction and "Any Faction" TFs (which can field off-faction units).
+function tfMatchesArmyFaction(tf, army) {
+  if(!army || !army.faction) return true;
+  if(!tf.faction) return true;            // No Faction = unaligned, fits anywhere
+  return tf.faction === army.faction;
+}
+
 function _renderAddTFList() {
   const armyId = addTFTargetArmyId;
   const army = state.armies.find(a=>a.id===armyId);
   const noteEl = document.getElementById("add-tf-faction-note");
   if(army?.faction) {
     noteEl.style.display = "block";
-    noteEl.innerHTML = `<i class="fa-solid fa-filter" style="margin-right:4px"></i>Showing only ${factionPill(army.faction)} task forces.`;
+    noteEl.innerHTML = `<i class="fa-solid fa-filter" style="margin-right:4px"></i>Showing ${factionPill(army.faction)} and unaligned (No Faction) task forces.`;
   } else { noteEl.style.display = "none"; }
   const list = document.getElementById("add-tf-list");
   const available = state.taskForces.filter(tf => {
     if((army?.taskForceIds||[]).includes(tf.id)) return false;
-    if(army?.faction && tf.faction !== army.faction) return false;
+    if(!tfMatchesArmyFaction(tf, army)) return false;
     return true;
   });
   if(!available.length) {
-    list.innerHTML=`<div class="empty">${army?.faction?"No task forces match the faction restriction, or all are already added.":"All task forces already added, or none exist."}</div>`;
+    list.innerHTML=`<div class="empty">${army?.faction?"No matching or unaligned task forces available — all are added, or locked to other factions.":"All task forces already added, or none exist."}</div>`;
   } else {
     list.innerHTML = available.map(tf => {
       const pts = tfPoints(tf);
