@@ -3109,15 +3109,18 @@ function _populateTFTypeSelect(selEl, currentVal) {
 
 function _populateFactionSelect(selEl, currentVal) {
   const builtins = [
-    {val:"",     label:"-- Any --",      color:null},
-    {val:"standard",  label:"Standard",  color:FACTION_COLORS.standard},
-    {val:"precursor", label:"Precursor", color:FACTION_COLORS.precursor},
-    {val:"soulless",  label:"Soulless",  color:FACTION_COLORS.soulless},
-    {val:"swarm",     label:"Swarm",     color:FACTION_COLORS.swarm},
-    {val:"warrior",   label:"Warrior",   color:FACTION_COLORS.warrior},
+    {val:"",          label:"No Faction",  color:null},
+    {val:"standard",  label:"Standard",    color:FACTION_COLORS.standard},
+    {val:"precursor", label:"Precursor",   color:FACTION_COLORS.precursor},
+    {val:"soulless",  label:"Soulless",    color:FACTION_COLORS.soulless},
+    {val:"swarm",     label:"Swarm",       color:FACTION_COLORS.swarm},
+    {val:"warrior",   label:"Warrior",     color:FACTION_COLORS.warrior},
+    {val:"any",       label:"Any Faction", color:null},
   ];
   const custom = (state.customFactions||[]).map(f=>({val:f.id, label:f.name, color:f.color}));
-  selEl.innerHTML = [...builtins,...custom].map(f=>`<option value="${f.val}"${currentVal===f.val?" selected":""}>${esc(f.label)}</option>`).join("");
+  // Insert custom factions before "Any Faction"
+  const opts = [...builtins.slice(0,-1), ...custom, builtins[builtins.length-1]];
+  selEl.innerHTML = opts.map(f=>`<option value="${f.val}"${currentVal===f.val?" selected":""}>${esc(f.label)}</option>`).join("");
 }
 
 function renderTFList() {
@@ -3641,7 +3644,9 @@ function renderAddUnitList() {
   // Filter out units that have no valid type for this section
   units = units.filter(u => availableTypesFor(u.class, addUnitTargetRole).length > 0);
   // Filter out units from other factions if TF has a faction set
-  if(tf && tf.faction) units = units.filter(u => !u.faction || u.faction === tf.faction);
+  if(tf && tf.faction === "any") { /* no filter — all factions allowed */ }
+  else if(tf && tf.faction) { units = units.filter(u => !u.faction || u.faction === tf.faction); }
+  else { units = units.filter(u => u.faction === "standard" || !u.faction); }
   const list = document.getElementById("addunit-list");
   list.innerHTML = units.map(u => {
     const pts = calcPoints(u);
@@ -3873,7 +3878,7 @@ function openAssetPickerModal(tfId) {
 function renderAssetPickerList() {
   const search = (document.getElementById("asset-picker-search")?.value||"").toLowerCase();
   const tf = state.taskForces.find(t=>t.id===assetPickerTFId);
-  const tfFaction = tf?.faction || null;
+  const tfFaction = (tf?.faction && tf.faction !== "any") ? tf.faction : null;
   let assets = allTacticalAssets().filter(a => {
     // Filter by faction: faction-locked assets only available when TF faction matches
     if(a.faction && a.faction !== tfFaction) return false;
