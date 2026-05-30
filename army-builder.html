@@ -3425,26 +3425,52 @@ function renderTFDetail() {
     </div>
   </div>`;
   const lim = tfSectionLimits(tf);
+
+  function _slotBadge(count, max, min) {
+    if(max === 0) return "";
+    const underMin = min > 0 && count < min;
+    const full     = count >= max;
+    const [color, bg, border] = underMin
+      ? ["#ef5350","#200808","#ef535055"]
+      : full
+      ? ["#ffa726","#1c1000","#ffa72655"]
+      : ["#66bb6a","#061406","#66bb6a55"];
+    const suffix = underMin ? ` · need ${min-count} more`
+                 : full     ? " · full"
+                 :            ` · ${max-count} left`;
+    return `<span style="font-size:10px;color:${color};background:${bg};border:1px solid ${border};border-radius:3px;padding:1px 7px;white-space:nowrap">${count}/${max}${suffix}</span>`;
+  }
+
   let slotsHTML = "";
   sections.forEach(({role, label, shClass}) => {
     const slots = (tf.units||[]).filter(u=>u.role===role||(role==="core"&&u.role==="commander"));
 
-    // Build limit indicator text
-    let limitInfo = "";
+    // Build limit indicator badges
+    let limitBadges = "";
     if(role === "core") {
-      const parts = Object.entries(lim.coreLimitsByClass).map(([cls, li]) => {
-        const warn = li.count < li.min;
-        return `<span style="color:${warn?"#ef5350":"#8b949e"}">${classLabel(cls)}: ${li.count}/${li.max}${li.min>0?` (min ${li.min})`:""}</span>`;
-      });
-      if(parts.length) limitInfo = parts.join(" &bull; ");
+      limitBadges = Object.entries(lim.coreLimitsByClass)
+        .filter(([,li]) => li.max > 0)
+        .map(([cls, li]) => {
+          const underMin = li.min > 0 && li.count < li.min;
+          const full     = li.count >= li.max;
+          const [color, bg, border] = underMin
+            ? ["#ef5350","#200808","#ef535055"]
+            : full
+            ? ["#ffa726","#1c1000","#ffa72655"]
+            : ["#66bb6a","#061406","#66bb6a55"];
+          const suffix = underMin ? ` ⚠ min ${li.min}`
+                       : full     ? " · full"
+                       :            ` · ${li.max-li.count} left`;
+          return `<span style="font-size:10px;color:${color};background:${bg};border:1px solid ${border};border-radius:3px;padding:1px 7px;white-space:nowrap">${classLabel(cls)} ${li.count}/${li.max}${suffix}</span>`;
+        }).join("");
     } else if(role === "specialist") {
       const specTotal = Object.values(lim.specLimitsByClass).reduce((s,v)=>s+v.count,0);
       const maxTotal  = Object.values(lim.specLimitsByClass).reduce((s,v)=>s+v.max,0);
-      limitInfo = `<span style="color:${specTotal>=maxTotal&&maxTotal>0?"#ef9a9a":"#8b949e"}">${specTotal}/${maxTotal}</span>`;
+      limitBadges = _slotBadge(specTotal, maxTotal, 0);
     } else if(role === "command") {
-      limitInfo = `<span style="color:${lim.cmdCount>=lim.cmdMax&&lim.cmdMax>0?"#ef9a9a":"#8b949e"}">${lim.cmdCount}/${lim.cmdMax}</span>`;
+      limitBadges = _slotBadge(lim.cmdCount, lim.cmdMax, 0);
     } else if(role === "support") {
-      limitInfo = `<span style="color:${lim.suppCount>=lim.suppMax?"#ef9a9a":"#8b949e"}">${lim.suppCount}/${lim.suppMax}</span>`;
+      limitBadges = _slotBadge(lim.suppCount, lim.suppMax, 0);
     }
 
     // Determine if Add button should be disabled for this section
@@ -3461,12 +3487,12 @@ function renderTFDetail() {
     // Core: always allow click, limit enforced per class in modal
 
     slotsHTML += `<div style="margin-bottom:14px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
-        <div style="display:flex;align-items:center;gap:8px">
-          <div class="section-header ${shClass}" style="margin-bottom:0">${label}</div>
-          ${limitInfo?`<span style="font-size:11px">${limitInfo}</span>`:""}
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;gap:6px">
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;min-width:0">
+          <div class="section-header ${shClass}" style="margin-bottom:0;flex-shrink:0">${label}</div>
+          ${limitBadges}
         </div>
-        <button class="trait-edit-btn" onclick="openAddUnitModal('${tf.id}','${role}')" ${sectionFull?"disabled style='opacity:0.4;cursor:not-allowed'":""}>Add</button>
+        <button class="trait-edit-btn" style="flex-shrink:0" onclick="openAddUnitModal('${tf.id}','${role}')" ${sectionFull?"disabled style='opacity:0.4;cursor:not-allowed;flex-shrink:0'":""}>Add</button>
       </div>
       ${slots.length===0?`<div style="font-size:12px;color:#444;padding:4px 0;font-style:italic">None</div>`:""}
       ${slots.map(slot => {
