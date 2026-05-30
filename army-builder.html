@@ -3347,7 +3347,7 @@ function selectTF(id) {
 function renderTFDetail() {
   const panel = document.getElementById("tf-detail-panel");
   const tf = state.taskForces.find(t=>t.id===currentTFId);
-  if(!tf) { panel.innerHTML = `<div class="card"><div class="empty">Select a Task Force</div></div>`; return; }
+  if(!tf) { panel.innerHTML = `<div class="card"><div class="empty"><div class="empty-icon"><i class="fa-solid fa-users"></i></div>Select a Task Force to edit</div></div>`; return; }
   const pts = tfPoints(tf);
   const sections = [
     {role:"core",       label:"Core Units",       shClass:"sh-core"},
