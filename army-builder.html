@@ -2156,67 +2156,123 @@ const FACTION_COLORS = {standard:"#007eff",precursor:"#9c27b0",soulless:"#607d8b
 // Each battle group carries one; when that symbol card is drawn the group activates.
 const BG_SYMBOLS = {
   // Strike
-  skull:      { icon:"fa-solid fa-skull",            color:"#ef5350", label:"Skull"          },
-  crosshairs: { icon:"fa-solid fa-crosshairs",       color:"#66bb6a", label:"Crosshairs"     },
-  bolt:       { icon:"fa-solid fa-bolt",             color:"#ffd740", label:"Laser"          },
-  bomb:       { icon:"fa-solid fa-bomb",             color:"#ff7043", label:"Bomb"           },
-  fire:       { icon:"fa-solid fa-fire",             color:"#ff5252", label:"Incendiary"     },
-  gun:        { icon:"fa-solid fa-gun",              color:"#90a4ae", label:"Firearm"        },
-  // Mobile
-  rocket:     { icon:"fa-solid fa-rocket",           color:"#82b1ff", label:"Rocket"         },
-  jet:        { icon:"fa-solid fa-jet-fighter",      color:"#80cbc4", label:"Jet Fighter"    },
-  meteor:     { icon:"fa-solid fa-meteor",           color:"#ff6e40", label:"Orbital Drop"   },
-  satellite:  { icon:"fa-solid fa-satellite-dish",   color:"#80deea", label:"Comms Dish"     },
+  "skull":             { icon:"fa-solid fa-skull",             color:"#ef5350", label:"Skull"           },
+  "skull-crossbones":  { icon:"fa-solid fa-skull-crossbones",  color:"#e53935", label:"Death's Head"    },
+  "crosshairs":        { icon:"fa-solid fa-crosshairs",        color:"#66bb6a", label:"Crosshairs"      },
+  "gun":               { icon:"fa-solid fa-gun",               color:"#90a4ae", label:"Firearm"         },
+  "bomb":              { icon:"fa-solid fa-bomb",              color:"#ff7043", label:"Bomb"            },
+  "bullseye":          { icon:"fa-solid fa-bullseye",          color:"#ef9a9a", label:"Bullseye"        },
+  "bolt":              { icon:"fa-solid fa-bolt",              color:"#ffd740", label:"Laser"           },
+  "fire":              { icon:"fa-solid fa-fire",              color:"#ff5252", label:"Incendiary"      },
+  "hand-fist":         { icon:"fa-solid fa-hand-fist",         color:"#ff8a65", label:"Assault"         },
+  "person-rifle":      { icon:"fa-solid fa-person-rifle",      color:"#a5d6a7", label:"Rifleman"        },
+  // Vehicles
+  "rocket":            { icon:"fa-solid fa-rocket",            color:"#82b1ff", label:"Rocket"          },
+  "jet-fighter":       { icon:"fa-solid fa-jet-fighter",       color:"#80cbc4", label:"Jet Fighter"     },
+  "helicopter":        { icon:"fa-solid fa-helicopter",        color:"#b2dfdb", label:"Helicopter"      },
+  "meteor":            { icon:"fa-solid fa-meteor",            color:"#ff6e40", label:"Orbital Drop"    },
+  "satellite-dish":    { icon:"fa-solid fa-satellite-dish",    color:"#80deea", label:"Comms Dish"      },
+  "satellite":         { icon:"fa-solid fa-satellite",         color:"#90caf9", label:"Orbital Station" },
+  "anchor":            { icon:"fa-solid fa-anchor",            color:"#546e7a", label:"Anchor"          },
+  "user-astronaut":    { icon:"fa-solid fa-user-astronaut",    color:"#b3e5fc", label:"Voidborn"        },
   // Tech
-  robot:      { icon:"fa-solid fa-robot",            color:"#b0bec5", label:"Mechanized"     },
-  microchip:  { icon:"fa-solid fa-microchip",        color:"#64b5f6", label:"Cyber Ops"      },
-  atom:       { icon:"fa-solid fa-atom",             color:"#80deea", label:"Nuclear"        },
-  gears:      { icon:"fa-solid fa-gears",            color:"#78909c", label:"Engineering"    },
-  tower:      { icon:"fa-solid fa-tower-broadcast",  color:"#a5d6a7", label:"Command Tower"  },
+  "robot":             { icon:"fa-solid fa-robot",             color:"#b0bec5", label:"Mechanized"      },
+  "microchip":         { icon:"fa-solid fa-microchip",         color:"#64b5f6", label:"Cyber Ops"       },
+  "atom":              { icon:"fa-solid fa-atom",              color:"#80deea", label:"Nuclear"         },
+  "gears":             { icon:"fa-solid fa-gears",             color:"#78909c", label:"Engineering"     },
+  "tower-broadcast":   { icon:"fa-solid fa-tower-broadcast",   color:"#a5d6a7", label:"Command Tower"   },
+  "wifi":              { icon:"fa-solid fa-wifi",              color:"#4fc3f7", label:"Network"         },
+  "network-wired":     { icon:"fa-solid fa-network-wired",     color:"#7986cb", label:"Hardwired Ops"   },
+  "server":            { icon:"fa-solid fa-server",            color:"#a1887f", label:"Data Core"       },
+  "terminal":          { icon:"fa-solid fa-terminal",          color:"#a5d6a7", label:"Command Line"    },
+  "magnet":            { icon:"fa-solid fa-magnet",            color:"#f48fb1", label:"Magnetic"        },
   // Hazard
-  radiation:  { icon:"fa-solid fa-radiation",        color:"#ffee58", label:"Radiation"      },
-  biohazard:  { icon:"fa-solid fa-biohazard",        color:"#69f0ae", label:"Biohazard"      },
-  skullx:     { icon:"fa-solid fa-skull-crossbones", color:"#e53935", label:"Death's Head"   },
-  eye:        { icon:"fa-solid fa-eye",              color:"#ce93d8", label:"Recon"          },
-  snowflake:  { icon:"fa-solid fa-snowflake",        color:"#b3e5fc", label:"Cryo"           },
+  "radiation":         { icon:"fa-solid fa-radiation",         color:"#ffee58", label:"Radiation"       },
+  "biohazard":         { icon:"fa-solid fa-biohazard",         color:"#69f0ae", label:"Biohazard"       },
+  "snowflake":         { icon:"fa-solid fa-snowflake",         color:"#b3e5fc", label:"Cryo"            },
+  "tornado":           { icon:"fa-solid fa-tornado",           color:"#90a4ae", label:"Tempest"         },
+  "cloud-bolt":        { icon:"fa-solid fa-cloud-bolt",        color:"#ce93d8", label:"Storm"           },
+  "syringe":           { icon:"fa-solid fa-syringe",           color:"#ef9a9a", label:"Injection"       },
+  "flask":             { icon:"fa-solid fa-flask",             color:"#a5d6a7", label:"Chemical"        },
+  "burst":             { icon:"fa-solid fa-burst",             color:"#ffd740", label:"Detonation"      },
+  "circle-radiation":  { icon:"fa-solid fa-circle-radiation",  color:"#ffcc80", label:"Fallout Zone"    },
   // Command
-  star:       { icon:"fa-solid fa-star",             color:"#ffd740", label:"Elite"          },
-  shield:     { icon:"fa-solid fa-shield",           color:"#42a5f5", label:"Shield"         },
-  crown:      { icon:"fa-solid fa-crown",            color:"#ce93d8", label:"High Command"   },
-  infinity:   { icon:"fa-solid fa-infinity",         color:"#80deea", label:"Eternal Guard"  },
-  medal:      { icon:"fa-solid fa-medal",            color:"#ffd54f", label:"Veteran"        },
-  // Numbers 1–5
+  "star":              { icon:"fa-solid fa-star",              color:"#ffd740", label:"Elite"           },
+  "crown":             { icon:"fa-solid fa-crown",             color:"#ce93d8", label:"High Command"    },
+  "shield":            { icon:"fa-solid fa-shield",            color:"#42a5f5", label:"Shield"          },
+  "shield-halved":     { icon:"fa-solid fa-shield-halved",     color:"#1e88e5", label:"Vanguard"        },
+  "medal":             { icon:"fa-solid fa-medal",             color:"#ffd54f", label:"Veteran"         },
+  "flag":              { icon:"fa-solid fa-flag",              color:"#ef5350", label:"Standard Bearer" },
+  "users":             { icon:"fa-solid fa-users",             color:"#64b5f6", label:"Regiment"        },
+  "chess-king":        { icon:"fa-solid fa-chess-king",        color:"#f5f5f5", label:"King"            },
+  "chess-rook":        { icon:"fa-solid fa-chess-rook",        color:"#bdbdbd", label:"Fortress"        },
+  "gem":               { icon:"fa-solid fa-gem",               color:"#e040fb", label:"Precursor"       },
+  // Recon
+  "eye":               { icon:"fa-solid fa-eye",               color:"#ce93d8", label:"Recon"           },
+  "eye-slash":         { icon:"fa-solid fa-eye-slash",         color:"#9575cd", label:"Shadow Ops"      },
+  "user-secret":       { icon:"fa-solid fa-user-secret",       color:"#78909c", label:"Infiltrator"     },
+  "ghost":             { icon:"fa-solid fa-ghost",             color:"#b0bec5", label:"Phantom"         },
+  "masks-theater":     { icon:"fa-solid fa-masks-theater",     color:"#ff8a65", label:"Deceiver"        },
+  "fingerprint":       { icon:"fa-solid fa-fingerprint",       color:"#4db6ac", label:"Tracker"         },
+  "dna":               { icon:"fa-solid fa-dna",               color:"#81c784", label:"Bio-Signature"   },
+  "heart":             { icon:"fa-solid fa-heart",             color:"#f06292", label:"Devoted"         },
+  "infinity":          { icon:"fa-solid fa-infinity",          color:"#80deea", label:"Eternal Guard"   },
+  // Organic
+  "virus":             { icon:"fa-solid fa-virus",             color:"#69f0ae", label:"Viral"           },
+  "dragon":            { icon:"fa-solid fa-dragon",            color:"#ff7043", label:"Drake"           },
+  "spider":            { icon:"fa-solid fa-spider",            color:"#9e9e9e", label:"Arachnid"        },
+  "worm":              { icon:"fa-solid fa-worm",              color:"#a5d6a7", label:"Crawler"         },
+  "bugs":              { icon:"fa-solid fa-bugs",              color:"#8d6e63", label:"Swarm Host"      },
+  "brain":             { icon:"fa-solid fa-brain",             color:"#f48fb1", label:"Psychic"         },
+  "pills":             { icon:"fa-solid fa-pills",             color:"#fff176", label:"Stimulant"       },
+  "paw":               { icon:"fa-solid fa-paw",               color:"#bcaaa4", label:"Beastmaster"     },
+  "locust":            { icon:"fa-solid fa-locust",            color:"#c5e1a5", label:"Locust"          },
+  "staff-snake":       { icon:"fa-solid fa-staff-snake",       color:"#81c784", label:"Venomous"        },
+  // Sequential text (BG-only)
   n1:{text:"1",color:"#64b5f6",label:"1"}, n2:{text:"2",color:"#64b5f6",label:"2"},
   n3:{text:"3",color:"#64b5f6",label:"3"}, n4:{text:"4",color:"#64b5f6",label:"4"},
   n5:{text:"5",color:"#64b5f6",label:"5"},
-  // Roman I–V
   r1:{text:"I",   color:"#ffd54f",label:"I"  }, r2:{text:"II", color:"#ffd54f",label:"II" },
   r3:{text:"III", color:"#ffd54f",label:"III"}, r4:{text:"IV", color:"#ffd54f",label:"IV" },
   r5:{text:"V",   color:"#ffd54f",label:"V"  },
-  // Greek α–ε
   ga:{text:"α",color:"#f48fb1",label:"Alpha"  }, gb:{text:"β",color:"#f48fb1",label:"Beta"   },
   gc:{text:"γ",color:"#f48fb1",label:"Gamma"  }, gd:{text:"δ",color:"#f48fb1",label:"Delta"  },
   ge:{text:"ε",color:"#f48fb1",label:"Epsilon"},
-  // Letters A–E
   la:{text:"A",color:"#a5d6a7",label:"A"}, lb:{text:"B",color:"#a5d6a7",label:"B"},
   lc:{text:"C",color:"#a5d6a7",label:"C"}, ld:{text:"D",color:"#a5d6a7",label:"D"},
   le:{text:"E",color:"#a5d6a7",label:"E"},
 };
-const ICON_SYMBOL_KEYS = ["skull","crosshairs","bolt","bomb","fire","gun","rocket","jet","meteor","satellite","robot","microchip","atom","gears","tower","radiation","biohazard","skullx","eye","snowflake","star","shield","crown","infinity","medal"];
+// Backwards-compat aliases for keys stored in old save data
+const _BG_SYM_ALIASES = { skullx:"skull-crossbones", jet:"jet-fighter", tower:"tower-broadcast" };
+function _bgSymLookup(key) {
+  if(!key) return BG_SYMBOLS[ICON_SYMBOL_KEYS[0]];
+  return BG_SYMBOLS[_BG_SYM_ALIASES[key]||key] || BG_SYMBOLS[ICON_SYMBOL_KEYS[0]];
+}
+const ICON_SYMBOL_KEYS = [
+  "skull","skull-crossbones","crosshairs","gun","bomb","bullseye","bolt","fire","hand-fist","person-rifle",
+  "rocket","jet-fighter","helicopter","meteor","satellite-dish","satellite","anchor","user-astronaut",
+  "robot","microchip","atom","gears","tower-broadcast","wifi","network-wired","server","terminal","magnet",
+  "radiation","biohazard","snowflake","tornado","cloud-bolt","syringe","flask","burst","circle-radiation",
+  "star","crown","shield","shield-halved","medal","flag","users","chess-king","chess-rook","gem",
+  "eye","eye-slash","user-secret","ghost","masks-theater","fingerprint","dna","heart","infinity",
+  "virus","dragon","spider","worm","bugs","brain","pills","paw","locust","staff-snake",
+];
 const BG_SYMBOLS_ORDER = [...ICON_SYMBOL_KEYS,"n1","n2","n3","n4","n5","r1","r2","r3","r4","r5","ga","gb","gc","gd","ge","la","lb","lc","ld","le"];
 const BG_SYMBOL_GROUPS = [
-  { label:"Strike",  keys:["skull","crosshairs","bolt","bomb","fire","gun"] },
-  { label:"Mobile",  keys:["rocket","jet","meteor","satellite"] },
-  { label:"Tech",    keys:["robot","microchip","atom","gears","tower"] },
-  { label:"Hazard",  keys:["radiation","biohazard","skullx","eye","snowflake"] },
-  { label:"Command", keys:["star","shield","crown","infinity","medal"] },
-  { label:"Numbers", keys:["n1","n2","n3","n4","n5"] },
-  { label:"Roman",   keys:["r1","r2","r3","r4","r5"] },
-  { label:"Greek",   keys:["ga","gb","gc","gd","ge"] },
-  { label:"Letters", keys:["la","lb","lc","ld","le"] },
+  { label:"Strike",   keys:["skull","skull-crossbones","crosshairs","gun","bomb","bullseye","bolt","fire","hand-fist","person-rifle"] },
+  { label:"Vehicles", keys:["rocket","jet-fighter","helicopter","meteor","satellite-dish","satellite","anchor","user-astronaut"] },
+  { label:"Tech",     keys:["robot","microchip","atom","gears","tower-broadcast","wifi","network-wired","server","terminal","magnet"] },
+  { label:"Hazard",   keys:["radiation","biohazard","snowflake","tornado","cloud-bolt","syringe","flask","burst","circle-radiation"] },
+  { label:"Command",  keys:["star","crown","shield","shield-halved","medal","flag","users","chess-king","chess-rook","gem"] },
+  { label:"Recon",    keys:["eye","eye-slash","user-secret","ghost","masks-theater","fingerprint","dna","heart","infinity"] },
+  { label:"Organic",  keys:["virus","dragon","spider","worm","bugs","brain","pills","paw","locust","staff-snake"] },
+  { label:"Numbers",  keys:["n1","n2","n3","n4","n5"] },
+  { label:"Roman",    keys:["r1","r2","r3","r4","r5"] },
+  { label:"Greek",    keys:["ga","gb","gc","gd","ge"] },
+  { label:"Letters",  keys:["la","lb","lc","ld","le"] },
 ];
-// Icon-only groups used by the army designation picker
-const ARMY_ICON_GROUPS = BG_SYMBOL_GROUPS.slice(0, 5);
+// Icon-only groups (no sequential text) — used by army designation and faction pickers
+const ARMY_ICON_GROUPS = BG_SYMBOL_GROUPS.slice(0, 7);
 
 function _bgSymInner(sd, size) {
   if(!sd) return "";
@@ -2230,8 +2286,7 @@ function _bgSymInner(sd, size) {
 function bgDesignation(army, bg) {
   const mode = army.bgIconMode || "custom";
   if(mode === "custom") {
-    const sym = bg.symbol || ICON_SYMBOL_KEYS[0];
-    return BG_SYMBOLS[sym] || BG_SYMBOLS[ICON_SYMBOL_KEYS[0]];
+    return _bgSymLookup(bg.symbol || ICON_SYMBOL_KEYS[0]);
   }
   const idx = (army.battleGroups||[]).indexOf(bg);
   const colors = { numbers:"#64b5f6", roman:"#ffd54f", greek:"#f48fb1", letters:"#a5d6a7" };
@@ -2280,26 +2335,6 @@ const TYPE_LABELS = {unit:"Unit", independent:"Independent", hero:"Hero", comman
 const VIEW_PTS_KEY = {unit:"unitPts", independent:"indPts", hero:"heroPts", command:"cmdPts", cmdHero:"cmdHeroPts"};
 const VIEW_LABELS  = {unit:"Unit", independent:"Ind", hero:"I.Hero", command:"Cmd", cmdHero:"C.Hero"};
 
-const FACTION_ICONS = [
-  // Combat & military
-  "shield","shield-halved","skull","skull-crossbones","crosshairs","gun","bomb",
-  "chess-rook","chess-king","chess-knight","medal","flag","rocket","jet-fighter","helicopter",
-  "anchor","hand-fist","person-rifle","bullseye",
-  // Sci-fi & tech
-  "robot","atom","radiation","biohazard","microchip","satellite","satellite-dish",
-  "bolt","wifi","eye","fingerprint","dna","flask","magnet","tower-broadcast","syringe",
-  // Fantasy & mystical
-  "dragon","crown","gem","infinity","moon","sun","star",
-  "hat-wizard","wand-magic-sparkles","staff-snake",
-  // Nature & elements
-  "fire","snowflake","leaf","mountain","tornado","wind","cloud-bolt","tree",
-  "paw","feather","spider","crow","horse","fish",
-  // Biological
-  "virus","worm","bugs","mosquito","locust","pills","brain",
-  // People & symbols
-  "users","user-secret","ghost","masks-theater","hand-rock",
-  "heart","eye-slash","circle-radiation",
-];
 
 function rebuildFactionSelect(selectValue) {
   const sel = document.getElementById("b-faction");
@@ -2436,19 +2471,29 @@ function renderFactionModalContent() {
       + `</div>`
     : `<div style="color:var(--text-inactive);font-size:12px;margin-bottom:4px">No custom factions yet.</div>`;
 
-  const selIcon = document.getElementById("faction-icon").value;
-  document.getElementById("faction-icon-picker").innerHTML = FACTION_ICONS.map(ic=>{
-    const sel = ic===selIcon;
-    return `<button type="button" onclick="selectFactionIcon(this,'${ic}')"
-      title="${ic.replace(/-/g,' ')}"
-      style="width:34px;height:34px;font-size:16px;border-radius:6px;cursor:pointer;border:2px solid ${sel?"var(--accent)":"var(--border-default)"};background:var(--surface-page);color:var(--text-primary);transition:border-color .12s"><i class="fa-solid fa-${ic}"></i></button>`;
-  }).join("");
+  renderFactionIconPicker();
 }
 
-function selectFactionIcon(btn, icon) {
+function renderFactionIconPicker() {
+  const selIcon = document.getElementById("faction-icon").value;
+  document.getElementById("faction-icon-picker").innerHTML = ARMY_ICON_GROUPS.map(grp => `
+    <div style="margin-bottom:8px">
+      <div style="font-size:9px;font-weight:700;letter-spacing:.08em;color:var(--text-inactive);text-transform:uppercase;margin-bottom:4px">${grp.label}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:4px">
+        ${grp.keys.map(s => {
+          const sd = BG_SYMBOLS[s];
+          if(!sd) return "";
+          const isCurrent = s === selIcon;
+          return `<button type="button" onclick="selectFactionIcon('${s}')" title="${sd.label}"
+            style="width:32px;height:32px;border-radius:6px;padding:0;border:${isCurrent?"2px solid "+sd.color:"1px solid "+sd.color+"44"};background:${isCurrent?sd.color+"2a":"transparent"};color:${sd.color};cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:border-color .12s,background .12s"><i class="${sd.icon}" style="font-size:15px"></i></button>`;
+        }).join("")}
+      </div>
+    </div>`).join("");
+}
+
+function selectFactionIcon(icon) {
   document.getElementById("faction-icon").value = icon;
-  document.querySelectorAll("#faction-icon-picker button").forEach(b=>b.style.borderColor="var(--border-default)");
-  btn.style.borderColor = "var(--accent)";
+  renderFactionIconPicker();
 }
 
 function saveCustomFaction() {
@@ -4121,7 +4166,7 @@ function renderArmyList() {
     const meta = fp
       ? `${a.bgCount||3} BGs &bull; <span style="${overLimit?"color:#ef5350;font-weight:bold":""}">${deployed}${a.pointsLimit?` / ${a.pointsLimit}`:""} pts</span>`
       : `${tfCount} TF${tfCount!==1?"s":""} &bull; ${a.bgCount||3} BGs &bull; <span style="${overLimit?"color:#ef5350;font-weight:bold":""}">${deployed}${a.pointsLimit?` / ${a.pointsLimit}`:""} pts</span> deployed${pool!==deployed?` <span style="color:#666">(${pool} pooled)</span>`:""}`;
-    const armySym = a.symbol ? BG_SYMBOLS[a.symbol] : null;
+    const armySym = a.symbol ? _bgSymLookup(a.symbol) : null;
     const armyIconBadge = armySym
       ? `<span style="display:inline-flex;width:20px;height:20px;border-radius:5px;background:${armySym.color}18;border:1px solid ${armySym.color}55;color:${armySym.color};align-items:center;justify-content:center;flex-shrink:0;font-size:10px">${_bgSymInner(armySym,10)}</span>`
       : "";
@@ -4282,7 +4327,7 @@ function renderArmyDetail() {
           <div style="font-size:9px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.7px;margin-bottom:4px">${grp.label}</div>
           <div style="display:flex;gap:4px;flex-wrap:wrap">
             ${grp.keys.map(s => {
-              const sd = BG_SYMBOLS[s];
+              const sd = _bgSymLookup(s);
               const isCurrent = s === sym;
               const isUsed = usedByOthers.has(s);
               return `<button onclick="${isUsed&&!isCurrent?"":"setBGSymbol('"+army.id+"','"+bg.id+"','"+s+"')"}" title="${sd.label}${isUsed&&!isCurrent?" (used by another group)":""}" style="min-width:30px;height:30px;border-radius:6px;padding:0 5px;border:${isCurrent?"2px solid "+sd.color:"1px solid "+sd.color+(isUsed&&!isCurrent?"22":"44")};background:${isCurrent?sd.color+"2a":"transparent"};color:${isUsed&&!isCurrent?"#333":sd.color};cursor:${isUsed&&!isCurrent?"default":"pointer"};display:inline-flex;align-items:center;justify-content:center">${_bgSymInner(sd)}</button>`;
@@ -4321,7 +4366,7 @@ function renderArmyDetail() {
 
   const fpTag = fp ? `<span style="font-size:9px;font-weight:bold;padding:1px 6px;border-radius:8px;background:#1a2a1a;color:#66bb6a;border:1px solid #66bb6a44;letter-spacing:.5px">FREE PICK</span>` : "";
   // Army icon badge
-  const armySym = army.symbol ? BG_SYMBOLS[army.symbol] : null;
+  const armySym = army.symbol ? _bgSymLookup(army.symbol) : null;
   const armyIconBtn = armySym
     ? `<button onclick="openArmyIconPicker()" title="Army designation icon — click to change" style="width:34px;height:34px;border-radius:8px;background:${armySym.color}1a;border:1.5px solid ${armySym.color}99;color:${armySym.color};cursor:pointer;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;padding:0;transition:background .15s" onmouseover="this.style.background='${armySym.color}33'" onmouseout="this.style.background='${armySym.color}1a'">${_bgSymInner(armySym,14)}</button>`
     : `<button onclick="openArmyIconPicker()" title="Set army designation icon" style="width:34px;height:34px;border-radius:8px;background:var(--surface-raised);border:1.5px dashed var(--border-default);color:var(--text-faint);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;padding:0;font-size:16px;transition:border-color .15s,color .15s" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border-default)';this.style.color='var(--text-faint)'"><i class="fa-solid fa-plus" style="font-size:11px"></i></button>`;
@@ -4333,7 +4378,7 @@ function renderArmyDetail() {
         <div style="font-size:9px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.7px;margin-bottom:4px">${grp.label}</div>
         <div style="display:flex;gap:4px;flex-wrap:wrap">
           ${grp.keys.map(s => {
-            const sd = BG_SYMBOLS[s];
+            const sd = _bgSymLookup(s);
             const isCurrent = army.symbol === s;
             return `<button onclick="setArmyIcon('${army.id}','${isCurrent?null:s}')" title="${sd.label}" style="width:32px;height:32px;border-radius:6px;padding:0;border:${isCurrent?"2px solid "+sd.color:"1px solid "+sd.color+"44"};background:${isCurrent?sd.color+"2a":"transparent"};color:${sd.color};cursor:pointer;display:inline-flex;align-items:center;justify-content:center">${_bgSymInner(sd)}</button>`;
           }).join("")}
