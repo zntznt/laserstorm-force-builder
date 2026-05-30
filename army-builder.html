@@ -1080,6 +1080,7 @@ let bgUnitSelectedItems = new Set();
 let bgTFTargetArmyId = null;
 let bgTFTargetBgId = null;
 let bgTFSelectedId = null;
+let bgSymbolPickerBgId = null;
 let libFilterClass = "all";
 let libFilterFaction = "all";
 let libSort = "name-asc";
@@ -1122,6 +1123,10 @@ function loadState() {
       state.taskForces.forEach(tf => (tf.units||[]).forEach(s=>{ if(!s.id) s.id="slot_"+uid(); }));
       // Cleanup: drop any army BG entries left dangling by earlier deletions
       pruneOrphanedBGEntries();
+      // Migration: backfill activation symbols on BGs that predate this feature
+      (state.armies||[]).forEach(a => a.battleGroups && a.battleGroups.forEach(bg => {
+        if(!bg.symbol) _autoAssignBGSymbol(a, bg);
+      }));
       // Migration: BG entries pre-dated split support — give each the full
       // quantity of its slot (older data placed a whole stack in one group).
       (state.armies||[]).forEach(a => (a.battleGroups||[]).forEach(bg => (bg.entries||[]).forEach(e => {
@@ -2079,6 +2084,18 @@ function saveToLibrary() {
 // FACTIONS
 // ============================================================
 const FACTION_COLORS = {standard:"#007eff",precursor:"#9c27b0",soulless:"#607d8b",swarm:"#4caf50",warrior:"#f44336"};
+
+// Symbols for the Initiative Deck activation mechanic.
+// Each battle group carries one; when that symbol card is drawn the group activates.
+const BG_SYMBOLS = {
+  skull:      { icon:"fa-solid fa-skull",      color:"#ef5350", label:"Skull"      },
+  star:       { icon:"fa-solid fa-star",        color:"#ffd740", label:"Star"       },
+  shield:     { icon:"fa-solid fa-shield",      color:"#42a5f5", label:"Shield"     },
+  crown:      { icon:"fa-solid fa-crown",       color:"#ce93d8", label:"Crown"      },
+  crosshairs: { icon:"fa-solid fa-crosshairs",  color:"#66bb6a", label:"Crosshairs" },
+  bolt:       { icon:"fa-solid fa-bolt",        color:"#ff9800", label:"Bolt"       },
+};
+const BG_SYMBOLS_ORDER = ["skull","star","shield","crown","crosshairs","bolt"];
 const TACTICAL_ASSETS = [
   {id:"area_denial",     name:"Area Denial",        faction:null,       use:["Activation"],                              fn:`Select an objective. All enemy stands within 8" must retreat 3" towards their own table edge.`},
   {id:"camouflage",      name:"Camouflage",          faction:null,       use:["Deployment"],                              fn:`The unit may not be targeted by pre-game bombardment fire. It is not considered to be the nearest target for any enemy command stand during the bombardment phase.`},
@@ -3828,11 +3845,33 @@ function factionName(id) {
   return BUILTIN_FACTION_LABELS[id] || (state.customFactions||[]).find(f=>f.id===id)?.name || id;
 }
 
+function _autoAssignBGSymbol(army, bg) {
+  const used = new Set((army.battleGroups||[]).filter(b=>b.id!==bg.id).map(b=>b.symbol).filter(Boolean));
+  bg.symbol = BG_SYMBOLS_ORDER.find(s=>!used.has(s)) || BG_SYMBOLS_ORDER[0];
+}
+
 function _ensureBGs(army) {
   const n = army.bgCount || 3;
   if(!army.battleGroups) army.battleGroups = [];
   while(army.battleGroups.length < n)
     army.battleGroups.push({id:"bg_"+uid(), name:`Battle Group ${romanNumeral(army.battleGroups.length+1)}`, entries:[]});
+  // Backfill missing symbols one at a time so each assignment sees prior ones
+  army.battleGroups.forEach(bg => { if(!bg.symbol) _autoAssignBGSymbol(army, bg); });
+}
+
+function openBGSymbolPicker(armyId, bgId) {
+  bgSymbolPickerBgId = bgSymbolPickerBgId === bgId ? null : bgId;
+  renderArmyDetail();
+}
+
+function setBGSymbol(armyId, bgId, sym) {
+  const army = state.armies.find(a=>a.id===armyId);
+  const bg = army?.battleGroups?.find(b=>b.id===bgId);
+  if(!bg) return;
+  bg.symbol = sym;
+  bgSymbolPickerBgId = null;
+  saveState();
+  renderArmyDetail();
 }
 
 function renderArmyList() {
@@ -3863,6 +3902,7 @@ function renderArmyList() {
 function selectArmy(id) {
   currentArmyId = id;
   tfRemoveBlockedId = null;
+  bgSymbolPickerBgId = null;
   renderArmyList();
   renderArmyDetail();
 }
@@ -3968,18 +4008,35 @@ function renderArmyDetail() {
       <i class="fa-solid fa-triangle-exclamation" style="color:#ef5350;flex-shrink:0;margin-top:1px"></i>
       <span>Has ${bgSize} unit${bgSize!==1?"s":""} — needs at least <strong style="color:#ef5350">${bgViol.minAllowed}</strong> (half of ${esc(bgViol.largestName)}'s ${bgViol.largest}, rounded up)</span>
     </div>` : "";
+    const sym = bg.symbol || BG_SYMBOLS_ORDER[0];
+    const symDef = BG_SYMBOLS[sym] || BG_SYMBOLS[BG_SYMBOLS_ORDER[0]];
+    const symBadge = `<button onclick="openBGSymbolPicker('${army.id}','${bg.id}')" title="Activation symbol: ${symDef.label} — click to change" style="width:30px;height:30px;border-radius:7px;background:${symDef.color}1a;border:1.5px solid ${symDef.color}99;color:${symDef.color};cursor:pointer;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;padding:0;transition:background .15s" onmouseover="this.style.background='${symDef.color}33'" onmouseout="this.style.background='${symDef.color}1a'"><i class="${symDef.icon}" style="font-size:13px"></i></button>`;
+    const pickerOpen = bgSymbolPickerBgId === bg.id;
+    const usedByOthers = new Set((army.battleGroups||[]).slice(0,bgCount).filter(b=>b.id!==bg.id).map(b=>b.symbol).filter(Boolean));
+    const pickerHTML = pickerOpen ? `<div style="display:flex;gap:5px;flex-wrap:wrap;align-items:center;margin-bottom:8px;padding:8px 10px;border-radius:6px;background:var(--surface-raised);border:1px solid var(--border-subtle)">
+      <span style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.7px;margin-right:4px">Activation symbol</span>
+      ${BG_SYMBOLS_ORDER.map(s => {
+        const sd = BG_SYMBOLS[s];
+        const isCurrent = s === sym;
+        const isUsed = usedByOthers.has(s);
+        return `<button onclick="${isUsed?"":"setBGSymbol('"+army.id+"','"+bg.id+"','"+s+"')"}" title="${sd.label}${isUsed?" (used by another group)":""}" style="width:32px;height:32px;border-radius:7px;border:${isCurrent?"2px solid "+sd.color:"1px solid "+sd.color+(isUsed?"22":"55")};background:${isCurrent?sd.color+"2a":"transparent"};color:${isUsed&&!isCurrent?"#3a3a3a":sd.color};cursor:${isUsed&&!isCurrent?"default":"pointer"};padding:0;display:inline-flex;align-items:center;justify-content:center"><i class="${sd.icon}" style="font-size:13px"></i></button>`;
+      }).join("")}
+    </div>` : "";
     return `<div class="army-bg-card" style="${bgUndersize?"border-color:#ef535044":""}">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:6px">
-        <div>
-          <div style="font-family:var(--font-display);font-size:16px;letter-spacing:.5px;color:${bgUndersize?"#ef5350":"var(--accent)"};">${esc(bg.name)}</div>
-          <div style="font-size:10px;color:var(--text-muted)">${bPts} pts &bull; ${bgSize} unit${bgSize!==1?"s":""}</div>
+        <div style="display:flex;align-items:center;gap:8px;min-width:0">
+          ${symBadge}
+          <div style="min-width:0">
+            <div style="font-family:var(--font-display);font-size:16px;letter-spacing:.5px;color:${bgUndersize?"#ef5350":"var(--accent)"};">${esc(bg.name)}</div>
+            <div style="font-size:10px;color:var(--text-muted)">${bPts} pts &bull; ${bgSize} unit${bgSize!==1?"s":""}</div>
+          </div>
         </div>
         <div style="display:flex;gap:4px;flex-shrink:0">
           <button class="trait-edit-btn" onclick="openArmyBGUnitModal('${army.id}','${bg.id}')">Add Unit</button>
           <button class="trait-edit-btn" onclick="openBGTFModal('${army.id}','${bg.id}')">Add TF</button>
         </div>
       </div>
-      ${bgWarnStrip}
+      ${pickerHTML}${bgWarnStrip}
       ${entriesHTML || `<div style="font-size:11px;color:#444;font-style:italic;padding:4px 0">No units yet</div>`}
     </div>`;
   }).join("");
@@ -4082,9 +4139,9 @@ function saveArmy() {
     }
     editingArmyId = null;
   } else {
-    const battleGroups = Array.from({length:bgCount},(_,i)=>({id:"bg_"+uid(),name:`Battle Group ${romanNumeral(i+1)}`,entries:[]}));
-    const army = {id:"army_"+uid(), name, faction, bgCount, pointsLimit, taskForceIds:[], battleGroups};
+    const army = {id:"army_"+uid(), name, faction, bgCount, pointsLimit, taskForceIds:[], battleGroups:[]};
     state.armies.push(army);
+    _ensureBGs(army);
     currentArmyId = army.id;
   }
   saveState();
