@@ -3716,11 +3716,18 @@ function deleteCustomAsset(id) {
 // ============================================================
 function romanNumeral(n) { return ["","I","II","III","IV","V"][n]||String(n); }
 
+// Total cost of every task force in the pool, regardless of what's deployed.
 function armyPoints(a) {
   return (a.taskForceIds||[]).reduce((sum,tfId) => {
     const tf = state.taskForces.find(t=>t.id===tfId);
     return sum + (tf?tfPoints(tf):0);
   },0);
+}
+
+// Cost of only the units actually placed into battle groups — this is the
+// figure that counts against the army's points limit on the tabletop.
+function armyDeployedPoints(a) {
+  return (a.battleGroups||[]).reduce((sum,bg) => sum + bgPoints(bg), 0);
 }
 
 function bgPoints(bg) {
@@ -3833,18 +3840,20 @@ function renderArmyList() {
   const list = document.getElementById("army-list");
   if(!state.armies.length) { list.innerHTML=`<div class="empty"><div class="empty-icon"><i class="fa-solid fa-chess-rook"></i></div>No armies yet</div>`; return; }
   list.innerHTML = state.armies.map(a => {
-    const pts = armyPoints(a);
+    const pool = armyPoints(a);
+    const deployed = armyDeployedPoints(a);
+    const overLimit = a.pointsLimit && deployed > a.pointsLimit;
     const tfCount = (a.taskForceIds||[]).length;
     const isCurrent = a.id===currentArmyId;
     const viol = armyBGSizeViolations(a);
     const facViol = armyFactionViolations(a);
-    const notDeployable = !viol.ok || facViol.size > 0;
+    const notDeployable = !viol.ok || facViol.size > 0 || overLimit;
     return `<div class="list-row" style="${isCurrent?"border-color:#007eff":notDeployable?"border-color:#ef535044":""}" onclick="selectArmy('${a.id}')">
       <div style="min-width:0;flex:1">
         <div style="font-weight:bold;color:${isCurrent?"#007eff":"#fff"};overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(a.name)}</div>
         <div style="font-size:11px;color:#8b949e;display:flex;align-items:center;gap:5px;flex-wrap:wrap">
           ${a.faction ? factionPill(a.faction) : ""}
-          <span>${tfCount} TF${tfCount!==1?"s":""} &bull; ${a.bgCount||3} BGs &bull; ${pts}${a.pointsLimit?` / ${a.pointsLimit}`:""} pts</span>
+          <span>${tfCount} TF${tfCount!==1?"s":""} &bull; ${a.bgCount||3} BGs &bull; <span style="${overLimit?"color:#ef5350;font-weight:bold":""}">${deployed}${a.pointsLimit?` / ${a.pointsLimit}`:""} pts</span> deployed${pool!==deployed?` <span style="color:#666">(${pool} pooled)</span>`:""}</span>
         </div>
       </div>
       ${notDeployable?`<span title="Has rule violations — not deployable" style="color:#ef5350;font-size:12px;flex-shrink:0"><i class="fa-solid fa-triangle-exclamation"></i></span>`:""}
@@ -3864,7 +3873,9 @@ function renderArmyDetail() {
   const army = state.armies.find(a=>a.id===currentArmyId);
   if(!army) { panel.innerHTML=`<div class="card"><div class="empty"><div class="empty-icon"><i class="fa-solid fa-chess-rook"></i></div>Select an army to view</div></div>`; return; }
   _ensureBGs(army);
-  const pts = armyPoints(army);
+  const poolPts = armyPoints(army);
+  const deployedPts = armyDeployedPoints(army);
+  const overPtsLimit = army.pointsLimit && deployedPts > army.pointsLimit;
   const bgCount = army.bgCount || 3;
   const tfs = (army.taskForceIds||[]).map(id=>state.taskForces.find(t=>t.id===id)).filter(Boolean);
   const bgViol = armyBGSizeViolations(army);
@@ -3906,6 +3917,7 @@ function renderArmyDetail() {
 
   // Unified non-deployable banner (warn, never block — invalid armies are fine here).
   const deployIssues = [];
+  if(overPtsLimit) deployIssues.push(`Deployed cost <strong>${deployedPts} pts</strong> exceeds the army's <strong>${army.pointsLimit} pt</strong> limit by ${deployedPts-army.pointsLimit}.`);
   if(!bgViol.ok) deployIssues.push(`Battle Groups must be reasonably equal — no group may hold fewer than <strong>${bgViol.minAllowed}</strong> unit${bgViol.minAllowed!==1?"s":""} (half the largest, ${bgViol.largest}, rounded up).`);
   if(facViol.size) deployIssues.push(`<strong>${facViol.size}</strong> task force${facViol.size>1?"s":""} in the pool ${facViol.size>1?"don't":"doesn't"} match the ${esc(factionName(army.faction))} faction restriction.`);
   const deployBannerHTML = deployIssues.length ? `<div style="margin-bottom:14px;padding:8px 12px;border-radius:6px;background:#1a0505;border:1px solid #ef535066;display:flex;align-items:flex-start;gap:10px">
@@ -3974,8 +3986,10 @@ function renderArmyDetail() {
       </div>
     </div>
     <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:16px;flex-wrap:wrap">
-      <span class="points-big" style="font-size:20px">${pts}</span>
-      <span class="points-label">${army.pointsLimit?`/ ${army.pointsLimit} pts`:"pts"}</span>
+      <span class="points-big" style="font-size:20px${overPtsLimit?";color:#ef5350":""}">${deployedPts}</span>
+      <span class="points-label">${army.pointsLimit?`/ ${army.pointsLimit} pts deployed`:"pts deployed"}</span>
+      ${overPtsLimit?`<span style="font-size:11px;color:#ef5350;font-weight:bold"><i class="fa-solid fa-triangle-exclamation"></i> over limit</span>`:""}
+      <span style="font-size:11px;color:var(--text-muted)" title="Total cost of every task force in the pool">Pool: ${poolPts} pts</span>
       <span style="font-size:11px;color:var(--text-muted)">${tfs.length} task force${tfs.length!==1?"s":""} &bull; ${bgCount} battle groups</span>
       ${army.faction ? factionPill(army.faction) : ""}
     </div>
