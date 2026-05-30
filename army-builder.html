@@ -1156,6 +1156,7 @@ let bgSymbolPickerBgId = null;
 let editingBGId = null;
 let armyIconPickerOpen = false;
 let activeBGTabId = null;
+let activeTFTab = "core";
 let fpUnitTargetArmyId = null;
 let fpUnitTargetBgId = null;
 let fpUnitAddedCount = 0;
@@ -3332,11 +3333,72 @@ function renderTFDetail() {
     return `<span style="font-size:10px;color:${color};background:${bg};border:1px solid ${border};border-radius:3px;padding:1px 7px;white-space:nowrap">${count}/${max}${suffix}</span>`;
   }
 
-  let slotsHTML = "";
-  sections.forEach(({role, label, shClass}) => {
-    const slots = (tf.units||[]).filter(u=>u.role===role||(role==="core"&&u.role==="commander"));
+  // Per-section status helpers
+  function _sectionStatus(role) {
+    if(role === "core") {
+      const entries = Object.values(lim.coreLimitsByClass).filter(li=>li.max>0);
+      if(!entries.length) return {color:"#555",label:"—"};
+      const total = entries.reduce((s,li)=>s+li.count,0);
+      const max   = entries.reduce((s,li)=>s+li.max,0);
+      const anyUnderMin = entries.some(li=>li.min>0&&li.count<li.min);
+      const allFull = entries.every(li=>li.count>=li.max);
+      if(anyUnderMin) return {color:"#ef5350", label:`⚠ ${total}`};
+      if(allFull)     return {color:"#ffa726", label:`${total}u FULL`};
+      return {color:"#66bb6a", label:`${total}u`};
+    }
+    if(role === "specialist") {
+      const total = Object.values(lim.specLimitsByClass).reduce((s,v)=>s+v.count,0);
+      const max   = Object.values(lim.specLimitsByClass).reduce((s,v)=>s+v.max,0);
+      if(!max) return {color:"#555",label:"—"};
+      if(total >= max) return {color:"#ffa726",label:`${total}/${max} FULL`};
+      return {color:"#66bb6a",label:`${total}/${max}`};
+    }
+    if(role === "command") {
+      if(!lim.cmdMax) return {color:"#555",label:"—"};
+      if(lim.cmdCount >= lim.cmdMax) return {color:"#ffa726",label:`${lim.cmdCount}/${lim.cmdMax} FULL`};
+      return {color:"#66bb6a",label:`${lim.cmdCount}/${lim.cmdMax}`};
+    }
+    if(role === "support") {
+      if(!lim.suppMax) return {color:"#555",label:"—"};
+      if(lim.suppCount >= lim.suppMax) return {color:"#ffa726",label:`${lim.suppCount}/${lim.suppMax} FULL`};
+      return {color:"#66bb6a",label:`${lim.suppCount}/${lim.suppMax}`};
+    }
+    return {color:"#555",label:"—"};
+  }
 
-    // Build limit indicator badges
+  // Ensure activeTFTab is valid for this TF
+  if(!sections.find(s=>s.role===activeTFTab)) activeTFTab = "core";
+  const activeSection = sections.find(s=>s.role===activeTFTab);
+
+  // Build tab bar
+  const tfTabsHTML = `<div style="display:grid;grid-template-columns:repeat(${sections.length},1fr);gap:1px;background:var(--border-subtle)">
+    ${sections.map(({role, label}) => {
+      const isActive = activeTFTab === role;
+      const st = _sectionStatus(role);
+      const badge = `<span style="font-size:8px;font-weight:700;color:${st.color};flex-shrink:0;letter-spacing:.3px;white-space:nowrap">${st.label}</span>`;
+      if(isActive) {
+        return `<div style="padding:8px 9px;border:none;border-top:2px solid var(--accent);background:var(--surface-page);overflow:hidden;min-width:0">
+          <div style="font-family:var(--font-display);font-size:11px;letter-spacing:.4px;color:var(--accent);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:3px">${label}</div>
+          ${badge}
+        </div>`;
+      } else {
+        return `<button onclick="selectTFTab('${role}')"
+          style="padding:8px 9px;border:none;border-top:2px solid transparent;background:var(--surface-raised);cursor:pointer;text-align:left;overflow:hidden;min-width:0;width:100%;transition:background .12s,border-top-color .12s"
+          onmouseover="this.style.background='var(--surface-page)';this.style.borderTopColor='var(--border-default)'"
+          onmouseout="this.style.background='var(--surface-raised)';this.style.borderTopColor='transparent'">
+          <div style="font-family:var(--font-display);font-size:11px;letter-spacing:.4px;color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:3px">${label}</div>
+          ${badge}
+        </button>`;
+      }
+    }).join("")}
+  </div>`;
+
+  // Build active section content
+  let activeSectionHTML = "";
+  {
+    const {role, label, shClass} = activeSection;
+    const slots = (tf.units||[]).filter(u=>u.role===role||(role==="core"&&u.role==="commander"));
+    // Limit badges (the detailed pills — the "screenshotted info")
     let limitBadges = "";
     if(role === "core") {
       limitBadges = Object.entries(lim.coreLimitsByClass)
@@ -3349,9 +3411,7 @@ function renderTFDetail() {
             : full
             ? ["#ffa726","#1c1000","#ffa72655"]
             : ["#66bb6a","#061406","#66bb6a55"];
-          const suffix = underMin ? ` ⚠ min ${li.min}`
-                       : full     ? " · full"
-                       :            ` · ${li.max-li.count} left`;
+          const suffix = underMin ? ` ⚠ min ${li.min}` : full ? " · FULL" : ` · ${li.max-li.count} left`;
           return `<span style="font-size:10px;color:${color};background:${bg};border:1px solid ${border};border-radius:3px;padding:1px 7px;white-space:nowrap">${classLabel(cls)} ${li.count}/${li.max}${suffix}</span>`;
         }).join("");
     } else if(role === "specialist") {
@@ -3363,8 +3423,6 @@ function renderTFDetail() {
     } else if(role === "support") {
       limitBadges = _slotBadge(lim.suppCount, lim.suppMax, 0);
     }
-
-    // Determine if Add button should be disabled for this section
     let sectionFull = false;
     if(role === "specialist") {
       const specTotal = Object.values(lim.specLimitsByClass).reduce((s,v)=>s+v.count,0);
@@ -3375,36 +3433,38 @@ function renderTFDetail() {
     } else if(role === "support") {
       sectionFull = lim.suppCount >= lim.suppMax;
     }
-    // Core: always allow click, limit enforced per class in modal
-
-    slotsHTML += `<div style="margin-bottom:16px">
-      <div class="sub-divider">
-        <div class="sub-divider-label">
-          <div class="section-header ${shClass}" style="margin-bottom:0;flex-shrink:0">${label}</div>
-          ${limitBadges}
-        </div>
-        <button class="trait-edit-btn" style="flex-shrink:0" onclick="openAddUnitModal('${tf.id}','${role}')" ${sectionFull?"disabled style='opacity:0.4;cursor:not-allowed;flex-shrink:0'":""}>Add</button>
-      </div>
-      ${slots.length===0?`<div style="font-size:11px;color:#444;padding:4px 0;font-style:italic;text-align:center">None added yet</div>`:""}
-      ${slots.map(slot => {
-        const u = unitById(slot.unitId);
-        if(!u) return `<div class="tf-unit-row"><span style="color:#666">[Deleted Unit]</span><button class="trait-edit-btn" onclick="confirmBtn(this,()=>removeTFSlot('${tf.id}','${slot.id}'))">Remove</button></div>`;
-        const typeLabel_ = TYPE_LABELS[slot.unitType||"unit"] || "Unit";
-        const slotActions = `<div style="display:flex;align-items:center;justify-content:space-between;width:100%">
-          <div style="display:flex;align-items:center;gap:8px">
-            <div class="qty-ctrl">
-              <button class="qty-btn" onclick="changeTFSlotQty('${tf.id}','${slot.id}',-1)">−</button>
-              <span class="qty-val">${slot.quantity}</span>
-              <button class="qty-btn" onclick="changeTFSlotQty('${tf.id}','${slot.id}',1)">+</button>
+    const slotsContent = slots.length === 0
+      ? `<div style="font-size:11px;color:#444;padding:8px 0;font-style:italic;text-align:center">None added yet</div>`
+      : slots.map(slot => {
+          const u = unitById(slot.unitId);
+          if(!u) return `<div class="tf-unit-row"><span style="color:#666">[Deleted Unit]</span><button class="trait-edit-btn" onclick="confirmBtn(this,()=>removeTFSlot('${tf.id}','${slot.id}'))">Remove</button></div>`;
+          const typeLabel_ = TYPE_LABELS[slot.unitType||"unit"] || "Unit";
+          const slotActions = `<div style="display:flex;align-items:center;justify-content:space-between;width:100%">
+            <div style="display:flex;align-items:center;gap:8px">
+              <div class="qty-ctrl">
+                <button class="qty-btn" onclick="changeTFSlotQty('${tf.id}','${slot.id}',-1)">−</button>
+                <span class="qty-val">${slot.quantity}</span>
+                <button class="qty-btn" onclick="changeTFSlotQty('${tf.id}','${slot.id}',1)">+</button>
+              </div>
+              <span style="font-size:10px;padding:2px 7px;border-radius:10px;background:#1a2030;color:#7eb3ff;border:1px solid #2a3a5a">${esc(typeLabel_)}</span>
             </div>
-            <span style="font-size:10px;padding:2px 7px;border-radius:10px;background:#1a2030;color:#7eb3ff;border:1px solid #2a3a5a">${esc(typeLabel_)}</span>
-          </div>
-          <button class="trait-edit-btn" onclick="confirmBtn(this,()=>removeTFSlot('${tf.id}','${slot.id}'))">Remove</button>
-        </div>`;
-        return unitCardHTML(u, slotActions, slot.unitType||"unit");
-      }).join("")}
+            <button class="trait-edit-btn" onclick="confirmBtn(this,()=>removeTFSlot('${tf.id}','${slot.id}'))">Remove</button>
+          </div>`;
+          return unitCardHTML(u, slotActions, slot.unitType||"unit");
+        }).join("");
+    activeSectionHTML = `<div style="padding:12px 14px;background:var(--surface-card)">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:${limitBadges?"10px":"12px"}">
+        <div style="display:flex;gap:5px;flex-wrap:wrap;align-items:center">${limitBadges || `<span style="font-size:10px;color:#555;font-style:italic">No limits defined</span>`}</div>
+        <button class="trait-edit-btn" style="flex-shrink:0" onclick="openAddUnitModal('${tf.id}','${role}')" ${sectionFull?`disabled style="opacity:0.4;cursor:not-allowed;flex-shrink:0"`:""}><i class="fa-solid fa-plus"></i> Add</button>
+      </div>
+      ${slotsContent}
     </div>`;
-  });
+  }
+
+  const slotsHTML = `<div style="border:1px solid var(--border-default);border-radius:8px;overflow:hidden;margin-bottom:8px">
+    ${tfTabsHTML}
+    <div style="border-top:1px solid var(--border-subtle)">${activeSectionHTML}</div>
+  </div>`;
   const tfOverLimitNow = tf.pointsLimit && pts > tf.pointsLimit;
   panel.innerHTML = `<div class="card">
     <div class="card-title">
@@ -4124,6 +4184,11 @@ function selectBGTab(armyId, bgId) {
   bgSymbolPickerBgId = null;
   editingBGId = null;
   renderArmyDetail();
+}
+
+function selectTFTab(role) {
+  activeTFTab = role;
+  renderTFDetail();
 }
 
 function openBGSymbolPicker(armyId, bgId) {
