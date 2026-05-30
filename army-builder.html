@@ -1280,6 +1280,8 @@ function loadState() {
       // Migration: ensure every slot has a stable id (older data may lack one)
       state.taskForces.forEach(tf => (tf.units||[]).forEach(s=>{ if(!s.id) s.id="slot_"+uid(); }));
       state.deployments.forEach(d => (d.battleGroups||[]).forEach(bg=>(bg.units||[]).forEach(s=>{ if(!s.id) s.id="bgu_"+uid(); })));
+      // Cleanup: drop any army BG entries left dangling by earlier deletions
+      pruneOrphanedBGEntries();
       // Migration: emoji → FA name
       const _ICON_MIG = {
         "⬢":"shield","▲":"flag","◆":"gem","●":"circle","■":"square",
@@ -2972,8 +2974,13 @@ function renderLibrary() {
 function deleteCustomUnit(id) {
   state.customUnits = state.customUnits.filter(u=>u.id!==id);
   state.taskForces.forEach(tf => { tf.units = tf.units.filter(u=>u.unitId!==id); });
+  pruneOrphanedBGEntries();
   saveState();
   renderLibrary();
+  renderTFList();
+  if(currentTFId) renderTFDetail();
+  renderArmyList();
+  if(currentArmyId) renderArmyDetail();
 }
 
 // ---- Export / Import unit ----
@@ -3630,10 +3637,13 @@ function createTaskForce() {
 function deleteTF(id) {
   state.taskForces = state.taskForces.filter(t=>t.id!==id);
   state.armies.forEach(a => { a.taskForceIds = a.taskForceIds.filter(tid=>tid!==id); });
+  pruneOrphanedBGEntries();
   if(currentTFId===id) currentTFId=null;
   saveState();
   renderTFList();
   renderTFDetail();
+  renderArmyList();
+  if(currentArmyId) renderArmyDetail();
 }
 
 function openAddUnitModal(tfId, role) {
@@ -3729,9 +3739,11 @@ function removeTFSlot(tfId, slotId) {
   const tf = state.taskForces.find(t=>t.id===tfId);
   if(!tf) return;
   tf.units = tf.units.filter(u=>u.id!==slotId);
+  pruneOrphanedBGEntries();
   saveState();
   renderTFList();
   renderTFDetail();
+  if(currentArmyId) renderArmyDetail();
 }
 
 function changeTFSlotQty(tfId, slotId, delta) {
@@ -4079,6 +4091,24 @@ function bgUnitCount(bg) {
     const slot = tf ? (tf.units||[]).find(s=>s.id===e.slotId) : null;
     return sum + (slot ? slot.quantity : 0);
   }, 0);
+}
+
+// Remove battle-group entries pointing at a task force or slot that no
+// longer exists (e.g. after deleting a unit, slot, or whole TF), so armies
+// never carry dangling references. Returns how many entries were pruned.
+function pruneOrphanedBGEntries() {
+  let removed = 0;
+  (state.armies||[]).forEach(army => {
+    (army.battleGroups||[]).forEach(bg => {
+      const before = (bg.entries||[]).length;
+      bg.entries = (bg.entries||[]).filter(e => {
+        const tf = state.taskForces.find(t=>t.id===e.tfId);
+        return tf && (tf.units||[]).some(s=>s.id===e.slotId);
+      });
+      removed += before - bg.entries.length;
+    });
+  });
+  return removed;
 }
 
 function armyBGSizeViolations(army) {
