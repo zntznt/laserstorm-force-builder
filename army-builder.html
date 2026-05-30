@@ -696,7 +696,7 @@ label .trait-edit-btn{margin-left:6px}
       <button class="trait-edit-btn" onclick="openCustomAssetsModal()"><i class="fa-solid fa-gear"></i> Custom Assets</button>
       <div style="display:flex;gap:8px">
         <button class="btn btn-secondary" onclick="closeModal('modal-asset-picker')">Cancel</button>
-        <button class="btn btn-primary" onclick="confirmAssetPick()">Select</button>
+        <button class="btn btn-primary" id="asset-picker-confirm-btn" onclick="confirmAssetPick()">Select</button>
       </div>
     </div>
   </div>
@@ -779,7 +779,8 @@ end hidden -->
     <div class="modal-header" id="army-modal-title">New Army <button class="modal-close" onclick="closeModal('modal-army')"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="form-group" style="margin-bottom:12px">
       <label>Army Name</label>
-      <input type="text" id="army-new-name" placeholder="e.g. Iron Legion" style="width:100%">
+      <input type="text" id="army-new-name" placeholder="e.g. Iron Legion" style="width:100%" oninput="clearFieldErr('army-new-name')">
+      <span class="field-error" id="army-new-name-err"></span>
     </div>
     <div class="form-row" style="margin-bottom:12px">
       <div class="form-group">
@@ -807,6 +808,7 @@ end hidden -->
         <input type="number" id="army-points-limit" min="0" step="50" placeholder="e.g. 1500" style="width:100px">
       </div>
     </div>
+    <div id="army-modal-msg" style="display:none;margin-bottom:10px"></div>
     <div style="display:flex;justify-content:flex-end;gap:8px">
       <button class="btn btn-secondary" onclick="closeModal('modal-army')">Cancel</button>
       <button class="btn btn-primary" id="army-modal-save-btn" onclick="saveArmy()">Create</button>
@@ -822,7 +824,7 @@ end hidden -->
     <div class="scrolllist" id="add-tf-list"></div>
     <div style="margin-top:12px;display:flex;justify-content:flex-end;gap:8px">
       <button class="btn btn-secondary" onclick="closeModal('modal-add-tf')">Cancel</button>
-      <button class="btn btn-primary" onclick="confirmAddTF()">Add</button>
+      <button class="btn btn-primary" id="add-tf-confirm-btn" onclick="confirmAddTF()" disabled>Add</button>
     </div>
   </div>
 </div>
@@ -850,7 +852,7 @@ end hidden -->
     <div class="scrolllist" id="bg-tf-list"></div>
     <div style="margin-top:12px;display:flex;justify-content:flex-end;gap:8px">
       <button class="btn btn-secondary" onclick="closeModal('modal-army-bg-tf')">Cancel</button>
-      <button class="btn btn-primary" onclick="confirmAddTFToBG()">Add All Units</button>
+      <button class="btn btn-primary" id="bg-tf-confirm-btn" onclick="confirmAddTFToBG()" disabled>Add All Units</button>
     </div>
   </div>
 </div>
@@ -887,6 +889,7 @@ end hidden -->
   <div class="modal" style="max-width:480px">
     <div class="modal-header">Custom Factions <button class="modal-close" onclick="closeModal('modal-faction')"><i class="fa-solid fa-xmark"></i></button></div>
     <div id="faction-modal-list"></div>
+    <div id="faction-modal-msg" style="display:none;margin-bottom:10px"></div>
     <div>
       <div id="faction-form-header" class="modal-sub-header">New Faction</div>
       <div class="form-group" style="margin-bottom:10px">
@@ -919,6 +922,7 @@ end hidden -->
   <div class="modal" style="max-width:500px">
     <div class="modal-header">Custom Traits <button class="modal-close" onclick="closeModal('modal-custom-trait')"><i class="fa-solid fa-xmark"></i></button></div>
     <div id="custom-trait-list"></div>
+    <div id="custom-trait-msg" style="display:none;margin-bottom:10px"></div>
     <div>
       <div id="ct-form-header" class="modal-sub-header">New Trait</div>
       <div class="form-row" style="gap:8px;margin-bottom:12px">
@@ -2516,6 +2520,7 @@ function cancelEditCustomFaction() {
 }
 
 function renderFactionModalContent() {
+  modalMsg("faction-modal-msg", "");
   const list = document.getElementById("faction-modal-list");
   const facs = state.customFactions||[];
   list.innerHTML = facs.length
@@ -2591,7 +2596,7 @@ function deleteCustomFaction(id) {
   const builderFaction = document.getElementById("b-faction")?.value;
   if(builderFaction===id) usedBy.unshift("(current unit in builder)");
   if(usedBy.length) {
-    alert(`"${faction.name}" is in use and cannot be deleted:\n\n${usedBy.map(n=>`• ${n}`).join("\n")}\n\nRemove it from those units and traits first.`);
+    modalMsg("faction-modal-msg", `<strong>${esc(faction.name)}</strong> is in use and can't be deleted:<ul style="margin:4px 0 0 16px;padding:0">${usedBy.map(n=>`<li>${esc(n)}</li>`).join("")}</ul><div style="margin-top:4px">Remove it from those first.</div>`);
     return;
   }
   state.customFactions = state.customFactions.filter(f=>f.id!==id);
@@ -2773,6 +2778,7 @@ function cancelEditCustomTrait() {
 }
 
 function renderCustomTraitList() {
+  modalMsg("custom-trait-msg", "");
   const list = document.getElementById("custom-trait-list");
   const traits = state.customTraits||[];
   if(!traits.length) {
@@ -2861,7 +2867,7 @@ function deleteCustomTrait(id) {
     builderWeapons.some(w=>(w.traits||[]).some(t=>t[0]===trait.name));
   if(inBuilder) usedBy.unshift("(current unit in builder)");
   if(usedBy.length) {
-    alert(`"${trait.name}" is used by the following units and cannot be deleted:\n\n${usedBy.map(n=>`• ${n}`).join("\n")}\n\nRemove it from those units first.`);
+    modalMsg("custom-trait-msg", `<strong>${esc(trait.name)}</strong> is in use and can't be deleted:<ul style="margin:4px 0 0 16px;padding:0">${usedBy.map(n=>`<li>${esc(n)}</li>`).join("")}</ul><div style="margin-top:4px">Remove it from those units first.</div>`);
     return;
   }
   state.customTraits = state.customTraits.filter(t=>t.id!==id);
@@ -3584,6 +3590,15 @@ function showFieldErr(id, msg) {
   if(el) { el.classList.add("input-error"); el.focus(); }
   if(err) { err.textContent=msg; err.classList.add("visible"); }
 }
+// Inline message strip inside a modal (replaces alert popups).
+// `html` may contain markup — caller is responsible for escaping user content.
+function modalMsg(id, html) {
+  const el = document.getElementById(id);
+  if(!el) return;
+  if(!html) { el.style.display="none"; el.innerHTML=""; return; }
+  el.style.display="block";
+  el.innerHTML = `<div style="padding:7px 10px;border-radius:5px;background:#1a0505;border:1px solid #ef535066;color:#ef9a9a;font-size:11px;line-height:1.5;display:flex;align-items:flex-start;gap:7px"><i class="fa-solid fa-triangle-exclamation" style="margin-top:1px;flex-shrink:0;color:#ef5350"></i><div>${html}</div></div>`;
+}
 
 function createTaskForce() {
   const name = document.getElementById("tf-new-name").value.trim();
@@ -3630,7 +3645,7 @@ function openAddUnitModal(tfId, role) {
   document.getElementById("addunit-modal-title").textContent = "Add " + (labels[addUnitTargetRole]||"Unit");
   document.getElementById("addunit-search").value = "";
   document.getElementById("addunit-type-selector").style.display = "none";
-  document.getElementById("addunit-confirm-btn").disabled = false;
+  document.getElementById("addunit-confirm-btn").disabled = true;
   renderAddUnitList();
   openModal("modal-add-unit");
 }
@@ -3668,11 +3683,11 @@ function renderAddUnitTypeSelector() {
   const warningEl = document.getElementById("addunit-type-warning");
   const confirmBtn = document.getElementById("addunit-confirm-btn");
   const tf = state.taskForces.find(t=>t.id===addUnitTargetTFId);
-  if(!addUnitSelectedId) { selectorEl.style.display="none"; return; }
+  if(!addUnitSelectedId) { selectorEl.style.display="none"; if(confirmBtn) confirmBtn.disabled=true; return; }
   const u = unitById(addUnitSelectedId);
-  if(!u) { selectorEl.style.display="none"; return; }
+  if(!u) { selectorEl.style.display="none"; if(confirmBtn) confirmBtn.disabled=true; return; }
   const types = availableTypesFor(u.class, addUnitTargetRole);
-  if(!types.length) { selectorEl.style.display="none"; return; }
+  if(!types.length) { selectorEl.style.display="none"; if(confirmBtn) confirmBtn.disabled=true; return; }
   // Default to first type if none selected or selected type no longer valid
   if(!addUnitSelectedType || !types.includes(addUnitSelectedType)) {
     addUnitSelectedType = types[0];
@@ -3695,12 +3710,12 @@ function renderAddUnitTypeSelector() {
 }
 
 function confirmAddUnit() {
-  if(!addUnitSelectedId) { alert("Select a unit."); return; }
+  if(!addUnitSelectedId) { return; }
   const tf = state.taskForces.find(t=>t.id===addUnitTargetTFId);
-  if(!tf) { alert("No task force selected."); return; }
+  if(!tf) { return; }
   const u = unitById(addUnitSelectedId);
   if(!u) return;
-  if(!canAddToSection(tf, addUnitTargetRole, u.class)) { alert("This section is full for that unit class."); return; }
+  if(!canAddToSection(tf, addUnitTargetRole, u.class)) { return; }
   const types = availableTypesFor(u.class, addUnitTargetRole);
   const unitType = types.includes(addUnitSelectedType) ? addUnitSelectedType : (types[0] || "unit");
   tf.units.push({id:"slot_"+uid(), unitId:addUnitSelectedId, role:addUnitTargetRole, unitType, quantity:1});
@@ -3885,7 +3900,12 @@ function renderAssetPickerList() {
     return true;
   });
   const list = document.getElementById("asset-picker-list");
-  if(!assets.length) { list.innerHTML = `<div class="empty">No assets available for this faction</div>`; return; }
+  const confBtn = document.getElementById("asset-picker-confirm-btn");
+  if(!assets.length) {
+    list.innerHTML = `<div class="empty">No assets available for this faction</div>`;
+    if(confBtn) confBtn.disabled = true;
+    return;
+  }
   list.innerHTML = assets.map(a => {
     const sel = assetPickerSelectedId === a.id;
     return `<div class="list-row" style="${sel?"border-color:#007eff;background:#1a2a1a":""}" onclick="assetPickerSelectedId='${a.id}';renderAssetPickerList()">
@@ -3896,10 +3916,11 @@ function renderAssetPickerList() {
       </div>
     </div>`;
   }).join("");
+  if(confBtn) confBtn.disabled = !assetPickerSelectedId;
 }
 
 function confirmAssetPick() {
-  if(!assetPickerSelectedId) { alert("Select an asset."); return; }
+  if(!assetPickerSelectedId) { return; }
   const tf = state.taskForces.find(t=>t.id===assetPickerTFId);
   if(!tf) return;
   tf.tacAsset = assetPickerSelectedId;
@@ -4232,6 +4253,8 @@ function openNewArmyModal() {
   document.getElementById("army-faction").value = "";
   document.getElementById("army-bg-count").value = "3";
   document.getElementById("army-points-limit").value = "";
+  clearFieldErr("army-new-name");
+  modalMsg("army-modal-msg", "");
   // Populate custom factions in the faction dropdown
   _refreshArmyFactionSelect();
   openModal("modal-army");
@@ -4247,6 +4270,8 @@ function openEditArmyModal(id) {
   document.getElementById("army-faction").value = army.faction || "";
   document.getElementById("army-bg-count").value = String(army.bgCount || 3);
   document.getElementById("army-points-limit").value = army.pointsLimit || "";
+  clearFieldErr("army-new-name");
+  modalMsg("army-modal-msg", "");
   _refreshArmyFactionSelect();
   openModal("modal-army");
 }
@@ -4261,8 +4286,9 @@ function _refreshArmyFactionSelect() {
 }
 
 function saveArmy() {
+  modalMsg("army-modal-msg", "");
   const name = document.getElementById("army-new-name").value.trim();
-  if(!name) { alert("Enter a name."); return; }
+  if(!name) { showFieldErr("army-new-name","Enter an army name."); return; }
   const factionRaw = document.getElementById("army-faction").value;
   const faction = (factionRaw && factionRaw !== "any") ? factionRaw : null;
   const bgCount = parseInt(document.getElementById("army-bg-count").value) || 3;
@@ -4276,8 +4302,8 @@ function saveArmy() {
         const bgsToRemove = (army.battleGroups||[]).slice(bgCount);
         const hasUnits = bgsToRemove.some(bg => (bg.entries||[]).length > 0);
         if(hasUnits) {
-          const names = bgsToRemove.filter(bg=>(bg.entries||[]).length>0).map(bg=>bg.name).join(", ");
-          alert(`Cannot reduce to ${bgCount} battle groups — ${names} still have units. Remove those units first.`);
+          const names = bgsToRemove.filter(bg=>(bg.entries||[]).length>0).map(bg=>esc(bg.name)).join(", ");
+          modalMsg("army-modal-msg", `Can't reduce to ${bgCount} battle groups — <strong>${names}</strong> still ${bgsToRemove.filter(bg=>(bg.entries||[]).length>0).length>1?"have":"has"} units. Remove those first.`);
           return;
         }
         army.battleGroups = (army.battleGroups||[]).slice(0, bgCount);
@@ -4346,10 +4372,12 @@ function _renderAddTFList() {
       </div>`;
     }).join("");
   }
+  const b = document.getElementById("add-tf-confirm-btn");
+  if(b) b.disabled = !addTFSelectedId;
 }
 
 function confirmAddTF() {
-  if(!addTFSelectedId) { alert("Select a task force."); return; }
+  if(!addTFSelectedId) { return; }
   const army = state.armies.find(a=>a.id===addTFTargetArmyId);
   if(!army) return;
   if(!army.taskForceIds.includes(addTFSelectedId)) army.taskForceIds.push(addTFSelectedId);
@@ -4475,7 +4503,12 @@ function _renderBGTFList() {
   const army = state.armies.find(a=>a.id===bgTFTargetArmyId);
   const tfs = (army?.taskForceIds||[]).map(id=>state.taskForces.find(t=>t.id===id)).filter(Boolean);
   const list = document.getElementById("bg-tf-list");
-  if(!tfs.length) { list.innerHTML=`<div class="empty">No task forces in this army's pool.</div>`; return; }
+  const confBtn = document.getElementById("bg-tf-confirm-btn");
+  if(!tfs.length) {
+    list.innerHTML=`<div class="empty">No task forces in this army's pool.</div>`;
+    if(confBtn) confBtn.disabled = true;
+    return;
+  }
   list.innerHTML = tfs.map(tf => {
     const pts = tfPoints(tf);
     const unitCount = (tf.units||[]).reduce((s,u)=>s+u.quantity,0);
@@ -4491,10 +4524,11 @@ function _renderBGTFList() {
       ${sel?`<i class="fa-solid fa-check" style="color:#007eff;flex-shrink:0"></i>`:""}
     </div>`;
   }).join("");
+  if(confBtn) confBtn.disabled = !bgTFSelectedId;
 }
 
 function confirmAddTFToBG() {
-  if(!bgTFSelectedId) { alert("Select a task force."); return; }
+  if(!bgTFSelectedId) { return; }
   const army = state.armies.find(a=>a.id===bgTFTargetArmyId);
   const bg = army?.battleGroups?.find(b=>b.id===bgTFTargetBgId);
   const tf = state.taskForces.find(t=>t.id===bgTFSelectedId);
