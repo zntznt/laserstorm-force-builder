@@ -4052,6 +4052,16 @@ function bgPoints(bg) {
   }, 0);
 }
 
+function armyBGSizeViolations(army) {
+  const bgs = (army.battleGroups||[]).slice(0, army.bgCount||3);
+  const sizes = bgs.map(bg => (bg.entries||[]).length);
+  const largest = Math.max(...sizes, 0);
+  if(largest === 0) return { violatingIds: new Set(), minAllowed: 0, largest: 0, ok: true };
+  const minAllowed = Math.ceil(largest / 2);
+  const violatingIds = new Set(bgs.filter(bg => (bg.entries||[]).length < minAllowed).map(bg => bg.id));
+  return { violatingIds, minAllowed, largest, ok: violatingIds.size === 0 };
+}
+
 function _ensureBGs(army) {
   const n = army.bgCount || 3;
   if(!army.battleGroups) army.battleGroups = [];
@@ -4066,14 +4076,16 @@ function renderArmyList() {
     const pts = armyPoints(a);
     const tfCount = (a.taskForceIds||[]).length;
     const isCurrent = a.id===currentArmyId;
-    return `<div class="list-row" style="${isCurrent?"border-color:#007eff":""}" onclick="selectArmy('${a.id}')">
-      <div style="min-width:0">
+    const viol = armyBGSizeViolations(a);
+    return `<div class="list-row" style="${isCurrent?"border-color:#007eff":!viol.ok?"border-color:#ef535044":""}" onclick="selectArmy('${a.id}')">
+      <div style="min-width:0;flex:1">
         <div style="font-weight:bold;color:${isCurrent?"#007eff":"#fff"};overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(a.name)}</div>
         <div style="font-size:11px;color:#8b949e;display:flex;align-items:center;gap:5px;flex-wrap:wrap">
           ${a.faction ? factionPill(a.faction) : ""}
           <span>${tfCount} TF${tfCount!==1?"s":""} &bull; ${a.bgCount||3} BGs &bull; ${pts}${a.pointsLimit?` / ${a.pointsLimit}`:""} pts</span>
         </div>
       </div>
+      ${!viol.ok?`<span title="Battle Group size imbalance — not deployable" style="color:#ef5350;font-size:12px;flex-shrink:0"><i class="fa-solid fa-triangle-exclamation"></i></span>`:""}
     </div>`;
   }).join("");
 }
@@ -4093,6 +4105,7 @@ function renderArmyDetail() {
   const pts = armyPoints(army);
   const bgCount = army.bgCount || 3;
   const tfs = (army.taskForceIds||[]).map(id=>state.taskForces.find(t=>t.id===id)).filter(Boolean);
+  const bgViol = armyBGSizeViolations(army);
 
   // Compact TF pool rows
   const tfPoolHTML = tfs.length === 0
@@ -4124,9 +4137,19 @@ function renderArmyDetail() {
         </div>`;
       }).join("");
 
+  const deployBannerHTML = !bgViol.ok ? `<div style="margin-bottom:14px;padding:8px 12px;border-radius:6px;background:#1a0505;border:1px solid #ef535066;display:flex;align-items:flex-start;gap:10px">
+    <i class="fa-solid fa-triangle-exclamation" style="color:#ef5350;margin-top:1px;flex-shrink:0"></i>
+    <div style="font-size:12px;color:#ef9a9a;line-height:1.5">
+      <strong style="color:#ef5350">Not deployable</strong> — Battle Groups must be reasonably equal in size.
+      No BG may have fewer than <strong>${bgViol.minAllowed}</strong> unit${bgViol.minAllowed!==1?"s":""} (half of the largest, ${bgViol.largest}, rounded up).
+    </div>
+  </div>` : "";
+
   // Battle group cards
   const bgCardsHTML = army.battleGroups.slice(0, bgCount).map(bg => {
     const bPts = bgPoints(bg);
+    const bgSize = (bg.entries||[]).length;
+    const bgUndersize = bgViol.violatingIds.has(bg.id);
     const entriesHTML = (bg.entries||[]).map(e => {
       const tf = state.taskForces.find(t=>t.id===e.tfId);
       if(!tf) return "";
@@ -4143,17 +4166,22 @@ function renderArmyDetail() {
       return unitCardHTML(unit, actions, slot.unitType || "unit");
     }).join("");
 
-    return `<div class="army-bg-card">
+    const bgWarnStrip = bgUndersize ? `<div style="margin-bottom:8px;padding:5px 8px;border-radius:4px;background:#1a0505;border:1px solid #ef535055;font-size:11px;color:#ef9a9a;display:flex;align-items:center;gap:6px">
+      <i class="fa-solid fa-triangle-exclamation" style="color:#ef5350;flex-shrink:0"></i>
+      Too small — needs at least <strong style="color:#ef5350">${bgViol.minAllowed}</strong> unit${bgViol.minAllowed!==1?"s":""} (has ${bgSize})
+    </div>` : "";
+    return `<div class="army-bg-card" style="${bgUndersize?"border-color:#ef535044":""}">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:6px">
         <div>
-          <div style="font-family:var(--font-display);font-size:16px;letter-spacing:.5px;color:var(--accent)">${esc(bg.name)}</div>
-          <div style="font-size:10px;color:var(--text-muted)">${bPts} pts &bull; ${(bg.entries||[]).length} unit${(bg.entries||[]).length!==1?"s":""}</div>
+          <div style="font-family:var(--font-display);font-size:16px;letter-spacing:.5px;color:${bgUndersize?"#ef5350":"var(--accent)"};">${esc(bg.name)}</div>
+          <div style="font-size:10px;color:var(--text-muted)">${bPts} pts &bull; ${bgSize} unit${bgSize!==1?"s":""}</div>
         </div>
         <div style="display:flex;gap:4px;flex-shrink:0">
           <button class="trait-edit-btn" onclick="openArmyBGUnitModal('${army.id}','${bg.id}')">Add Unit</button>
           <button class="trait-edit-btn" onclick="openBGTFModal('${army.id}','${bg.id}')">Add TF</button>
         </div>
       </div>
+      ${bgWarnStrip}
       ${entriesHTML || `<div style="font-size:11px;color:#444;font-style:italic;padding:4px 0">No units yet</div>`}
     </div>`;
   }).join("");
@@ -4179,6 +4207,7 @@ function renderArmyDetail() {
       </div>
       ${tfPoolHTML}
     </div>
+    ${deployBannerHTML}
     <div style="font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--text-muted);font-weight:bold;margin-bottom:10px">Battle Groups</div>
     <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;align-items:start">
       ${bgCardsHTML}
@@ -4555,7 +4584,11 @@ function editDeployment(id) {
   // Populate army dropdown
   const armySel = document.getElementById("dep-army");
   armySel.innerHTML = `<option value="">-- All Task Forces --</option>` +
-    state.armies.map(a=>`<option value="${a.id}" ${currentDeployment.armyId===a.id?"selected":""}>${esc(a.name)}</option>`).join("");
+    state.armies.map(a => {
+      const viol = armyBGSizeViolations(a);
+      const warn = !viol.ok ? " ⚠ Not deployable" : "";
+      return `<option value="${a.id}" ${currentDeployment.armyId===a.id?"selected":""}${!viol.ok?" style='color:#ef5350'":""}>${esc(a.name)}${warn}</option>`;
+    }).join("");
   document.getElementById("deploy-editor-title").textContent = currentDeployment.name;
   document.getElementById("deploy-editor").style.display="block";
   rebuildBGEditor();
