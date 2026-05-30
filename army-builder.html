@@ -731,6 +731,16 @@ label .trait-edit-btn{margin-left:6px}
         <input type="number" id="army-points-limit" min="0" step="50" placeholder="e.g. 1500" style="width:100px">
       </div>
     </div>
+    <div class="form-group" style="margin-bottom:12px">
+      <label>Battle Group Marking</label>
+      <select id="army-bg-mode" style="width:auto;margin-top:4px">
+        <option value="custom">Icons</option>
+        <option value="numbers">Numbers — 1  2  3</option>
+        <option value="roman">Roman — I  II  III</option>
+        <option value="greek">Greek — α  β  γ</option>
+        <option value="letters">Letters — A  B  C</option>
+      </select>
+    </div>
     <div id="army-modal-msg" style="display:none;margin-bottom:10px"></div>
     <div style="display:flex;justify-content:flex-end;gap:8px">
       <button class="btn btn-secondary" onclick="closeModal('modal-army')">Cancel</button>
@@ -4410,15 +4420,7 @@ function renderArmyDetail() {
         </div>
       </div>`).join("")}
   </div>` : "";
-  // BG icon mode selector
   const bgMode = army.bgIconMode || "custom";
-  const bgModePills = `<div style="display:flex;align-items:center;gap:6px;margin-bottom:12px;flex-wrap:wrap">
-    <span style="font-size:9px;text-transform:uppercase;letter-spacing:.8px;color:var(--text-faint);font-weight:700;white-space:nowrap">BG Mark</span>
-    ${[["custom","Icons"],["numbers","1 2 3"],["roman","I II III"],["greek","α β γ"],["letters","A B C"]].map(([m,lbl]) => {
-      const active = bgMode === m;
-      return `<button onclick="setBGIconMode('${army.id}','${m}')" style="padding:2px 9px;border-radius:10px;font-size:10px;border:1px solid ${active?"var(--accent)":"var(--border-subtle)"};background:${active?"var(--accent-tint)":"transparent"};color:${active?"var(--accent-light)":"var(--text-muted)"};cursor:pointer;white-space:nowrap">${lbl}</button>`;
-    }).join("")}
-  </div>`;
   panel.innerHTML = `<div class="card">
     <div class="card-title">
       <span style="display:flex;align-items:center;gap:10px">${armyIconBtn}${esc(army.name)} ${fpTag}</span>
@@ -4451,7 +4453,6 @@ function renderArmyDetail() {
     <div class="sub-divider">
       <div class="sub-divider-label"><i class="fa-solid fa-chess-board" style="color:var(--accent);font-size:9px"></i> Battle Groups</div>
     </div>
-    ${bgModePills}
     <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;align-items:start">
       ${bgCardsHTML}
     </div>
@@ -4569,6 +4570,7 @@ function openNewArmyModal() {
   document.getElementById("army-type-tf").checked = true;
   document.querySelectorAll("input[name='army-type']").forEach(r => r.disabled = false);
   document.getElementById("army-type-lock-note").style.display = "none";
+  document.getElementById("army-bg-mode").value = "custom";
   clearFieldErr("army-new-name");
   modalMsg("army-modal-msg", "");
   _refreshArmyFactionSelect();
@@ -4589,6 +4591,7 @@ function openEditArmyModal(id) {
   document.getElementById(isFP ? "army-type-fp" : "army-type-tf").checked = true;
   document.querySelectorAll("input[name='army-type']").forEach(r => r.disabled = true);
   document.getElementById("army-type-lock-note").style.display = "block";
+  document.getElementById("army-bg-mode").value = army.bgIconMode || "custom";
   clearFieldErr("army-new-name");
   modalMsg("army-modal-msg", "");
   _refreshArmyFactionSelect();
@@ -4614,6 +4617,7 @@ function saveArmy() {
   const limitRaw = parseInt(document.getElementById("army-points-limit").value);
   const pointsLimit = (!isNaN(limitRaw) && limitRaw > 0) ? limitRaw : null;
   const armyType = document.querySelector("input[name='army-type']:checked")?.value || "tf";
+  const bgIconMode = document.getElementById("army-bg-mode").value || "custom";
   if(editingArmyId) {
     const army = state.armies.find(a=>a.id===editingArmyId);
     if(army) {
@@ -4628,12 +4632,12 @@ function saveArmy() {
         }
         army.battleGroups = (army.battleGroups||[]).slice(0, bgCount);
       }
-      army.name=name; army.faction=faction; army.bgCount=bgCount; army.pointsLimit=pointsLimit; _ensureBGs(army);
+      army.name=name; army.faction=faction; army.bgCount=bgCount; army.pointsLimit=pointsLimit; army.bgIconMode=bgIconMode; _ensureBGs(army);
       // armyType is locked on edit — do not overwrite
     }
     editingArmyId = null;
   } else {
-    const army = {id:"army_"+uid(), name, faction, bgCount, pointsLimit, armyType, taskForceIds:[], battleGroups:[]};
+    const army = {id:"army_"+uid(), name, faction, bgCount, pointsLimit, armyType, bgIconMode, taskForceIds:[], battleGroups:[]};
     state.armies.push(army);
     _ensureBGs(army);
     currentArmyId = army.id;
