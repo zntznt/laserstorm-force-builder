@@ -1125,6 +1125,15 @@ function loadState() {
       state.deployments.forEach(d => (d.battleGroups||[]).forEach(bg=>(bg.units||[]).forEach(s=>{ if(!s.id) s.id="bgu_"+uid(); })));
       // Cleanup: drop any army BG entries left dangling by earlier deletions
       pruneOrphanedBGEntries();
+      // Migration: BG entries pre-dated split support — give each the full
+      // quantity of its slot (older data placed a whole stack in one group).
+      (state.armies||[]).forEach(a => (a.battleGroups||[]).forEach(bg => (bg.entries||[]).forEach(e => {
+        if(e.qty == null) {
+          const tf = state.taskForces.find(t=>t.id===e.tfId);
+          const s = tf && (tf.units||[]).find(x=>x.id===e.slotId);
+          e.qty = s ? s.quantity : 1;
+        }
+      })));
       // Migration: emoji → FA name
       const _ICON_MIG = {
         "⬢":"shield","▲":"flag","◆":"gem","●":"circle","■":"square",
@@ -3390,9 +3399,11 @@ function changeTFSlotQty(tfId, slotId, delta) {
   if(!slot) return;
   const maxQty = maxQtyForSlot(tf, slot);
   slot.quantity = Math.min(Math.max(1, slot.quantity+delta), maxQty);
+  clampArmyAssignments(slot.id, slot.quantity);
   saveState();
   renderTFList();
   renderTFDetail();
+  if(currentArmyId) renderArmyDetail();
 }
 
 function changeTFSlotRole(tfId, slotId, role) {
@@ -3713,21 +3724,57 @@ function armyPoints(a) {
 }
 
 function bgPoints(bg) {
-  return (bg.entries||[]).reduce((sum,e) => {
-    const tf = state.taskForces.find(t=>t.id===e.tfId);
-    const slot = tf ? (tf.units||[]).find(s=>s.id===e.slotId) : null;
-    return sum + (slot ? slotPointValue(slot) : 0);
-  }, 0);
+  return (bg.entries||[]).reduce((sum,e) => sum + entryPointValue(e), 0);
 }
 
-// Count actual Units in a battle group: each entry references a TF slot,
-// whose quantity is the number of Units of that profile.
+// Units actually placed in a battle group = sum of each entry's quantity.
+// An entry holds `qty` of a TF slot's units (a slot's stack can be split
+// across several battle groups).
 function bgUnitCount(bg) {
-  return (bg.entries||[]).reduce((sum,e) => {
-    const tf = state.taskForces.find(t=>t.id===e.tfId);
-    const slot = tf ? (tf.units||[]).find(s=>s.id===e.slotId) : null;
-    return sum + (slot ? slot.quantity : 0);
-  }, 0);
+  return (bg.entries||[]).reduce((sum,e) => sum + (e.qty||0), 0);
+}
+
+function entrySlot(e) {
+  const tf = state.taskForces.find(t=>t.id===e.tfId);
+  return tf ? (tf.units||[]).find(s=>s.id===e.slotId) : null;
+}
+function entryPointValue(e) {
+  const slot = entrySlot(e);
+  if(!slot) return 0;
+  const u = unitById(slot.unitId);
+  if(!u) return 0;
+  const pts = calcPoints(u);
+  const typeKey = {unit:"unitPts",independent:"indPts",hero:"heroPts",command:"cmdPts",cmdHero:"cmdHeroPts"}[slot.unitType||"unit"];
+  return ((pts[typeKey]!=null?pts[typeKey]:pts.unitPts)||0) * (e.qty||0);
+}
+// Units of a slot already placed across all of this army's battle groups.
+function slotAssignedQty(army, slotId) {
+  let n = 0;
+  (army.battleGroups||[]).forEach(bg => (bg.entries||[]).forEach(e => { if(e.slotId===slotId) n += (e.qty||0); }));
+  return n;
+}
+// Units of a slot not yet placed in any of this army's battle groups.
+function slotRemainingQty(army, slot) {
+  return Math.max(0, (slot.quantity||0) - slotAssignedQty(army, slot.id));
+}
+// When a TF slot's quantity drops, trim this slot's BG entries (later groups
+// first) so no army ever has more units placed than the slot now provides.
+function clampArmyAssignments(slotId, maxQty) {
+  (state.armies||[]).forEach(army => {
+    let excess = slotAssignedQty(army, slotId) - maxQty;
+    if(excess <= 0) return;
+    const bgs = army.battleGroups||[];
+    for(let i=bgs.length-1; i>=0 && excess>0; i--){
+      const entries = bgs[i].entries||[];
+      for(let j=entries.length-1; j>=0 && excess>0; j--){
+        if(entries[j].slotId!==slotId) continue;
+        const take = Math.min(excess, entries[j].qty||0);
+        entries[j].qty = (entries[j].qty||0) - take;
+        excess -= take;
+        if(entries[j].qty<=0) entries.splice(j,1);
+      }
+    }
+  });
 }
 
 // Remove battle-group entries pointing at a task force or slot that no
@@ -3883,10 +3930,17 @@ function renderArmyDetail() {
       if(!unit) return "";
       const tfColor = FACTION_COLORS[tf.faction] || "#555";
       const tfBadge = `<span style="font-size:9px;font-weight:bold;padding:1px 6px;border-radius:8px;background:${tfColor}18;color:${tfColor};border:1px solid ${tfColor}44">${esc(tf.name)}</span>`;
-      const qtyBadge = slot.quantity > 1 ? `<span style="font-size:10px;font-weight:bold;color:var(--accent-light)">×${slot.quantity}</span>` : "";
-      const actions = `<div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
-        <span style="font-size:10px;color:var(--text-muted);display:flex;align-items:center;gap:6px">from ${tfBadge}${qtyBadge}</span>
-        <button class="trait-edit-btn" style="border-color:#8b000066;color:#ef5350;background:#2a0a0a" onclick="removeFromBG('${army.id}','${bg.id}','${e.id}')">Remove</button>
+      const eqty = e.qty || slot.quantity;
+      const canInc = slotRemainingQty(army, slot) > 0;
+      const stepBtn = (lbl, d, dis) => `<button onclick="changeBGEntryQty('${army.id}','${bg.id}','${e.id}',${d})" ${dis?"disabled":""} style="width:20px;height:20px;border-radius:50%;border:none;background:var(--surface-raised);color:var(--text-bright);font-size:13px;line-height:20px;text-align:center;cursor:${dis?"default":"pointer"};opacity:${dis?".3":"1"}">${lbl}</button>`;
+      const stepper = slot.quantity > 1
+        ? `<span style="display:inline-flex;align-items:center;gap:4px" title="Split this stack across battle groups">${stepBtn("&minus;",-1,eqty<=1)}<span style="font-weight:bold;font-size:12px;min-width:18px;text-align:center">&times;${eqty}</span>${stepBtn("+",1,!canInc)}</span>`
+        : "";
+      const actions = `<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+        <span style="font-size:10px;color:var(--text-muted);display:flex;align-items:center;gap:6px">from ${tfBadge}</span>
+        <span style="display:flex;align-items:center;gap:8px">${stepper}<span style="font-size:10px;color:var(--text-muted)">${entryPointValue(e)} pts</span>
+          <button class="trait-edit-btn" style="border-color:#8b000066;color:#ef5350;background:#2a0a0a" onclick="removeFromBG('${army.id}','${bg.id}','${e.id}')">Remove</button>
+        </span>
       </div>`;
       return unitCardHTML(unit, actions, slot.unitType || "unit");
     }).join("");
@@ -4122,11 +4176,6 @@ function _renderBGUnitList() {
   const countEl = document.getElementById("bg-unit-count");
   if(!army||!bg) return;
   const inThisBG = new Set((bg.entries||[]).map(e=>e.slotId));
-  // Map slotId → BG name for slots assigned to other groups
-  const assignedTo = {};
-  (army.battleGroups||[]).filter(b=>b.id!==bgUnitTargetBgId).forEach(b => {
-    (b.entries||[]).forEach(e => { assignedTo[e.slotId] = b.name; });
-  });
   const tfs = (army.taskForceIds||[]).map(id=>state.taskForces.find(t=>t.id===id)).filter(Boolean);
   if(!tfs.length) { list.innerHTML=`<div class="empty">No task forces in this army's pool.</div>`; return; }
   list.innerHTML = tfs.map(tf => {
@@ -4141,13 +4190,18 @@ function _renderBGUnitList() {
         const unit = unitById(slot.unitId);
         if(!unit) return "";
         const inThis = inThisBG.has(slot.id);
-        const otherBG = assignedTo[slot.id];
-        const unavailable = inThis || !!otherBG;
+        const remaining = slotRemainingQty(army, slot);
+        const assigned = slot.quantity - remaining;
+        const unavailable = inThis || remaining === 0;
         const sel = bgUnitSelectedItems.has(slot.id);
-        const note = inThis ? " &bull; already in this group" : otherBG ? ` &bull; assigned to ${esc(otherBG)}` : "";
+        const note = inThis ? " &bull; already in this group"
+                   : remaining === 0 ? " &bull; fully assigned"
+                   : assigned > 0 ? ` &bull; <span style="color:#66bb6a">${remaining} of ${slot.quantity} left</span>`
+                   : "";
+        const addQtyHint = (!unavailable && remaining > 1) ? ` <span style="color:#8b949e">(adds ${remaining})</span>` : "";
         return `<div class="list-row" style="${sel?"border-color:#007eff;background:#0d1e36":unavailable?"opacity:.4;cursor:default":""}" onclick="${unavailable?"":"toggleBGUnitItem('"+slot.id+"')"}">
           <div style="min-width:0">
-            <div style="font-weight:bold;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(unit.name)}</div>
+            <div style="font-weight:bold;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(unit.name)}${addQtyHint}</div>
             <div style="font-size:11px;color:#8b949e">${slot.unitType||"unit"} &bull; ×${slot.quantity} &bull; ${slotPointValue(slot)} pts${note}</div>
           </div>
           ${sel?`<i class="fa-solid fa-check" style="color:#007eff;flex-shrink:0"></i>`:""}
@@ -4169,20 +4223,37 @@ function confirmAddToBG() {
   const army = state.armies.find(a=>a.id===bgUnitTargetArmyId);
   const bg = army?.battleGroups?.find(b=>b.id===bgUnitTargetBgId);
   if(!army||!bg) return;
-  const assignedAnywhere = new Set((army.battleGroups||[]).flatMap(b=>(b.entries||[]).map(e=>e.slotId)));
   bgUnitSelectedItems.forEach(slotId => {
-    if(assignedAnywhere.has(slotId)) return;
-    let tfId = null;
+    // already an entry for this slot in this group? adjust it with the +/− stepper instead
+    if((bg.entries||[]).some(e=>e.slotId===slotId)) return;
+    let tfId = null, slot = null;
     for(const tid of army.taskForceIds) {
       const tf = state.taskForces.find(t=>t.id===tid);
-      if(tf && (tf.units||[]).some(s=>s.id===slotId)) { tfId=tid; break; }
+      const s = tf && (tf.units||[]).find(x=>x.id===slotId);
+      if(s) { tfId=tid; slot=s; break; }
     }
-    if(!tfId) return;
+    if(!tfId || !slot) return;
+    const remaining = slotRemainingQty(army, slot);
+    if(remaining <= 0) return;
     if(!bg.entries) bg.entries=[];
-    bg.entries.push({id:"bge_"+uid(), tfId, slotId});
+    bg.entries.push({id:"bge_"+uid(), tfId, slotId, qty:remaining});
   });
   saveState();
   closeModal("modal-army-bg-unit");
+  renderArmyDetail();
+}
+
+function changeBGEntryQty(armyId, bgId, entryId, delta) {
+  const army = state.armies.find(a=>a.id===armyId);
+  const bg = army?.battleGroups?.find(b=>b.id===bgId);
+  const e = bg?.entries?.find(x=>x.id===entryId);
+  if(!army || !e) return;
+  const slot = entrySlot(e);
+  if(!slot) return;
+  const assignedElsewhere = slotAssignedQty(army, slot.id) - (e.qty||0);
+  const maxThis = Math.max(1, (slot.quantity||1) - assignedElsewhere);
+  e.qty = Math.min(maxThis, Math.max(1, (e.qty||1) + delta));
+  saveState();
   renderArmyDetail();
 }
 
@@ -4237,11 +4308,12 @@ function confirmAddTFToBG() {
   const bg = army?.battleGroups?.find(b=>b.id===bgTFTargetBgId);
   const tf = state.taskForces.find(t=>t.id===bgTFSelectedId);
   if(!army||!bg||!tf) return;
-  const assignedAnywhere = new Set((army.battleGroups||[]).flatMap(b=>(b.entries||[]).map(e=>e.slotId)));
   (tf.units||[]).forEach(slot => {
-    if(assignedAnywhere.has(slot.id)) return;
+    if((bg.entries||[]).some(e=>e.slotId===slot.id)) return;
+    const remaining = slotRemainingQty(army, slot);
+    if(remaining <= 0) return;
     if(!bg.entries) bg.entries=[];
-    bg.entries.push({id:"bge_"+uid(), tfId:tf.id, slotId:slot.id});
+    bg.entries.push({id:"bge_"+uid(), tfId:tf.id, slotId:slot.id, qty:remaining});
   });
   saveState();
   closeModal("modal-army-bg-tf");
