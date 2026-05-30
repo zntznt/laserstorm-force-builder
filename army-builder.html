@@ -118,9 +118,9 @@ input.input-error,textarea.input-error{border-color:#ef535066!important;outline:
 .wtype{color:var(--text-dim);font-weight:normal!important}
 .unit-card-actions{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
 @media(min-width:860px){#lib-list{display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:start}#lib-list .unit-card{margin-bottom:0}}
-.unit-name{font-weight:bold;color:var(--text-bright);font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0}
+.unit-name{font-weight:bold;color:var(--text-bright);font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 .unit-name-wrap{display:block}
-.unit-name-row{display:flex;align-items:center;gap:5px;min-width:0}
+.unit-name-row{display:inline-flex;align-items:center;gap:4px;max-width:100%;min-width:0}
 .unit-desc{display:block;max-height:0;overflow:hidden;font-size:11px;color:#8b949e;line-height:1.5;font-style:italic;transition:max-height .35s ease,opacity .35s ease,margin-top .2s ease;opacity:0;margin-top:0}
 .unit-desc.expanded{max-height:200px;opacity:1;margin-top:5px}
 .unit-desc-btn{background:none;border:none;cursor:pointer;padding:1px 3px;font-size:10px;color:#444;line-height:1;border-radius:3px;flex-shrink:0;transition:color .15s}
@@ -1606,7 +1606,7 @@ function unitCardHTML(unit, actions, viewType="unit") {
             <span class="unit-name-wrap" style="min-width:0;flex:1">
               <span class="unit-name-row">
                 <span class="unit-name">${esc(unit.name)}</span>
-                ${unit.description ? `<button class="unit-desc-btn" title="Toggle notes" onclick="const d=this.closest('.unit-card').querySelector('.unit-desc');const e=d.classList.toggle('expanded');this.classList.toggle('active',e)"><i class="fa-solid fa-note-sticky"></i></button>` : ""}
+                ${unit.description ? `<button class="unit-desc-btn" title="Toggle description" onclick="const d=this.closest('.unit-card').querySelector('.unit-desc');const e=d.classList.toggle('expanded');this.classList.toggle('active',e)"><i class="fa-solid fa-circle-info"></i></button>` : ""}
               </span>
               ${unit.description ? `<span class="unit-desc">${esc(unit.description)}</span>` : ""}
             </span>
