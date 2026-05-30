@@ -787,12 +787,13 @@ end hidden -->
       <div class="form-group">
         <label>Faction Restriction <span style="font-size:10px;color:#8b949e;font-weight:normal">(optional)</span></label>
         <select id="army-faction" style="width:auto">
-          <option value="">Any Faction</option>
+          <option value="">No Faction</option>
           <option value="standard">Standard</option>
           <option value="precursor">Precursor</option>
           <option value="soulless">Soulless</option>
           <option value="swarm">Swarm</option>
           <option value="warrior">Warrior</option>
+          <option value="any">Any Faction</option>
         </select>
       </div>
       <div class="form-group">
@@ -4214,17 +4215,18 @@ function openEditArmyModal(id) {
 
 function _refreshArmyFactionSelect() {
   const sel = document.getElementById("army-faction");
-  const builtIn = [["","Any Faction"],["standard","Standard"],["precursor","Precursor"],["soulless","Soulless"],["swarm","Swarm"],["warrior","Warrior"]];
+  const builtIn = [["","No Faction"],["standard","Standard"],["precursor","Precursor"],["soulless","Soulless"],["swarm","Swarm"],["warrior","Warrior"]];
   const custom = (state.customFactions||[]).map(cf=>[cf.id, cf.name]);
   const cur = sel.value;
-  sel.innerHTML = [...builtIn,...custom].map(([v,l])=>`<option value="${v}">${esc(l)}</option>`).join("");
+  sel.innerHTML = [...builtIn,...custom,["any","Any Faction"]].map(([v,l])=>`<option value="${v}">${esc(l)}</option>`).join("");
   sel.value = cur;
 }
 
 function saveArmy() {
   const name = document.getElementById("army-new-name").value.trim();
   if(!name) { alert("Enter a name."); return; }
-  const faction = document.getElementById("army-faction").value || null;
+  const factionRaw = document.getElementById("army-faction").value;
+  const faction = (factionRaw && factionRaw !== "any") ? factionRaw : null;
   const bgCount = parseInt(document.getElementById("army-bg-count").value) || 3;
   const limitRaw = parseInt(document.getElementById("army-points-limit").value);
   const pointsLimit = (!isNaN(limitRaw) && limitRaw > 0) ? limitRaw : null;
