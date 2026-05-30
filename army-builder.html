@@ -2155,42 +2155,36 @@ const FACTION_COLORS = {standard:"#007eff",precursor:"#9c27b0",soulless:"#607d8b
 // Symbols for the Initiative Deck activation mechanic.
 // Each battle group carries one; when that symbol card is drawn the group activates.
 const BG_SYMBOLS = {
-  // Combat
+  // Strike
   skull:      { icon:"fa-solid fa-skull",            color:"#ef5350", label:"Skull"          },
-  skullx:     { icon:"fa-solid fa-skull-crossbones", color:"#e53935", label:"Skull & Bones"  },
   crosshairs: { icon:"fa-solid fa-crosshairs",       color:"#66bb6a", label:"Crosshairs"     },
-  khanda:     { icon:"fa-solid fa-khanda",           color:"#ffcc02", label:"Blade"          },
-  hand:       { icon:"fa-solid fa-hand-fist",        color:"#ff7043", label:"Fist"           },
-  hammer:     { icon:"fa-solid fa-hammer",           color:"#b0bec5", label:"Hammer"         },
-  bolt:       { icon:"fa-solid fa-bolt",             color:"#ff9800", label:"Bolt"           },
-  // Beasts & Nature
-  dragon:     { icon:"fa-solid fa-dragon",           color:"#8d6e63", label:"Dragon"         },
-  spider:     { icon:"fa-solid fa-spider",           color:"#81c784", label:"Spider"         },
-  crow:       { icon:"fa-solid fa-crow",             color:"#90a4ae", label:"Crow"           },
-  horse:      { icon:"fa-solid fa-horse",            color:"#a1887f", label:"Horse"          },
-  paw:        { icon:"fa-solid fa-paw",              color:"#ffab40", label:"Paw"            },
-  feather:    { icon:"fa-solid fa-feather-pointed",  color:"#80cbc4", label:"Feather"        },
-  // Power & Tech
-  fire:       { icon:"fa-solid fa-fire",             color:"#ff5252", label:"Fire"           },
-  meteor:     { icon:"fa-solid fa-meteor",           color:"#ff6e40", label:"Meteor"         },
-  atom:       { icon:"fa-solid fa-atom",             color:"#80deea", label:"Atom"           },
-  radiation:  { icon:"fa-solid fa-radiation",        color:"#ffee58", label:"Radiation"      },
-  biohazard:  { icon:"fa-solid fa-biohazard",        color:"#a5d6a7", label:"Biohazard"      },
+  bolt:       { icon:"fa-solid fa-bolt",             color:"#ffd740", label:"Laser"          },
+  bomb:       { icon:"fa-solid fa-bomb",             color:"#ff7043", label:"Bomb"           },
+  fire:       { icon:"fa-solid fa-fire",             color:"#ff5252", label:"Incendiary"     },
+  gun:        { icon:"fa-solid fa-gun",              color:"#90a4ae", label:"Firearm"        },
+  // Mobile
   rocket:     { icon:"fa-solid fa-rocket",           color:"#82b1ff", label:"Rocket"         },
-  satellite:  { icon:"fa-solid fa-satellite-dish",   color:"#80cbc4", label:"Satellite"      },
-  // Mystical
-  star:       { icon:"fa-solid fa-star",             color:"#ffd740", label:"Star"           },
-  moon:       { icon:"fa-solid fa-moon",             color:"#90caf9", label:"Moon"           },
-  eye:        { icon:"fa-solid fa-eye",              color:"#ce93d8", label:"Eye"            },
-  infinity:   { icon:"fa-solid fa-infinity",         color:"#80deea", label:"Infinity"       },
-  snowflake:  { icon:"fa-solid fa-snowflake",        color:"#b3e5fc", label:"Snowflake"      },
-  sun:        { icon:"fa-solid fa-sun",              color:"#ffe082", label:"Sun"            },
-  gem:        { icon:"fa-solid fa-gem",              color:"#26c6da", label:"Gem"            },
-  // Rank & Honor
+  jet:        { icon:"fa-solid fa-jet-fighter",      color:"#80cbc4", label:"Jet Fighter"    },
+  meteor:     { icon:"fa-solid fa-meteor",           color:"#ff6e40", label:"Orbital Drop"   },
+  satellite:  { icon:"fa-solid fa-satellite-dish",   color:"#80deea", label:"Comms Dish"     },
+  // Tech
+  robot:      { icon:"fa-solid fa-robot",            color:"#b0bec5", label:"Mechanized"     },
+  microchip:  { icon:"fa-solid fa-microchip",        color:"#64b5f6", label:"Cyber Ops"      },
+  atom:       { icon:"fa-solid fa-atom",             color:"#80deea", label:"Nuclear"        },
+  gears:      { icon:"fa-solid fa-gears",            color:"#78909c", label:"Engineering"    },
+  tower:      { icon:"fa-solid fa-tower-broadcast",  color:"#a5d6a7", label:"Command Tower"  },
+  // Hazard
+  radiation:  { icon:"fa-solid fa-radiation",        color:"#ffee58", label:"Radiation"      },
+  biohazard:  { icon:"fa-solid fa-biohazard",        color:"#69f0ae", label:"Biohazard"      },
+  skullx:     { icon:"fa-solid fa-skull-crossbones", color:"#e53935", label:"Death's Head"   },
+  eye:        { icon:"fa-solid fa-eye",              color:"#ce93d8", label:"Recon"          },
+  snowflake:  { icon:"fa-solid fa-snowflake",        color:"#b3e5fc", label:"Cryo"           },
+  // Command
+  star:       { icon:"fa-solid fa-star",             color:"#ffd740", label:"Elite"          },
   shield:     { icon:"fa-solid fa-shield",           color:"#42a5f5", label:"Shield"         },
-  crown:      { icon:"fa-solid fa-crown",            color:"#ce93d8", label:"Crown"          },
-  rook:       { icon:"fa-solid fa-chess-rook",       color:"#ffd54f", label:"Rook"           },
-  knight:     { icon:"fa-solid fa-chess-knight",     color:"#e0e0e0", label:"Knight"         },
+  crown:      { icon:"fa-solid fa-crown",            color:"#ce93d8", label:"High Command"   },
+  infinity:   { icon:"fa-solid fa-infinity",         color:"#80deea", label:"Eternal Guard"  },
+  medal:      { icon:"fa-solid fa-medal",            color:"#ffd54f", label:"Veteran"        },
   // Numbers 1–5
   n1:{text:"1",color:"#64b5f6",label:"1"}, n2:{text:"2",color:"#64b5f6",label:"2"},
   n3:{text:"3",color:"#64b5f6",label:"3"}, n4:{text:"4",color:"#64b5f6",label:"4"},
@@ -2208,18 +2202,18 @@ const BG_SYMBOLS = {
   lc:{text:"C",color:"#a5d6a7",label:"C"}, ld:{text:"D",color:"#a5d6a7",label:"D"},
   le:{text:"E",color:"#a5d6a7",label:"E"},
 };
-const ICON_SYMBOL_KEYS = ["skull","skullx","crosshairs","khanda","hand","hammer","bolt","dragon","spider","crow","horse","paw","feather","fire","meteor","atom","radiation","biohazard","rocket","satellite","star","moon","eye","infinity","snowflake","sun","gem","shield","crown","rook","knight"];
+const ICON_SYMBOL_KEYS = ["skull","crosshairs","bolt","bomb","fire","gun","rocket","jet","meteor","satellite","robot","microchip","atom","gears","tower","radiation","biohazard","skullx","eye","snowflake","star","shield","crown","infinity","medal"];
 const BG_SYMBOLS_ORDER = [...ICON_SYMBOL_KEYS,"n1","n2","n3","n4","n5","r1","r2","r3","r4","r5","ga","gb","gc","gd","ge","la","lb","lc","ld","le"];
 const BG_SYMBOL_GROUPS = [
-  { label:"Combat",          keys:["skull","skullx","crosshairs","khanda","hand","hammer","bolt"] },
-  { label:"Beasts & Nature", keys:["dragon","spider","crow","horse","paw","feather"] },
-  { label:"Power & Tech",    keys:["fire","meteor","atom","radiation","biohazard","rocket","satellite"] },
-  { label:"Mystical",        keys:["star","moon","eye","infinity","snowflake","sun","gem"] },
-  { label:"Rank & Honor",    keys:["shield","crown","rook","knight"] },
-  { label:"Numbers",         keys:["n1","n2","n3","n4","n5"] },
-  { label:"Roman",           keys:["r1","r2","r3","r4","r5"] },
-  { label:"Greek",           keys:["ga","gb","gc","gd","ge"] },
-  { label:"Letters",         keys:["la","lb","lc","ld","le"] },
+  { label:"Strike",  keys:["skull","crosshairs","bolt","bomb","fire","gun"] },
+  { label:"Mobile",  keys:["rocket","jet","meteor","satellite"] },
+  { label:"Tech",    keys:["robot","microchip","atom","gears","tower"] },
+  { label:"Hazard",  keys:["radiation","biohazard","skullx","eye","snowflake"] },
+  { label:"Command", keys:["star","shield","crown","infinity","medal"] },
+  { label:"Numbers", keys:["n1","n2","n3","n4","n5"] },
+  { label:"Roman",   keys:["r1","r2","r3","r4","r5"] },
+  { label:"Greek",   keys:["ga","gb","gc","gd","ge"] },
+  { label:"Letters", keys:["la","lb","lc","ld","le"] },
 ];
 // Icon-only groups used by the army designation picker
 const ARMY_ICON_GROUPS = BG_SYMBOL_GROUPS.slice(0, 5);
