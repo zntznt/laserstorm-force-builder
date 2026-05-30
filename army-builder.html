@@ -65,7 +65,6 @@ nav{background:var(--surface-nav);border-bottom:2px solid var(--accent);display:
 .page{display:none;padding:20px;max-width:1200px;margin:0 auto}
 .page.active{display:block}
 .card{background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:8px;padding:16px;margin-bottom:16px}
-.card-title{font-family:var(--font-display);color:var(--accent);font-size:18px;letter-spacing:1.5px;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border-subtle);display:flex;justify-content:space-between;align-items:center}
 .btn{display:inline-block;padding:7px 14px;border:none;border-radius:20px;cursor:pointer;font-family:var(--font-display);font-size:14px;text-transform:uppercase;letter-spacing:1px;transition:all .2s;line-height:1.2}
 .btn-primary{background:var(--accent);color:var(--text-bright)}.btn-primary:hover{background:var(--accent-hover)}.btn-primary:disabled{background:#1e2a3a;color:#3a4a5a;border-color:#1e2a3a;cursor:not-allowed}
 .btn-danger{background:var(--danger);color:var(--text-bright)}.btn-danger:hover{background:var(--danger-hover)}
@@ -84,7 +83,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);outline:none}
 .field-error.visible{display:block}
 input.input-error,textarea.input-error{border-color:#ef535066!important;outline:none}
 .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-.grid-sidebar{display:grid;grid-template-columns:220px 1fr;gap:16px;align-items:start}
+.grid-sidebar{display:grid;grid-template-columns:260px 1fr;gap:16px;align-items:start}
 .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
 @media(max-width:768px){.grid-2,.grid-3,.grid-sidebar{grid-template-columns:1fr}}
 .stat-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;align-items:flex-start}
@@ -134,13 +133,13 @@ input.input-error,textarea.input-error{border-color:#ef535066!important;outline:
 .sh-command{background:#2a1a0a;color:#ffb74d}
 .sh-support{background:#1a0a2a;color:#ba68c8}
 .sh-commander{background:#3a0a0a;color:#ef5350}
-.modal-bg{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.8);z-index:200;justify-content:center;align-items:flex-start;padding:40px 10px}
+.modal-bg{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.75);backdrop-filter:blur(4px);z-index:200;justify-content:center;align-items:flex-start;padding:40px 10px}
 .modal-bg.open{display:flex}
 .modal{background:var(--surface-card);border:1px solid var(--accent);border-radius:10px;padding:20px;width:100%;max-width:640px;max-height:85vh;overflow-y:auto}
 .modal-header{font-family:var(--font-display);display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;color:var(--accent);font-size:20px;letter-spacing:1.5px}
 .modal-close{cursor:pointer;background:var(--surface-raised);border:none;color:var(--text-mid);width:26px;height:26px;border-radius:50%;font-size:16px;line-height:26px;text-align:center}
 .modal-close:hover{color:var(--text-bright);background:#444}
-.army-bg-card{background:var(--surface-page);border:1px solid var(--border-subtle);border-radius:8px;padding:10px;flex:1;min-width:180px}
+.army-bg-card{background:var(--surface-card);border:1px solid var(--border-default);border-radius:10px;padding:14px;flex:1;min-width:200px}
 .empty{text-align:center;padding:40px;color:#444;font-size:14px}
 .empty-icon{font-size:40px;margin-bottom:8px}
 .list-row{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--surface-page);border:1px solid var(--border-subtle);border-radius:4px;margin-bottom:6px;gap:8px}
@@ -224,6 +223,32 @@ label .trait-edit-btn{margin-left:6px}
 .trait-cost{font-size:10px;font-weight:600;color:var(--accent-light);background:var(--accent-tint);border:1px solid #1f6feb44;border-radius:8px;padding:0 5px;margin-left:5px;vertical-align:middle}
 .custom-trait-item{display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:6px;background:var(--surface-page);border:1px solid var(--border-default)}
 .modal-sub-header{font-family:var(--font-display);font-size:15px;letter-spacing:1px;color:var(--text-muted);margin-bottom:10px;padding-top:14px;margin-top:4px;border-top:1px solid var(--border-default)}
+/* ── Sidebar list items ─────────────────────────────────────────────── */
+.sl-item{padding:10px 12px;border-radius:7px;border:1px solid var(--border-subtle);background:var(--surface-page);cursor:pointer;margin-bottom:6px;transition:border-color .15s,background .15s}
+.sl-item:hover{border-color:var(--border-default);background:var(--surface-raised)}
+.sl-item.sl-active{border-color:var(--accent);background:var(--accent-tint);border-left:3px solid var(--accent)}
+.sl-name{font-weight:700;font-size:14px;color:var(--text-bright);line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:3px}
+.sl-active .sl-name{color:var(--accent-light)}
+.sl-meta{font-size:11px;color:var(--text-muted);line-height:1.5;display:flex;flex-wrap:wrap;align-items:center;gap:4px}
+.sl-pts{font-size:12px;font-weight:600;color:var(--text-secondary)}
+/* ── Sub-section divider ─────────────────────────────────────────────── */
+.sub-divider{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;margin-top:16px}
+.sub-divider:first-child{margin-top:0}
+.sub-divider-label{font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--text-muted);font-weight:700;display:flex;align-items:center;gap:6px}
+/* ── Info strip (points + meta in army/TF header) ───────────────────── */
+.info-strip{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px;padding:10px 14px;background:var(--surface-raised);border-radius:8px;border:1px solid var(--border-subtle)}
+.info-strip-pts{font-family:var(--font-display);font-size:28px;color:var(--gold);letter-spacing:1.5px;line-height:1}
+.info-strip-sep{width:1px;height:24px;background:var(--border-default);flex-shrink:0}
+.info-strip-label{font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px}
+.info-strip-val{font-size:12px;color:var(--text-secondary);font-weight:600}
+/* ── Pill group labels ───────────────────────────────────────────────── */
+.pill-group{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.pill-group-label{font-size:9px;text-transform:uppercase;letter-spacing:.8px;color:var(--text-faint);font-weight:700;padding-right:2px;white-space:nowrap}
+/* ── Warning / danger strip ─────────────────────────────────────────── */
+.warn-strip{padding:8px 12px;border-radius:6px;background:#1a0505;border:1px solid #ef535066;margin-bottom:14px;font-size:12px;color:#ef9a9a;line-height:1.5}
+.warn-strip strong{color:#ef5350}
+/* ── Page card headings ──────────────────────────────────────────────── */
+.card-title{font-family:var(--font-display);color:var(--accent);font-size:18px;letter-spacing:1.5px;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border-subtle);display:flex;justify-content:space-between;align-items:center}
 </style>
 </head>
 <body>
@@ -410,12 +435,13 @@ label .trait-edit-btn{margin-left:6px}
       </div>
     </div>
     <input class="search-bar" id="lib-search" placeholder="Search units..." oninput="renderLibrary()">
-    <div style="display:flex;align-items:flex-start;gap:8px">
-      <div class="pill-nav" id="lib-faction-filters" style="flex:1"></div>
+    <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:4px">
+      <div class="pill-group" id="lib-faction-filters" style="flex:1;margin-bottom:0"></div>
       <button class="trait-edit-btn" style="margin-top:4px;white-space:nowrap;flex-shrink:0" onclick="openFactionModal(false)"><i class="fa-solid fa-gear"></i> Custom Factions</button>
     </div>
-    <div class="pill-nav" id="lib-filters">
-      <div class="pill active" data-filter="all" onclick="setLibFilter(this,'all')">All Classes</div>
+    <div class="pill-group" id="lib-filters">
+      <span class="pill-group-label">Class</span>
+      <div class="pill active" data-filter="all" onclick="setLibFilter(this,'all')">All</div>
       <div class="pill" data-filter="inf" onclick="setLibFilter(this,'inf')">Infantry</div>
       <div class="pill" data-filter="cav" onclick="setLibFilter(this,'cav')">Cavalry</div>
       <div class="pill" data-filter="fg" onclick="setLibFilter(this,'fg')">Field Gun</div>
@@ -425,16 +451,18 @@ label .trait-edit-btn{margin-left:6px}
       <div class="pill" data-filter="sh" onclick="setLibFilter(this,'sh')">Super Heavy</div>
       <div class="pill" data-filter="beh" onclick="setLibFilter(this,'beh')">Behemoth</div>
     </div>
-    <div class="pill-nav" id="lib-view-filters">
-      <div class="pill active" data-view="unit"        onclick="setLibViewType(this,'unit')">Unit</div>
-      <div class="pill"        data-view="independent" onclick="setLibViewType(this,'independent')">Independent</div>
-      <div class="pill"        data-view="command"     onclick="setLibViewType(this,'command')">Commander</div>
-      <div class="pill"        data-view="hero"        onclick="setLibViewType(this,'hero')">Hero</div>
-      <div class="pill"        data-view="cmdHero"     onclick="setLibViewType(this,'cmdHero')">Hero Cmd</div>
-    </div>
-    <div style="display:flex;align-items:center;gap:8px;margin:2px 0 14px">
-      <label style="font-size:0.82em;color:var(--text-muted);white-space:nowrap">Sort by</label>
-      <select id="lib-sort" onchange="libSort=this.value;renderLibrary()" style="width:auto">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px">
+      <div class="pill-group" id="lib-view-filters" style="margin-bottom:0">
+        <span class="pill-group-label">View as</span>
+        <div class="pill active" data-view="unit"        onclick="setLibViewType(this,'unit')">Unit</div>
+        <div class="pill"        data-view="independent" onclick="setLibViewType(this,'independent')">Independent</div>
+        <div class="pill"        data-view="command"     onclick="setLibViewType(this,'command')">Commander</div>
+        <div class="pill"        data-view="hero"        onclick="setLibViewType(this,'hero')">Hero</div>
+        <div class="pill"        data-view="cmdHero"     onclick="setLibViewType(this,'cmdHero')">Hero Cmd</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+        <span class="pill-group-label">Sort</span>
+        <select id="lib-sort" onchange="libSort=this.value;renderLibrary()" style="width:auto">
         <option value="name-asc">Name A → Z</option>
         <option value="name-desc">Name Z → A</option>
         <option value="pts-asc">Points: Low → High</option>
@@ -451,6 +479,7 @@ label .trait-edit-btn{margin-left:6px}
         <option value="assault-desc">Assault: High → Low</option>
         <option value="assault-asc">Assault: Low → High</option>
       </select>
+      </div>
     </div>
     <div id="lib-list"></div>
   </div>
@@ -2714,11 +2743,13 @@ function renderLibFactionFilters() {
     {v:"custom", l:'<i class="fa-solid fa-pen"></i> Custom',     c:"#ffd700"},
   ];
   const all = [...builtins, ...customs, ...extras];
-  document.getElementById("lib-faction-filters").innerHTML = all.map(p=>{
-    const style = p.c ? `style="--fc:${p.c}"` : "";
-    const active = libFilterFaction===p.v ? " active" : "";
-    return `<div class="pill${active}" ${style} onclick="setLibFactionFilter(this,'${p.v}')">${p.l}</div>`;
-  }).join("");
+  document.getElementById("lib-faction-filters").innerHTML =
+    `<span class="pill-group-label">Faction</span>` +
+    all.map(p=>{
+      const style = p.c ? `style="--fc:${p.c}"` : "";
+      const active = libFilterFaction===p.v ? " active" : "";
+      return `<div class="pill${active}" ${style} onclick="setLibFactionFilter(this,'${p.v}')">${p.l}</div>`;
+    }).join("");
 }
 
 function setLibFactionFilter(el, faction) {
@@ -2909,13 +2940,16 @@ function renderTFList() {
     const overLimit = tf.pointsLimit && pts > tf.pointsLimit;
     const ptsColor = overLimit ? "#ef5350" : "#8b949e";
     const ptsText = tf.pointsLimit ? `${pts} / ${tf.pointsLimit} pts${overLimit?" ⚠":""}` : `${pts} pts`;
-    return `<div class="list-row" style="${isCurrent?"border-color:#007eff":overLimit?"border-color:#ef535055":""}" onclick="selectTF('${tf.id}')">
-      <div>
-        <div style="font-weight:bold;color:${isCurrent?"#007eff":"#fff"};overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(tf.name)}</div>
-        <div style="font-size:11px;color:#7986cb;margin-top:1px;display:flex;align-items:center;gap:5px;flex-wrap:wrap">${typeLabel?esc(typeLabel):"No type"}${facPill}</div>
-        <div style="font-size:11px;color:${ptsColor};overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${unitCount} unit${unitCount!==1?"s":""} &bull; ${ptsText}</div>
-        ${cmdAssetLine}
+    return `<div class="sl-item${isCurrent?" sl-active":""}${overLimit?" sl-warn":""}" style="${overLimit&&!isCurrent?"border-color:#ef535055":""}" onclick="selectTF('${tf.id}')">
+      <div class="sl-name">${esc(tf.name)}</div>
+      <div class="sl-meta">
+        <span style="color:#7986cb">${typeLabel?esc(typeLabel):"—"}</span>
+        ${facPill}
       </div>
+      <div class="sl-meta" style="color:${ptsColor};margin-top:1px">
+        ${unitCount} unit${unitCount!==1?"s":""} &bull; <span class="sl-pts" style="color:${ptsColor}">${ptsText}</span>
+      </div>
+      ${cmdAssetLine}
     </div>`;
   }).join("");
 }
@@ -3098,10 +3132,6 @@ function renderTFDetail() {
     {role:"support",    label:"Support Units",     shClass:"sh-support"},
   ];
   const typeLabel = tf.tfType ? _tfTypeLabel(tf.tfType) : "";
-  const metaHTML = `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;font-size:12px;align-items:center">
-    ${typeLabel?`<span style="background:#1a1a3a;color:#7986cb;border:1px solid #3949ab55;border-radius:8px;padding:2px 8px">${esc(typeLabel)}</span>`:""}
-    ${tf.faction ? factionPill(tf.faction) : ""}
-  </div>`;
   const allAssets = allTacticalAssets();
   const asset = tf.tacAsset ? allAssets.find(a=>a.id===tf.tacAsset) : null;
   const _slots = tfRankSlots();
@@ -3126,13 +3156,9 @@ function renderTFDetail() {
     : _slots.scale === "large"
     ? `<span style="font-size:10px;color:#8b949e">Large Battle — Sr. TFC ${_slots.usedSenior}/${_slots.seniorSlots} used</span>`
     : `<span style="font-size:10px;color:#8b949e">Epic Battle — Sr. TFC ${_slots.usedSenior}/${_slots.seniorSlots} &bull; Lord ${_slots.usedLord}/${_slots.lordSlots}</span>`;
-  const commanderSection = `<div style="background:#0d1118;border:1px solid #1e2a1e;border-radius:8px;padding:12px;margin-bottom:14px">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-      <div style="display:flex;align-items:center;gap:6px">
-        <i class="fa-solid fa-star" style="color:#ffd54f;font-size:10px"></i>
-        <span style="font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:#8b949e;font-weight:bold">Task Force Commander</span>
-      </div>
-      <button class="trait-edit-btn" onclick="openEditTFModal('${tf.id}')"><i class="fa-solid fa-pen"></i> Edit</button>
+  const commanderSection = `<div style="background:#0d1118;border:1px solid #1e2a1e;border-radius:8px;padding:12px;margin-bottom:16px">
+    <div class="sub-divider" style="margin-top:0;margin-bottom:10px">
+      <div class="sub-divider-label"><i class="fa-solid fa-star" style="color:#ffd54f;font-size:9px"></i> Task Force Commander</div>
     </div>
     <div style="font-size:17px;font-family:var(--font-display);letter-spacing:.5px;color:${tf.commander?"#fff":"#333"};margin-bottom:10px">
       ${tf.commander ? esc(tf.commander) : "No commander assigned"}
@@ -3144,11 +3170,8 @@ function renderTFDetail() {
       ${rankNote}
     </div>
     <div style="border-top:1px solid #1a2a1a;padding-top:10px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-        <div style="display:flex;align-items:center;gap:6px">
-          <i class="fa-solid fa-chess-rook" style="color:#ffd54f;font-size:10px"></i>
-          <span style="font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:#8b949e;font-weight:bold">Tactical Asset Provided</span>
-        </div>
+      <div class="sub-divider" style="margin-top:0;margin-bottom:8px">
+        <div class="sub-divider-label"><i class="fa-solid fa-chess-rook" style="color:#ffd54f;font-size:9px"></i> Tactical Asset Provided</div>
         <button class="trait-edit-btn" onclick="openAssetPickerModal('${tf.id}')"><i class="fa-solid fa-${asset?'rotate':'plus'}"></i> ${asset?"Change":"Assign"}</button>
       </div>
       ${asset ? `<div>
@@ -3228,15 +3251,15 @@ function renderTFDetail() {
     }
     // Core: always allow click, limit enforced per class in modal
 
-    slotsHTML += `<div style="margin-bottom:14px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;gap:6px">
-        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;min-width:0">
+    slotsHTML += `<div style="margin-bottom:16px">
+      <div class="sub-divider">
+        <div class="sub-divider-label">
           <div class="section-header ${shClass}" style="margin-bottom:0;flex-shrink:0">${label}</div>
           ${limitBadges}
         </div>
         <button class="trait-edit-btn" style="flex-shrink:0" onclick="openAddUnitModal('${tf.id}','${role}')" ${sectionFull?"disabled style='opacity:0.4;cursor:not-allowed;flex-shrink:0'":""}>Add</button>
       </div>
-      ${slots.length===0?`<div style="font-size:12px;color:#444;padding:4px 0;font-style:italic">None</div>`:""}
+      ${slots.length===0?`<div style="font-size:11px;color:#444;padding:4px 0;font-style:italic;text-align:center">None added yet</div>`:""}
       ${slots.map(slot => {
         const u = unitById(slot.unitId);
         if(!u) return `<div class="tf-unit-row"><span style="color:#666">[Deleted Unit]</span><button class="trait-edit-btn" onclick="confirmBtn(this,()=>removeTFSlot('${tf.id}','${slot.id}'))">Remove</button></div>`;
@@ -3256,19 +3279,28 @@ function renderTFDetail() {
       }).join("")}
     </div>`;
   });
+  const tfOverLimitNow = tf.pointsLimit && pts > tf.pointsLimit;
   panel.innerHTML = `<div class="card">
     <div class="card-title">
       <span>${esc(tf.name)}</span>
-      <button class="trait-edit-btn" onclick="confirmBtn(this,()=>deleteTF('${tf.id}'))">Delete</button>
+      <div style="display:flex;gap:6px">
+        <button class="trait-edit-btn" onclick="openEditTFModal('${tf.id}')"><i class="fa-solid fa-pen"></i> Edit</button>
+        <button class="trait-edit-btn" style="border-color:#8b000066;color:#ef5350;background:#2a0a0a" onclick="confirmBtn(this,()=>deleteTF('${tf.id}'))"><i class="fa-solid fa-trash"></i> Delete</button>
+      </div>
     </div>
-    ${metaHTML}
-    <div style="margin-bottom:14px;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap">
-      <span class="points-big" style="font-size:22px;color:${tf.pointsLimit&&pts>tf.pointsLimit?"#ef5350":"var(--gold)"}">${pts}</span>
-      <span class="points-label">${tf.pointsLimit ? `/ ${tf.pointsLimit} pts` : "pts"}</span>
-      ${tf.pointsLimit&&pts>tf.pointsLimit ? `<span style="font-size:12px;color:#ef5350;font-weight:bold"><i class="fa-solid fa-triangle-exclamation"></i> Over limit by ${pts-tf.pointsLimit} pts — ineligible for armies &amp; deployments</span>` : ""}
+    <div class="info-strip" style="${tfOverLimitNow?"border-color:#ef535055":""}">
+      <div>
+        <div class="info-strip-label">Points</div>
+        <div class="info-strip-pts" style="${tfOverLimitNow?"color:#ef5350":""}">${pts}${tf.pointsLimit?` <span style="font-size:14px;color:var(--text-muted);font-family:var(--font-body);letter-spacing:0">/ ${tf.pointsLimit}</span>`:""}</div>
+        ${tfOverLimitNow?`<div style="font-size:10px;color:#ef5350;font-weight:bold;margin-top:1px"><i class="fa-solid fa-triangle-exclamation"></i> Over limit — ineligible</div>`:""}
+      </div>
+      <div class="info-strip-sep"></div>
+      ${tf.tfType?`<div><div class="info-strip-label">Type</div><div class="info-strip-val" style="color:#7986cb">${esc(_tfTypeLabel(tf.tfType))}</div></div><div class="info-strip-sep"></div>`:""}
+      <div><div class="info-strip-label">Units</div><div class="info-strip-val">${(tf.units||[]).reduce((s,u)=>s+u.quantity,0)}</div></div>
+      ${tf.faction?`<div class="info-strip-sep"></div><div style="display:flex;align-items:center">${factionPill(tf.faction)}</div>`:""}
     </div>
-    ${commanderSection}
     ${tf.notes ? `<div style="background:#0d0f14;border:1px solid #1e2530;border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:13px;color:#8b949e;line-height:1.6;font-style:italic">${esc(tf.notes).replace(/\n/g,"<br>")}</div>` : ""}
+    ${commanderSection}
     ${slotsHTML}
   </div>`;
 }
@@ -4018,15 +4050,13 @@ function renderArmyList() {
     const meta = fp
       ? `${a.bgCount||3} BGs &bull; <span style="${overLimit?"color:#ef5350;font-weight:bold":""}">${deployed}${a.pointsLimit?` / ${a.pointsLimit}`:""} pts</span>`
       : `${tfCount} TF${tfCount!==1?"s":""} &bull; ${a.bgCount||3} BGs &bull; <span style="${overLimit?"color:#ef5350;font-weight:bold":""}">${deployed}${a.pointsLimit?` / ${a.pointsLimit}`:""} pts</span> deployed${pool!==deployed?` <span style="color:#666">(${pool} pooled)</span>`:""}`;
-    return `<div class="list-row" style="${isCurrent?"border-color:#007eff":notDeployable?"border-color:#ef535044":""}" onclick="selectArmy('${a.id}')">
-      <div style="min-width:0;flex:1">
-        <div style="font-weight:bold;color:${isCurrent?"#007eff":"#fff"};overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(a.name)}</div>
-        <div style="font-size:11px;color:#8b949e;display:flex;align-items:center;gap:5px;flex-wrap:wrap">
-          ${typeTag}${a.faction ? factionPill(a.faction) : ""}
-          <span>${meta}</span>
-        </div>
+    return `<div class="sl-item${isCurrent?" sl-active":""}${notDeployable&&!isCurrent?" sl-warn":""}" style="${notDeployable&&!isCurrent?"border-color:#ef535044":""}" onclick="selectArmy('${a.id}')">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:6px">
+        <div class="sl-name" style="flex:1;min-width:0">${esc(a.name)}</div>
+        ${notDeployable?`<span title="Not deployable — has rule violations" style="color:#ef5350;font-size:11px;flex-shrink:0;margin-top:2px"><i class="fa-solid fa-triangle-exclamation"></i></span>`:""}
       </div>
-      ${notDeployable?`<span title="Has rule violations — not deployable" style="color:#ef5350;font-size:12px;flex-shrink:0"><i class="fa-solid fa-triangle-exclamation"></i></span>`:""}
+      <div class="sl-meta">${typeTag}${a.faction ? factionPill(a.faction) : ""}</div>
+      <div class="sl-meta">${meta}</div>
     </div>`;
   }).join("");
 }
@@ -4184,8 +4214,8 @@ function renderArmyDetail() {
            style="font-family:var(--font-display);font-size:15px;letter-spacing:.5px;color:var(--accent);background:transparent;border:none;border-bottom:1px solid var(--accent);outline:none;width:100%;max-width:180px;padding:0"
            onblur="saveBGName('${army.id}','${bg.id}')"
            onkeydown="if(event.key==='Enter')this.blur();if(event.key==='Escape')cancelBGNameEdit()">`
-      : `<span style="font-family:var(--font-display);font-size:16px;letter-spacing:.5px;color:${bgUndersize?"#ef5350":"var(--accent)"};">${esc(bg.name)}</span>
-         <button onclick="startBGNameEdit('${bg.id}')" title="Rename" style="background:none;border:none;color:#444;cursor:pointer;padding:0 3px;font-size:11px;line-height:1;vertical-align:middle" onmouseover="this.style.color='#888'" onmouseout="this.style.color='#444'"><i class="fa-solid fa-pencil"></i></button>`;
+      : `<span style="font-family:var(--font-display);font-size:17px;letter-spacing:.8px;color:${bgUndersize?"#ef5350":"var(--accent)"};">${esc(bg.name)}</span>
+         <button onclick="startBGNameEdit('${bg.id}')" title="Rename" style="background:none;border:none;color:#555;cursor:pointer;padding:0 4px;font-size:10px;line-height:1;vertical-align:middle;transition:color .15s" onmouseover="this.style.color='#aaa'" onmouseout="this.style.color='#555'"><i class="fa-solid fa-pencil"></i></button>`;
     return `<div class="army-bg-card" style="${bgUndersize?"border-color:#ef535044":""}">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:6px">
         <div style="display:flex;align-items:center;gap:8px;min-width:0">
@@ -4203,36 +4233,43 @@ function renderArmyDetail() {
         </div>
       </div>
       ${pickerHTML}${bgWarnStrip}
-      ${entriesHTML || `<div style="font-size:11px;color:#444;font-style:italic;padding:4px 0">No units yet</div>`}
+      ${entriesHTML || `<div style="font-size:11px;color:#555;font-style:italic;padding:6px 0;text-align:center"><i class="fa-solid fa-circle-plus" style="color:#333;margin-right:5px"></i>No units assigned</div>`}
     </div>`;
   }).join("");
 
+  const fpTag = fp ? `<span style="font-size:9px;font-weight:bold;padding:1px 6px;border-radius:8px;background:#1a2a1a;color:#66bb6a;border:1px solid #66bb6a44;letter-spacing:.5px">FREE PICK</span>` : "";
   panel.innerHTML = `<div class="card">
     <div class="card-title">
-      ${esc(army.name)}
+      <span style="display:flex;align-items:center;gap:10px">${esc(army.name)} ${fpTag}</span>
       <div style="display:flex;gap:6px">
-        <button class="trait-edit-btn" onclick="openEditArmyModal('${army.id}')">Edit</button>
-        <button class="trait-edit-btn" style="border-color:#8b000066;color:#ef5350;background:#2a0a0a" onclick="confirmBtn(this,()=>deleteArmy('${army.id}'))">Delete</button>
+        <button class="trait-edit-btn" onclick="openEditArmyModal('${army.id}')"><i class="fa-solid fa-pen"></i> Edit</button>
+        <button class="trait-edit-btn" style="border-color:#8b000066;color:#ef5350;background:#2a0a0a" onclick="confirmBtn(this,()=>deleteArmy('${army.id}'))"><i class="fa-solid fa-trash"></i> Delete</button>
       </div>
     </div>
-    <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:16px;flex-wrap:wrap">
-      <span class="points-big" style="font-size:20px${overPtsLimit?";color:#ef5350":""}">${deployedPts}</span>
-      <span class="points-label">${army.pointsLimit?`/ ${army.pointsLimit} pts deployed`:"pts deployed"}</span>
-      ${overPtsLimit?`<span style="font-size:11px;color:#ef5350;font-weight:bold"><i class="fa-solid fa-triangle-exclamation"></i> over limit</span>`:""}
-      ${!fp?`<span style="font-size:11px;color:var(--text-muted)" title="Total cost of every task force in the pool">Pool: ${poolPts} pts</span>`:""}
-      <span style="font-size:11px;color:var(--text-muted)">${fp?"":`${tfs.length} task force${tfs.length!==1?"s":""} &bull; `}${bgCount} battle groups</span>
-      ${army.faction ? factionPill(army.faction) : ""}
+    <div class="info-strip" style="${overPtsLimit?"border-color:#ef535055":""}">
+      <div>
+        <div class="info-strip-label">Deployed</div>
+        <div class="info-strip-pts" style="${overPtsLimit?"color:#ef5350":""}">${deployedPts}${army.pointsLimit?` <span style="font-size:14px;color:var(--text-muted);font-family:var(--font-body);letter-spacing:0">/ ${army.pointsLimit}</span>`:""}</div>
+        ${overPtsLimit?`<div style="font-size:10px;color:#ef5350;font-weight:bold;margin-top:1px"><i class="fa-solid fa-triangle-exclamation"></i> over limit</div>`:""}
+      </div>
+      ${!fp&&poolPts!==deployedPts?`<div class="info-strip-sep"></div><div><div class="info-strip-label">Pool</div><div class="info-strip-val">${poolPts} pts</div></div>`:""}
+      <div class="info-strip-sep"></div>
+      ${!fp?`<div><div class="info-strip-label">Task Forces</div><div class="info-strip-val">${tfs.length}</div></div><div class="info-strip-sep"></div>`:""}
+      <div><div class="info-strip-label">Battle Groups</div><div class="info-strip-val">${bgCount}</div></div>
+      ${army.faction?`<div class="info-strip-sep"></div><div style="display:flex;align-items:center">${factionPill(army.faction)}</div>`:""}
     </div>
-    ${!fp?`<div style="margin-bottom:14px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-        <span style="font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--text-muted);font-weight:bold">Task Force Pool</span>
-        <button class="trait-edit-btn" onclick="openAddTFModal('${army.id}')">Add TF</button>
+    ${!fp?`<div style="margin-bottom:16px">
+      <div class="sub-divider" style="margin-top:0">
+        <div class="sub-divider-label"><i class="fa-solid fa-layer-group" style="color:#7986cb;font-size:9px"></i> Task Force Pool</div>
+        <button class="trait-edit-btn" onclick="openAddTFModal('${army.id}')"><i class="fa-solid fa-plus"></i> Add TF</button>
       </div>
       ${tfPoolHTML}
     </div>`:""}
     ${deployBannerHTML}
-    <div style="font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--text-muted);font-weight:bold;margin-bottom:10px">Battle Groups</div>
-    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;align-items:start">
+    <div class="sub-divider">
+      <div class="sub-divider-label"><i class="fa-solid fa-chess-board" style="color:var(--accent);font-size:9px"></i> Battle Groups</div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;align-items:start">
       ${bgCardsHTML}
     </div>
   </div>`;
