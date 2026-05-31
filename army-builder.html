@@ -4541,10 +4541,9 @@ function renderArmyDetail() {
             const stepper = slot.quantity > 1
               ? `<span style="display:inline-flex;align-items:center;gap:4px" title="Split this stack across battle groups">${stepBtn("&minus;",-1,eqty<=1)}<span style="font-weight:bold;font-size:12px;min-width:18px;text-align:center">&times;${eqty}</span>${stepBtn("+",1,!canInc)}</span>`
               : "";
-            const actions = `<div style="display:flex;justify-content:flex-end;align-items:center;gap:8px;flex-wrap:wrap">
-              <span style="display:flex;align-items:center;gap:8px">${stepper}<span style="font-size:10px;color:var(--text-muted)">${entryPointValue(e)} pts</span>
-                <button class="trait-edit-btn" style="border-color:#8b000066;color:#ef5350;background:#2a0a0a" onclick="removeFromBG('${army.id}','${bg.id}','${e.id}')">Remove</button>
-              </span>
+            const actions = `<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+              <span style="font-size:10px;color:var(--text-muted);display:flex;align-items:center;gap:8px">${stepper}${entryPointValue(e)} pts</span>
+              <button class="trait-edit-btn" style="border-color:#8b000066;color:#ef5350;background:#2a0a0a" onclick="removeFromBG('${army.id}','${bg.id}','${e.id}')">Remove</button>
             </div>`;
             return unitCardHTML(unit, actions, slot.unitType || "unit", {tfBadge});
           }).join("");
