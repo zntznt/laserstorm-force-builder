@@ -5617,7 +5617,7 @@ function printArmy(armyId, paperSize, inkMode) {
       </div>`;
     }
     const tuPtsPerStand = calcPoints(tu).perStand;
-    return `<div style="display:flex;background:${pal.cardBg};border:1.5px solid ${pal.cardBorder};border-radius:8px;overflow:hidden;break-inside:avoid;page-break-inside:avoid;grid-column:span 2">
+    return `<div class="mech-pair-print" style="display:flex;background:${pal.cardBg};border:1.5px solid ${pal.cardBorder};border-radius:8px;overflow:hidden;break-inside:avoid;page-break-inside:avoid">
       ${halfContent(carrier, viewType, {badge: badgeHTML||""})}
       <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px 4px;background:${connBg};border-left:1px solid ${connBord};border-right:1px solid ${connBord};gap:4px;min-width:26px;flex-shrink:0">
         <i class="fa-solid fa-truck" style="color:${connFg};font-size:12px"></i>
@@ -5761,7 +5761,7 @@ body{font-family:'Barlow',sans-serif;background:#fff;color:${pal.pageText};-webk
 .print-page{padding:0}
 .page-break{page-break-before:always;break-before:always}
 .cards-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:start}
-@media print{@page{size:${pageSize};margin:${pageMargin}}body{margin:0}}
+@media print{@page{size:${pageSize};margin:0}body{margin:0}.print-page{padding:${pageMargin}}.cards-grid{display:flex;flex-wrap:wrap;gap:10px;align-items:start}.cards-grid>div{break-inside:avoid;page-break-inside:avoid;flex:0 0 calc(50% - 5px)}.cards-grid>.mech-pair-print{flex:0 0 100%}}
 @media screen{body{max-width:${paperSize==="a4"?"794px":"860px"};margin:24px auto;padding:24px;background:#e8eaed}.print-page{background:#fff;padding:0.5in;border-radius:4px;box-shadow:0 2px 10px rgba(0,0,0,.18);margin-bottom:28px}}
 </style>
 </head>
