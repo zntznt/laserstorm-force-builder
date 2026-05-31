@@ -3692,7 +3692,12 @@ function confirmAddUnit() {
   if(!canAddToSection(tf, addUnitTargetRole, u.class)) { return; }
   const types = availableTypesFor(u.class, addUnitTargetRole);
   const unitType = types.includes(addUnitSelectedType) ? addUnitSelectedType : (types[0] || "unit");
-  tf.units.push({id:"slot_"+uid(), unitId:addUnitSelectedId, role:addUnitTargetRole, unitType, quantity:1});
+  const existing = (tf.units||[]).find(s => s.unitId === addUnitSelectedId && s.role === addUnitTargetRole && s.unitType === unitType);
+  if(existing) {
+    existing.quantity = (existing.quantity || 1) + 1;
+  } else {
+    tf.units.push({id:"slot_"+uid(), unitId:addUnitSelectedId, role:addUnitTargetRole, unitType, quantity:1});
+  }
   saveState();
   closeModal("modal-add-unit");
   if(currentTFId===addUnitTargetTFId) renderTFDetail();
@@ -4678,8 +4683,13 @@ function addFPUnit(unitId, unitType) {
   const bg = army && (army.battleGroups||[]).find(b=>b.id===fpUnitTargetBgId);
   if(!army || !bg) return;
   bg.entries = bg.entries || [];
-  const entry = {id:"fpe_"+uid(), unitId, unitType: unitType||"unit", qty:1};
-  bg.entries.push(entry);
+  const resolvedType = unitType || "unit";
+  const existing = bg.entries.find(e => e.unitId === unitId && e.unitType === resolvedType);
+  if(existing) {
+    existing.qty = (existing.qty || 1) + 1;
+  } else {
+    bg.entries.push({id:"fpe_"+uid(), unitId, unitType: resolvedType, qty:1});
+  }
   fpUnitAddedCount++;
   saveState();
   const addedEl = document.getElementById("fp-unit-added");
