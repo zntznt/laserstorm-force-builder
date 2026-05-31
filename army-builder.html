@@ -4434,6 +4434,13 @@ function renderArmyDetail() {
           <i class="fa-solid fa-triangle-exclamation" style="margin-right:4px;color:#ef5350"></i>Doesn't match this army's ${factionPill(army.faction)} restriction — remove it, or change the restriction.
         </div>` : "";
         const tfSlots = tfRankSlots(tf.id);
+        const allAssets = allTacticalAssets();
+        const tfAsset = tf.tacAsset ? allAssets.find(a=>a.id===tf.tacAsset) : null;
+        const assetLineHTML = tfAsset ? `<div style="font-size:10px;color:#8b949e;display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-top:3px">
+          <i class="fa-solid fa-chess" style="color:#ffd54f;font-size:9px"></i>
+          <span style="color:#e0e0e0;font-weight:bold">${esc(tfAsset.name)}</span>
+          ${_assetUsePills(tfAsset.use)}
+        </div>` : "";
         return `<div class="list-row" style="${offFaction?"border-color:#ef535066":overLimit?"border-color:#ef535055":isBlocked?"border-color:#f9731666":""}">
           <div style="min-width:0;flex:1">
             <div style="display:flex;align-items:center;gap:6px;min-width:0">
@@ -4444,6 +4451,7 @@ function renderArmyDetail() {
               ${tf.faction ? factionPill(tf.faction) : `<span style="font-size:10px;color:#666">No Faction</span>`}
               <span>${unitCount} unit${unitCount!==1?"s":""} &bull; ${tp} pts${overLimit?" ⚠":""}</span>
             </div>
+            ${assetLineHTML}
             ${_tfRankPillsHTML(tf, tfSlots)}
             ${warningHTML}${offFactionHTML}
           </div>
@@ -4534,7 +4542,13 @@ function renderArmyDetail() {
             const unit = unitById(slot.unitId);
             if(!unit) return "";
             const tfColor = FACTION_COLORS[tf.faction] || "#555";
-            const tfBadge = `<span style="font-size:9px;font-weight:bold;padding:1px 6px;border-radius:8px;background:${tfColor}18;color:${tfColor};border:1px solid ${tfColor}44">${esc(tf.name)}</span>`;
+            const bgAsset = tf.tacAsset ? allTacticalAssets().find(a=>a.id===tf.tacAsset) : null;
+            const tfBadge = bgAsset
+              ? `<span style="display:inline-flex;align-items:center;gap:4px;flex-wrap:wrap">
+                   <span style="font-size:9px;font-weight:bold;padding:1px 6px;border-radius:8px;background:${tfColor}18;color:${tfColor};border:1px solid ${tfColor}44">${esc(tf.name)}</span>
+                   <span style="font-size:9px;font-weight:bold;padding:1px 6px;border-radius:8px;background:#1a1400;color:#ffd54f;border:1px solid #ffd54f44"><i class="fa-solid fa-chess" style="font-size:8px;margin-right:3px"></i>${esc(bgAsset.name)}</span>${_assetUsePills(bgAsset.use)}
+                 </span>`
+              : `<span style="font-size:9px;font-weight:bold;padding:1px 6px;border-radius:8px;background:${tfColor}18;color:${tfColor};border:1px solid ${tfColor}44">${esc(tf.name)}</span>`;
             const eqty = e.qty || slot.quantity;
             const canInc = slotRemainingQty(army, slot) > 0;
             const stepBtn = (lbl, d, dis) => `<button onclick="changeBGEntryQty('${army.id}','${bg.id}','${e.id}',${d})" ${dis?"disabled":""} style="width:20px;height:20px;border-radius:50%;border:none;background:var(--surface-raised);color:var(--text-bright);font-size:13px;line-height:20px;text-align:center;cursor:${dis?"default":"pointer"};opacity:${dis?".3":"1"}">${lbl}</button>`;
