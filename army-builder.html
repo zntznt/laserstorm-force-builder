@@ -987,6 +987,32 @@ label .trait-edit-btn{margin-left:6px}
   </div>
 </div>
 
+<!-- ===== PRINT ARMY MODAL ===== -->
+<div id="modal-print-army" class="modal-bg">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header">Print Army <button class="modal-close" onclick="closeModal('modal-print-army')"><i class="fa-solid fa-xmark"></i></button></div>
+    <input type="hidden" id="print-army-id">
+    <div class="form-group" style="margin-bottom:14px">
+      <label>Paper Size</label>
+      <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:6px">
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;color:#e0e0e0"><input type="radio" name="print-paper" value="letter" checked> Letter (8.5 &times; 11 in)</label>
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;color:#e0e0e0"><input type="radio" name="print-paper" value="a4"> A4 (210 &times; 297 mm)</label>
+      </div>
+    </div>
+    <div class="form-group" style="margin-bottom:22px">
+      <label>Ink Mode</label>
+      <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:6px">
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;color:#e0e0e0"><input type="radio" name="print-ink" value="color" checked> Color</label>
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;color:#e0e0e0"><input type="radio" name="print-ink" value="gray"> Grayscale</label>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px">
+      <button class="btn btn-secondary" onclick="closeModal('modal-print-army')">Cancel</button>
+      <button class="btn btn-primary" onclick="doPrintArmy()"><i class="fa-solid fa-print"></i> Print</button>
+    </div>
+  </div>
+</div>
+
 <div id="modal-faction" class="modal-bg">
   <div class="modal">
     <div class="modal-header">Custom Factions <button class="modal-close" onclick="closeModal('modal-faction')"><i class="fa-solid fa-xmark"></i></button></div>
@@ -5108,6 +5134,7 @@ function renderArmyDetail() {
         ${efDeployedBadge}
       </div>
       <div style="display:flex;gap:6px">
+        <button class="trait-edit-btn" onclick="openPrintArmyModal('${army.id}')"><i class="fa-solid fa-print"></i> Print</button>
         <button class="trait-edit-btn" onclick="openEditArmyModal('${army.id}')"><i class="fa-solid fa-pen"></i> Edit</button>
         <button class="trait-edit-btn" style="border-color:#8b000066;color:#ef5350;background:#2a0a0a" onclick="confirmBtn(this,()=>deleteArmy('${army.id}'))"><i class="fa-solid fa-trash"></i> Delete</button>
       </div>
@@ -5142,6 +5169,290 @@ function renderArmyDetail() {
       ${bgCardHTML}
     </div>
   </div>`;
+}
+
+// ============================================================
+// PRINT
+// ============================================================
+function openPrintArmyModal(armyId) {
+  document.getElementById("print-army-id").value = armyId;
+  openModal("modal-print-army");
+}
+
+function doPrintArmy() {
+  const armyId   = document.getElementById("print-army-id").value;
+  const paperSize = document.querySelector('input[name="print-paper"]:checked')?.value || "letter";
+  const inkMode   = document.querySelector('input[name="print-ink"]:checked')?.value  || "color";
+  closeModal("modal-print-army");
+  printArmy(armyId, paperSize, inkMode);
+}
+
+function printArmy(armyId, paperSize, inkMode) {
+  const army = state.armies.find(a => a.id === armyId);
+  if (!army) return;
+  _ensureBGs(army);
+  const fp          = isFreePick(army);
+  const bgCount     = army.bgCount || 3;
+  const bgList      = army.battleGroups.slice(0, bgCount);
+  const tfs         = (army.taskForceIds || []).map(id => state.taskForces.find(t => t.id === id)).filter(Boolean);
+  const allAssets   = allTacticalAssets();
+  const deployedPts = armyDeployedPoints(army);
+  const gray        = inkMode === "gray";
+
+  const pal = gray ? {
+    pageText:"#111",headBg:"#222",headText:"#fff",cardBg:"#fff",cardBorder:"#aaa",
+    sectionHead:"#333",statBg:"#f0f0f0",statBorder:"#ccc",wepBg:"#f5f5f5",wepBorder:"#ddd",
+    mutedText:"#666",ptsBoxBg:"#222",ptsBoxText:"#fff",accentLine:"#999",
+    tfRowBg:"#f5f5f5",assetColor:"#444",symBg:"#333",symBorder:"#666",symColor:"#fff",
+  } : {
+    pageText:"#0f1929",headBg:"#162040",headText:"#fff",cardBg:"#fff",cardBorder:"#c0cfe8",
+    sectionHead:"#162040",statBg:"#eef3fb",statBorder:"#c0cce8",wepBg:"#f5f8fd",wepBorder:"#dce4f4",
+    mutedText:"#546080",ptsBoxBg:"#162040",ptsBoxText:"#fff",accentLine:"#4a7adc",
+    tfRowBg:"#f3f7fd",assetColor:"#8a5a00",symBg:"#162040",symBorder:"#3060a8",symColor:"#fff",
+  };
+
+  const pageSize   = paperSize === "a4" ? "210mm 297mm" : "8.5in 11in";
+  const pageMargin = "0.5in";
+
+  function symBadge(sd, size) {
+    if (!sd) return "";
+    const c    = gray ? "#fff" : sd.color;
+    const bg   = gray ? "#444" : (sd.color + "1a");
+    const bord = gray ? "#666" : (sd.color + "99");
+    const fs   = size * 0.55;
+    const inner = sd.text
+      ? `<span style="font-family:'Bebas Neue',sans-serif;font-size:${sd.text.length>2?Math.round(fs*.9):fs}px;font-weight:bold;line-height:1;letter-spacing:0">${sd.text}</span>`
+      : `<i class="${sd.icon}" style="font-size:${fs}px"></i>`;
+    return `<div style="width:${size}px;height:${size}px;border-radius:${Math.round(size*.2)}px;background:${bg};border:2.5px solid ${bord};color:${c};display:inline-flex;align-items:center;justify-content:center;flex-shrink:0">${inner}</div>`;
+  }
+
+  function printFacPill(factionId) {
+    if (!factionId) return "";
+    const name  = BUILTIN_FACTION_LABELS[factionId] || (state.customFactions||[]).find(f=>f.id===factionId)?.name || factionId;
+    const icon  = BUILTIN_FACTION_ICONS[factionId]  || (state.customFactions||[]).find(f=>f.id===factionId)?.icon;
+    const label = icon ? `<i class="fa-solid fa-${icon}"></i> ${esc(name)}` : esc(name);
+    if (gray) return `<span style="display:inline-block;padding:1px 7px;border-radius:10px;font-size:10px;font-weight:bold;background:#e0e0e0;color:#333;border:1px solid #bbb">${label}</span>`;
+    const color = FACTION_COLORS[factionId] || (state.customFactions||[]).find(f=>f.id===factionId)?.color || "#888";
+    return `<span style="display:inline-block;padding:1px 7px;border-radius:10px;font-size:10px;font-weight:bold;background:${color}22;color:${color};border:1px solid ${color}55">${label}</span>`;
+  }
+
+  function printClassBadge(c) {
+    const label = classLabel(c);
+    if (gray) return `<span style="display:inline-block;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:bold;text-transform:uppercase;background:#e0e0e0;color:#222;border:1px solid #bbb">${label}</span>`;
+    const CLASS_BG_P   = {inf:"#1a3a1a",cav:"#1a2a4a",fg:"#2a1a3a",scout:"#1a3a3a",afv:"#3a2a0a",ac:"#1a3a3a",sh:"#3a1a0a",beh:"#3a0a0a",core:"#0a2a0a",specialist:"#0a0a3a",command:"#2a1a0a",support:"#1a0a2a",commander:"#3a0a0a"};
+    const CLASS_TEXT_P = {inf:"#4caf50",cav:"#64b5f6",fg:"#ba68c8",scout:"#4db6ac",afv:"#ffb74d",ac:"#26c6da",sh:"#ff7043",beh:"#ef5350",core:"#4caf50",specialist:"#64b5f6",command:"#ffb74d",support:"#ba68c8",commander:"#ef5350"};
+    return `<span style="display:inline-block;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:bold;text-transform:uppercase;background:${CLASS_BG_P[c]||"#222"};color:${CLASS_TEXT_P[c]||"#aaa"}">${label}</span>`;
+  }
+
+  function printTraitPills(traitArr, allTraits) {
+    if (!traitArr || !traitArr.length) return `<span style="color:${pal.mutedText};font-size:10px;font-style:italic">None</span>`;
+    return traitArr.map(t => {
+      const name = t[0];
+      const cnt  = traitCount(t);
+      const disp = cnt > 1 ? `${name} ${cnt}` : name;
+      const [, entry] = Object.entries(allTraits).find(([,v])=>v[0]===name) || [];
+      const fac = entry ? traitFactionKey(entry) : null;
+      if (gray) return `<span style="display:inline-block;padding:2px 7px;border-radius:8px;font-size:10px;font-weight:500;background:#e0e0e0;color:#333;border:1px solid #bbb;margin:1px 2px 1px 0">${esc(disp)}</span>`;
+      const color = fac ? (FACTION_COLORS[fac] || (state.customFactions||[]).find(f=>f.id===fac)?.color || "#888") : null;
+      const bg   = color ? `${color}18` : "#e8f0fb";
+      const bord = color ? `${color}44` : "#b8cae8";
+      const tc   = color ? color : "#1a3a6e";
+      return `<span style="display:inline-block;padding:2px 7px;border-radius:8px;font-size:10px;font-weight:500;background:${bg};color:${tc};border:1px solid ${bord};margin:1px 2px 1px 0">${esc(disp)}</span>`;
+    }).join("");
+  }
+
+  function printUnitCard(unit, viewType, tfBadgeHTML) {
+    const pts    = calcPoints(unit);
+    const pKey   = VIEW_PTS_KEY[viewType] || "unitPts";
+    const pVal   = pts[pKey] != null ? pts[pKey] : "—";
+    const pLabel = VIEW_LABELS[viewType] || "Unit";
+    const minSpd = unit.mobility === "grav" ? Math.ceil(unit.speed/2) : unit.mobility === "air" ? Math.ceil(unit.speed*3/4) : null;
+    const traitsHTML  = printTraitPills(unit.standTraits||[], allStandTraits());
+    const weaponsHTML = (unit.weapons||[]).length === 0
+      ? `<div style="padding:4px 8px;font-size:10px;color:${pal.mutedText};font-style:italic;background:${pal.wepBg};border-radius:4px;margin-top:3px">No ranged weapons — assault only</div>`
+      : unit.weapons.map(w => {
+          const wtPills = (w.traits||[]).length ? " | " + printTraitPills(w.traits, allWeaponTraits()) : "";
+          const wName   = w.name ? `<strong>${esc(w.name)}</strong> ` : "";
+          return `<div style="padding:4px 8px;font-size:10px;background:${pal.wepBg};border:1px solid ${pal.wepBorder};border-radius:4px;margin-top:3px;line-height:1.5"><span style="color:${pal.pageText}">${wName}<span style="color:${pal.mutedText};font-weight:normal">${w.mode.toUpperCase()}/${w.type.toUpperCase()}</span> | Rng <strong>${rangeLabel(w.range)}</strong> | Shots <strong>${w.shots}</strong> | Impact <strong>+${w.impact}</strong>${wtPills}</span></div>`;
+        }).join("");
+    const descHTML    = unit.description ? `<div style="font-size:10px;color:${pal.mutedText};font-style:italic;line-height:1.4;padding:3px 0 4px">${esc(unit.description)}</div>` : "";
+    const unitSizeStr = viewType === "unit" ? ` <span style="font-size:10px;color:${pal.mutedText};font-weight:normal">${pts.unitSize} stand${pts.unitSize>1?"s":""}</span>` : "";
+    return `<div style="background:${pal.cardBg};border:1.5px solid ${pal.cardBorder};border-radius:8px;padding:10px;break-inside:avoid;page-break-inside:avoid">
+      <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:6px">
+        <div style="flex:1;min-width:0">
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:.4px;color:${pal.pageText};line-height:1.15">${esc(unit.name)}${unitSizeStr}</div>
+          <div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:3px">${printClassBadge(unit.class)}${printFacPill(unit.faction)}${tfBadgeHTML||""}</div>
+          ${descHTML}
+        </div>
+        <div style="background:${pal.ptsBoxBg};color:${pal.ptsBoxText};border-radius:6px;padding:4px 7px;text-align:center;flex-shrink:0;min-width:36px">
+          <div style="font-size:13px;font-weight:bold;line-height:1.1">${pVal}</div>
+          <div style="font-size:8px;text-transform:uppercase;letter-spacing:.04em;opacity:.75">${pLabel}</div>
+        </div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;background:${pal.statBg};border:1px solid ${pal.statBorder};border-radius:6px;padding:5px 6px;margin-bottom:6px;gap:2px">
+        ${[
+          ["Spd", `${unit.speed}"${minSpd!==null?` <small style="font-size:9px;color:${pal.mutedText}">min ${minSpd}"</small>`:"" }`],
+          ["Mob", unit.mobility],
+          ["Aim", `${unit.aim}+`],
+          ["Assault", `+${unit.assault}`],
+          ["Save", `${pts.saveDice}D6/${unit.saveNumber}+`],
+          ["Morale", `${unit.morale}+`],
+        ].map(([label,val])=>`<div style="text-align:center;flex:1;min-width:34px;padding:1px 2px"><div style="font-size:7.5px;text-transform:uppercase;color:${pal.mutedText};letter-spacing:.05em;font-weight:700">${label}</div><div style="font-size:12px;font-weight:bold;color:${pal.pageText};line-height:1.15">${val}</div></div>`).join("")}
+      </div>
+      <div style="margin-bottom:5px">
+        <div style="font-size:8px;text-transform:uppercase;letter-spacing:.05em;color:${pal.mutedText};font-weight:700;margin-bottom:3px">Stand Traits</div>
+        <div style="display:flex;flex-wrap:wrap;gap:2px">${traitsHTML}</div>
+      </div>
+      <div>
+        <div style="font-size:8px;text-transform:uppercase;letter-spacing:.05em;color:${pal.mutedText};font-weight:700;margin-bottom:2px">Weapons</div>
+        ${weaponsHTML}
+      </div>
+    </div>`;
+  }
+
+  // ── Army overview page ────────────────────────────────────
+  const armySym    = army.symbol ? _bgSymLookup(army.symbol) : null;
+  const armySymEl  = armySym
+    ? symBadge(armySym, 72)
+    : `<div style="width:72px;height:72px;border-radius:14px;background:${pal.symBg};border:2px solid ${pal.symBorder};display:inline-flex;align-items:center;justify-content:center;color:${pal.symColor};font-size:28px;flex-shrink:0"><i class="fa-solid fa-chess-rook"></i></div>`;
+
+  const tfRows = tfs.length === 0
+    ? `<div style="color:${pal.mutedText};font-style:italic;font-size:12px">No task forces</div>`
+    : tfs.map(tf => {
+        const asset    = tf.tacAsset ? allAssets.find(a=>a.id===tf.tacAsset) : null;
+        const tfColor  = gray ? "#555" : (FACTION_COLORS[tf.faction]||"#555");
+        const useColor = u => {
+          if (gray) return "#555";
+          return {activation:"#9c27b0",deployment:"#2196f3",end:"#4caf50",reaction:"#f44336"}[u.toLowerCase()]||"#888";
+        };
+        const assetPills = asset ? (asset.use||[]).map(u=>`<span style="display:inline-block;padding:1px 6px;border-radius:8px;font-size:9px;font-weight:bold;text-transform:uppercase;letter-spacing:.4px;background:${useColor(u)}22;color:${useColor(u)};border:1px solid ${useColor(u)}55">${esc(u)}</span>`).join("") : "";
+        return `<div style="display:flex;align-items:flex-start;gap:8px;padding:8px 10px;background:${pal.tfRowBg};border:1px solid ${pal.cardBorder};border-radius:6px;margin-bottom:6px">
+          <div style="flex:1;min-width:0">
+            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+              <span style="font-weight:700;font-size:13px;color:${pal.pageText}">${esc(tf.name)}</span>
+              ${tf.faction ? printFacPill(tf.faction) : ""}
+              <span style="font-size:10px;color:${pal.mutedText}">${(tf.units||[]).reduce((s,u)=>s+u.quantity,0)} units</span>
+            </div>
+            ${asset ? `<div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-top:4px"><i class="fa-solid fa-chess" style="color:${pal.assetColor};font-size:10px"></i><span style="font-size:11px;font-weight:bold;color:${pal.assetColor}">${esc(asset.name)}</span>${assetPills}</div>` : ""}
+          </div>
+        </div>`;
+      }).join("");
+
+  const bgSummaryRows = bgList.map(bg => {
+    const sd   = bgDesignation(army, bg);
+    const bgPt = bgPoints(bg);
+    const bgSz = bgUnitCount(bg);
+    return `<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:${pal.tfRowBg};border:1px solid ${pal.cardBorder};border-radius:6px;margin-bottom:4px">
+      ${symBadge(sd, 28)}
+      <span style="font-weight:700;font-size:13px;color:${pal.pageText}">${esc(bg.name)}</span>
+      <span style="font-size:10px;color:${pal.mutedText};margin-left:auto">${bgSz} unit${bgSz!==1?"s":""} · ${bgPt} pts</span>
+    </div>`;
+  }).join("");
+
+  const overviewPage = `<div class="print-page">
+    <div style="background:${pal.headBg};color:${pal.headText};border-radius:10px;padding:18px 22px;margin-bottom:18px;display:flex;align-items:center;gap:18px">
+      ${armySymEl}
+      <div style="flex:1;min-width:0">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:2px;line-height:1;margin-bottom:5px">${esc(army.name)}</div>
+        <div style="font-size:10px;letter-spacing:.8px;opacity:.65;text-transform:uppercase;margin-bottom:6px">${fp?"Free Pick Army":"Task Force Army"}</div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <span style="font-size:13px;font-weight:600">${deployedPts} pts deployed</span>
+          ${army.faction ? printFacPill(army.faction) : ""}
+          ${fp?`<span style="display:inline-block;padding:2px 8px;border-radius:8px;font-size:10px;font-weight:bold;background:#4caf5022;color:#4caf50;border:1px solid #4caf5055;letter-spacing:.5px">FREE PICK</span>`:""}
+        </div>
+      </div>
+    </div>
+    ${army.notes?`<div style="padding:10px 14px;background:${pal.tfRowBg};border:1px solid ${pal.cardBorder};border-radius:6px;margin-bottom:16px;font-size:12px;color:${pal.mutedText};line-height:1.6;font-style:italic">${esc(army.notes).replace(/\n/g,"<br>")}</div>`:""}
+    ${!fp?`<div style="margin-bottom:16px">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:1px;color:${pal.sectionHead};border-bottom:2px solid ${pal.accentLine};padding-bottom:4px;margin-bottom:10px">Task Forces</div>
+      ${tfRows}
+    </div>`:""}
+    <div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:1px;color:${pal.sectionHead};border-bottom:2px solid ${pal.accentLine};padding-bottom:4px;margin-bottom:10px">Battle Groups</div>
+      ${bgSummaryRows}
+    </div>
+  </div>`;
+
+  // ── Battlegroup pages ─────────────────────────────────────
+  const bgPages = bgList.map(bg => {
+    const sd      = bgDesignation(army, bg);
+    const bgPt    = bgPoints(bg);
+    const bgSz    = bgUnitCount(bg);
+    const symColor = gray ? "#888" : (sd?.color || "#4a7adc");
+    const hdrBg   = gray ? "#e0e0e0" : (sd?.color ? sd.color + "0e" : "#edf2fb");
+    const hdrBord = gray ? "#bbb"    : (sd?.color ? sd.color + "55" : "#c0cce8");
+
+    const unitCards = (bg.entries||[]).flatMap(e => {
+      if (fp) {
+        const u = unitById(e.unitId);
+        if (!u) return [];
+        const qty = e.qty || 1;
+        return Array.from({length:qty}, () => printUnitCard(u, e.unitType||"unit", ""));
+      } else {
+        const tf   = state.taskForces.find(t=>t.id===e.tfId);
+        const slot = tf && (tf.units||[]).find(s=>s.id===e.slotId);
+        const u    = slot && unitById(slot.unitId);
+        if (!u) return [];
+        const qty     = e.qty || slot.quantity || 1;
+        const tfColor = gray ? "#555" : (FACTION_COLORS[tf.faction]||"#555");
+        const asset   = tf.tacAsset ? allAssets.find(a=>a.id===tf.tacAsset) : null;
+        const tfBadge = asset
+          ? `<span style="display:inline-flex;align-items:center;gap:3px;flex-wrap:wrap"><span style="display:inline-block;padding:1px 6px;border-radius:8px;font-size:9px;font-weight:bold;background:${tfColor}18;color:${tfColor};border:1px solid ${tfColor}44">${esc(tf.name)}</span><span style="display:inline-block;padding:1px 6px;border-radius:8px;font-size:9px;font-weight:bold;background:${pal.assetColor}18;color:${pal.assetColor};border:1px solid ${pal.assetColor}44"><i class="fa-solid fa-chess" style="font-size:7px;margin-right:2px"></i>${esc(asset.name)}</span></span>`
+          : `<span style="display:inline-block;padding:1px 6px;border-radius:8px;font-size:9px;font-weight:bold;background:${tfColor}18;color:${tfColor};border:1px solid ${tfColor}44">${esc(tf.name)}</span>`;
+        return Array.from({length:qty}, () => printUnitCard(u, slot.unitType||"unit", tfBadge));
+      }
+    });
+
+    const grid = unitCards.length
+      ? `<div class="cards-grid">${unitCards.join("")}</div>`
+      : `<div style="padding:16px;text-align:center;color:${pal.mutedText};font-style:italic">No units assigned to this battle group</div>`;
+
+    return `<div class="print-page page-break">
+      <div style="display:flex;align-items:stretch;background:${hdrBg};border:2px solid ${hdrBord};border-radius:10px;overflow:hidden;margin-bottom:16px">
+        <div style="flex:1;padding:14px 18px">
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:1.5px;color:${pal.pageText};line-height:1.1;margin-bottom:5px">${esc(bg.name)}</div>
+          ${bg.notes?`<div style="font-size:12px;color:${pal.mutedText};line-height:1.5;font-style:italic;margin-bottom:6px">${esc(bg.notes).replace(/\n/g,"<br>")}</div>`:""}
+          <div style="font-size:11px;color:${pal.mutedText}">${bgSz} unit${bgSz!==1?"s":""} · ${bgPt} pts</div>
+        </div>
+        <div style="padding:14px 20px;display:flex;align-items:center;justify-content:center;border-left:1px solid ${hdrBord};background:${gray?"#d0d0d0":sd?.color?sd.color+"22":"#dde6f8"}">
+          ${symBadge(sd, 72)}
+        </div>
+      </div>
+      ${grid}
+    </div>`;
+  }).join("");
+
+  // ── Assemble & open ───────────────────────────────────────
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>${esc(army.name)} — Print</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Barlow',sans-serif;background:#fff;color:${pal.pageText};-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.print-page{padding:0}
+.page-break{page-break-before:always;break-before:always}
+.cards-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:start}
+@media print{@page{size:${pageSize};margin:${pageMargin}}body{margin:0}}
+@media screen{body{max-width:${paperSize==="a4"?"794px":"860px"};margin:24px auto;padding:24px;background:#e8eaed}.print-page{background:#fff;padding:0.5in;border-radius:4px;box-shadow:0 2px 10px rgba(0,0,0,.18);margin-bottom:28px}}
+</style>
+</head>
+<body>
+${overviewPage}
+${bgPages}
+<script>
+(document.fonts&&document.fonts.ready?document.fonts.ready:Promise.resolve()).then(()=>setTimeout(()=>window.print(),350));
+<\/script>
+</body>
+</html>`;
+
+  const w = window.open("", "_blank");
+  if (w) { w.document.write(html); w.document.close(); }
 }
 
 // ===== FREE-PICK UNIT MODAL =====
