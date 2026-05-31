@@ -609,7 +609,13 @@ label .trait-edit-btn{margin-left:6px}
 <!-- ===== ADD UNIT TO TF MODAL ===== -->
 <div id="modal-add-unit" class="modal-bg">
   <div class="modal">
-    <div class="modal-header"><span id="addunit-modal-title">Add Unit to Task Force</span> <button class="modal-close" onclick="closeModal('modal-add-unit')"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="modal-header">
+      <span id="addunit-modal-title">Add Unit to Task Force</span>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button id="addunit-show-unavail-btn" class="trait-edit-btn" onclick="toggleAddUnitShowUnavailable()"><i class="fa-solid fa-eye-slash"></i> Show Unavailable</button>
+        <button class="modal-close" onclick="closeModal('modal-add-unit')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+    </div>
     <input class="search-bar" id="addunit-search" placeholder="Search..." oninput="renderAddUnitList()">
     <div class="scrolllist" id="addunit-list"></div>
     <div id="addunit-type-selector" style="display:none;margin-top:10px;padding:10px;background:var(--surface-page);border-radius:6px;border:1px solid var(--border-subtle)">
@@ -1159,6 +1165,7 @@ let addUnitTargetTFId = null;
 let addUnitTargetRole = "core";
 let addUnitSelectedId = null;
 let addUnitSelectedType = "unit";
+let addUnitShowUnavailable = false;
 let currentArmyId = null;
 let editingArmyId = null;
 let tfRemoveBlockedId = null;
@@ -3638,8 +3645,25 @@ function openAddUnitModal(tfId, role) {
   document.getElementById("addunit-search").value = "";
   document.getElementById("addunit-type-selector").style.display = "none";
   document.getElementById("addunit-confirm-btn").disabled = true;
+  addUnitShowUnavailable = false;
+  const btn = document.getElementById("addunit-show-unavail-btn");
+  if(btn) { btn.innerHTML = `<i class="fa-solid fa-eye-slash"></i> Show Unavailable`; btn.style.cssText = ""; }
   renderAddUnitList();
   openModal("modal-add-unit");
+}
+
+function toggleAddUnitShowUnavailable() {
+  addUnitShowUnavailable = !addUnitShowUnavailable;
+  const btn = document.getElementById("addunit-show-unavail-btn");
+  if(btn) {
+    btn.innerHTML = addUnitShowUnavailable
+      ? `<i class="fa-solid fa-eye"></i> Hide Unavailable`
+      : `<i class="fa-solid fa-eye-slash"></i> Show Unavailable`;
+    btn.style.background = addUnitShowUnavailable ? "var(--accent-tint)" : "";
+    btn.style.borderColor = addUnitShowUnavailable ? "var(--accent)" : "";
+    btn.style.color = addUnitShowUnavailable ? "var(--accent)" : "";
+  }
+  renderAddUnitList();
 }
 
 function renderAddUnitList() {
@@ -3654,10 +3678,11 @@ function renderAddUnitList() {
   else if(tf && tf.faction) { units = units.filter(u => !u.faction || u.faction === tf.faction); }
   else { units = units.filter(u => u.faction === "standard" || !u.faction); }
   const list = document.getElementById("addunit-list");
-  list.innerHTML = units.map(u => {
+  const rows = units.map(u => {
     const pts = calcPoints(u);
     const sel = addUnitSelectedId===u.id;
     const canAdd = !tf || canAddToSection(tf, addUnitTargetRole, u.class);
+    if(!canAdd && !addUnitShowUnavailable) return "";
     return `<div class="list-row" style="${sel?"border-color:#007eff;background:#1a2a4a":""};${!canAdd?"opacity:0.45":""}" onclick="addUnitSelectedId='${u.id}';addUnitSelectedType='';renderAddUnitList();renderAddUnitTypeSelector()">
       <div>
         ${classBadge(u.class)}
@@ -3665,7 +3690,8 @@ function renderAddUnitList() {
         <div style="font-size:11px;color:#8b949e">${pts.unitPts} pts | ${pts.unitSize} stands${!canAdd?" &bull; <span style='color:#ef5350'>section full</span>":""}</div>
       </div>
     </div>`;
-  }).join("") || `<div class="empty">No units available for this section</div>`;
+  }).join("");
+  list.innerHTML = rows || `<div class="empty">No units available for this section</div>`;
   if(addUnitSelectedId) renderAddUnitTypeSelector();
 }
 
