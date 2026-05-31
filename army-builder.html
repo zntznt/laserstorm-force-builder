@@ -439,34 +439,35 @@ label .trait-edit-btn{margin-left:6px}
       </div>
     </div>
     <input class="search-bar" id="lib-search" placeholder="Search units..." oninput="renderLibrary()">
-    <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:4px">
-      <div class="pill-group" id="lib-faction-filters" style="flex:1;margin-bottom:0"></div>
-      <button class="trait-edit-btn" style="margin-top:4px;white-space:nowrap;flex-shrink:0" onclick="openFactionModal(false)"><i class="fa-solid fa-gear"></i> Custom Factions</button>
-    </div>
-    <div class="pill-group" id="lib-filters">
-      <span class="pill-group-label">Class</span>
-      <div class="pill active" data-filter="all" onclick="setLibFilter(this,'all')">All</div>
-      <div class="pill" data-filter="inf" onclick="setLibFilter(this,'inf')">Infantry</div>
-      <div class="pill" data-filter="cav" onclick="setLibFilter(this,'cav')">Cavalry</div>
-      <div class="pill" data-filter="fg" onclick="setLibFilter(this,'fg')">Field Gun</div>
-      <div class="pill" data-filter="scout" onclick="setLibFilter(this,'scout')">Scout</div>
-      <div class="pill" data-filter="afv" onclick="setLibFilter(this,'afv')">AFV</div>
-      <div class="pill" data-filter="ac" onclick="setLibFilter(this,'ac')">Aircraft</div>
-      <div class="pill" data-filter="sh" onclick="setLibFilter(this,'sh')">Super Heavy</div>
-      <div class="pill" data-filter="beh" onclick="setLibFilter(this,'beh')">Behemoth</div>
-    </div>
-    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px">
-      <div class="pill-group" id="lib-view-filters" style="margin-bottom:0">
-        <span class="pill-group-label">View as</span>
-        <div class="pill active" data-view="unit"        onclick="setLibViewType(this,'unit')">Unit</div>
-        <div class="pill"        data-view="independent" onclick="setLibViewType(this,'independent')">Independent</div>
-        <div class="pill"        data-view="command"     onclick="setLibViewType(this,'command')">Commander</div>
-        <div class="pill"        data-view="hero"        onclick="setLibViewType(this,'hero')">Hero</div>
-        <div class="pill"        data-view="cmdHero"     onclick="setLibViewType(this,'cmdHero')">Hero Cmd</div>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px">
+      <div style="display:flex;align-items:center;gap:8px">
+        <div class="pill-group" id="lib-faction-filters" style="flex:1;margin-bottom:0"></div>
+        <button class="trait-edit-btn" style="white-space:nowrap;flex-shrink:0" onclick="openFactionModal(false)"><i class="fa-solid fa-gear"></i> Custom Factions</button>
       </div>
-      <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
-        <span class="pill-group-label">Sort</span>
-        <select id="lib-sort" onchange="libSort=this.value;renderLibrary()" style="width:auto">
+      <div class="pill-group" id="lib-filters" style="margin-bottom:0">
+        <span class="pill-group-label">Class</span>
+        <div class="pill active" data-filter="all" onclick="setLibFilter(this,'all')">All</div>
+        <div class="pill" data-filter="inf" onclick="setLibFilter(this,'inf')">Infantry</div>
+        <div class="pill" data-filter="cav" onclick="setLibFilter(this,'cav')">Cavalry</div>
+        <div class="pill" data-filter="fg" onclick="setLibFilter(this,'fg')">Field Gun</div>
+        <div class="pill" data-filter="scout" onclick="setLibFilter(this,'scout')">Scout</div>
+        <div class="pill" data-filter="afv" onclick="setLibFilter(this,'afv')">AFV</div>
+        <div class="pill" data-filter="ac" onclick="setLibFilter(this,'ac')">Aircraft</div>
+        <div class="pill" data-filter="sh" onclick="setLibFilter(this,'sh')">Super Heavy</div>
+        <div class="pill" data-filter="beh" onclick="setLibFilter(this,'beh')">Behemoth</div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+        <div class="pill-group" id="lib-view-filters" style="margin-bottom:0">
+          <span class="pill-group-label">View as</span>
+          <div class="pill active" data-view="unit"        onclick="setLibViewType(this,'unit')">Unit</div>
+          <div class="pill"        data-view="independent" onclick="setLibViewType(this,'independent')">Independent</div>
+          <div class="pill"        data-view="command"     onclick="setLibViewType(this,'command')">Commander</div>
+          <div class="pill"        data-view="hero"        onclick="setLibViewType(this,'hero')">Hero</div>
+          <div class="pill"        data-view="cmdHero"     onclick="setLibViewType(this,'cmdHero')">Hero Cmd</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+          <span class="pill-group-label">Sort</span>
+          <select id="lib-sort" onchange="libSort=this.value;renderLibrary()" style="width:auto">
         <option value="name-asc">Name A → Z</option>
         <option value="name-desc">Name Z → A</option>
         <option value="pts-asc">Points: Low → High</option>
@@ -482,7 +483,8 @@ label .trait-edit-btn{margin-left:6px}
         <option value="morale-desc">Morale: Worst → Best</option>
         <option value="assault-desc">Assault: High → Low</option>
         <option value="assault-asc">Assault: Low → High</option>
-      </select>
+          </select>
+        </div>
       </div>
     </div>
     <div id="lib-list"></div>
