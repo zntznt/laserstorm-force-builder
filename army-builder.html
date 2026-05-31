@@ -625,15 +625,18 @@ label .trait-edit-btn{margin-left:6px}
 <!-- ===== TACTICAL ASSET PICKER MODAL ===== -->
 <div id="modal-asset-picker" class="modal-bg">
   <div class="modal">
-    <div class="modal-header">Select Tactical Asset <button class="modal-close" onclick="closeModal('modal-asset-picker')"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="modal-header">
+      <span>Select Tactical Asset</span>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button class="trait-edit-btn" onclick="openCustomAssetsModal()"><i class="fa-solid fa-gear"></i> Custom Assets</button>
+        <button class="modal-close" onclick="closeModal('modal-asset-picker')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+    </div>
     <input class="search-bar" id="asset-picker-search" placeholder="Search assets..." oninput="renderAssetPickerList()">
     <div class="scrolllist" id="asset-picker-list"></div>
-    <div style="margin-top:12px;display:flex;justify-content:space-between;align-items:center;gap:8px">
-      <button class="trait-edit-btn" onclick="openCustomAssetsModal()"><i class="fa-solid fa-gear"></i> Custom Assets</button>
-      <div style="display:flex;gap:8px">
-        <button class="btn btn-secondary" onclick="closeModal('modal-asset-picker')">Cancel</button>
-        <button class="btn btn-primary" id="asset-picker-confirm-btn" onclick="confirmAssetPick()">Select</button>
-      </div>
+    <div style="margin-top:12px;display:flex;justify-content:flex-end;gap:8px">
+      <button class="btn btn-secondary" onclick="closeModal('modal-asset-picker')">Cancel</button>
+      <button class="btn btn-primary" id="asset-picker-confirm-btn" onclick="confirmAssetPick()">Select</button>
     </div>
   </div>
 </div>
