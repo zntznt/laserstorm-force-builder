@@ -2960,8 +2960,8 @@ function renderLibrary() {
   list.innerHTML = units.map(u => {
     const pts = calcPoints(u);
     const actions = `
-      ${u.builtIn?"":`<button class="trait-edit-btn" onclick="confirmBtn(this,()=>deleteCustomUnit('${u.id}'))">Delete</button>`}
       ${u.builtIn?"":`<button class="trait-edit-btn" onclick="editUnit('${u.id}')">Edit</button>`}
+      ${u.builtIn?"":`<button class="trait-edit-btn" onclick="confirmBtn(this,()=>deleteCustomUnit('${u.id}'))">Delete</button>`}
       <!-- Export Unit hidden pending custom trait/faction handling -->`;
     return unitCardHTML(u, actions, libViewType);
   }).join("");
