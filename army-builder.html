@@ -595,7 +595,7 @@ label .trait-edit-btn{margin-left:6px}
       <input type="number" id="tf-points-limit" min="0" step="5" placeholder="e.g. 500" style="width:140px">
     </div>
     <div class="form-group" style="margin-bottom:16px">
-      <label>Notes <span style="font-size:10px;color:#8b949e;font-weight:normal">(optional — lore, composition notes, etc.)</span></label>
+      <label>Description <span style="font-size:10px;color:#8b949e;font-weight:normal">(optional — lore, composition notes, etc.)</span></label>
       <textarea id="tf-notes" placeholder="e.g. Veteran unit tasked with holding the northern flank..." style="width:100%;min-height:72px;resize:vertical;background:var(--surface-raised);border:1px solid var(--border-subtle);border-radius:6px;color:#e0e0e0;padding:8px;font-family:var(--font-body);font-size:13px;line-height:1.5"></textarea>
     </div>
     <div style="display:flex;justify-content:flex-end;gap:8px">
@@ -780,7 +780,7 @@ label .trait-edit-btn{margin-left:6px}
       </select>
     </div>
     <div class="form-group" style="margin-bottom:16px">
-      <label>Notes <span style="font-size:10px;color:#8b949e;font-weight:normal">(optional — lore, composition notes, etc.)</span></label>
+      <label>Description <span style="font-size:10px;color:#8b949e;font-weight:normal">(optional — lore, composition notes, etc.)</span></label>
       <textarea id="army-notes" placeholder="e.g. Veteran formation tasked with holding the northern flank..." style="width:100%;min-height:72px;resize:vertical;background:var(--surface-raised);border:1px solid var(--border-subtle);border-radius:6px;color:#e0e0e0;padding:8px;font-family:var(--font-body);font-size:13px;line-height:1.5"></textarea>
     </div>
     <div id="army-modal-msg" style="display:none;margin-bottom:10px"></div>
@@ -921,14 +921,14 @@ label .trait-edit-btn{margin-left:6px}
 <div id="modal-bg-notes" class="modal-bg">
   <div class="modal">
     <div class="modal-header">
-      <span>Battle Group Notes</span>
+      <span>Battle Group Description</span>
       <button class="modal-close" onclick="closeModal('modal-bg-notes')"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <input type="hidden" id="bg-notes-army-id">
     <input type="hidden" id="bg-notes-bg-id">
     <div style="font-size:11px;color:#8b949e;margin-bottom:10px" id="bg-notes-name"></div>
     <div class="form-group" style="margin-bottom:16px">
-      <label>Notes <span style="font-size:10px;color:#8b949e;font-weight:normal">(optional)</span></label>
+      <label>Description <span style="font-size:10px;color:#8b949e;font-weight:normal">(optional)</span></label>
       <textarea id="bg-notes-textarea" placeholder="e.g. Armoured spearhead assigned to the northern breakthrough..." style="width:100%;min-height:80px;resize:vertical;background:var(--surface-raised);border:1px solid var(--border-subtle);border-radius:6px;color:#e0e0e0;padding:8px;font-family:var(--font-body);font-size:13px;line-height:1.5"></textarea>
     </div>
     <div style="display:flex;justify-content:flex-end;gap:8px">
@@ -4715,7 +4715,7 @@ function renderArmyDetail() {
             ? `<button class="trait-edit-btn" onclick="openFPBGUnitModal('${army.id}','${bg.id}')">Add Unit</button>`
             : `<button class="trait-edit-btn" onclick="openArmyBGUnitModal('${army.id}','${bg.id}')">Add Unit</button>
                <button class="trait-edit-btn" onclick="openBGTFModal('${army.id}','${bg.id}')">Add Task Force</button>`}
-          <button class="trait-edit-btn" onclick="openBGNotesModal('${army.id}','${bg.id}')"><i class="fa-solid fa-pen"></i> Notes</button>
+          <button class="trait-edit-btn" onclick="openBGNotesModal('${army.id}','${bg.id}')"><i class="fa-solid fa-pen"></i> Description</button>
           ${(bg.entries||[]).length > 0
             ? `<button class="trait-edit-btn" style="border-color:#8b000066;color:#ef5350;background:#2a0a0a" onclick="confirmBtn(this,()=>clearBG('${army.id}','${bg.id}'))"><i class="fa-solid fa-trash"></i> Clear</button>`
             : ""}
