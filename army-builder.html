@@ -588,17 +588,18 @@ label .trait-edit-btn{margin-left:6px}
   <div class="modal" style="max-width:500px">
     <div class="modal-header">Custom TF Types <button class="modal-close" onclick="closeModal('modal-custom-tf-type')"><i class="fa-solid fa-xmark"></i></button></div>
     <div id="custom-tf-type-list" style="margin-bottom:8px"></div>
-    <hr style="border-color:#30363d;margin:10px 0">
-    <div style="font-weight:bold;color:#fff;font-size:12px;margin-bottom:8px" id="custom-tf-type-form-title">New Custom Type</div>
+    <div class="modal-sub-header" id="custom-tf-type-form-title">New Custom Type</div>
     <div class="form-group" style="margin-bottom:8px">
       <label>Name</label>
-      <input type="text" id="custom-tf-type-name" placeholder="e.g. Rapid Strike" style="width:100%" oninput="_updateCustomTFTypeSaveBtn()">
+      <input type="text" id="custom-tf-type-name" placeholder="e.g. Rapid Strike" style="width:100%" oninput="clearFieldErr('custom-tf-type-name')">
+      <span class="field-error" id="custom-tf-type-name-err"></span>
     </div>
     <div style="font-size:11px;color:#8b949e;margin-bottom:6px">Min/max <strong style="color:#e0e0e0">Core unit</strong> slots per class (0–5). At least one class must have a max &gt; 0.</div>
     <div id="custom-tf-type-slots"></div>
-    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px">
-      <button class="btn btn-secondary" id="custom-tf-type-cancel" onclick="closeModal('modal-custom-tf-type')">Close</button>
-      <button class="btn btn-primary" id="custom-tf-type-submit" onclick="saveCustomTFType()" disabled>Add Type</button>
+    <span class="field-error" id="custom-tf-type-slots-err"></span>
+    <div style="display:flex;gap:8px;align-items:center;margin-top:12px">
+      <button class="btn btn-primary" id="custom-tf-type-submit" onclick="saveCustomTFType()">Create</button>
+      <button class="btn btn-secondary btn-xs" id="custom-tf-type-cancel" onclick="cancelEditCustomTFType()" style="display:none">Cancel</button>
     </div>
   </div>
 </div>
@@ -642,11 +643,11 @@ label .trait-edit-btn{margin-left:6px}
   <div class="modal" style="max-width:540px">
     <div class="modal-header">Custom Tactical Assets <button class="modal-close" onclick="closeModal('modal-custom-assets')"><i class="fa-solid fa-xmark"></i></button></div>
     <div id="custom-asset-list" style="margin-bottom:8px"></div>
-    <hr style="border-color:#30363d;margin:10px 0">
-    <div style="font-weight:bold;color:#fff;font-size:12px;margin-bottom:10px" id="custom-asset-form-title">New Custom Asset</div>
+    <div class="modal-sub-header" id="custom-asset-form-title">New Custom Asset</div>
     <div class="form-group" style="margin-bottom:8px">
       <label>Asset Name</label>
-      <input type="text" id="custom-asset-name" placeholder="e.g. Suppressive Fire" style="width:100%" oninput="_updateCustomAssetSaveBtn()">
+      <input type="text" id="custom-asset-name" placeholder="e.g. Suppressive Fire" style="width:100%" oninput="clearFieldErr('custom-asset-name')">
+      <span class="field-error" id="custom-asset-name-err"></span>
     </div>
     <div class="form-row" style="margin-bottom:8px">
       <div class="form-group" style="flex:1">
@@ -668,14 +669,16 @@ label .trait-edit-btn{margin-left:6px}
         <label style="display:flex;align-items:center;gap:5px;font-size:12px;text-transform:none;letter-spacing:0;font-weight:normal;color:#e0e0e0"><input type="checkbox" id="ca-use-deployment" onchange="_updateCustomAssetSaveBtn()"> Deployment</label>
         <label style="display:flex;align-items:center;gap:5px;font-size:12px;text-transform:none;letter-spacing:0;font-weight:normal;color:#e0e0e0"><input type="checkbox" id="ca-use-reinforcements" onchange="_updateCustomAssetSaveBtn()"> Reinforcements</label>
       </div>
+      <span class="field-error" id="custom-asset-use-err"></span>
     </div>
     <div class="form-group" style="margin-bottom:12px">
       <label>Game Function</label>
       <textarea id="custom-asset-fn" rows="3" style="width:100%;resize:vertical" placeholder="Describe what this asset does..." oninput="_updateCustomAssetSaveBtn()"></textarea>
+      <span class="field-error" id="custom-asset-fn-err"></span>
     </div>
-    <div style="display:flex;justify-content:flex-end;gap:8px">
-      <button class="btn btn-secondary" id="custom-asset-cancel" onclick="cancelEditCustomAsset()">Close</button>
-      <button class="btn btn-primary" id="custom-asset-submit" onclick="saveCustomAsset()" disabled>Add Asset</button>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button class="btn btn-primary" id="custom-asset-submit" onclick="saveCustomAsset()">Create</button>
+      <button class="btn btn-secondary btn-xs" id="custom-asset-cancel" onclick="cancelEditCustomAsset()" style="display:none">Cancel</button>
     </div>
   </div>
 </div>
@@ -3743,14 +3746,24 @@ function changeTFSlotRole(tfId, slotId, role) {
 // ---- Custom TF Types ----
 function openCustomTFTypeModal() {
   editingCustomTFTypeId = null;
+  clearFieldErr("custom-tf-type-name"); clearFieldErr("custom-tf-type-slots");
   document.getElementById("custom-tf-type-name").value = "";
   document.getElementById("custom-tf-type-form-title").textContent = "New Custom Type";
-  document.getElementById("custom-tf-type-submit").textContent = "Add Type";
-  document.getElementById("custom-tf-type-cancel").textContent = "Close";
+  document.getElementById("custom-tf-type-submit").textContent = "Create";
+  document.getElementById("custom-tf-type-cancel").style.display = "none";
   _renderCustomTFTypeSlots({});
   _renderCustomTFTypeList();
-  _updateCustomTFTypeSaveBtn();
   openModal("modal-custom-tf-type");
+}
+
+function cancelEditCustomTFType() {
+  editingCustomTFTypeId = null;
+  clearFieldErr("custom-tf-type-name"); clearFieldErr("custom-tf-type-slots");
+  document.getElementById("custom-tf-type-name").value = "";
+  document.getElementById("custom-tf-type-form-title").textContent = "New Custom Type";
+  document.getElementById("custom-tf-type-submit").textContent = "Create";
+  document.getElementById("custom-tf-type-cancel").style.display = "none";
+  _renderCustomTFTypeSlots({});
 }
 
 const _TF_CLASS_KEYS = ["inf","scout","cav","fg","afv","sh","beh","ac"];
@@ -3772,17 +3785,15 @@ function _renderCustomTFTypeSlots(slots) {
   </table>`;
 }
 
+// Live-clears the slots requirement error as the user raises a max above 0.
 function _updateCustomTFTypeSaveBtn() {
-  const btn = document.getElementById("custom-tf-type-submit");
-  if(!btn) return;
-  const name = (document.getElementById("custom-tf-type-name")?.value||"").trim();
   const anySet = _TF_CLASS_KEYS.some(k => parseInt(document.getElementById(`ctft-max-${k}`)?.value||0) > 0);
-  btn.disabled = !name || !anySet;
+  if(anySet) clearFieldErr("custom-tf-type-slots");
 }
 
 function _renderCustomTFTypeList() {
   const el = document.getElementById("custom-tf-type-list");
-  if(!state.customTFTypes.length) { el.innerHTML = `<div style="font-size:12px;color:#555;font-style:italic">No custom types yet</div>`; return; }
+  if(!state.customTFTypes.length) { el.innerHTML = `<div style="color:var(--text-inactive);font-size:12px;margin-bottom:4px">No custom types yet.</div>`; return; }
   el.innerHTML = `<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:4px">`
     + state.customTFTypes.map(t=>`<div class="custom-trait-item">
       <span style="flex:1;font-weight:bold;color:var(--text-primary)">${esc(t.name)}</span>
@@ -3796,38 +3807,40 @@ function editCustomTFType(id) {
   const t = state.customTFTypes.find(x=>x.id===id);
   if(!t) return;
   editingCustomTFTypeId = id;
+  clearFieldErr("custom-tf-type-name"); clearFieldErr("custom-tf-type-slots");
   document.getElementById("custom-tf-type-name").value = t.name;
   document.getElementById("custom-tf-type-form-title").textContent = "Edit Custom Type";
-  document.getElementById("custom-tf-type-submit").textContent = "Save";
-  document.getElementById("custom-tf-type-cancel").textContent = "Cancel";
+  document.getElementById("custom-tf-type-submit").textContent = "Save Changes";
+  document.getElementById("custom-tf-type-cancel").style.display = "";
   _renderCustomTFTypeSlots(t.slots||{});
-  _updateCustomTFTypeSaveBtn();
+  document.getElementById("custom-tf-type-name").focus();
 }
 
 function saveCustomTFType() {
   const name = document.getElementById("custom-tf-type-name").value.trim();
-  if(!name) return;
+  if(!name) { showFieldErr("custom-tf-type-name","Enter a type name."); return; }
   const slots = {};
   _TF_CLASS_KEYS.forEach(k => {
     const mn = parseInt(document.getElementById(`ctft-min-${k}`).value)||0;
     const mx = parseInt(document.getElementById(`ctft-max-${k}`).value)||0;
     slots[k] = [mn, Math.max(mn,mx)];
   });
+  if(!_TF_CLASS_KEYS.some(k => slots[k][1] > 0)) { showFieldErr("custom-tf-type-slots","At least one class must have a max greater than 0."); return; }
   if(editingCustomTFTypeId) {
     const t = state.customTFTypes.find(x=>x.id===editingCustomTFTypeId);
     if(t) { t.name = name; t.slots = slots; }
     editingCustomTFTypeId = null;
     document.getElementById("custom-tf-type-form-title").textContent = "New Custom Type";
-    document.getElementById("custom-tf-type-submit").textContent = "Add Type";
-    document.getElementById("custom-tf-type-cancel").textContent = "Close";
+    document.getElementById("custom-tf-type-submit").textContent = "Create";
+    document.getElementById("custom-tf-type-cancel").style.display = "none";
   } else {
     state.customTFTypes.push({id:"ctft_"+uid(), name, slots});
   }
   saveState();
+  clearFieldErr("custom-tf-type-name"); clearFieldErr("custom-tf-type-slots");
   document.getElementById("custom-tf-type-name").value = "";
   _renderCustomTFTypeSlots({});
   _renderCustomTFTypeList();
-  _updateCustomTFTypeSaveBtn();
   _populateTFTypeSelect(document.getElementById("tf-type"), document.getElementById("tf-type").value);
 }
 
@@ -3835,15 +3848,15 @@ function deleteCustomTFType(id) {
   state.customTFTypes = state.customTFTypes.filter(t=>t.id!==id);
   if(editingCustomTFTypeId===id) {
     editingCustomTFTypeId = null;
+    clearFieldErr("custom-tf-type-name"); clearFieldErr("custom-tf-type-slots");
     document.getElementById("custom-tf-type-form-title").textContent = "New Custom Type";
-    document.getElementById("custom-tf-type-submit").textContent = "Add Type";
-    document.getElementById("custom-tf-type-cancel").textContent = "Close";
+    document.getElementById("custom-tf-type-submit").textContent = "Create";
+    document.getElementById("custom-tf-type-cancel").style.display = "none";
     document.getElementById("custom-tf-type-name").value = "";
     _renderCustomTFTypeSlots({});
   }
   saveState();
   _renderCustomTFTypeList();
-  _updateCustomTFTypeSaveBtn();
   _populateTFTypeSelect(document.getElementById("tf-type"), document.getElementById("tf-type").value);
 }
 
@@ -3939,6 +3952,7 @@ function openCustomAssetsModal() {
 }
 
 function _resetCustomAssetForm() {
+  clearFieldErr("custom-asset-name"); clearFieldErr("custom-asset-use"); clearFieldErr("custom-asset-fn");
   document.getElementById("custom-asset-name").value = "";
   document.getElementById("custom-asset-faction").value = "";
   document.getElementById("ca-use-activation").checked = false;
@@ -3946,26 +3960,24 @@ function _resetCustomAssetForm() {
   document.getElementById("ca-use-reinforcements").checked = false;
   document.getElementById("custom-asset-fn").value = "";
   document.getElementById("custom-asset-form-title").textContent = "New Custom Asset";
-  document.getElementById("custom-asset-submit").textContent = "Add Asset";
-  document.getElementById("custom-asset-cancel").textContent = "Close";
-  _updateCustomAssetSaveBtn();
+  document.getElementById("custom-asset-submit").textContent = "Create";
+  document.getElementById("custom-asset-cancel").style.display = "none";
 }
 
+// Live-clears the use / function errors as the user fills those fields.
 function _updateCustomAssetSaveBtn() {
-  const btn = document.getElementById("custom-asset-submit");
-  if(!btn) return;
-  const name = (document.getElementById("custom-asset-name")?.value||"").trim();
   const hasUse = document.getElementById("ca-use-activation")?.checked
     || document.getElementById("ca-use-deployment")?.checked
     || document.getElementById("ca-use-reinforcements")?.checked;
   const hasFn = (document.getElementById("custom-asset-fn")?.value||"").trim();
-  btn.disabled = !name || !hasUse || !hasFn;
+  if(hasUse) clearFieldErr("custom-asset-use");
+  if(hasFn) clearFieldErr("custom-asset-fn");
 }
 
 function _renderCustomAssetList() {
   const el = document.getElementById("custom-asset-list");
   const assets = state.customTacticalAssets||[];
-  if(!assets.length) { el.innerHTML = `<div style="font-size:12px;color:#555;font-style:italic">No custom assets yet</div>`; return; }
+  if(!assets.length) { el.innerHTML = `<div style="color:var(--text-inactive);font-size:12px;margin-bottom:4px">No custom assets yet.</div>`; return; }
   el.innerHTML = `<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:4px">`
     + assets.map(a=>`<div class="custom-trait-item">
       <div style="flex:1;min-width:0">
@@ -3988,26 +4000,29 @@ function editCustomAsset(id) {
   document.getElementById("ca-use-deployment").checked = (a.use||[]).includes("Deployment");
   document.getElementById("ca-use-reinforcements").checked = (a.use||[]).includes("Reinforcements");
   document.getElementById("custom-asset-fn").value = a.fn||"";
+  clearFieldErr("custom-asset-name"); clearFieldErr("custom-asset-use"); clearFieldErr("custom-asset-fn");
   document.getElementById("custom-asset-form-title").textContent = "Edit Custom Asset";
-  document.getElementById("custom-asset-submit").textContent = "Save";
-  document.getElementById("custom-asset-cancel").textContent = "Cancel";
-  _updateCustomAssetSaveBtn();
+  document.getElementById("custom-asset-submit").textContent = "Save Changes";
+  document.getElementById("custom-asset-cancel").style.display = "";
+  document.getElementById("custom-asset-name").focus();
 }
 
 function cancelEditCustomAsset() {
-  if(editingCustomAssetId) { editingCustomAssetId = null; _resetCustomAssetForm(); }
-  else closeModal("modal-custom-assets");
+  editingCustomAssetId = null;
+  _resetCustomAssetForm();
 }
 
 function saveCustomAsset() {
   const name = document.getElementById("custom-asset-name").value.trim();
-  if(!name) return;
+  if(!name) { showFieldErr("custom-asset-name","Enter an asset name."); return; }
   const faction = document.getElementById("custom-asset-faction").value||null;
   const use = [];
   if(document.getElementById("ca-use-activation").checked) use.push("Activation");
   if(document.getElementById("ca-use-deployment").checked) use.push("Deployment");
   if(document.getElementById("ca-use-reinforcements").checked) use.push("Reinforcements");
+  if(!use.length) { showFieldErr("custom-asset-use","Select at least one Use phase."); return; }
   const fn = document.getElementById("custom-asset-fn").value.trim();
+  if(!fn) { showFieldErr("custom-asset-fn","Describe what this asset does."); return; }
   if(editingCustomAssetId) {
     const a = (state.customTacticalAssets||[]).find(x=>x.id===editingCustomAssetId);
     if(a) { a.name=name; a.faction=faction; a.use=use; a.fn=fn; }
