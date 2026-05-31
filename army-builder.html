@@ -3246,6 +3246,38 @@ function setTFCommanderRank(tfId, rank) {
   saveState();
   renderTFList();
   renderTFDetail();
+  renderArmyDetail();
+}
+
+function _tfRankPillsHTML(tf, slots) {
+  const rank = tf.commanderRank || "regular";
+  const canSenior = slots.scale !== "normal" && (rank === "senior" || slots.usedSenior < slots.seniorSlots);
+  const canLord   = slots.scale === "epic"   && (rank === "lord"   || slots.usedLord   < slots.lordSlots);
+  function pill(key, label, color, bg, border, canUpgrade) {
+    const active = rank === key;
+    const disabled = !active && !canUpgrade;
+    const style = active
+      ? `background:${bg};color:${color};border:1px solid ${border};cursor:default;`
+      : disabled
+      ? `background:transparent;color:#333;border:1px solid #2a2a2a;cursor:not-allowed;opacity:.4;`
+      : `background:transparent;color:${color};border:1px solid ${border}55;cursor:pointer;opacity:.75;`;
+    const onclick = !active && canUpgrade ? `onclick="setTFCommanderRank('${tf.id}','${key}')"` : "";
+    const remove = active && key !== "regular"
+      ? `<span onclick="setTFCommanderRank('${tf.id}','regular')" style="font-size:9px;color:#555;cursor:pointer;margin-left:3px;text-decoration:underline">remove</span>` : "";
+    return `<span ${onclick} style="display:inline-flex;align-items:center;gap:2px;padding:2px 8px;border-radius:10px;font-size:9px;font-weight:bold;letter-spacing:.5px;${style}">${label}${active?` <i class="fa-solid fa-check" style="font-size:7px"></i>`:""}${remove}</span>`;
+  }
+  const scope = slots.army ? "in this army" : "total";
+  const note = slots.scale === "normal"
+    ? `<span style="font-size:9px;color:#444;font-style:italic">Need 5+ TFs for Large Battle upgrades</span>`
+    : slots.scale === "large"
+    ? `<span style="font-size:9px;color:#666">Large (${slots.n} TFs) — Sr. ${slots.usedSenior}/${slots.seniorSlots}</span>`
+    : `<span style="font-size:9px;color:#666">Epic (${slots.n} TFs) — Sr. ${slots.usedSenior}/${slots.seniorSlots} · Lord ${slots.usedLord}/${slots.lordSlots}</span>`;
+  return `<div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-top:7px;padding-top:7px;border-top:1px solid #1a2020">
+    ${pill("regular","Regular","#8b949e","#8b949e22","#8b949e",true)}
+    ${pill("senior","Senior TFC","#90caf9","#1a237e33","#1a237e",canSenior)}
+    ${pill("lord","Lord","#ce93d8","#7b1fa233","#7b1fa2",canLord)}
+    ${note}
+  </div>`;
 }
 
 function selectTF(id) {
@@ -3269,41 +3301,19 @@ function renderTFDetail() {
   const typeLabel = tf.tfType ? _tfTypeLabel(tf.tfType) : "";
   const allAssets = allTacticalAssets();
   const asset = tf.tacAsset ? allAssets.find(a=>a.id===tf.tacAsset) : null;
-  const _slots = tfRankSlots(tf.id);
   const _rank = tf.commanderRank || "regular";
-  const _canSenior = _slots.scale !== "normal" && (_rank === "senior" || _slots.usedSenior < _slots.seniorSlots);
-  const _canLord   = _slots.scale === "epic"   && (_rank === "lord"   || _slots.usedLord   < _slots.lordSlots);
-  function _rankPill(key, label, color, bg, border, canUpgrade) {
-    const active = _rank === key;
-    const disabled = !active && !canUpgrade;
-    const style = active
-      ? `background:${bg};color:${color};border:1px solid ${border};cursor:default;`
-      : disabled
-      ? `background:transparent;color:#333;border:1px solid #333;cursor:not-allowed;opacity:.45;`
-      : `background:transparent;color:${color};border:1px solid ${border}55;cursor:pointer;opacity:.7;`;
-    const onclick = (!active && canUpgrade) ? `onclick="setTFCommanderRank('${tf.id}','${key}')"` : "";
-    const downgrade = active && key !== "regular"
-      ? `<span ${onclick && ""} onclick="setTFCommanderRank('${tf.id}','regular')" style="font-size:9px;color:#555;cursor:pointer;margin-left:4px;text-decoration:underline">remove</span>` : "";
-    return `<span ${onclick} style="display:inline-flex;align-items:center;gap:3px;padding:2px 9px;border-radius:10px;font-size:10px;font-weight:bold;letter-spacing:.5px;${style}">${label}${active?` <i class="fa-solid fa-check" style="font-size:8px"></i>`:""}${downgrade}</span>`;
-  }
-  const _scope = _slots.army ? "in this army" : "total";
-  const rankNote = _slots.scale === "normal"
-    ? `<span style="font-size:10px;color:#555;font-style:italic">Need 5+ TFs ${_slots.army ? "in this army" : ""} for Large Battle upgrades</span>`
-    : _slots.scale === "large"
-    ? `<span style="font-size:10px;color:#8b949e">Large Battle (${_slots.n} TFs ${_scope}) — Sr. TFC ${_slots.usedSenior}/${_slots.seniorSlots} used</span>`
-    : `<span style="font-size:10px;color:#8b949e">Epic Battle (${_slots.n} TFs ${_scope}) — Sr. TFC ${_slots.usedSenior}/${_slots.seniorSlots} &bull; Lord ${_slots.usedLord}/${_slots.lordSlots}</span>`;
+  const _rankBadge = _rank === "lord"
+    ? `<span style="background:#7b1fa222;color:#ce93d8;border:1px solid #7b1fa255;padding:1px 8px;border-radius:8px;font-size:10px;font-weight:bold;letter-spacing:.5px">LORD</span>`
+    : _rank === "senior"
+    ? `<span style="background:#1a237e22;color:#90caf9;border:1px solid #1a237e55;padding:1px 8px;border-radius:8px;font-size:10px;font-weight:bold;letter-spacing:.5px">SR. TFC</span>`
+    : "";
   const commanderSection = `<div style="background:#0d1118;border:1px solid #1e2a1e;border-radius:8px;padding:12px;margin-bottom:16px">
     <div class="sub-divider" style="margin-top:0;margin-bottom:10px">
       <div class="sub-divider-label"><i class="fa-solid fa-person-military-pointing" style="color:#ffd54f;font-size:9px"></i> Task Force Commander</div>
     </div>
-    <div style="font-size:17px;font-family:var(--font-display);letter-spacing:.5px;color:${tf.commander?"#fff":"#333"};margin-bottom:10px">
-      ${tf.commander ? esc(tf.commander) : "No commander assigned"}
-    </div>
-    <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:10px">
-      ${_rankPill("regular","Regular TFC","#8b949e","#8b949e22","#8b949e",true)}
-      ${_rankPill("senior","Senior TFC","#90caf9","#1a237e33","#1a237e",_canSenior)}
-      ${_rankPill("lord","Lord","#ce93d8","#7b1fa233","#7b1fa2",_canLord)}
-      ${rankNote}
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+      <span style="font-size:17px;font-family:var(--font-display);letter-spacing:.5px;color:${tf.commander?"#fff":"#333"}">${tf.commander ? esc(tf.commander) : "No commander assigned"}</span>
+      ${_rankBadge}
     </div>
     <div style="border-top:1px solid #1a2a1a;padding-top:10px">
       <div class="sub-divider" style="margin-top:0;margin-bottom:8px">
@@ -4347,16 +4357,21 @@ function renderArmyDetail() {
         const offFactionHTML = (offFaction && !isBlocked) ? `<div style="margin-top:6px;padding:6px 8px;border-radius:4px;background:#1a0505;border:1px solid #ef535066;font-size:11px;color:#ef9a9a;line-height:1.4">
           <i class="fa-solid fa-triangle-exclamation" style="margin-right:4px;color:#ef5350"></i>Doesn't match this army's ${factionPill(army.faction)} restriction — remove it, or change the restriction.
         </div>` : "";
+        const tfSlots = tfRankSlots(tf.id);
         return `<div class="list-row" style="${offFaction?"border-color:#ef535066":overLimit?"border-color:#ef535055":isBlocked?"border-color:#f9731666":""}">
           <div style="min-width:0;flex:1">
-            <div style="font-weight:bold;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(tf.name)}</div>
-            <div style="font-size:11px;color:#8b949e;display:flex;align-items:center;gap:4px;flex-wrap:wrap">
+            <div style="display:flex;align-items:center;gap:6px;min-width:0">
+              <span style="font-weight:bold;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1">${esc(tf.name)}</span>
+              ${tf.commander ? `<span style="font-size:10px;color:#6a7a6a;flex-shrink:0;white-space:nowrap"><i class="fa-solid fa-person-military-pointing" style="color:#ffd54f;font-size:8px;margin-right:2px"></i>${esc(tf.commander)}</span>` : ""}
+            </div>
+            <div style="font-size:11px;color:#8b949e;display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin-top:2px">
               ${tf.faction ? factionPill(tf.faction) : `<span style="font-size:10px;color:#666">No Faction</span>`}
               <span>${unitCount} unit${unitCount!==1?"s":""} &bull; ${tp} pts${overLimit?" ⚠":""}</span>
             </div>
+            ${_tfRankPillsHTML(tf, tfSlots)}
             ${warningHTML}${offFactionHTML}
           </div>
-          <button class="trait-edit-btn" style="border-color:#8b000066;color:#ef5350;background:#2a0a0a;flex-shrink:0" onclick="removeTFFromArmy('${army.id}','${tf.id}')">Remove</button>
+          <button class="trait-edit-btn" style="border-color:#8b000066;color:#ef5350;background:#2a0a0a;flex-shrink:0;align-self:flex-start" onclick="removeTFFromArmy('${army.id}','${tf.id}')">Remove</button>
         </div>`;
       }).join("");
 
