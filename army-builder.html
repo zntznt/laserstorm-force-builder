@@ -1875,6 +1875,78 @@ function unitCardHTML(unit, actions, viewType="unit", opts={}) {
     </div>`;
 }
 
+function mechPairCardHTML(infUnit, tuUnit, n, actionsHTML, viewType, opts={}) {
+  function halfInner(unit, vt, extra={}) {
+    const pts = calcPoints(unit);
+    const traitsHTML = traitTipHTML(unit.standTraits||[], allStandTraits());
+    const weaponsHTML = (unit.weapons||[]).length===0
+      ? `<div class="weapon-row" style="color:#8b949e;font-style:italic">No ranged weapons — assault only</div>`
+      : (unit.weapons||[]).map(w => {
+          const wtHTML = (w.traits||[]).length ? " | " + traitTipHTML(w.traits, allWeaponTraits()) : "";
+          const wName = w.name ? `<strong>${esc(w.name)}</strong> ` : "";
+          return `<div class="weapon-row">${wName}<span class="wtype">${w.mode.toUpperCase()}/${w.type.toUpperCase()}</span> | Range <span>${rangeLabel(w.range)}</span> | Shots <span>${w.shots}</span> | Impact <span>+${w.impact}</span>${wtHTML}</div>`;
+        }).join("");
+    const minSpd = unit.mobility === "grav" ? Math.ceil(unit.speed/2)
+                 : unit.mobility === "air"  ? Math.ceil(unit.speed*3/4)
+                 : null;
+    const pKey = VIEW_PTS_KEY[vt] || "unitPts";
+    const pVal = extra.ptsVal != null ? extra.ptsVal : (pts[pKey] != null ? pts[pKey] : "—");
+    const pLabel = VIEW_LABELS[vt] || "Unit";
+    const topRightHTML = extra.countBadge != null
+      ? `<span style="font-size:12px;font-weight:bold;color:#66bb6a;flex-shrink:0;white-space:nowrap">&times;${extra.countBadge}</span>`
+      : (vt === "unit" ? `<span style="font-size:11px;color:var(--text-muted);flex-shrink:0;white-space:nowrap">${pts.unitSize} stand${pts.unitSize>1?"s":""}</span>` : "");
+    const transportTagHTML = extra.transportTag||"";
+    return `<div class="mech-half" style="flex:1;min-width:0;padding:10px 10px 8px">
+        <div class="unit-card-header">
+          <div style="min-width:0">
+            <div style="display:flex;align-items:baseline;gap:6px;min-width:0">
+              <span class="unit-name-wrap" style="min-width:0;flex:1">
+                <span class="unit-name-row">
+                  <span class="unit-name">${esc(unit.name)}</span>
+                  ${unit.description ? `<button class="unit-desc-btn" title="Toggle description" onclick="const d=this.closest('.mech-half').querySelector('.unit-desc');const e=d.classList.toggle('expanded');this.classList.toggle('active',e)"><i class="fa-solid fa-circle-info"></i></button>` : ""}
+                </span>
+                ${unit.description ? `<span class="unit-desc">${esc(unit.description)}</span>` : ""}
+              </span>
+              ${topRightHTML}
+            </div>
+            <div style="display:flex;flex-wrap:wrap;align-items:center;gap:4px;margin-top:3px">
+              ${classBadge(unit.class, true)}${factionBadge(unit)}
+              ${!unit.builtIn?`<span class="badge" style="background:#333;color:#aaa">Custom</span>`:""}
+              ${extra.tfBadge||""}${transportTagHTML}
+            </div>
+          </div>
+          <div class="pts-box" style="flex:0 0 auto;width:46px;padding:4px 2px;align-self:flex-start">
+            <div class="pts-box-val">${pVal}</div>
+            <div class="pts-box-label">${pLabel}</div>
+          </div>
+        </div>
+        <div class="stat-row">
+          <div class="stat"><span class="stat-name">Spd</span><span class="stat-val">${unit.speed}"</span>${minSpd!==null?`<span class="stat-sub">min ${minSpd}"</span>`:""}</div>
+          <div class="stat"><span class="stat-name">Mob</span><span class="stat-val">${unit.mobility}</span></div>
+          <div class="stat"><span class="stat-name">Aim</span><span class="stat-val">${unit.aim}+</span></div>
+          <div class="stat"><span class="stat-name">Assault</span><span class="stat-val">+${unit.assault}</span></div>
+          <div class="stat"><span class="stat-name">Save</span><span class="stat-val">${pts.saveDice}D6/${unit.saveNumber}+</span></div>
+          <div class="stat"><span class="stat-name">Morale</span><span class="stat-val">${unit.morale}+</span></div>
+        </div>
+        <div class="unit-card-traits"><span class="unit-card-section-label">Stand Traits</span>${traitsHTML}</div>
+        ${weaponsHTML}
+      </div>`;
+  }
+  const tuPtsVal = calcPoints(tuUnit).perStand;
+  const transportTag = `<span class="badge" style="background:#1a2a1a;color:#66bb6a;border:1px solid #66bb6a44">Transport</span>`;
+  return `<div class="unit-card" style="padding:0;overflow:hidden">
+    <div style="display:flex;align-items:stretch">
+      ${halfInner(infUnit, viewType, {tfBadge: opts.tfBadge||""})}
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px 4px;background:#0d1a0d;border-left:1px solid #1e3a1e55;border-right:1px solid #1e3a1e55;gap:5px;min-width:28px;flex-shrink:0">
+        <i class="fa-solid fa-truck" style="color:#66bb6a;font-size:13px"></i>
+        <span style="font-size:7px;font-weight:bold;text-transform:uppercase;letter-spacing:.7px;color:#4a8a4a;writing-mode:vertical-rl;transform:rotate(180deg)">Mechanized</span>
+      </div>
+      ${halfInner(tuUnit, "unit", {countBadge: n, ptsVal: tuPtsVal, transportTag})}
+    </div>
+    ${actionsHTML ? `<div class="unit-card-actions" style="padding:8px 10px;border-top:1px solid var(--border-subtle)">${actionsHTML}</div>` : ""}
+  </div>`;
+}
+
 // ============================================================
 // NAVIGATION
 // ============================================================
@@ -5171,6 +5243,7 @@ function renderArmyDetail() {
               <span style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">${stepper}<span style="font-size:10px;color:var(--text-muted)">${pts} pts</span>${fpMechBtn}</span>
               <button class="trait-edit-btn" style="border-color:#8b000066;color:#ef5350;background:#2a0a0a" onclick="removeFPEntry('${army.id}','${bg.id}','${e.id}')">Remove</button>
             </div>`;
+            if (fpTU) return mechPairCardHTML(u, fpTU, mechanizedCount(u, fpTU), actions, e.unitType||"unit");
             return unitCardHTML(u, actions, e.unitType||"unit");
           }).join("")
         : (bg.entries||[]).map(e => {
@@ -5183,13 +5256,12 @@ function renderArmyDetail() {
             const tfColor = FACTION_COLORS[tf.faction] || "#555";
             const bgAsset = tf.tacAsset ? allTacticalAssets().find(a=>a.id===tf.tacAsset) : null;
             const slotTU = slot.transport ? unitById(slot.transport) : null;
-            const mechPillHTML = slotTU ? _mechPill(unit, slotTU) : "";
-            const tfBadge = (bgAsset
+            const tfBadge = bgAsset
               ? `<span style="display:inline-flex;align-items:center;gap:4px;flex-wrap:wrap">
                    <span style="font-size:9px;font-weight:bold;padding:1px 6px;border-radius:8px;background:${tfColor}18;color:${tfColor};border:1px solid ${tfColor}44">${esc(tf.name)}</span>
                    <span style="font-size:9px;font-weight:bold;padding:1px 6px;border-radius:8px;background:#1a1400;color:#ffd54f;border:1px solid #ffd54f44"><i class="fa-solid fa-chess" style="font-size:8px;margin-right:3px"></i>${esc(bgAsset.name)}</span>${_assetUsePills(bgAsset.use)}
                  </span>`
-              : `<span style="font-size:9px;font-weight:bold;padding:1px 6px;border-radius:8px;background:${tfColor}18;color:${tfColor};border:1px solid ${tfColor}44">${esc(tf.name)}</span>`) + mechPillHTML;
+              : `<span style="font-size:9px;font-weight:bold;padding:1px 6px;border-radius:8px;background:${tfColor}18;color:${tfColor};border:1px solid ${tfColor}44">${esc(tf.name)}</span>`;
             const eqty = e.qty || slot.quantity;
             const canInc = slotRemainingQty(army, slot) > 0;
             const stepBtn = (lbl, d, dis) => `<button onclick="changeBGEntryQty('${army.id}','${bg.id}','${e.id}',${d})" ${dis?"disabled":""} style="width:20px;height:20px;border-radius:50%;border:none;background:var(--surface-raised);color:var(--text-bright);font-size:13px;line-height:20px;text-align:center;cursor:${dis?"default":"pointer"};opacity:${dis?".3":"1"}">${lbl}</button>`;
@@ -5200,6 +5272,7 @@ function renderArmyDetail() {
               <span style="font-size:10px;color:var(--text-muted);display:flex;align-items:center;gap:8px">${stepper}${entryPointValue(e)} pts</span>
               <button class="trait-edit-btn" style="border-color:#8b000066;color:#ef5350;background:#2a0a0a" onclick="removeFromBG('${army.id}','${bg.id}','${e.id}')">Remove</button>
             </div>`;
+            if (slotTU) return mechPairCardHTML(unit, slotTU, mechanizedCount(unit, slotTU), actions, slot.unitType||"unit", {tfBadge});
             return unitCardHTML(unit, actions, slot.unitType || "unit", {tfBadge});
           }).join("");
       // Toolbar: rename inline + action buttons
@@ -5491,6 +5564,69 @@ function printArmy(armyId, paperSize, inkMode) {
     </div>`;
   }
 
+  function printMechPair(carrier, viewType, tu, n, badgeHTML) {
+    const connBg   = gray ? "#e8e8e8" : "#e8f5e9";
+    const connFg   = gray ? "#555"    : "#2e7d32";
+    const connBord = gray ? "#ccc"    : "#a5d6a7";
+    function halfContent(unit, vt, extra={}) {
+      const pts = calcPoints(unit);
+      const pKey = VIEW_PTS_KEY[vt] || "unitPts";
+      const pVal = extra.ptsVal != null ? extra.ptsVal : (pts[pKey] != null ? pts[pKey] : "—");
+      const pLabel = extra.ptsLabel || VIEW_LABELS[vt] || "Unit";
+      const minSpd = unit.mobility === "grav" ? Math.ceil(unit.speed/2)
+                   : unit.mobility === "air"  ? Math.ceil(unit.speed*3/4) : null;
+      const traitsHTML = printTraitPills(unit.standTraits||[], allStandTraits());
+      const weaponsHTML = (unit.weapons||[]).length === 0
+        ? `<div style="padding:4px 8px;font-size:10px;color:${pal.mutedText};font-style:italic;background:${pal.wepBg};border-radius:4px;margin-top:3px">No ranged weapons — assault only</div>`
+        : unit.weapons.map(w => {
+            const wtPills = (w.traits||[]).length ? " | " + printTraitPills(w.traits, allWeaponTraits()) : "";
+            const wName = w.name ? `<strong>${esc(w.name)}</strong> ` : "";
+            return `<div style="padding:4px 8px;font-size:10px;background:${pal.wepBg};border:1px solid ${pal.wepBorder};border-radius:4px;margin-top:3px;line-height:1.5"><span style="color:${pal.pageText}">${wName}<span style="color:${pal.mutedText};font-weight:normal">${w.mode.toUpperCase()}/${w.type.toUpperCase()}</span> | Rng <strong>${rangeLabel(w.range)}</strong> | Shots <strong>${w.shots}</strong> | Impact <strong>+${w.impact}</strong>${wtPills}</span></div>`;
+          }).join("");
+      const descHTML = unit.description ? `<div style="font-size:10px;color:${pal.mutedText};font-style:italic;line-height:1.4;padding:3px 0 4px">${esc(unit.description)}</div>` : "";
+      const tagHTML = extra.tag ? `<span style="display:inline-block;padding:1px 6px;border-radius:8px;font-size:8px;font-weight:bold;letter-spacing:.5px;text-transform:uppercase;background:${connBg};color:${connFg};border:1px solid ${connBord}">${esc(extra.tag)}</span>` : "";
+      const countHTML = extra.countBadge != null
+        ? `<div style="margin-top:5px;font-size:14px;font-weight:bold;color:${connFg}">&times;${extra.countBadge}<span style="font-size:9px;font-weight:normal;color:${pal.mutedText}"> stands</span></div>`
+        : "";
+      const unitSizeStr = extra.countBadge == null && vt === "unit"
+        ? ` <span style="font-size:10px;color:${pal.mutedText};font-weight:normal">${pts.unitSize} stand${pts.unitSize>1?"s":""}</span>`
+        : "";
+      return `<div style="flex:1;min-width:0;padding:10px">
+        <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:6px">
+          <div style="flex:1;min-width:0">
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:.4px;color:${pal.pageText};line-height:1.15">${esc(unit.name)}${unitSizeStr}</div>
+            <div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:3px">${printClassBadge(unit.class)}${printFacPill(unit.faction)}${tagHTML}${extra.badge||""}</div>
+            ${descHTML}${countHTML}
+          </div>
+          <div style="background:${pal.ptsBoxBg};color:${pal.ptsBoxText};border-radius:6px;padding:4px 7px;text-align:center;flex-shrink:0;min-width:36px">
+            <div style="font-size:13px;font-weight:bold;line-height:1.1">${pVal}</div>
+            <div style="font-size:8px;text-transform:uppercase;letter-spacing:.04em;opacity:.75">${pLabel}</div>
+          </div>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;background:${pal.statBg};border:1px solid ${pal.statBorder};border-radius:6px;padding:5px 6px;margin-bottom:6px;gap:2px">
+          ${[["Spd",`${unit.speed}"${minSpd!==null?` <small style="font-size:9px;color:${pal.mutedText}">min ${minSpd}"</small>`:""}`],["Mob",unit.mobility],["Aim",`${unit.aim}+`],["Assault",`+${unit.assault}`],["Save",`${pts.saveDice}D6/${unit.saveNumber}+`],["Morale",`${unit.morale}+`]].map(([l,v])=>`<div style="text-align:center;flex:1;min-width:34px;padding:1px 2px"><div style="font-size:7.5px;text-transform:uppercase;color:${pal.mutedText};letter-spacing:.05em;font-weight:700">${l}</div><div style="font-size:12px;font-weight:bold;color:${pal.pageText};line-height:1.15">${v}</div></div>`).join("")}
+        </div>
+        <div style="margin-bottom:5px">
+          <div style="font-size:8px;text-transform:uppercase;letter-spacing:.05em;color:${pal.mutedText};font-weight:700;margin-bottom:3px">Stand Traits</div>
+          <div style="display:flex;flex-wrap:wrap;gap:2px">${traitsHTML}</div>
+        </div>
+        <div>
+          <div style="font-size:8px;text-transform:uppercase;letter-spacing:.05em;color:${pal.mutedText};font-weight:700;margin-bottom:2px">Weapons</div>
+          ${weaponsHTML}
+        </div>
+      </div>`;
+    }
+    const tuPtsPerStand = calcPoints(tu).perStand;
+    return `<div style="display:flex;background:${pal.cardBg};border:1.5px solid ${pal.cardBorder};border-radius:8px;overflow:hidden;break-inside:avoid;page-break-inside:avoid;grid-column:span 2">
+      ${halfContent(carrier, viewType, {badge: badgeHTML||""})}
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px 4px;background:${connBg};border-left:1px solid ${connBord};border-right:1px solid ${connBord};gap:4px;min-width:26px;flex-shrink:0">
+        <i class="fa-solid fa-truck" style="color:${connFg};font-size:12px"></i>
+        <span style="font-size:7px;font-weight:bold;text-transform:uppercase;letter-spacing:.5px;color:${connFg};writing-mode:vertical-rl;transform:rotate(180deg)">Mechanized</span>
+      </div>
+      ${halfContent(tu, "unit", {countBadge: n, tag: "Transport", ptsVal: tuPtsPerStand, ptsLabel: "/ Stand"})}
+    </div>`;
+  }
+
   // ── Army overview page ────────────────────────────────────
   const armySym    = army.symbol ? _bgSymLookup(army.symbol) : null;
   const armySymEl  = armySym
@@ -5563,15 +5699,9 @@ function printArmy(armyId, paperSize, inkMode) {
     const hdrBg   = gray ? "#e0e0e0" : (sd?.color ? sd.color + "0e" : "#edf2fb");
     const hdrBord = gray ? "#bbb"    : (sd?.color ? sd.color + "55" : "#c0cce8");
 
-    const mechStyle = gray ? "print-gray" : "print-color";
-    // For a mechanized unit, emit the carried unit card (with a transport pill)
-    // plus one stat card per transport AFV it rides in — for every instance.
     const withTransport = (carrier, viewType, tu, badgeHTML) => {
-      const nT = tu ? mechanizedCount(carrier, tu) : 0;
-      const pill = tu ? _mechPill(carrier, tu, mechStyle) : "";
-      const cards = [ printUnitCard(carrier, viewType, (badgeHTML||"") + pill) ];
-      for (let i=0;i<nT;i++) cards.push(printUnitCard(tu, "unit", "", {tag:"Transport", ptsVal:calcPoints(tu).perStand, ptsLabel:"Stand"}));
-      return cards;
+      if (!tu) return [printUnitCard(carrier, viewType, badgeHTML||"")];
+      return [printMechPair(carrier, viewType, tu, mechanizedCount(carrier, tu), badgeHTML||"")];
     };
     const unitCards = (bg.entries||[]).flatMap(e => {
       if (fp) {
