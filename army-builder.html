@@ -5782,7 +5782,57 @@ body{font-family:'Barlow',sans-serif;background:#fff;color:${pal.pageText};-webk
 ${overviewPage}
 ${bgPages}
 <script>
-(document.fonts&&document.fonts.ready?document.fonts.ready:Promise.resolve()).then(()=>setTimeout(()=>window.print(),350));
+(function(){
+  var MARGIN_PX = 48;
+  var PAGE_H_PX = ${paperSize==="a4"?1123:1056};
+  var PAGE_W_PX = ${paperSize==="a4"?794:816};
+  var CONTENT_H = PAGE_H_PX - 2*MARGIN_PX - 10; /* 10px safety buffer */
+
+  function splitOverflowingPages(){
+    var pages = Array.from(document.querySelectorAll('.print-page'));
+    for(var pi=pages.length-1;pi>=0;pi--){
+      var page = pages[pi];
+      var children = Array.from(page.children);
+      var rows = children.filter(function(el){return el.classList.contains('card-row');});
+      if(!rows.length) continue;
+      var header = children.find(function(el){return el.classList.contains('bg-header');});
+      var headerH = header ? header.getBoundingClientRect().height+16 : 0;
+      var rowItems = rows.map(function(r){return{el:r,h:Math.max(r.getBoundingClientRect().height,40)+10};});
+      var groups = [[]];
+      var used = headerH;
+      for(var ri=0;ri<rowItems.length;ri++){
+        var item=rowItems[ri];
+        if(used+item.h<=CONTENT_H){groups[groups.length-1].push(item.el);used+=item.h;}
+        else{groups.push([item.el]);used=item.h;}
+      }
+      if(groups.length<=1) continue;
+      rows.forEach(function(r){page.removeChild(r);});
+      groups[0].forEach(function(r){page.appendChild(r);});
+      var parent=page.parentNode;
+      var insertAfter=page;
+      for(var gi=1;gi<groups.length;gi++){
+        var np=document.createElement('div');
+        np.className='print-page page-break';
+        groups[gi].forEach(function(r){np.appendChild(r);});
+        parent.insertBefore(np,insertAfter.nextSibling);
+        insertAfter=np;
+      }
+    }
+  }
+
+  function doRepaginate(){
+    var st=document.createElement('style');
+    st.textContent='body{width:'+PAGE_W_PX+'px!important;max-width:'+PAGE_W_PX+'px!important;margin:0!important;padding:0!important}';
+    document.head.appendChild(st);
+    requestAnimationFrame(function(){requestAnimationFrame(function(){
+      splitOverflowingPages();
+      document.head.removeChild(st);
+      setTimeout(function(){window.print();},350);
+    });});
+  }
+
+  (document.fonts&&document.fonts.ready?document.fonts.ready:Promise.resolve()).then(doRepaginate);
+})();
 <\/script>
 </body>
 </html>`;
