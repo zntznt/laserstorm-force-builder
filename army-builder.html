@@ -777,7 +777,13 @@ label .trait-edit-btn{margin-left:6px}
 <!-- ===== ARMY: ADD UNIT TO BG MODAL ===== -->
 <div id="modal-army-bg-unit" class="modal-bg">
   <div class="modal">
-    <div class="modal-header">Add Units to Battle Group <button class="modal-close" onclick="closeModal('modal-army-bg-unit')"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="modal-header">
+      <span>Add Units to Battle Group</span>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button id="bg-unit-show-unavail-btn" class="trait-edit-btn" onclick="toggleBGShowUnavailable()"><i class="fa-solid fa-eye-slash"></i> Show Unavailable</button>
+        <button class="modal-close" onclick="closeModal('modal-army-bg-unit')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+    </div>
     <div class="scrolllist" id="bg-unit-list"></div>
     <div style="margin-top:12px;display:flex;justify-content:space-between;align-items:center;gap:8px">
       <span id="bg-unit-count" style="font-size:11px;color:#8b949e"></span>
@@ -1161,6 +1167,7 @@ let addTFSelectedId = null;
 let bgUnitTargetArmyId = null;
 let bgUnitTargetBgId = null;
 let bgUnitSelectedItems = new Set();
+let bgUnitShowUnavailable = false;
 let bgTFTargetArmyId = null;
 let bgTFTargetBgId = null;
 let bgTFSelectedId = null;
@@ -4937,8 +4944,23 @@ function openArmyBGUnitModal(armyId, bgId) {
   bgUnitTargetArmyId = armyId;
   bgUnitTargetBgId = bgId;
   bgUnitSelectedItems = new Set();
+  bgUnitShowUnavailable = false;
   _renderBGUnitList();
   openModal("modal-army-bg-unit");
+}
+
+function toggleBGShowUnavailable() {
+  bgUnitShowUnavailable = !bgUnitShowUnavailable;
+  const btn = document.getElementById("bg-unit-show-unavail-btn");
+  if(btn) {
+    btn.innerHTML = bgUnitShowUnavailable
+      ? `<i class="fa-solid fa-eye"></i> Hide Unavailable`
+      : `<i class="fa-solid fa-eye-slash"></i> Show Unavailable`;
+    btn.style.background = bgUnitShowUnavailable ? "var(--accent-tint)" : "";
+    btn.style.borderColor = bgUnitShowUnavailable ? "var(--accent)" : "";
+    btn.style.color = bgUnitShowUnavailable ? "var(--accent)" : "";
+  }
+  _renderBGUnitList();
 }
 
 function _renderBGUnitList() {
@@ -4955,33 +4977,36 @@ function _renderBGUnitList() {
     const slots = (tf.units||[]).filter(s=>s.quantity>0);
     if(!slots.length) return "";
     const tfColor = FACTION_COLORS[tf.faction] || "#555";
+    const rowsHTML = slots.map(slot => {
+      const unit = unitById(slot.unitId);
+      if(!unit) return "";
+      totalSlots++;
+      const inThis = inThisBG.has(slot.id);
+      const remaining = slotRemainingQty(army, slot);
+      const assigned = slot.quantity - remaining;
+      const unavailable = inThis || remaining === 0;
+      if(!unavailable) selectable++;
+      if(unavailable && !bgUnitShowUnavailable) return "";
+      const sel = bgUnitSelectedItems.has(slot.id);
+      const note = inThis ? " &bull; already in this group"
+                 : remaining === 0 ? " &bull; fully assigned"
+                 : assigned > 0 ? ` &bull; <span style="color:#66bb6a">${remaining} of ${slot.quantity} left</span>`
+                 : "";
+      const addQtyHint = (!unavailable && remaining > 1) ? ` <span style="color:#8b949e">(adds ${remaining})</span>` : "";
+      return `<div class="list-row" style="${sel?"border-color:#007eff;background:#0d1e36":unavailable?"opacity:.4;cursor:default":""}" onclick="${unavailable?"":"toggleBGUnitItem('"+slot.id+"')"}">
+        <div style="min-width:0">
+          <div style="font-weight:bold;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(unit.name)}${addQtyHint}</div>
+          <div style="font-size:11px;color:#8b949e">${slot.unitType||"unit"} &bull; ×${slot.quantity} &bull; ${slotPointValue(slot)} pts${note}</div>
+        </div>
+        ${sel?`<i class="fa-solid fa-check" style="color:#007eff;flex-shrink:0"></i>`:""}
+      </div>`;
+    }).join("");
+    if(!rowsHTML.trim()) return "";
     return `<div>
       <div style="font-size:10px;text-transform:uppercase;letter-spacing:.8px;font-weight:bold;padding:8px 0 5px;display:flex;align-items:center;gap:6px;border-top:1px solid var(--border-subtle);margin-top:4px">
         <span style="color:${tfColor}">${esc(tf.name)}</span>${tf.faction?factionPill(tf.faction):""}
       </div>
-      ${slots.map(slot => {
-        const unit = unitById(slot.unitId);
-        if(!unit) return "";
-        totalSlots++;
-        const inThis = inThisBG.has(slot.id);
-        const remaining = slotRemainingQty(army, slot);
-        const assigned = slot.quantity - remaining;
-        const unavailable = inThis || remaining === 0;
-        if(!unavailable) selectable++;
-        const sel = bgUnitSelectedItems.has(slot.id);
-        const note = inThis ? " &bull; already in this group"
-                   : remaining === 0 ? " &bull; fully assigned"
-                   : assigned > 0 ? ` &bull; <span style="color:#66bb6a">${remaining} of ${slot.quantity} left</span>`
-                   : "";
-        const addQtyHint = (!unavailable && remaining > 1) ? ` <span style="color:#8b949e">(adds ${remaining})</span>` : "";
-        return `<div class="list-row" style="${sel?"border-color:#007eff;background:#0d1e36":unavailable?"opacity:.4;cursor:default":""}" onclick="${unavailable?"":"toggleBGUnitItem('"+slot.id+"')"}">
-          <div style="min-width:0">
-            <div style="font-weight:bold;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(unit.name)}${addQtyHint}</div>
-            <div style="font-size:11px;color:#8b949e">${slot.unitType||"unit"} &bull; ×${slot.quantity} &bull; ${slotPointValue(slot)} pts${note}</div>
-          </div>
-          ${sel?`<i class="fa-solid fa-check" style="color:#007eff;flex-shrink:0"></i>`:""}
-        </div>`;
-      }).join("")}
+      ${rowsHTML}
     </div>`;
   }).join("");
   // Explain why nothing can be picked rather than showing a wall of dimmed rows.
