@@ -1013,6 +1013,22 @@ label .trait-edit-btn{margin-left:6px}
   </div>
 </div>
 
+<!-- ===== MECHANIZED TRANSPORT PICKER MODAL ===== -->
+<div id="modal-transport" class="modal-bg">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-header"><span>Mechanized Transport</span> <button class="modal-close" onclick="closeModal('modal-transport')"><i class="fa-solid fa-xmark"></i></button></div>
+    <div id="transport-intro" style="font-size:12px;color:#8b949e;line-height:1.5;margin-bottom:12px"></div>
+    <div class="scrolllist" id="transport-list" style="max-height:340px"></div>
+    <div style="margin-top:12px;display:flex;justify-content:space-between;gap:8px">
+      <button class="btn btn-secondary" id="transport-clear-btn" onclick="clearTransport()" style="display:none">On Foot (no transport)</button>
+      <div style="display:flex;gap:8px;margin-left:auto">
+        <button class="btn btn-secondary" onclick="closeModal('modal-transport')">Cancel</button>
+        <button class="btn btn-primary" id="transport-confirm-btn" onclick="confirmTransport()" disabled>Apply</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div id="modal-faction" class="modal-bg">
   <div class="modal">
     <div class="modal-header">Custom Factions <button class="modal-close" onclick="closeModal('modal-faction')"><i class="fa-solid fa-xmark"></i></button></div>
@@ -1369,6 +1385,10 @@ let bgSymbolPickerBgId = null;
 let editingBGId = null;
 let armyIconPickerOpen = false;
 let activeBGTabId = null;
+// Transport picker state
+let _tpKind = null; let _tpTFId = null; let _tpSlotId = null;
+let _tpArmyId = null; let _tpBgId = null; let _tpEntryId = null;
+let _tpSelected = null; let _tpForUnit = null;
 let activeTFTab = "core";
 let currentForceId = null;
 let editingForceId = null;
@@ -3565,7 +3585,12 @@ function slotPointValue(slot) {
   if(!u) return 0;
   const pts = calcPoints(u);
   const typeKey = {unit:"unitPts",independent:"indPts",hero:"heroPts",command:"cmdPts",cmdHero:"cmdHeroPts"}[slot.unitType||"unit"];
-  return ((pts[typeKey] != null ? pts[typeKey] : pts.unitPts) || 0) * slot.quantity;
+  let basePts = (pts[typeKey] != null ? pts[typeKey] : pts.unitPts) || 0;
+  if ((slot.unitType||"unit") === "unit" && slot.transport) {
+    const tu = unitById(slot.transport);
+    if (tu) basePts += mechanizedCount(u, tu) * calcPoints(tu).perStand;
+  }
+  return basePts * slot.quantity;
 }
 
 function _getTFTypeSlots(tfType) {
@@ -3932,14 +3957,20 @@ function renderTFDetail() {
           const u = unitById(slot.unitId);
           if(!u) return `<div class="tf-unit-row"><span style="color:#666">[Deleted Unit]</span><button class="trait-edit-btn" onclick="confirmBtn(this,()=>removeTFSlot('${tf.id}','${slot.id}'))">Remove</button></div>`;
           const typeLabel_ = TYPE_LABELS[slot.unitType||"unit"] || "Unit";
-          const slotActions = `<div style="display:flex;align-items:center;justify-content:space-between;width:100%">
-            <div style="display:flex;align-items:center;gap:8px">
+          const canMech = (u.class==="inf"||u.class==="fg") && (slot.unitType||"unit")==="unit";
+          const tu = slot.transport ? unitById(slot.transport) : null;
+          const mechBtn = canMech
+            ? `<button class="trait-edit-btn" onclick="openTransportPickerTF('${tf.id}','${slot.id}')" title="Mechanized transport"${tu?` style="border-color:#66bb6a55;color:#66bb6a;background:#0e1a0e"`:""}><i class="fa-solid fa-truck"></i> ${tu?`${mechanizedCount(u,tu)}&times; ${esc(tu.name)}`:"Mechanize"}</button>`
+            : "";
+          const slotActions = `<div style="display:flex;align-items:center;justify-content:space-between;width:100%;gap:8px;flex-wrap:wrap">
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
               <div class="qty-ctrl">
                 <button class="qty-btn" onclick="changeTFSlotQty('${tf.id}','${slot.id}',-1)">−</button>
                 <span class="qty-val">${slot.quantity}</span>
                 <button class="qty-btn" onclick="changeTFSlotQty('${tf.id}','${slot.id}',1)">+</button>
               </div>
               <span style="font-size:10px;padding:2px 7px;border-radius:10px;background:#1a2030;color:#7eb3ff;border:1px solid #2a3a5a">${esc(typeLabel_)}</span>
+              ${mechBtn}
             </div>
             <button class="trait-edit-btn" onclick="confirmBtn(this,()=>removeTFSlot('${tf.id}','${slot.id}'))">Remove</button>
           </div>`;
@@ -4609,13 +4640,23 @@ function entryPointValue(e) {
     if(!u) return 0;
     const pts = calcPoints(u);
     const typeKey = {unit:"unitPts",independent:"indPts",hero:"heroPts",command:"cmdPts",cmdHero:"cmdHeroPts"}[slot.unitType||"unit"];
-    return ((pts[typeKey]!=null?pts[typeKey]:pts.unitPts)||0) * (e.qty||0);
+    let basePts = (pts[typeKey]!=null?pts[typeKey]:pts.unitPts)||0;
+    if ((slot.unitType||"unit") === "unit" && slot.transport) {
+      const tu = unitById(slot.transport);
+      if (tu) basePts += mechanizedCount(u, tu) * calcPoints(tu).perStand;
+    }
+    return basePts * (e.qty||0);
   } else {
     const u = unitById(e.unitId);
     if(!u) return 0;
     const pts = calcPoints(u);
     const typeKey = {unit:"unitPts",independent:"indPts",hero:"heroPts",command:"cmdPts",cmdHero:"cmdHeroPts"}[e.unitType||"unit"];
-    return ((pts[typeKey]!=null?pts[typeKey]:pts.unitPts)||0) * (e.qty||1);
+    let basePts = (pts[typeKey]!=null?pts[typeKey]:pts.unitPts)||0;
+    if ((e.unitType||"unit") === "unit" && e.transport) {
+      const tu = unitById(e.transport);
+      if (tu) basePts += mechanizedCount(u, tu) * calcPoints(tu).perStand;
+    }
+    return basePts * (e.qty||1);
   }
 }
 // Units of a slot already placed across all of this army's battle groups.
@@ -4627,6 +4668,138 @@ function slotAssignedQty(army, slotId) {
 // Units of a slot not yet placed in any of this army's battle groups.
 function slotRemainingQty(army, slot) {
   return Math.max(0, (slot.quantity||0) - slotAssignedQty(army, slot.id));
+}
+
+// ── Mechanized transport helpers ──────────────────────────
+function transportSlotsFor(unit) {
+  const t = (unit.standTraits||[]).find(tr => tr[0] === "Transport");
+  return t ? traitCount(t) : 0;
+}
+function mechanizedCount(infUnit, transportUnit) {
+  if (!infUnit || !transportUnit) return 0;
+  const cls = infUnit.class;
+  if (cls !== "inf" && cls !== "fg") return 0;
+  const cap = transportSlotsFor(transportUnit);
+  if (!cap) return 0;
+  return Math.ceil(calcPoints(infUnit).unitSize * (cls === "fg" ? 2 : 1) / cap);
+}
+function availableTransports() {
+  return allUnits().filter(u => u.class === "afv" && transportSlotsFor(u) > 0);
+}
+function _mechPill(infUnit, transportUnit, style) {
+  if (!transportUnit) return "";
+  const n = mechanizedCount(infUnit, transportUnit);
+  if (!n) return "";
+  const base = style === "print-color"
+    ? `background:#e8f5e9;color:#2e7d32;border:1px solid #a5d6a7`
+    : style === "print-gray"
+    ? `background:#e0e0e0;color:#333;border:1px solid #bbb`
+    : `background:#1a2a1a;color:#66bb6a;border:1px solid #66bb6a44`;
+  return `<span style="display:inline-flex;align-items:center;gap:3px;font-size:9px;font-weight:bold;padding:1px 6px;border-radius:8px;${base}"><i class="fa-solid fa-truck" style="font-size:8px"></i>${n}&times; ${esc(transportUnit.name)}</span>`;
+}
+
+// ── Transport picker (per-deployment) ─────────────────────
+// TF slot:  openTransportPickerTF(tfId, slotId)
+// FP entry: openTransportPickerFP(armyId, bgId, entryId)
+function openTransportPickerTF(tfId, slotId) {
+  const tf = state.taskForces.find(t=>t.id===tfId);
+  const slot = tf && (tf.units||[]).find(s=>s.id===slotId);
+  const u = slot && unitById(slot.unitId);
+  if(!u) return;
+  _tpKind="tf"; _tpTFId=tfId; _tpSlotId=slotId;
+  _tpArmyId=null; _tpBgId=null; _tpEntryId=null;
+  _tpForUnit=u; _tpSelected=slot.transport||null;
+  _openTransportPicker(u, slot.transport||null, tf.faction);
+}
+function openTransportPickerFP(armyId, bgId, entryId) {
+  const army = state.armies.find(a=>a.id===armyId);
+  const bg = army && (army.battleGroups||[]).find(b=>b.id===bgId);
+  const e = bg && (bg.entries||[]).find(x=>x.id===entryId);
+  const u = e && unitById(e.unitId);
+  if(!u) return;
+  _tpKind="fp"; _tpArmyId=armyId; _tpBgId=bgId; _tpEntryId=entryId;
+  _tpTFId=null; _tpSlotId=null;
+  _tpForUnit=u; _tpSelected=e.transport||null;
+  _openTransportPicker(u, e.transport||null, army.faction);
+}
+function _openTransportPicker(unit, current, faction) {
+  const intro = document.getElementById("transport-intro");
+  const slotsPer = unit.class === "fg" ? 2 : 1;
+  const need = calcPoints(unit).unitSize * slotsPer;
+  intro.innerHTML = `<strong style="color:#e0e0e0">${esc(unit.name)}</strong> — ${calcPoints(unit).unitSize} ${unit.class==="fg"?"gun":"infantry"} stand${calcPoints(unit).unitSize!==1?"s":""} needing <strong>${need}</strong> transport slot${need!==1?"s":""}. Pick a transport AFV; the minimum number needed is added automatically.`;
+  document.getElementById("transport-clear-btn").style.display = current ? "inline-flex" : "none";
+  _tpSelected = current;
+  _renderTransportList(faction);
+  document.getElementById("transport-confirm-btn").disabled = !current;
+  openModal("modal-transport");
+}
+function _renderTransportList(faction) {
+  const list = document.getElementById("transport-list");
+  const unit = _tpForUnit;
+  // Faction-match: transports of the same faction, or no faction.
+  let opts = availableTransports().filter(t => !t.faction || !faction || t.faction === faction);
+  opts.sort((a,b)=>a.name.localeCompare(b.name));
+  if(!opts.length){ list.innerHTML = `<div class="empty" style="padding:20px"><div class="empty-icon"><i class="fa-solid fa-truck"></i></div>No transport-capable AFVs available for this faction</div>`; return; }
+  list.innerHTML = opts.map(t => {
+    const n = mechanizedCount(unit, t);
+    const cap = transportSlotsFor(t);
+    const addPts = n * calcPoints(t).perStand;
+    const sel = _tpSelected === t.id;
+    return `<div onclick="_selectTransport('${t.id}')" style="display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:6px;margin-bottom:5px;cursor:pointer;border:1px solid ${sel?"var(--accent)":"var(--border-subtle)"};background:${sel?"#0d1b2e":"var(--surface-card)"}">
+      <div style="width:30px;height:30px;border-radius:6px;background:var(--surface-raised);display:flex;align-items:center;justify-content:center;color:#7eb3ff;flex-shrink:0"><i class="fa-solid fa-truck"></i></div>
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:bold;color:#e0e0e0;font-size:13px">${esc(t.name)}</div>
+        <div style="font-size:10px;color:#8b949e">Carries ${cap} slot${cap!==1?"s":""} · ${calcPoints(t).perStand} pts each${t.faction?"":" · no faction"}</div>
+      </div>
+      <div style="text-align:right;flex-shrink:0">
+        <div style="font-weight:bold;color:#66bb6a;font-size:13px">${n}&times;</div>
+        <div style="font-size:10px;color:#8b949e">+${addPts} pts</div>
+      </div>
+    </div>`;
+  }).join("");
+}
+function _selectTransport(id) {
+  _tpSelected = id;
+  const faction = _tpKind==="tf"
+    ? state.taskForces.find(t=>t.id===_tpTFId)?.faction
+    : state.armies.find(a=>a.id===_tpArmyId)?.faction;
+  _renderTransportList(faction);
+  document.getElementById("transport-confirm-btn").disabled = false;
+}
+function confirmTransport() {
+  if(!_tpSelected) return;
+  if(_tpKind==="tf"){
+    const tf = state.taskForces.find(t=>t.id===_tpTFId);
+    const slot = tf && (tf.units||[]).find(s=>s.id===_tpSlotId);
+    if(slot) slot.transport = _tpSelected;
+  } else if(_tpKind==="fp"){
+    const army = state.armies.find(a=>a.id===_tpArmyId);
+    const bg = army && (army.battleGroups||[]).find(b=>b.id===_tpBgId);
+    const e = bg && (bg.entries||[]).find(x=>x.id===_tpEntryId);
+    if(e) e.transport = _tpSelected;
+  }
+  saveState();
+  closeModal("modal-transport");
+  _refreshAfterTransport();
+}
+function clearTransport() {
+  if(_tpKind==="tf"){
+    const tf = state.taskForces.find(t=>t.id===_tpTFId);
+    const slot = tf && (tf.units||[]).find(s=>s.id===_tpSlotId);
+    if(slot) delete slot.transport;
+  } else if(_tpKind==="fp"){
+    const army = state.armies.find(a=>a.id===_tpArmyId);
+    const bg = army && (army.battleGroups||[]).find(b=>b.id===_tpBgId);
+    const e = bg && (bg.entries||[]).find(x=>x.id===_tpEntryId);
+    if(e) delete e.transport;
+  }
+  saveState();
+  closeModal("modal-transport");
+  _refreshAfterTransport();
+}
+function _refreshAfterTransport() {
+  if(_tpKind==="tf"){ renderTFList(); if(currentTFId===_tpTFId) renderTFDetail(); }
+  if(_tpKind==="fp"){ renderArmyList(); renderArmyDetail(); }
 }
 // When a TF slot's quantity drops, trim this slot's BG entries (later groups
 // first) so no army ever has more units placed than the slot now provides.
@@ -4989,8 +5162,13 @@ function renderArmyDetail() {
             const stepBtn = (lbl, d, dis) => `<button onclick="changeFPEntryQty('${army.id}','${bg.id}','${e.id}',${d})" ${dis?"disabled":""} style="width:20px;height:20px;border-radius:50%;border:none;background:var(--surface-raised);color:var(--text-bright);font-size:13px;line-height:20px;text-align:center;cursor:${dis?"default":"pointer"};opacity:${dis?".3":"1"}">${lbl}</button>`;
             const stepper = `<span style="display:inline-flex;align-items:center;gap:4px">${stepBtn("&minus;",-1,eqty<=1)}<span style="font-weight:bold;font-size:12px;min-width:18px;text-align:center">&times;${eqty}</span>${stepBtn("+",1,false)}</span>`;
             const offFacStrip = offFac ? `<div style="padding:4px 8px;border-radius:4px;background:#1a0505;border:1px solid #ef535066;font-size:10px;color:#ef9a9a;margin-bottom:4px"><i class="fa-solid fa-triangle-exclamation" style="color:#ef5350;margin-right:3px"></i>Faction doesn't match the army restriction.</div>` : "";
+            const canMechFP = (u.class==="inf"||u.class==="fg") && (e.unitType||"unit")==="unit";
+            const fpTU = e.transport ? unitById(e.transport) : null;
+            const fpMechBtn = canMechFP
+              ? `<button class="trait-edit-btn" onclick="openTransportPickerFP('${army.id}','${bg.id}','${e.id}')" title="Mechanized transport"${fpTU?` style="border-color:#66bb6a55;color:#66bb6a;background:#0e1a0e"`:""}><i class="fa-solid fa-truck"></i> ${fpTU?`${mechanizedCount(u,fpTU)}&times; ${esc(fpTU.name)}`:"Mechanize"}</button>`
+              : "";
             const actions = `${offFacStrip}<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
-              <span style="display:flex;align-items:center;gap:8px">${stepper}<span style="font-size:10px;color:var(--text-muted)">${pts} pts</span></span>
+              <span style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">${stepper}<span style="font-size:10px;color:var(--text-muted)">${pts} pts</span>${fpMechBtn}</span>
               <button class="trait-edit-btn" style="border-color:#8b000066;color:#ef5350;background:#2a0a0a" onclick="removeFPEntry('${army.id}','${bg.id}','${e.id}')">Remove</button>
             </div>`;
             return unitCardHTML(u, actions, e.unitType||"unit");
@@ -5004,12 +5182,14 @@ function renderArmyDetail() {
             if(!unit) return "";
             const tfColor = FACTION_COLORS[tf.faction] || "#555";
             const bgAsset = tf.tacAsset ? allTacticalAssets().find(a=>a.id===tf.tacAsset) : null;
-            const tfBadge = bgAsset
+            const slotTU = slot.transport ? unitById(slot.transport) : null;
+            const mechPillHTML = slotTU ? _mechPill(unit, slotTU) : "";
+            const tfBadge = (bgAsset
               ? `<span style="display:inline-flex;align-items:center;gap:4px;flex-wrap:wrap">
                    <span style="font-size:9px;font-weight:bold;padding:1px 6px;border-radius:8px;background:${tfColor}18;color:${tfColor};border:1px solid ${tfColor}44">${esc(tf.name)}</span>
                    <span style="font-size:9px;font-weight:bold;padding:1px 6px;border-radius:8px;background:#1a1400;color:#ffd54f;border:1px solid #ffd54f44"><i class="fa-solid fa-chess" style="font-size:8px;margin-right:3px"></i>${esc(bgAsset.name)}</span>${_assetUsePills(bgAsset.use)}
                  </span>`
-              : `<span style="font-size:9px;font-weight:bold;padding:1px 6px;border-radius:8px;background:${tfColor}18;color:${tfColor};border:1px solid ${tfColor}44">${esc(tf.name)}</span>`;
+              : `<span style="font-size:9px;font-weight:bold;padding:1px 6px;border-radius:8px;background:${tfColor}18;color:${tfColor};border:1px solid ${tfColor}44">${esc(tf.name)}</span>`) + mechPillHTML;
             const eqty = e.qty || slot.quantity;
             const canInc = slotRemainingQty(army, slot) > 0;
             const stepBtn = (lbl, d, dis) => `<button onclick="changeBGEntryQty('${army.id}','${bg.id}','${e.id}',${d})" ${dis?"disabled":""} style="width:20px;height:20px;border-radius:50%;border:none;background:var(--surface-raised);color:var(--text-bright);font-size:13px;line-height:20px;text-align:center;cursor:${dis?"default":"pointer"};opacity:${dis?".3":"1"}">${lbl}</button>`;
@@ -5261,11 +5441,11 @@ function printArmy(armyId, paperSize, inkMode) {
     }).join("");
   }
 
-  function printUnitCard(unit, viewType, tfBadgeHTML) {
+  function printUnitCard(unit, viewType, tfBadgeHTML, opts={}) {
     const pts    = calcPoints(unit);
     const pKey   = VIEW_PTS_KEY[viewType] || "unitPts";
-    const pVal   = pts[pKey] != null ? pts[pKey] : "—";
-    const pLabel = VIEW_LABELS[viewType] || "Unit";
+    const pVal   = opts.ptsVal != null ? opts.ptsVal : (pts[pKey] != null ? pts[pKey] : "—");
+    const pLabel = opts.ptsLabel || VIEW_LABELS[viewType] || "Unit";
     const minSpd = unit.mobility === "grav" ? Math.ceil(unit.speed/2) : unit.mobility === "air" ? Math.ceil(unit.speed*3/4) : null;
     const traitsHTML  = printTraitPills(unit.standTraits||[], allStandTraits());
     const weaponsHTML = (unit.weapons||[]).length === 0
@@ -5276,12 +5456,13 @@ function printArmy(armyId, paperSize, inkMode) {
           return `<div style="padding:4px 8px;font-size:10px;background:${pal.wepBg};border:1px solid ${pal.wepBorder};border-radius:4px;margin-top:3px;line-height:1.5"><span style="color:${pal.pageText}">${wName}<span style="color:${pal.mutedText};font-weight:normal">${w.mode.toUpperCase()}/${w.type.toUpperCase()}</span> | Rng <strong>${rangeLabel(w.range)}</strong> | Shots <strong>${w.shots}</strong> | Impact <strong>+${w.impact}</strong>${wtPills}</span></div>`;
         }).join("");
     const descHTML    = unit.description ? `<div style="font-size:10px;color:${pal.mutedText};font-style:italic;line-height:1.4;padding:3px 0 4px">${esc(unit.description)}</div>` : "";
-    const unitSizeStr = viewType === "unit" ? ` <span style="font-size:10px;color:${pal.mutedText};font-weight:normal">${pts.unitSize} stand${pts.unitSize>1?"s":""}</span>` : "";
+    const unitSizeStr = opts.tag ? "" : (viewType === "unit" ? ` <span style="font-size:10px;color:${pal.mutedText};font-weight:normal">${pts.unitSize} stand${pts.unitSize>1?"s":""}</span>` : "");
+    const tagHTML = opts.tag ? `<span style="display:inline-block;padding:1px 6px;border-radius:8px;font-size:8px;font-weight:bold;letter-spacing:.5px;text-transform:uppercase;background:${gray?"#e0e0e0":"#e3f2fd"};color:${gray?"#333":"#1565c0"};border:1px solid ${gray?"#bbb":"#90caf9"}">${esc(opts.tag)}</span>` : "";
     return `<div style="background:${pal.cardBg};border:1.5px solid ${pal.cardBorder};border-radius:8px;padding:10px;break-inside:avoid;page-break-inside:avoid">
       <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:6px">
         <div style="flex:1;min-width:0">
           <div style="font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:.4px;color:${pal.pageText};line-height:1.15">${esc(unit.name)}${unitSizeStr}</div>
-          <div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:3px">${printClassBadge(unit.class)}${printFacPill(unit.faction)}${tfBadgeHTML||""}</div>
+          <div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:3px">${printClassBadge(unit.class)}${printFacPill(unit.faction)}${tagHTML}${tfBadgeHTML||""}</div>
           ${descHTML}
         </div>
         <div style="background:${pal.ptsBoxBg};color:${pal.ptsBoxText};border-radius:6px;padding:4px 7px;text-align:center;flex-shrink:0;min-width:36px">
@@ -5382,12 +5563,23 @@ function printArmy(armyId, paperSize, inkMode) {
     const hdrBg   = gray ? "#e0e0e0" : (sd?.color ? sd.color + "0e" : "#edf2fb");
     const hdrBord = gray ? "#bbb"    : (sd?.color ? sd.color + "55" : "#c0cce8");
 
+    const mechStyle = gray ? "print-gray" : "print-color";
+    // For a mechanized unit, emit the carried unit card (with a transport pill)
+    // plus one stat card per transport AFV it rides in — for every instance.
+    const withTransport = (carrier, viewType, tu, badgeHTML) => {
+      const nT = tu ? mechanizedCount(carrier, tu) : 0;
+      const pill = tu ? _mechPill(carrier, tu, mechStyle) : "";
+      const cards = [ printUnitCard(carrier, viewType, (badgeHTML||"") + pill) ];
+      for (let i=0;i<nT;i++) cards.push(printUnitCard(tu, "unit", "", {tag:"Transport", ptsVal:calcPoints(tu).perStand, ptsLabel:"Stand"}));
+      return cards;
+    };
     const unitCards = (bg.entries||[]).flatMap(e => {
       if (fp) {
         const u = unitById(e.unitId);
         if (!u) return [];
         const qty = e.qty || 1;
-        return Array.from({length:qty}, () => printUnitCard(u, e.unitType||"unit", ""));
+        const tu = ((e.unitType||"unit")==="unit" && e.transport) ? unitById(e.transport) : null;
+        return Array.from({length:qty}).flatMap(() => withTransport(u, e.unitType||"unit", tu, ""));
       } else {
         const tf   = state.taskForces.find(t=>t.id===e.tfId);
         const slot = tf && (tf.units||[]).find(s=>s.id===e.slotId);
@@ -5399,7 +5591,8 @@ function printArmy(armyId, paperSize, inkMode) {
         const tfBadge = asset
           ? `<span style="display:inline-flex;align-items:center;gap:3px;flex-wrap:wrap"><span style="display:inline-block;padding:1px 6px;border-radius:8px;font-size:9px;font-weight:bold;background:${tfColor}18;color:${tfColor};border:1px solid ${tfColor}44">${esc(tf.name)}</span><span style="display:inline-block;padding:1px 6px;border-radius:8px;font-size:9px;font-weight:bold;background:${pal.assetColor}18;color:${pal.assetColor};border:1px solid ${pal.assetColor}44"><i class="fa-solid fa-chess" style="font-size:7px;margin-right:2px"></i>${esc(asset.name)}</span></span>`
           : `<span style="display:inline-block;padding:1px 6px;border-radius:8px;font-size:9px;font-weight:bold;background:${tfColor}18;color:${tfColor};border:1px solid ${tfColor}44">${esc(tf.name)}</span>`;
-        return Array.from({length:qty}, () => printUnitCard(u, slot.unitType||"unit", tfBadge));
+        const tu = ((slot.unitType||"unit")==="unit" && slot.transport) ? unitById(slot.transport) : null;
+        return Array.from({length:qty}).flatMap(() => withTransport(u, slot.unitType||"unit", tu, tfBadge));
       }
     });
 
