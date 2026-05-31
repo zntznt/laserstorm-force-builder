@@ -2509,12 +2509,15 @@ function renderFactionModalContent() {
   list.innerHTML = facs.length
     ? `<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:4px">`
       + facs.map(f=>`
-        <div class="custom-trait-item" style="flex-wrap:wrap">
-          <span style="font-size:18px;color:${f.color}"><i class="fa-solid fa-${f.icon}"></i></span>
-          <span style="flex:1;font-weight:bold;color:${f.color}">${esc(f.name)}</span>
-          <button class="trait-edit-btn" onclick="editCustomFaction('${f.id}')"><i class="fa-solid fa-pencil"></i> Edit</button>
-          ${f.description?`<div style="width:100%;font-size:10px;color:#8b949e;font-style:italic;padding-left:28px;margin-top:2px">${esc(f.description)}</div>`:""}
-          <button class="trait-edit-btn" style="border-color:#8b000066;color:#ef5350;background:#2a0a0a" onclick="confirmBtn(this,()=>deleteCustomFaction('${f.id}'))"><i class="fa-solid fa-trash"></i> Delete</button>
+        <div class="custom-trait-item">
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:bold;color:${f.color};font-size:13px"><i class="fa-solid fa-${f.icon}" style="margin-right:5px"></i>${esc(f.name)}</div>
+            ${f.description?`<div style="font-size:10px;color:#8b949e;font-style:italic;margin-top:2px">${esc(f.description)}</div>`:""}
+          </div>
+          <div style="display:flex;gap:6px;flex-shrink:0;align-items:center">
+            <button class="trait-edit-btn" onclick="editCustomFaction('${f.id}')"><i class="fa-solid fa-pencil"></i> Edit</button>
+            <button class="trait-edit-btn" style="border-color:#8b000066;color:#ef5350;background:#2a0a0a" onclick="confirmBtn(this,()=>deleteCustomFaction('${f.id}'))"><i class="fa-solid fa-trash"></i> Delete</button>
+          </div>
         </div>`).join("")
       + `</div>`
     : `<div style="color:var(--text-inactive);font-size:12px;margin-bottom:4px">No custom factions yet.</div>`;
@@ -3537,7 +3540,7 @@ function openEditTFModal(id) {
   document.getElementById("tf-points-limit").value = tf.pointsLimit || "";
   clearFieldErr("tf-new-name"); clearFieldErr("tf-commander");
   document.getElementById("modal-tf-title").textContent = "Edit Task Force";
-  document.getElementById("tf-modal-submit").textContent = "Save";
+  document.getElementById("tf-modal-submit").textContent = "Save Changes";
   _populateTFTypeSelect(document.getElementById("tf-type"), tf.tfType || "infantry");
   _populateFactionSelect(document.getElementById("tf-faction"), tf.faction || "");
   openModal("modal-tf");
@@ -3795,11 +3798,22 @@ function _renderCustomTFTypeList() {
   const el = document.getElementById("custom-tf-type-list");
   if(!state.customTFTypes.length) { el.innerHTML = `<div style="color:var(--text-inactive);font-size:12px;margin-bottom:4px">No custom types yet.</div>`; return; }
   el.innerHTML = `<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:4px">`
-    + state.customTFTypes.map(t=>`<div class="custom-trait-item">
-      <span style="flex:1;font-weight:bold;color:var(--text-primary)">${esc(t.name)}</span>
-      <button class="trait-edit-btn" onclick="editCustomTFType('${t.id}')"><i class="fa-solid fa-pencil"></i> Edit</button>
-      <button class="trait-edit-btn" style="border-color:#8b000066;color:#ef5350;background:#2a0a0a" onclick="confirmBtn(this,()=>deleteCustomTFType('${t.id}'))"><i class="fa-solid fa-trash"></i> Delete</button>
-    </div>`).join("")
+    + state.customTFTypes.map(t=>{
+      const slotSummary = _TF_CLASS_KEYS
+        .filter(k => t.slots && t.slots[k] && t.slots[k][1] > 0)
+        .map(k => `${_TF_CLASS_NAMES[k]}: ${t.slots[k][0]}–${t.slots[k][1]}`)
+        .join(", ");
+      return `<div class="custom-trait-item">
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:bold;color:var(--text-primary);font-size:13px">${esc(t.name)}</div>
+          ${slotSummary?`<div style="font-size:10px;color:#8b949e;margin-top:2px">${slotSummary}</div>`:""}
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0;align-items:center">
+          <button class="trait-edit-btn" onclick="editCustomTFType('${t.id}')"><i class="fa-solid fa-pencil"></i> Edit</button>
+          <button class="trait-edit-btn" style="border-color:#8b000066;color:#ef5350;background:#2a0a0a" onclick="confirmBtn(this,()=>deleteCustomTFType('${t.id}'))"><i class="fa-solid fa-trash"></i> Delete</button>
+        </div>
+      </div>`;
+    }).join("")
     + `</div>`;
 }
 
@@ -3983,9 +3997,12 @@ function _renderCustomAssetList() {
       <div style="flex:1;min-width:0">
         <div style="font-weight:bold;color:var(--text-primary);font-size:13px">${esc(a.name)}${_assetFactionPill(a.faction)}</div>
         <div style="margin-top:2px">${_assetUsePills(a.use)}</div>
+        ${a.fn?`<div style="font-size:10px;color:#8b949e;font-style:italic;margin-top:3px">${esc(a.fn)}</div>`:""}
       </div>
-      <button class="trait-edit-btn" onclick="editCustomAsset('${a.id}')"><i class="fa-solid fa-pencil"></i> Edit</button>
-      <button class="trait-edit-btn" style="border-color:#8b000066;color:#ef5350;background:#2a0a0a" onclick="confirmBtn(this,()=>deleteCustomAsset('${a.id}'))"><i class="fa-solid fa-trash"></i> Delete</button>
+      <div style="display:flex;gap:6px;flex-shrink:0;align-items:center">
+        <button class="trait-edit-btn" onclick="editCustomAsset('${a.id}')"><i class="fa-solid fa-pencil"></i> Edit</button>
+        <button class="trait-edit-btn" style="border-color:#8b000066;color:#ef5350;background:#2a0a0a" onclick="confirmBtn(this,()=>deleteCustomAsset('${a.id}'))"><i class="fa-solid fa-trash"></i> Delete</button>
+      </div>
     </div>`).join("")
     + `</div>`;
 }
@@ -4756,7 +4773,7 @@ function openEditArmyModal(id) {
   if(!army) return;
   editingArmyId = id;
   document.getElementById("army-modal-title").childNodes[0].textContent = "Edit Army ";
-  document.getElementById("army-modal-save-btn").textContent = "Save";
+  document.getElementById("army-modal-save-btn").textContent = "Save Changes";
   document.getElementById("army-new-name").value = army.name;
   document.getElementById("army-faction").value = army.faction || "";
   document.getElementById("army-bg-count").value = String(army.bgCount || 3);
