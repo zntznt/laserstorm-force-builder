@@ -263,6 +263,7 @@ label .trait-edit-btn{margin-left:6px}
     <div class="nav-tab" id="tab-library" onclick="showPage('library')">Library</div>
     <div class="nav-tab" id="tab-taskforces" onclick="showPage('taskforces')">Task Forces</div>
     <div class="nav-tab" id="tab-armies" onclick="showPage('armies')">Armies</div>
+    <div class="nav-tab" id="tab-forces" onclick="showPage('forces')">Exp. Forces</div>
   </div>
   <a href="https://www.wargamevault.com/product/476399/laserstorm-2nd-edition?affiliate_id=564654" target="_blank" rel="noopener" style="margin-left:auto;margin-right:12px;padding:5px 13px;background:#007eff;color:#fff;border-radius:20px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;text-decoration:none;white-space:nowrap;transition:background .2s" onmouseover="this.style.background='#0066cc'" onmouseout="this.style.background='#007eff'">Buy LaserStorm</a>
 </nav>
@@ -525,6 +526,25 @@ label .trait-edit-btn{margin-left:6px}
     <div id="army-detail-panel">
       <div class="card">
         <div class="empty"><div class="empty-icon"><i class="fa-solid fa-chess-rook"></i></div>Select an army to view</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== EXPEDITIONARY FORCES PAGE ===== -->
+<div id="page-forces" class="page">
+  <div class="grid-sidebar">
+    <div style="position:sticky;top:16px;display:flex;flex-direction:column;gap:12px">
+      <div class="card">
+        <div class="card-title">Expeditionary Forces
+          <button class="trait-edit-btn" onclick="openNewForceModal()">New Force</button>
+        </div>
+        <div id="force-list"></div>
+      </div>
+    </div>
+    <div id="force-detail-panel">
+      <div class="card">
+        <div class="empty"><div class="empty-icon"><i class="fa-solid fa-flag"></i></div>Select a force to view</div>
       </div>
     </div>
   </div>
@@ -823,6 +843,72 @@ label .trait-edit-btn{margin-left:6px}
     <div style="margin-top:12px;display:flex;justify-content:space-between;align-items:center;gap:8px">
       <span id="fp-unit-added" style="font-size:11px;color:#66bb6a"></span>
       <button class="btn btn-primary" onclick="closeFPUnitModal()">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== NEW / EDIT EXPEDITIONARY FORCE MODAL ===== -->
+<div id="modal-force" class="modal-bg">
+  <div class="modal">
+    <div class="modal-header">
+      <span id="force-modal-title">New Expeditionary Force</span>
+      <button class="modal-close" onclick="closeModal('modal-force')"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="form-group" style="margin-bottom:12px">
+      <label>Force Name</label>
+      <input type="text" id="force-new-name" placeholder="e.g. 1st Expeditionary Force" style="width:100%" oninput="clearFieldErr('force-new-name')">
+      <span class="field-error" id="force-new-name-err"></span>
+    </div>
+    <div class="form-row" style="margin-bottom:12px">
+      <div class="form-group">
+        <label>Army Groups</label>
+        <select id="force-ag-count" style="width:auto">
+          <option value="3">3 Groups</option>
+          <option value="4">4 Groups</option>
+          <option value="5">5 Groups</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group" style="margin-bottom:16px">
+      <label>Description <span style="font-size:10px;color:#8b949e;font-weight:normal">(optional)</span></label>
+      <textarea id="force-description" placeholder="e.g. Combined arms expeditionary force tasked with..." style="width:100%;min-height:72px;resize:vertical;background:var(--surface-raised);border:1px solid var(--border-subtle);border-radius:6px;color:#e0e0e0;padding:8px;font-family:var(--font-body);font-size:13px;line-height:1.5"></textarea>
+    </div>
+    <div id="force-modal-msg" style="display:none;margin-bottom:10px"></div>
+    <div style="display:flex;justify-content:flex-end;gap:8px">
+      <button class="btn btn-secondary" onclick="closeModal('modal-force')">Cancel</button>
+      <button class="btn btn-primary" id="force-modal-submit" onclick="saveForce()">Create</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ADD ARMY TO EF MODAL ===== -->
+<div id="modal-add-army-ef" class="modal-bg">
+  <div class="modal">
+    <div class="modal-header">Add Army to Group <button class="modal-close" onclick="closeModal('modal-add-army-ef')"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="scrolllist" id="add-army-ef-list"></div>
+    <div style="margin-top:12px;display:flex;justify-content:flex-end">
+      <button class="btn btn-secondary" onclick="closeModal('modal-add-army-ef')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ARMY GROUP DESCRIPTION MODAL ===== -->
+<div id="modal-ag-desc" class="modal-bg">
+  <div class="modal">
+    <div class="modal-header">
+      <span>Army Group Description</span>
+      <button class="modal-close" onclick="closeModal('modal-ag-desc')"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <input type="hidden" id="ag-desc-force-id">
+    <input type="hidden" id="ag-desc-ag-id">
+    <div style="font-size:11px;color:#8b949e;margin-bottom:10px" id="ag-desc-name"></div>
+    <div class="form-group" style="margin-bottom:16px">
+      <label>Description <span style="font-size:10px;color:#8b949e;font-weight:normal">(optional)</span></label>
+      <textarea id="ag-desc-textarea" placeholder="e.g. Armoured spearhead tasked with breaching the northern line..." style="width:100%;min-height:80px;resize:vertical;background:var(--surface-raised);border:1px solid var(--border-subtle);border-radius:6px;color:#e0e0e0;padding:8px;font-family:var(--font-body);font-size:13px;line-height:1.5"></textarea>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px">
+      <button class="btn btn-secondary" onclick="closeModal('modal-ag-desc')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveAGDesc()">Save</button>
     </div>
   </div>
 </div>
@@ -1142,7 +1228,8 @@ let state = {
   customTFTypes: [],
   customTacticalAssets: [],
   taskForces: [],
-  armies: []
+  armies: [],
+  expeditionaryForces: []
 };
 
 let currentBuilderTraits = [];
@@ -1183,6 +1270,14 @@ let editingBGId = null;
 let armyIconPickerOpen = false;
 let activeBGTabId = null;
 let activeTFTab = "core";
+let currentForceId = null;
+let editingForceId = null;
+let activeAGTabId = null;
+let agSymbolPickerAgId = null;
+let forceIconPickerOpen = false;
+let editingAGId = null;
+let addArmyTargetForceId = null;
+let addArmyTargetAgId = null;
 let fpUnitTargetArmyId = null;
 let fpUnitTargetBgId = null;
 let fpUnitAddedCount = 0;
@@ -1224,6 +1319,7 @@ function loadState() {
       state.customTacticalAssets = saved.customTacticalAssets || [];
       state.taskForces = saved.taskForces || [];
       state.armies = saved.armies || [];
+      state.expeditionaryForces = saved.expeditionaryForces || [];
       // Migration: ensure every slot has a stable id (older data may lack one)
       state.taskForces.forEach(tf => (tf.units||[]).forEach(s=>{ if(!s.id) s.id="slot_"+uid(); }));
       // Cleanup: drop any army BG entries left dangling by earlier deletions
@@ -1670,6 +1766,7 @@ function showPage(p) {
   if(p==="library") renderLibrary();
   if(p==="taskforces") renderTFList();
   if(p==="armies") renderArmyList();
+  if(p==="forces") renderForceList();
 }
 
 function closeModal(id) { document.getElementById(id).classList.remove("open"); }
@@ -4673,9 +4770,16 @@ function renderArmyDetail() {
       </div>`).join("")}
   </div>` : "";
   const bgMode = army.bgIconMode || "custom";
+  const efDeploy = efOfArmy(army.id);
+  const efDeployedBadge = efDeploy
+    ? `<span style="font-size:10px;color:#8b949e;display:flex;align-items:center;gap:5px;margin-top:4px"><i class="fa-solid fa-flag" style="color:#9c27b0;font-size:9px"></i>Deployed in <strong style="color:#ce93d8">${esc(efDeploy.force.name)}</strong> <span style="color:#555">/</span> <strong style="color:#ce93d8">${esc(efDeploy.ag.name)}</strong></span>`
+    : `<span style="font-size:10px;color:#444;display:flex;align-items:center;gap:5px;margin-top:4px"><i class="fa-solid fa-flag" style="font-size:9px"></i>Not deployed in any expeditionary force</span>`;
   panel.innerHTML = `<div class="card">
     <div class="card-title">
-      <span style="display:flex;align-items:center;gap:10px">${armyIconBtn}${esc(army.name)} ${fpTag}</span>
+      <div>
+        <span style="display:flex;align-items:center;gap:10px">${armyIconBtn}${esc(army.name)} ${fpTag}</span>
+        ${efDeployedBadge}
+      </div>
       <div style="display:flex;gap:6px">
         <button class="trait-edit-btn" onclick="openEditArmyModal('${army.id}')"><i class="fa-solid fa-pen"></i> Edit</button>
         <button class="trait-edit-btn" style="border-color:#8b000066;color:#ef5350;background:#2a0a0a" onclick="confirmBtn(this,()=>deleteArmy('${army.id}'))"><i class="fa-solid fa-trash"></i> Delete</button>
@@ -4909,9 +5013,15 @@ function saveArmy() {
 function deleteArmy(id) {
   state.armies = state.armies.filter(a=>a.id!==id);
   if(currentArmyId===id) currentArmyId=null;
+  // Remove from any expeditionary force army groups
+  (state.expeditionaryForces||[]).forEach(f=>(f.armyGroups||[]).forEach(ag=>{
+    ag.armyIds = (ag.armyIds||[]).filter(aid=>aid!==id);
+  }));
   saveState();
   renderArmyList();
   renderArmyDetail();
+  renderForceList();
+  if(currentForceId) renderForceDetail();
 }
 
 function openAddTFModal(armyId) {
@@ -5203,6 +5313,502 @@ function confirmAddTFToBG() {
 }
 
 // ============================================================
+// EXPEDITIONARY FORCES
+// ============================================================
+const AG_NAMES = ["Army Group I","Army Group II","Army Group III","Army Group IV","Army Group V"];
+
+function efOfArmy(armyId) {
+  for(const force of state.expeditionaryForces||[]) {
+    for(const ag of force.armyGroups||[]) {
+      if((ag.armyIds||[]).includes(armyId)) return {force, ag};
+    }
+  }
+  return null;
+}
+
+function _ensureAGs(force) {
+  if(!force.armyGroups) force.armyGroups = [];
+  const count = force.agCount || 3;
+  while(force.armyGroups.length < count) {
+    const idx = force.armyGroups.length;
+    const ag = {id:"ag_"+uid(), name:AG_NAMES[idx]||`Army Group ${idx+1}`, symbol:null, description:"", armyIds:[]};
+    force.armyGroups.push(ag);
+    _autoAssignAGSymbol(force, ag);
+  }
+}
+
+function _autoAssignAGSymbol(force, ag) {
+  const used = new Set((force.armyGroups||[]).map(g=>g.symbol).filter(Boolean));
+  ag.symbol = ICON_SYMBOL_KEYS.find(k=>!used.has(k)) || ICON_SYMBOL_KEYS[0];
+}
+
+function efAGViolations(force) {
+  const ags = (force.armyGroups||[]).slice(0, force.agCount||3);
+  const sizes = ags.map(ag=>(ag.armyIds||[]).length);
+  const largest = Math.max(...sizes, 0);
+  if(largest === 0) return {violatingIds:new Set(), minAllowed:0, largest:0, largestName:"", ok:true};
+  const minAllowed = Math.ceil(largest / 2);
+  const largestAG = ags.find(ag=>(ag.armyIds||[]).length === largest);
+  const violatingIds = new Set(ags.filter(ag=>(ag.armyIds||[]).length < minAllowed).map(ag=>ag.id));
+  return {violatingIds, minAllowed, largest, largestName:largestAG?.name||"", ok:violatingIds.size===0};
+}
+
+function renderForceList() {
+  const list = document.getElementById("force-list");
+  if(!list) return;
+  if(!(state.expeditionaryForces||[]).length) {
+    list.innerHTML = `<div class="empty"><div class="empty-icon"><i class="fa-solid fa-flag"></i></div>No expeditionary forces yet</div>`;
+    return;
+  }
+  list.innerHTML = (state.expeditionaryForces||[]).map(force => {
+    const agCount = force.agCount || 3;
+    const ags = (force.armyGroups||[]).slice(0, agCount);
+    const totalArmies = ags.reduce((s,ag)=>s+(ag.armyIds||[]).length, 0);
+    const viol = efAGViolations(force);
+    const notDeployable = !viol.ok;
+    const isCurrent = force.id === currentForceId;
+    const forceSym = force.symbol ? _bgSymLookup(force.symbol) : null;
+    const forceIconBadge = forceSym
+      ? `<span style="display:inline-flex;width:20px;height:20px;border-radius:5px;background:${forceSym.color}18;border:1px solid ${forceSym.color}55;color:${forceSym.color};align-items:center;justify-content:center;flex-shrink:0;font-size:10px">${_bgSymInner(forceSym,10)}</span>`
+      : "";
+    return `<div class="sl-item${isCurrent?" sl-active":""}${notDeployable&&!isCurrent?" sl-warn":""}" style="${notDeployable&&!isCurrent?"border-color:#ef535044":""}" onclick="selectForce('${force.id}')">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:6px">
+        <div style="display:flex;align-items:center;gap:6px;min-width:0;flex:1">
+          ${forceIconBadge}
+          <div class="sl-name" style="flex:1;min-width:0">${esc(force.name)}</div>
+        </div>
+        ${notDeployable?`<span title="Army group size violation" style="color:#ef5350;font-size:11px;flex-shrink:0;margin-top:2px"><i class="fa-solid fa-triangle-exclamation"></i></span>`:""}
+      </div>
+      <div class="sl-meta">${agCount} Army Groups &bull; ${totalArmies} arm${totalArmies!==1?"ies":"y"}</div>
+    </div>`;
+  }).join("");
+}
+
+function selectForce(id) {
+  currentForceId = id;
+  agSymbolPickerAgId = null;
+  editingAGId = null;
+  forceIconPickerOpen = false;
+  activeAGTabId = null;
+  renderForceList();
+  renderForceDetail();
+}
+
+function renderForceDetail() {
+  const panel = document.getElementById("force-detail-panel");
+  if(!panel) return;
+  const force = (state.expeditionaryForces||[]).find(f=>f.id===currentForceId);
+  if(!force) {
+    panel.innerHTML = `<div class="card"><div class="empty"><div class="empty-icon"><i class="fa-solid fa-flag"></i></div>Select a force to view</div></div>`;
+    return;
+  }
+  _ensureAGs(force);
+  const agCount = force.agCount || 3;
+  const agList = (force.armyGroups||[]).slice(0, agCount);
+  const agIds = agList.map(ag=>ag.id);
+  const viol = efAGViolations(force);
+  const totalArmies = agList.reduce((s,ag)=>s+(ag.armyIds||[]).length, 0);
+
+  if(!activeAGTabId || !agIds.includes(activeAGTabId)) activeAGTabId = agIds[0] || null;
+
+  // Force icon button
+  const forceSym = force.symbol ? _bgSymLookup(force.symbol) : null;
+  const forceIconBtn = forceSym
+    ? `<button onclick="openForceIconPicker()" title="Force designation icon — click to change" style="width:34px;height:34px;border-radius:8px;background:${forceSym.color}1a;border:1.5px solid ${forceSym.color}99;color:${forceSym.color};cursor:pointer;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;padding:0;transition:background .15s" onmouseover="this.style.background='${forceSym.color}33'" onmouseout="this.style.background='${forceSym.color}1a'">${_bgSymInner(forceSym,14)}</button>`
+    : `<button onclick="openForceIconPicker()" title="Set force designation icon" style="width:34px;height:34px;border-radius:8px;background:var(--surface-raised);border:1.5px dashed var(--border-default);color:var(--text-faint);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;padding:0;transition:border-color .15s,color .15s" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border-default)';this.style.color='var(--text-faint)'"><i class="fa-solid fa-plus" style="font-size:11px"></i></button>`;
+
+  // Force icon picker
+  const forceIconPickerHTML = forceIconPickerOpen ? `<div style="margin-bottom:14px;padding:10px 12px;border-radius:8px;background:var(--surface-raised);border:1px solid var(--border-subtle)">
+    <div style="font-size:9px;text-transform:uppercase;letter-spacing:.8px;color:var(--text-faint);font-weight:700;margin-bottom:8px">Force Designation</div>
+    ${ARMY_ICON_GROUPS.map(grp=>`
+      <div style="margin-bottom:8px">
+        <div style="font-size:9px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.7px;margin-bottom:4px">${grp.label}</div>
+        <div style="display:flex;gap:4px;flex-wrap:wrap">
+          ${grp.keys.map(s=>{
+            const sd=_bgSymLookup(s); const ic=force.symbol===s;
+            return `<button onclick="setForceIcon('${force.id}','${ic?null:s}')" title="${sd.label}" style="width:32px;height:32px;border-radius:6px;padding:0;border:${ic?"2px solid "+sd.color:"1px solid "+sd.color+"44"};background:${ic?sd.color+"2a":"transparent"};color:${sd.color};cursor:pointer;display:inline-flex;align-items:center;justify-content:center">${_bgSymInner(sd)}</button>`;
+          }).join("")}
+        </div>
+      </div>`).join("")}
+  </div>` : "";
+
+  // Validation banner
+  const deployIssues = [];
+  if(!viol.ok) {
+    const offenders = agList.filter(ag=>viol.violatingIds.has(ag.id)).map(ag=>`<strong>${esc(ag.name)}</strong> (${(ag.armyIds||[]).length})`);
+    const offenderList = offenders.length>1 ? offenders.slice(0,-1).join(", ")+" and "+offenders[offenders.length-1] : offenders[0];
+    deployIssues.push(`${offenderList} ${offenders.length>1?"are":"is"} too small — each Army Group needs at least <strong>${viol.minAllowed}</strong> arm${viol.minAllowed!==1?"ies":"y"}, half of the largest group <strong>${esc(viol.largestName)}</strong> (${viol.largest}) rounded up.`);
+  }
+  const deployBannerHTML = deployIssues.length ? `<div style="margin-bottom:14px;padding:8px 12px;border-radius:6px;background:#1a0505;border:1px solid #ef535066;display:flex;align-items:flex-start;gap:10px">
+    <i class="fa-solid fa-triangle-exclamation" style="color:#ef5350;margin-top:1px;flex-shrink:0"></i>
+    <div style="font-size:12px;color:#ef9a9a;line-height:1.5"><strong style="color:#ef5350">Not deployable</strong>
+      <ul style="margin:3px 0 0 16px;padding:0">${deployIssues.map(i=>`<li style="margin-top:1px">${i}</li>`).join("")}</ul>
+    </div>
+  </div>` : "";
+
+  // AG tabs (equal-width grid)
+  const agTabsHTML = `<div style="display:grid;grid-template-columns:repeat(${agList.length},1fr);gap:1px;background:var(--border-subtle)">
+    ${agList.map(ag=>{
+      const isActive = activeAGTabId===ag.id;
+      const agSize = (ag.armyIds||[]).length;
+      const agUndersize = viol.violatingIds.has(ag.id);
+      const symDef = _bgSymLookup(ag.symbol||ICON_SYMBOL_KEYS[0]);
+      const symInner = _bgSymInner(symDef,10);
+      const symStyle = `width:20px;height:20px;border-radius:4px;background:${symDef.color}${isActive?"22":"14"};border:1.5px solid ${symDef.color}${isActive?"99":"44"};color:${symDef.color};display:inline-flex;align-items:center;justify-content:center;flex-shrink:0`;
+      const stColor = agUndersize?"#ef5350":agSize>0?"#66bb6a":"#555";
+      const stLabel = agUndersize?`⚠ ${agSize}`:agSize>0?`${agSize}a`:"—";
+      const statusBadge = `<span style="font-size:8px;font-weight:700;color:${stColor};flex-shrink:0;letter-spacing:.3px">${stLabel}</span>`;
+      if(isActive) {
+        const symEl = `<button onclick="openAGSymbolPicker('${force.id}','${ag.id}')" title="${symDef.label} — click to change" style="${symStyle};cursor:pointer;padding:0;border:1.5px solid ${symDef.color}99;transition:background .15s" onmouseover="this.style.background='${symDef.color}33'" onmouseout="this.style.background='${symDef.color}22'">${symInner}</button>`;
+        return `<div style="padding:8px 9px;border:none;border-top:2px solid var(--accent);background:var(--surface-page);overflow:hidden;min-width:0">
+          <div style="display:flex;align-items:center;gap:5px;min-width:0">
+            ${symEl}
+            <span style="font-family:var(--font-display);font-size:11px;letter-spacing:.4px;color:var(--accent);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1" title="${esc(ag.name)}">${esc(ag.name)}</span>
+            ${statusBadge}
+          </div>
+        </div>`;
+      } else {
+        return `<button onclick="selectAGTab('${force.id}','${ag.id}')"
+          style="padding:8px 9px;border:none;border-top:2px solid transparent;background:var(--surface-raised);cursor:pointer;text-align:left;overflow:hidden;min-width:0;width:100%;transition:background .12s,border-top-color .12s"
+          onmouseover="this.style.background='var(--surface-page)';this.style.borderTopColor='var(--border-default)'"
+          onmouseout="this.style.background='var(--surface-raised)';this.style.borderTopColor='transparent'">
+          <div style="display:flex;align-items:center;gap:5px;min-width:0">
+            <div style="${symStyle}">${symInner}</div>
+            <span style="font-family:var(--font-display);font-size:11px;letter-spacing:.4px;color:var(--text-primary);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1" title="${esc(ag.name)}">${esc(ag.name)}</span>
+            ${statusBadge}
+          </div>
+        </button>`;
+      }
+    }).join("")}
+  </div>`;
+
+  // Active AG card body
+  let agCardBodyHTML = "";
+  {
+    const ag = agList.find(ag=>ag.id===activeAGTabId);
+    if(ag) {
+      const agSize = (ag.armyIds||[]).length;
+      const agUndersize = viol.violatingIds.has(ag.id);
+      const pickerOpen = agSymbolPickerAgId===ag.id;
+      const usedByOthers = new Set(agList.filter(g=>g.id!==ag.id).map(g=>g.symbol).filter(Boolean));
+      const sym = ag.symbol||ICON_SYMBOL_KEYS[0];
+
+      const pickerHTML = pickerOpen ? `<div style="margin-bottom:10px;padding:8px 10px;border-radius:6px;background:var(--surface-raised);border:1px solid var(--border-subtle)">
+        ${ARMY_ICON_GROUPS.map(grp=>`
+          <div style="margin-bottom:6px">
+            <div style="font-size:9px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.7px;margin-bottom:4px">${grp.label}</div>
+            <div style="display:flex;gap:4px;flex-wrap:wrap">
+              ${grp.keys.map(s=>{
+                const sd=_bgSymLookup(s); const ic=s===sym; const iu=usedByOthers.has(s);
+                return `<button onclick="${iu&&!ic?"":"setAGSymbol('"+force.id+"','"+ag.id+"','"+s+"')"}" title="${sd.label}${iu&&!ic?" (used by another group)":""}" style="min-width:30px;height:30px;border-radius:6px;padding:0 5px;border:${ic?"2px solid "+sd.color:"1px solid "+sd.color+(iu&&!ic?"22":"44")};background:${ic?sd.color+"2a":"transparent"};color:${iu&&!ic?"#333":sd.color};cursor:${iu&&!ic?"default":"pointer"};display:inline-flex;align-items:center;justify-content:center">${_bgSymInner(sd)}</button>`;
+              }).join("")}
+            </div>
+          </div>`).join("")}
+      </div>` : "";
+
+      const agWarnStripHTML = agUndersize ? `<div style="margin-bottom:8px;padding:5px 8px;border-radius:4px;background:#1a0505;border:1px solid #ef535055;font-size:11px;color:#ef9a9a;display:flex;align-items:flex-start;gap:6px">
+        <i class="fa-solid fa-triangle-exclamation" style="color:#ef5350;flex-shrink:0;margin-top:1px"></i>
+        <span>Has ${agSize} arm${agSize!==1?"ies":"y"} — needs at least <strong style="color:#ef5350">${viol.minAllowed}</strong> (half of ${esc(viol.largestName)}'s ${viol.largest}, rounded up)</span>
+      </div>` : "";
+
+      const descHTML = ag.description ? `<div style="font-size:12px;color:var(--text-muted);line-height:1.5;margin-bottom:10px;padding:6px 8px;background:var(--surface-raised);border-radius:4px;border:1px solid var(--border-subtle)">${esc(ag.description)}</div>` : "";
+
+      const armyRowsHTML = (ag.armyIds||[]).length===0
+        ? `<div style="font-size:11px;color:#555;font-style:italic;padding:10px 0;text-align:center"><i class="fa-solid fa-circle-plus" style="color:#333;margin-right:5px"></i>No armies assigned</div>`
+        : (ag.armyIds||[]).map(armyId=>{
+            const army = state.armies.find(a=>a.id===armyId);
+            if(!army) return "";
+            const fp = isFreePick(army);
+            const deployedPts = armyDeployedPoints(army);
+            const tfCount = (army.taskForceIds||[]).length;
+            const armySym = army.symbol ? _bgSymLookup(army.symbol) : null;
+            const armyIconEl = armySym
+              ? `<span style="display:inline-flex;width:24px;height:24px;border-radius:5px;background:${armySym.color}18;border:1px solid ${armySym.color}55;color:${armySym.color};align-items:center;justify-content:center;flex-shrink:0;font-size:11px">${_bgSymInner(armySym,11)}</span>`
+              : `<span style="display:inline-flex;width:24px;height:24px;border-radius:5px;background:var(--surface-raised);border:1px solid var(--border-subtle);align-items:center;justify-content:center;flex-shrink:0;font-size:11px;color:var(--text-faint)"><i class="fa-solid fa-chess-rook"></i></span>`;
+            const fpTag = fp ? `<span style="font-size:9px;font-weight:bold;padding:1px 5px;border-radius:8px;background:#1a2a1a;color:#66bb6a;border:1px solid #66bb6a44">FP</span>` : "";
+            const meta = fp ? `${deployedPts} pts` : `${tfCount} TF${tfCount!==1?"s":""} &bull; ${deployedPts} pts`;
+            return `<div class="list-row">
+              <div style="min-width:0;flex:1;display:flex;align-items:center;gap:8px">
+                ${armyIconEl}
+                <div style="min-width:0;flex:1">
+                  <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap">
+                    <span style="font-weight:bold;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(army.name)}</span>
+                    ${fpTag}${army.faction?factionPill(army.faction):""}
+                  </div>
+                  <div style="font-size:11px;color:#8b949e;margin-top:2px">${meta}</div>
+                </div>
+              </div>
+              <button class="trait-edit-btn" style="border-color:#8b000066;color:#ef5350;background:#2a0a0a;flex-shrink:0;align-self:flex-start" onclick="removeArmyFromAG('${force.id}','${ag.id}','${armyId}')">Remove</button>
+            </div>`;
+          }).join("");
+
+      // Toolbar
+      const isEditingName = editingAGId===ag.id;
+      const nameSection = isEditingName
+        ? `<input id="ag-name-inp-${ag.id}" type="text" value="${esc(ag.name)}" maxlength="40"
+             style="font-family:var(--font-display);font-size:14px;letter-spacing:.5px;color:var(--accent);background:transparent;border:none;border-bottom:1px solid var(--accent);outline:none;min-width:0;flex:1;padding:0"
+             onblur="saveAGName('${force.id}','${ag.id}')"
+             onkeydown="if(event.key==='Enter')this.blur();if(event.key==='Escape')cancelAGNameEdit()">`
+        : `<span style="font-family:var(--font-display);font-size:14px;letter-spacing:.6px;color:var(--text-bright);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(ag.name)}</span>
+           <button onclick="startAGNameEdit('${ag.id}')" title="Rename army group" style="background:none;border:none;color:#555;cursor:pointer;padding:0 4px;font-size:10px;line-height:1;flex-shrink:0;transition:color .15s" onmouseover="this.style.color='#aaa'" onmouseout="this.style.color='#555'"><i class="fa-solid fa-pencil"></i></button>`;
+      const toolbarHTML = `<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border-subtle)">
+        <div style="flex:1;min-width:0;overflow:hidden">
+          <div style="display:flex;align-items:center;gap:5px">${nameSection}</div>
+          <div style="font-size:9px;color:var(--text-muted);margin-top:2px">${agSize} arm${agSize!==1?"ies":"y"}</div>
+        </div>
+        <div style="display:flex;gap:4px;flex-shrink:0">
+          <button class="trait-edit-btn" onclick="openAddArmyEFModal('${force.id}','${ag.id}')"><i class="fa-solid fa-plus"></i> Add Army</button>
+          <button class="trait-edit-btn" onclick="openEditAGDescModal('${force.id}','${ag.id}')"><i class="fa-solid fa-pen"></i> Description</button>
+        </div>
+      </div>`;
+      agCardBodyHTML = `${toolbarHTML}${pickerHTML}${agWarnStripHTML}${descHTML}${armyRowsHTML}`;
+    }
+  }
+
+  const agViolActive = viol.violatingIds.has(activeAGTabId||"");
+  panel.innerHTML = `<div class="card">
+    <div class="card-title">
+      <span style="display:flex;align-items:center;gap:10px">${forceIconBtn}${esc(force.name)}</span>
+      <div style="display:flex;gap:6px">
+        <button class="trait-edit-btn" onclick="openEditForceModal('${force.id}')"><i class="fa-solid fa-pen"></i> Edit</button>
+        <button class="trait-edit-btn" style="border-color:#8b000066;color:#ef5350;background:#2a0a0a" onclick="confirmBtn(this,()=>deleteForce('${force.id}'))"><i class="fa-solid fa-trash"></i> Delete</button>
+      </div>
+    </div>
+    ${forceIconPickerHTML}
+    ${force.description?`<div style="font-size:12px;color:var(--text-muted);line-height:1.5;margin-bottom:14px;padding:8px 10px;background:var(--surface-raised);border-radius:6px;border:1px solid var(--border-subtle)">${esc(force.description)}</div>`:""}
+    <div class="info-strip">
+      <div><div class="info-strip-label">Army Groups</div><div class="info-strip-val">${agCount}</div></div>
+      <div class="info-strip-sep"></div>
+      <div><div class="info-strip-label">Total Armies</div><div class="info-strip-val">${totalArmies}</div></div>
+    </div>
+    ${deployBannerHTML}
+    <div class="sub-divider">
+      <div class="sub-divider-label"><i class="fa-solid fa-layer-group" style="color:#9c27b0;font-size:9px"></i> Army Groups</div>
+    </div>
+    <div style="border:1px solid ${agViolActive?"#ef535066":"var(--border-default)"};border-radius:8px;overflow:hidden">
+      ${agTabsHTML}
+      <div style="padding:12px 14px;background:var(--surface-card);border-top:1px solid var(--border-subtle)">${agCardBodyHTML}</div>
+    </div>
+  </div>`;
+}
+
+function openForceIconPicker() {
+  forceIconPickerOpen = !forceIconPickerOpen;
+  agSymbolPickerAgId = null;
+  renderForceDetail();
+}
+
+function setForceIcon(forceId, sym) {
+  const force = (state.expeditionaryForces||[]).find(f=>f.id===forceId);
+  if(force) { force.symbol = sym||null; saveState(); }
+  forceIconPickerOpen = false;
+  renderForceList();
+  renderForceDetail();
+}
+
+function selectAGTab(forceId, agId) {
+  activeAGTabId = agId;
+  agSymbolPickerAgId = null;
+  editingAGId = null;
+  renderForceDetail();
+}
+
+function openAGSymbolPicker(forceId, agId) {
+  agSymbolPickerAgId = agSymbolPickerAgId===agId ? null : agId;
+  renderForceDetail();
+}
+
+function setAGSymbol(forceId, agId, sym) {
+  const force = (state.expeditionaryForces||[]).find(f=>f.id===forceId);
+  const ag = (force?.armyGroups||[]).find(g=>g.id===agId);
+  if(ag) { ag.symbol=sym; saveState(); }
+  agSymbolPickerAgId = null;
+  renderForceDetail();
+}
+
+function startAGNameEdit(agId) {
+  editingAGId = agId;
+  agSymbolPickerAgId = null;
+  forceIconPickerOpen = false;
+  renderForceDetail();
+  setTimeout(()=>document.getElementById("ag-name-inp-"+agId)?.focus(), 0);
+}
+
+function cancelAGNameEdit() {
+  editingAGId = null;
+  renderForceDetail();
+}
+
+function saveAGName(forceId, agId) {
+  const force = (state.expeditionaryForces||[]).find(f=>f.id===forceId);
+  const ag = (force?.armyGroups||[]).find(g=>g.id===agId);
+  if(ag) {
+    const inp = document.getElementById("ag-name-inp-"+agId);
+    const val = inp ? inp.value.trim() : "";
+    if(val) ag.name = val;
+  }
+  editingAGId = null;
+  saveState();
+  renderForceDetail();
+}
+
+function openAddArmyEFModal(forceId, agId) {
+  addArmyTargetForceId = forceId;
+  addArmyTargetAgId = agId;
+  _renderAddArmyEFList();
+  openModal("modal-add-army-ef");
+}
+
+function _renderAddArmyEFList() {
+  const listEl = document.getElementById("add-army-ef-list");
+  if(!listEl) return;
+  const globalAssigned = new Set((state.expeditionaryForces||[]).flatMap(f=>(f.armyGroups||[]).flatMap(g=>g.armyIds||[])));
+  const available = state.armies.filter(a=>!globalAssigned.has(a.id));
+  if(!available.length) {
+    listEl.innerHTML = `<div style="font-size:12px;color:#555;font-style:italic;padding:8px 0">No available armies — all armies are already assigned to an expeditionary force.</div>`;
+    return;
+  }
+  listEl.innerHTML = available.map(army=>{
+    const fp = isFreePick(army);
+    const deployedPts = armyDeployedPoints(army);
+    const tfCount = (army.taskForceIds||[]).length;
+    const armySym = army.symbol ? _bgSymLookup(army.symbol) : null;
+    const armyIconEl = armySym
+      ? `<span style="display:inline-flex;width:22px;height:22px;border-radius:5px;background:${armySym.color}18;border:1px solid ${armySym.color}55;color:${armySym.color};align-items:center;justify-content:center;flex-shrink:0;font-size:11px">${_bgSymInner(armySym,11)}</span>`
+      : `<span style="display:inline-flex;width:22px;height:22px;border-radius:5px;background:var(--surface-raised);border:1px solid var(--border-subtle);align-items:center;justify-content:center;flex-shrink:0;font-size:11px;color:var(--text-faint)"><i class="fa-solid fa-chess-rook"></i></span>`;
+    const fpTag = fp ? `<span style="font-size:9px;font-weight:bold;padding:1px 5px;border-radius:8px;background:#1a2a1a;color:#66bb6a;border:1px solid #66bb6a44">FP</span>` : "";
+    return `<div class="list-row" style="cursor:default">
+      <div style="min-width:0;flex:1;display:flex;align-items:center;gap:8px">
+        ${armyIconEl}
+        <div style="min-width:0;flex:1">
+          <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap">
+            <span style="font-weight:bold">${esc(army.name)}</span>${fpTag}${army.faction?factionPill(army.faction):""}
+          </div>
+          <div style="font-size:11px;color:#8b949e;margin-top:2px">${fp?"":`${tfCount} TF${tfCount!==1?"s":""} &bull; `}${deployedPts} pts</div>
+        </div>
+      </div>
+      <button class="trait-edit-btn" onclick="addArmyToAG('${addArmyTargetForceId}','${addArmyTargetAgId}','${army.id}')">Add</button>
+    </div>`;
+  }).join("");
+}
+
+function addArmyToAG(forceId, agId, armyId) {
+  const force = (state.expeditionaryForces||[]).find(f=>f.id===forceId);
+  const ag = (force?.armyGroups||[]).find(g=>g.id===agId);
+  if(!ag) return;
+  if(!(ag.armyIds||[]).includes(armyId)) { ag.armyIds=ag.armyIds||[]; ag.armyIds.push(armyId); }
+  saveState();
+  _renderAddArmyEFList();
+  renderForceDetail();
+  renderForceList();
+  // Update army detail to show deployment badge if that army is selected
+  if(currentArmyId===armyId) renderArmyDetail();
+}
+
+function removeArmyFromAG(forceId, agId, armyId) {
+  const force = (state.expeditionaryForces||[]).find(f=>f.id===forceId);
+  const ag = (force?.armyGroups||[]).find(g=>g.id===agId);
+  if(!ag) return;
+  ag.armyIds=(ag.armyIds||[]).filter(id=>id!==armyId);
+  saveState();
+  renderForceDetail();
+  renderForceList();
+  if(currentArmyId===armyId) renderArmyDetail();
+}
+
+function openEditAGDescModal(forceId, agId) {
+  const force = (state.expeditionaryForces||[]).find(f=>f.id===forceId);
+  const ag = (force?.armyGroups||[]).find(g=>g.id===agId);
+  if(!ag) return;
+  document.getElementById("ag-desc-force-id").value = forceId;
+  document.getElementById("ag-desc-ag-id").value = agId;
+  document.getElementById("ag-desc-name").textContent = ag.name;
+  document.getElementById("ag-desc-textarea").value = ag.description||"";
+  openModal("modal-ag-desc");
+}
+
+function saveAGDesc() {
+  const forceId = document.getElementById("ag-desc-force-id").value;
+  const agId = document.getElementById("ag-desc-ag-id").value;
+  const desc = document.getElementById("ag-desc-textarea").value.trim();
+  const force = (state.expeditionaryForces||[]).find(f=>f.id===forceId);
+  const ag = (force?.armyGroups||[]).find(g=>g.id===agId);
+  if(ag) { ag.description=desc; saveState(); }
+  closeModal("modal-ag-desc");
+  renderForceDetail();
+}
+
+function openNewForceModal() {
+  editingForceId = null;
+  document.getElementById("force-modal-title").textContent = "New Expeditionary Force";
+  document.getElementById("force-modal-submit").textContent = "Create";
+  document.getElementById("force-new-name").value = "";
+  document.getElementById("force-ag-count").value = "3";
+  document.getElementById("force-description").value = "";
+  clearFieldErr("force-new-name");
+  modalMsg("force-modal-msg","");
+  openModal("modal-force");
+}
+
+function openEditForceModal(id) {
+  const force = (state.expeditionaryForces||[]).find(f=>f.id===id);
+  if(!force) return;
+  editingForceId = id;
+  document.getElementById("force-modal-title").textContent = "Edit Expeditionary Force";
+  document.getElementById("force-modal-submit").textContent = "Save Changes";
+  document.getElementById("force-new-name").value = force.name;
+  document.getElementById("force-ag-count").value = String(force.agCount||3);
+  document.getElementById("force-description").value = force.description||"";
+  clearFieldErr("force-new-name");
+  modalMsg("force-modal-msg","");
+  openModal("modal-force");
+}
+
+function saveForce() {
+  modalMsg("force-modal-msg","");
+  const name = document.getElementById("force-new-name").value.trim();
+  if(!name) { showFieldErr("force-new-name","Enter a force name."); return; }
+  const agCount = parseInt(document.getElementById("force-ag-count").value)||3;
+  const description = document.getElementById("force-description").value.trim();
+  if(editingForceId) {
+    const force = (state.expeditionaryForces||[]).find(f=>f.id===editingForceId);
+    if(force) {
+      if(agCount < (force.agCount||3)) {
+        const agsToRemove = (force.armyGroups||[]).slice(agCount);
+        const hasArmies = agsToRemove.some(ag=>(ag.armyIds||[]).length>0);
+        if(hasArmies) {
+          const names = agsToRemove.filter(ag=>(ag.armyIds||[]).length>0).map(ag=>esc(ag.name)).join(", ");
+          modalMsg("force-modal-msg",`Can't reduce to ${agCount} army groups — <strong>${names}</strong> still ${agsToRemove.filter(ag=>(ag.armyIds||[]).length>0).length>1?"have":"has"} armies. Remove those first.`);
+          return;
+        }
+        force.armyGroups=(force.armyGroups||[]).slice(0,agCount);
+      }
+      force.name=name; force.agCount=agCount; force.description=description;
+      _ensureAGs(force);
+    }
+    editingForceId = null;
+  } else {
+    const force = {id:"ef_"+uid(), name, agCount, description, symbol:null, armyGroups:[]};
+    if(!state.expeditionaryForces) state.expeditionaryForces=[];
+    state.expeditionaryForces.push(force);
+    _ensureAGs(force);
+    currentForceId = force.id;
+  }
+  saveState();
+  closeModal("modal-force");
+  renderForceList();
+  renderForceDetail();
+}
+
+function deleteForce(id) {
+  state.expeditionaryForces=(state.expeditionaryForces||[]).filter(f=>f.id!==id);
+  if(currentForceId===id) currentForceId=null;
+  saveState();
+  renderForceList();
+  renderForceDetail();
+}
+
+// ============================================================
 // INIT
 // ============================================================
 function renderAll() {
@@ -5211,6 +5817,8 @@ function renderAll() {
   if(currentTFId) renderTFDetail();
   renderArmyList();
   if(currentArmyId) renderArmyDetail();
+  renderForceList();
+  if(currentForceId) renderForceDetail();
 }
 
 loadState();
