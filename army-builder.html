@@ -779,6 +779,10 @@ label .trait-edit-btn{margin-left:6px}
         <option value="letters">Letters — A  B  C</option>
       </select>
     </div>
+    <div class="form-group" style="margin-bottom:16px">
+      <label>Notes <span style="font-size:10px;color:#8b949e;font-weight:normal">(optional — lore, composition notes, etc.)</span></label>
+      <textarea id="army-notes" placeholder="e.g. Veteran formation tasked with holding the northern flank..." style="width:100%;min-height:72px;resize:vertical;background:var(--surface-raised);border:1px solid var(--border-subtle);border-radius:6px;color:#e0e0e0;padding:8px;font-family:var(--font-body);font-size:13px;line-height:1.5"></textarea>
+    </div>
     <div id="army-modal-msg" style="display:none;margin-bottom:10px"></div>
     <div style="display:flex;justify-content:flex-end;gap:8px">
       <button class="btn btn-secondary" onclick="closeModal('modal-army')">Cancel</button>
@@ -909,6 +913,27 @@ label .trait-edit-btn{margin-left:6px}
     <div style="display:flex;justify-content:flex-end;gap:8px">
       <button class="btn btn-secondary" onclick="closeModal('modal-ag-desc')">Cancel</button>
       <button class="btn btn-primary" onclick="saveAGDesc()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== BATTLE GROUP NOTES MODAL ===== -->
+<div id="modal-bg-notes" class="modal-bg">
+  <div class="modal">
+    <div class="modal-header">
+      <span>Battle Group Notes</span>
+      <button class="modal-close" onclick="closeModal('modal-bg-notes')"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <input type="hidden" id="bg-notes-army-id">
+    <input type="hidden" id="bg-notes-bg-id">
+    <div style="font-size:11px;color:#8b949e;margin-bottom:10px" id="bg-notes-name"></div>
+    <div class="form-group" style="margin-bottom:16px">
+      <label>Notes <span style="font-size:10px;color:#8b949e;font-weight:normal">(optional)</span></label>
+      <textarea id="bg-notes-textarea" placeholder="e.g. Armoured spearhead assigned to the northern breakthrough..." style="width:100%;min-height:80px;resize:vertical;background:var(--surface-raised);border:1px solid var(--border-subtle);border-radius:6px;color:#e0e0e0;padding:8px;font-family:var(--font-body);font-size:13px;line-height:1.5"></textarea>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px">
+      <button class="btn btn-secondary" onclick="closeModal('modal-bg-notes')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveBGNotes()">Save</button>
     </div>
   </div>
 </div>
@@ -4690,12 +4715,14 @@ function renderArmyDetail() {
             ? `<button class="trait-edit-btn" onclick="openFPBGUnitModal('${army.id}','${bg.id}')">Add Unit</button>`
             : `<button class="trait-edit-btn" onclick="openArmyBGUnitModal('${army.id}','${bg.id}')">Add Unit</button>
                <button class="trait-edit-btn" onclick="openBGTFModal('${army.id}','${bg.id}')">Add Task Force</button>`}
+          <button class="trait-edit-btn" onclick="openBGNotesModal('${army.id}','${bg.id}')"><i class="fa-solid fa-pen"></i> Notes</button>
           ${(bg.entries||[]).length > 0
             ? `<button class="trait-edit-btn" style="border-color:#8b000066;color:#ef5350;background:#2a0a0a" onclick="confirmBtn(this,()=>clearBG('${army.id}','${bg.id}'))"><i class="fa-solid fa-trash"></i> Clear</button>`
             : ""}
         </div>
       </div>`;
-      bgCardBodyHTML = `${toolbarHTML}${pickerHTML}${bgWarnStripHTML}${entriesHTML || `<div style="font-size:11px;color:#555;font-style:italic;padding:10px 0;text-align:center"><i class="fa-solid fa-circle-plus" style="color:#333;margin-right:5px"></i>No units assigned</div>`}`;
+      const bgNotesHTML = bg.notes ? `<div style="background:#0d0f14;border:1px solid #1e2530;border-radius:6px;padding:8px 10px;margin-bottom:10px;font-size:12px;color:#8b949e;line-height:1.6;font-style:italic">${esc(bg.notes).replace(/\n/g,"<br>")}</div>` : "";
+      bgCardBodyHTML = `${toolbarHTML}${pickerHTML}${bgWarnStripHTML}${bgNotesHTML}${entriesHTML || `<div style="font-size:11px;color:#555;font-style:italic;padding:10px 0;text-align:center"><i class="fa-solid fa-circle-plus" style="color:#333;margin-right:5px"></i>No units assigned</div>`}`;
     }
   }
 
@@ -4786,6 +4813,7 @@ function renderArmyDetail() {
       </div>
     </div>
     ${armyIconPickerHTML}
+    ${army.notes?`<div style="background:#0d0f14;border:1px solid #1e2530;border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:13px;color:#8b949e;line-height:1.6;font-style:italic">${esc(army.notes).replace(/\n/g,"<br>")}</div>`:""}
     <div class="info-strip" style="${overPtsLimit?"border-color:#ef535055":""}">
       <div>
         <div class="info-strip-label">Deployed</div>
@@ -4933,6 +4961,7 @@ function openNewArmyModal() {
   document.querySelectorAll("input[name='army-type']").forEach(r => r.disabled = false);
   document.getElementById("army-type-lock-note").style.display = "none";
   document.getElementById("army-bg-mode").value = "custom";
+  document.getElementById("army-notes").value = "";
   clearFieldErr("army-new-name");
   modalMsg("army-modal-msg", "");
   _refreshArmyFactionSelect();
@@ -4954,6 +4983,7 @@ function openEditArmyModal(id) {
   document.querySelectorAll("input[name='army-type']").forEach(r => r.disabled = true);
   document.getElementById("army-type-lock-note").style.display = "block";
   document.getElementById("army-bg-mode").value = army.bgIconMode || "custom";
+  document.getElementById("army-notes").value = army.notes || "";
   clearFieldErr("army-new-name");
   modalMsg("army-modal-msg", "");
   _refreshArmyFactionSelect();
@@ -4980,6 +5010,7 @@ function saveArmy() {
   const pointsLimit = (!isNaN(limitRaw) && limitRaw > 0) ? limitRaw : null;
   const armyType = document.querySelector("input[name='army-type']:checked")?.value || "tf";
   const bgIconMode = document.getElementById("army-bg-mode").value || "custom";
+  const notes = document.getElementById("army-notes").value.trim();
   if(editingArmyId) {
     const army = state.armies.find(a=>a.id===editingArmyId);
     if(army) {
@@ -4994,12 +5025,12 @@ function saveArmy() {
         }
         army.battleGroups = (army.battleGroups||[]).slice(0, bgCount);
       }
-      army.name=name; army.faction=faction; army.bgCount=bgCount; army.pointsLimit=pointsLimit; army.bgIconMode=bgIconMode; _ensureBGs(army);
+      army.name=name; army.faction=faction; army.bgCount=bgCount; army.pointsLimit=pointsLimit; army.bgIconMode=bgIconMode; army.notes=notes; _ensureBGs(army);
       // armyType is locked on edit — do not overwrite
     }
     editingArmyId = null;
   } else {
-    const army = {id:"army_"+uid(), name, faction, bgCount, pointsLimit, armyType, bgIconMode, taskForceIds:[], battleGroups:[]};
+    const army = {id:"army_"+uid(), name, faction, bgCount, pointsLimit, armyType, bgIconMode, notes, taskForceIds:[], battleGroups:[]};
     state.armies.push(army);
     _ensureBGs(army);
     currentArmyId = army.id;
@@ -5309,6 +5340,28 @@ function confirmAddTFToBG() {
   });
   saveState();
   closeModal("modal-army-bg-tf");
+  renderArmyDetail();
+}
+
+function openBGNotesModal(armyId, bgId) {
+  const army = state.armies.find(a=>a.id===armyId);
+  const bg = (army?.battleGroups||[]).find(b=>b.id===bgId);
+  if(!bg) return;
+  document.getElementById("bg-notes-army-id").value = armyId;
+  document.getElementById("bg-notes-bg-id").value = bgId;
+  document.getElementById("bg-notes-name").textContent = bg.name;
+  document.getElementById("bg-notes-textarea").value = bg.notes||"";
+  openModal("modal-bg-notes");
+}
+
+function saveBGNotes() {
+  const armyId = document.getElementById("bg-notes-army-id").value;
+  const bgId = document.getElementById("bg-notes-bg-id").value;
+  const notes = document.getElementById("bg-notes-textarea").value.trim();
+  const army = state.armies.find(a=>a.id===armyId);
+  const bg = (army?.battleGroups||[]).find(b=>b.id===bgId);
+  if(bg) { bg.notes=notes; saveState(); }
+  closeModal("modal-bg-notes");
   renderArmyDetail();
 }
 
