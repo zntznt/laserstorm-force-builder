@@ -4758,18 +4758,6 @@ function mechanizedCount(infUnit, transportUnit) {
 function availableTransports() {
   return allUnits().filter(u => u.class === "afv" && transportSlotsFor(u) > 0);
 }
-function _mechPill(infUnit, transportUnit, style) {
-  if (!transportUnit) return "";
-  const n = mechanizedCount(infUnit, transportUnit);
-  if (!n) return "";
-  const base = style === "print-color"
-    ? `background:#e8f5e9;color:#2e7d32;border:1px solid #a5d6a7`
-    : style === "print-gray"
-    ? `background:#e0e0e0;color:#333;border:1px solid #bbb`
-    : `background:#1a2a1a;color:#66bb6a;border:1px solid #66bb6a44`;
-  return `<span style="display:inline-flex;align-items:center;gap:3px;font-size:9px;font-weight:bold;padding:1px 6px;border-radius:8px;${base}"><i class="fa-solid fa-truck" style="font-size:8px"></i>${n}&times; ${esc(transportUnit.name)}</span>`;
-}
-
 // ── Transport picker (per-deployment) ─────────────────────
 // TF slot:  openTransportPickerTF(tfId, slotId)
 // FP entry: openTransportPickerFP(armyId, bgId, entryId)
@@ -5700,8 +5688,8 @@ function printArmy(armyId, paperSize, inkMode) {
     const hdrBord = gray ? "#bbb"    : (sd?.color ? sd.color + "55" : "#c0cce8");
 
     const withTransport = (carrier, viewType, tu, badgeHTML) => {
-      if (!tu) return [printUnitCard(carrier, viewType, badgeHTML||"")];
-      return [printMechPair(carrier, viewType, tu, mechanizedCount(carrier, tu), badgeHTML||"")];
+      if (!tu) return [{html: printUnitCard(carrier, viewType, badgeHTML||""), full: false}];
+      return [{html: printMechPair(carrier, viewType, tu, mechanizedCount(carrier, tu), badgeHTML||""), full: true}];
     };
     const unitCards = (bg.entries||[]).flatMap(e => {
       if (fp) {
@@ -5726,12 +5714,33 @@ function printArmy(armyId, paperSize, inkMode) {
       }
     });
 
+    // Chunk cards into rows so each row is a self-contained block that the
+    // browser can keep together (break-inside:avoid) and page-break BETWEEN.
+    // Block-flow fragmentation works in every engine — unlike flex/grid
+    // containers, which WebKit refuses to split across pages. Full-width
+    // mechanized pairs get their own row; normal cards pair up two per row.
+    const rows = [];
+    let pending = null;
+    for (const c of unitCards) {
+      if (c.full) {
+        if (pending) { rows.push([pending]); pending = null; }
+        rows.push([c]);
+      } else if (pending) {
+        rows.push([pending, c]); pending = null;
+      } else {
+        pending = c;
+      }
+    }
+    if (pending) rows.push([pending]);
     const grid = unitCards.length
-      ? `<div class="cards-grid">${unitCards.join("")}</div>`
+      ? rows.map(r => r[0].full
+          ? `<div class="card-row">${r[0].html}</div>`
+          : `<div class="card-row"><div class="card-cell">${r[0].html}</div><div class="card-cell">${r[1]?r[1].html:""}</div></div>`
+        ).join("")
       : `<div style="padding:16px;text-align:center;color:${pal.mutedText};font-style:italic">No units assigned to this battle group</div>`;
 
     return `<div class="print-page page-break">
-      <div style="display:flex;align-items:stretch;background:${hdrBg};border:2px solid ${hdrBord};border-radius:10px;overflow:hidden;margin-bottom:16px">
+      <div class="bg-header" style="display:flex;align-items:stretch;background:${hdrBg};border:2px solid ${hdrBord};border-radius:10px;overflow:hidden;margin-bottom:16px">
         <div style="flex:1;padding:14px 18px">
           <div style="font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:1.5px;color:${pal.pageText};line-height:1.1;margin-bottom:5px">${esc(bg.name)}</div>
           ${bg.notes?`<div style="font-size:12px;color:${pal.mutedText};line-height:1.5;font-style:italic;margin-bottom:6px">${esc(bg.notes).replace(/\n/g,"<br>")}</div>`:""}
@@ -5760,8 +5769,12 @@ function printArmy(armyId, paperSize, inkMode) {
 body{font-family:'Barlow',sans-serif;background:#fff;color:${pal.pageText};-webkit-print-color-adjust:exact;print-color-adjust:exact}
 .print-page{padding:0}
 .page-break{page-break-before:always;break-before:always}
-.cards-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:start}
-@media print{@page{size:${pageSize};margin:0}body{margin:0}.print-page{padding:${pageMargin}}.cards-grid{display:flex;flex-wrap:wrap;gap:10px;align-items:start}.cards-grid>div{break-inside:avoid;page-break-inside:avoid;flex:0 0 calc(50% - 5px)}.cards-grid>.mech-pair-print{flex:0 0 100%}}
+.card-row{display:flex;gap:10px;align-items:stretch;margin-bottom:10px;break-inside:avoid;page-break-inside:avoid}
+.card-cell{flex:1 1 0;min-width:0;display:flex;flex-direction:column}
+.card-cell>div{flex:1}
+.card-row>.mech-pair-print{flex:1 1 100%}
+.bg-header{break-after:avoid;page-break-after:avoid}
+@media print{@page{size:${pageSize};margin:0}body{margin:0}.print-page{padding:${pageMargin}}}
 @media screen{body{max-width:${paperSize==="a4"?"794px":"860px"};margin:24px auto;padding:24px;background:#e8eaed}.print-page{background:#fff;padding:0.5in;border-radius:4px;box-shadow:0 2px 10px rgba(0,0,0,.18);margin-bottom:28px}}
 </style>
 </head>
