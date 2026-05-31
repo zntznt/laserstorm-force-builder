@@ -3511,9 +3511,22 @@ function renderTFDetail() {
     <div style="border-top:1px solid var(--border-subtle)">${activeSectionHTML}</div>
   </div>`;
   const tfOverLimitNow = tf.pointsLimit && pts > tf.pointsLimit;
+  const deployedArmy = armyOfTF(tf.id);
+  const deployedBadge = deployedArmy
+    ? `<span style="font-size:10px;color:#8b949e;display:flex;align-items:center;gap:5px;margin-top:4px">
+        <i class="fa-solid fa-shield-halved" style="color:#7986cb;font-size:9px"></i>
+        Deployed in <strong style="color:#c5cae9">${esc(deployedArmy.name)}</strong>
+       </span>`
+    : `<span style="font-size:10px;color:#444;display:flex;align-items:center;gap:5px;margin-top:4px">
+        <i class="fa-solid fa-shield-halved" style="font-size:9px"></i>
+        Not deployed in any army
+       </span>`;
   panel.innerHTML = `<div class="card">
     <div class="card-title">
-      <span>${esc(tf.name)}</span>
+      <div>
+        <span>${esc(tf.name)}</span>
+        ${deployedBadge}
+      </div>
       <div style="display:flex;gap:6px">
         <button class="trait-edit-btn" onclick="openEditTFModal('${tf.id}')"><i class="fa-solid fa-pen"></i> Edit</button>
         <button class="trait-edit-btn" style="border-color:#8b000066;color:#ef5350;background:#2a0a0a" onclick="confirmBtn(this,()=>deleteTF('${tf.id}'))"><i class="fa-solid fa-trash"></i> Delete</button>
