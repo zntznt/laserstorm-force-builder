@@ -4567,6 +4567,9 @@ function renderArmyDetail() {
             ? `<button class="trait-edit-btn" onclick="openFPBGUnitModal('${army.id}','${bg.id}')">Add Unit</button>`
             : `<button class="trait-edit-btn" onclick="openArmyBGUnitModal('${army.id}','${bg.id}')">Add Unit</button>
                <button class="trait-edit-btn" onclick="openBGTFModal('${army.id}','${bg.id}')">Add Task Force</button>`}
+          ${(bg.entries||[]).length > 0
+            ? `<button class="trait-edit-btn" style="border-color:#8b000066;color:#ef5350;background:#2a0a0a" onclick="confirmBtn(this,()=>clearBG('${army.id}','${bg.id}'))"><i class="fa-solid fa-trash"></i> Clear</button>`
+            : ""}
         </div>
       </div>`;
       bgCardBodyHTML = `${toolbarHTML}${pickerHTML}${bgWarnStripHTML}${entriesHTML || `<div style="font-size:11px;color:#555;font-style:italic;padding:10px 0;text-align:center"><i class="fa-solid fa-circle-plus" style="color:#333;margin-right:5px"></i>No units assigned</div>`}`;
@@ -5095,6 +5098,15 @@ function removeFromBG(armyId, bgId, entryId) {
   const bg = army?.battleGroups?.find(b=>b.id===bgId);
   if(!bg) return;
   bg.entries = (bg.entries||[]).filter(e=>e.id!==entryId);
+  saveState();
+  renderArmyDetail();
+}
+
+function clearBG(armyId, bgId) {
+  const army = state.armies.find(a=>a.id===armyId);
+  const bg = army?.battleGroups?.find(b=>b.id===bgId);
+  if(!bg) return;
+  bg.entries = [];
   saveState();
   renderArmyDetail();
 }
