@@ -264,6 +264,7 @@ label .trait-edit-btn{margin-left:6px}
     <div class="nav-tab" id="tab-taskforces" onclick="showPage('taskforces')">Task Forces</div>
     <div class="nav-tab" id="tab-armies" onclick="showPage('armies')">Armies</div>
     <div class="nav-tab" id="tab-forces" onclick="showPage('forces')">Exp. Forces</div>
+    <div class="nav-tab" id="tab-data" onclick="showPage('data')" title="Import / Export data"><i class="fa-solid fa-database"></i> Data</div>
   </div>
   <a href="https://www.wargamevault.com/product/476399/laserstorm-2nd-edition?affiliate_id=564654" target="_blank" rel="noopener" style="margin-left:auto;margin-right:12px;padding:5px 13px;background:#007eff;color:#fff;border-radius:20px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;text-decoration:none;white-space:nowrap;transition:background .2s" onmouseover="this.style.background='#0066cc'" onmouseout="this.style.background='#007eff'">Buy LaserStorm</a>
 </nav>
@@ -547,6 +548,54 @@ label .trait-edit-btn{margin-left:6px}
         <div class="empty"><div class="empty-icon"><i class="fa-solid fa-flag"></i></div>Select a force to view</div>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- ===== DATA (IMPORT / EXPORT) PAGE ===== -->
+<div id="page-data" class="page">
+  <div style="max-width:760px;margin:0 auto">
+
+    <!-- EXPORT CARD -->
+    <div class="card" style="margin-bottom:18px">
+      <div class="card-title">Export Data</div>
+      <p style="color:#8b949e;font-size:13px;margin:0 0 16px;line-height:1.5">
+        Download your custom content as a JSON file. Back up everything, or export a single faction together with all of its custom units and the custom traits they rely on.
+      </p>
+      <div class="form-group" style="margin-bottom:14px">
+        <label style="display:block;margin-bottom:8px">What to export</label>
+        <label style="display:flex;align-items:flex-start;gap:8px;font-weight:normal;margin-bottom:8px;cursor:pointer;text-transform:none;letter-spacing:0">
+          <input type="radio" name="export-scope" value="all" checked onchange="onExportScopeChange()" style="margin:3px 0 0">
+          <span>Everything <span style="color:#8b949e;font-size:12px">(full backup &mdash; all custom units, factions, traits, TF types, assets, task forces, armies &amp; forces)</span></span>
+        </label>
+        <label style="display:flex;align-items:flex-start;gap:8px;font-weight:normal;cursor:pointer;text-transform:none;letter-spacing:0">
+          <input type="radio" name="export-scope" value="faction" onchange="onExportScopeChange()" style="margin:3px 0 0">
+          <span>Single faction <span style="color:#8b949e;font-size:12px">(the faction + its custom units + required custom traits)</span></span>
+        </label>
+      </div>
+      <div class="form-group" id="export-faction-row" style="margin-bottom:16px;display:none">
+        <label>Faction</label>
+        <select id="export-faction-select" style="width:100%" onchange="updateExportFactionSummary()"></select>
+        <div id="export-faction-summary" style="font-size:12px;color:#8b949e;margin-top:6px"></div>
+      </div>
+      <div id="data-export-msg" style="display:none;margin-bottom:12px"></div>
+      <button class="btn btn-primary" onclick="doExport()"><i class="fa-solid fa-download"></i> Export JSON</button>
+    </div>
+
+    <!-- IMPORT CARD -->
+    <div class="card">
+      <div class="card-title">Import Data</div>
+      <p style="color:#8b949e;font-size:13px;margin:0 0 16px;line-height:1.5">
+        Load a previously exported JSON file. A <strong>faction</strong> export is merged into your current data (items whose name already exists are skipped). A <strong>full backup</strong> replaces everything you currently have.
+      </p>
+      <div class="form-group" style="margin-bottom:14px">
+        <label>JSON file</label>
+        <input type="file" id="import-file" accept="application/json,.json" onchange="onImportFileChange()" style="width:100%">
+      </div>
+      <div id="import-preview" style="display:none;background:var(--surface-raised);border:1px solid var(--border-default);border-radius:6px;padding:12px 14px;margin-bottom:14px;font-size:13px;line-height:1.6"></div>
+      <div id="data-import-msg" style="display:none;margin-bottom:12px"></div>
+      <button class="btn btn-primary" id="import-btn" onclick="doImport()" disabled><i class="fa-solid fa-upload"></i> Import</button>
+    </div>
+
   </div>
 </div>
 
@@ -1792,7 +1841,258 @@ function showPage(p) {
   if(p==="taskforces") renderTFList();
   if(p==="armies") renderArmyList();
   if(p==="forces") renderForceList();
+  if(p==="data") renderDataPage();
 }
+
+// ============================================================
+// DATA IMPORT / EXPORT
+// ============================================================
+let _pendingImport = null;     // parsed payload awaiting import
+let _fullImportArmed = false;  // two-step confirm for destructive full import
+
+function renderDataPage(){
+  const allRadio = document.querySelector('input[name="export-scope"][value="all"]');
+  if(allRadio) allRadio.checked = true;
+  populateExportFactionSelect();
+  onExportScopeChange();
+  _dataHideMsg("data-export-msg");
+  const fileInput = document.getElementById("import-file");
+  if(fileInput) fileInput.value = "";
+  _pendingImport = null;
+  _fullImportArmed = false;
+  const prev = document.getElementById("import-preview");
+  if(prev) prev.style.display = "none";
+  const ib = document.getElementById("import-btn");
+  if(ib){ ib.disabled = true; ib.innerHTML = '<i class="fa-solid fa-upload"></i> Import'; }
+  _dataHideMsg("data-import-msg");
+}
+
+function populateExportFactionSelect(){
+  const sel = document.getElementById("export-faction-select");
+  if(!sel) return;
+  const facs = (state.customFactions||[]).slice().sort((a,b)=>a.name.localeCompare(b.name));
+  sel.innerHTML = facs.length
+    ? facs.map(f=>`<option value="${esc(f.id)}">${esc(f.name)}</option>`).join("")
+    : '<option value="">No custom factions</option>';
+  updateExportFactionSummary();
+}
+
+function updateExportFactionSummary(){
+  const sel = document.getElementById("export-faction-select");
+  const out = document.getElementById("export-faction-summary");
+  if(!sel||!out) return;
+  const fac = (state.customFactions||[]).find(f=>f.id===sel.value);
+  if(!fac){ out.textContent = ""; return; }
+  const b = collectFactionBundle(fac);
+  out.textContent = `Includes ${b.customUnits.length} unit(s) and ${b.customTraits.length} custom trait(s).`;
+}
+
+function onExportScopeChange(){
+  const scope = (document.querySelector('input[name="export-scope"]:checked')||{}).value;
+  const row = document.getElementById("export-faction-row");
+  if(row) row.style.display = (scope==="faction") ? "" : "none";
+}
+
+// Gather a custom faction + its units + the custom traits those units rely on.
+// `faction` is the custom faction object. A unit references its faction by id
+// (unit.faction === faction.id). Traits on a unit are stored as arrays whose
+// first element is the trait name, in unit.standTraits[] and each weapon.traits[].
+function collectFactionBundle(faction){
+  if(!faction) return { faction:null, customFactions:[], customUnits:[], customTraits:[] };
+  const units = (state.customUnits||[]).filter(u=>u.faction===faction.id);
+  const refNames = new Set();
+  units.forEach(u=>{
+    (u.standTraits||[]).forEach(t=>{ if(t && t[0]!=null) refNames.add(String(t[0]).toLowerCase()); });
+    (u.weapons||[]).forEach(w=>(w.traits||[]).forEach(t=>{ if(t && t[0]!=null) refNames.add(String(t[0]).toLowerCase()); }));
+  });
+  const traits = (state.customTraits||[]).filter(t=>refNames.has(String(t.name).toLowerCase()));
+  return { faction, customFactions:[faction], customUnits:units, customTraits:traits };
+}
+
+function _dataSlug(s){ return String(s||"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"") || "export"; }
+
+function downloadJSON(filename, obj){
+  const blob = new Blob([JSON.stringify(obj,null,2)], {type:"application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url), 1000);
+}
+
+function doExport(){
+  const scope = (document.querySelector('input[name="export-scope"]:checked')||{}).value || "all";
+  const stamp = new Date().toISOString().slice(0,10);
+  if(scope==="faction"){
+    const sel = document.getElementById("export-faction-select");
+    const fac = (state.customFactions||[]).find(f=>f.id===(sel&&sel.value));
+    if(!fac){ _dataMsg("data-export-msg","error","Select a faction to export."); return; }
+    const b = collectFactionBundle(fac);
+    const payload = {
+      app:"laserstorm-army-builder", kind:"faction", version:1,
+      exportedAt:new Date().toISOString(), faction:fac.name,
+      data:{ customFactions:b.customFactions, customTraits:b.customTraits, customUnits:b.customUnits }
+    };
+    downloadJSON(`laserstorm-faction-${_dataSlug(fac.name)}-${stamp}.json`, payload);
+    _dataMsg("data-export-msg","success",`Exported "${esc(fac.name)}" &mdash; ${b.customUnits.length} unit(s), ${b.customTraits.length} trait(s).`);
+  } else {
+    const payload = {
+      app:"laserstorm-army-builder", kind:"full", version:1,
+      exportedAt:new Date().toISOString(),
+      data:{
+        customUnits:state.customUnits||[], customFactions:state.customFactions||[],
+        customTraits:state.customTraits||[], customTFTypes:state.customTFTypes||[],
+        customTacticalAssets:state.customTacticalAssets||[], taskForces:state.taskForces||[],
+        armies:state.armies||[], expeditionaryForces:state.expeditionaryForces||[]
+      }
+    };
+    downloadJSON(`laserstorm-backup-${stamp}.json`, payload);
+    _dataMsg("data-export-msg","success","Exported full backup.");
+  }
+}
+
+function onImportFileChange(){
+  const input = document.getElementById("import-file");
+  const ib = document.getElementById("import-btn");
+  const prev = document.getElementById("import-preview");
+  _pendingImport = null; _fullImportArmed = false;
+  if(ib){ ib.disabled = true; ib.innerHTML = '<i class="fa-solid fa-upload"></i> Import'; }
+  _dataHideMsg("data-import-msg");
+  if(prev) prev.style.display="none";
+  const file = input && input.files && input.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e=>{
+    let payload;
+    try { payload = JSON.parse(e.target.result); }
+    catch(err){ _dataMsg("data-import-msg","error","Could not parse file &mdash; not valid JSON."); return; }
+    if(!payload || payload.app!=="laserstorm-army-builder" || !payload.data){
+      _dataMsg("data-import-msg","error","This doesn't look like a LaserStorm export file."); return;
+    }
+    _pendingImport = payload;
+    const d = payload.data;
+    const nf=(d.customFactions||[]).length, nt=(d.customTraits||[]).length, nu=(d.customUnits||[]).length;
+    let html;
+    if(payload.kind==="full"){
+      html = `<strong>Full backup</strong> detected.<br>`+
+        `${nu} unit(s), ${nf} faction(s), ${nt} trait(s), ${(d.customTFTypes||[]).length} TF type(s), ${(d.customTacticalAssets||[]).length} asset(s),<br>`+
+        `${(d.taskForces||[]).length} task force(s), ${(d.armies||[]).length} army(ies), ${(d.expeditionaryForces||[]).length} force(s).<br>`+
+        `<span style="color:#f85149;font-weight:bold">Importing will REPLACE all of your current data.</span>`;
+      if(ib) ib.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Replace all data';
+    } else if(payload.kind==="faction"){
+      html = `<strong>Faction export</strong>: ${esc(payload.faction||((d.customFactions||[])[0]||{}).name||"&mdash;")}.<br>`+
+        `${nf} faction(s), ${nu} unit(s), ${nt} trait(s) will be merged (duplicates skipped).`;
+      if(ib) ib.innerHTML = '<i class="fa-solid fa-upload"></i> Import faction';
+    } else {
+      _dataMsg("data-import-msg","error","Unknown export kind."); return;
+    }
+    if(prev){ prev.innerHTML = html; prev.style.display=""; }
+    if(ib) ib.disabled = false;
+  };
+  reader.readAsText(file);
+}
+
+function doImport(){
+  if(!_pendingImport){ _dataMsg("data-import-msg","error","Choose a file first."); return; }
+  const payload = _pendingImport;
+  if(payload.kind==="full"){
+    if(!_fullImportArmed){
+      _fullImportArmed = true;
+      const ib = document.getElementById("import-btn");
+      if(ib) ib.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Click again to confirm REPLACE';
+      _dataMsg("data-import-msg","error","This will erase your current data. Click the button again to confirm.");
+      return;
+    }
+    importFull(payload.data);
+  } else {
+    importFaction(payload.data);
+  }
+}
+
+function importFull(d){
+  state.customUnits = d.customUnits||[];
+  state.customFactions = d.customFactions||[];
+  state.customTraits = d.customTraits||[];
+  state.customTFTypes = d.customTFTypes||[];
+  state.customTacticalAssets = d.customTacticalAssets||[];
+  state.taskForces = d.taskForces||[];
+  state.armies = d.armies||[];
+  state.expeditionaryForces = d.expeditionaryForces||[];
+  (state.customUnits||[]).forEach(u=>{ if(typeof migrateCustomUnit==="function") migrateCustomUnit(u); });
+  saveState();
+  renderDataPage();
+  _dataMsg("data-import-msg","success","Full backup imported. All data replaced.");
+}
+
+function importFaction(d){
+  let addedF=0,skipF=0,addedT=0,skipT=0,addedU=0,skipU=0;
+  // Factions: dedupe by name. Units reference a faction by id, so track how
+  // each imported faction id resolves to an id that exists in the current data.
+  const facById = new Map((state.customFactions||[]).map(f=>[f.id,f]));
+  const facByName = new Map((state.customFactions||[]).map(f=>[String(f.name).toLowerCase(),f]));
+  const facIdMap = {}; // imported faction id -> resolved id in current state
+  (d.customFactions||[]).forEach(f=>{
+    const nameLc = String(f.name||"").toLowerCase();
+    const existing = facByName.get(nameLc);
+    if(existing){ facIdMap[f.id] = existing.id; skipF++; return; }
+    let newId = f.id;
+    if(!newId || facById.has(newId)) newId = "fac_"+uid();
+    const nf = Object.assign({}, f, { id:newId });
+    state.customFactions.push(nf);
+    facById.set(newId,nf); facByName.set(nameLc,nf);
+    facIdMap[f.id] = newId; addedF++;
+  });
+  const remapFac = id => (id && facIdMap[id]) ? facIdMap[id] : id;
+
+  // Traits: dedupe by name; remap any faction ids they reference.
+  const traitByName = new Map((state.customTraits||[]).map(t=>[String(t.name).toLowerCase(),t]));
+  const traitById = new Set((state.customTraits||[]).map(t=>t.id));
+  (d.customTraits||[]).forEach(t=>{
+    const nameLc = String(t.name||"").toLowerCase();
+    if(traitByName.has(nameLc)){ skipT++; return; }
+    let newId = t.id;
+    if(!newId || traitById.has(newId)) newId = uid();
+    const nt = Object.assign({}, t, { id:newId });
+    if(nt.faction) nt.faction = remapFac(nt.faction);
+    if(Array.isArray(nt.reqs)) nt.reqs = nt.reqs.map(r =>
+      (r && r.type==="faction" && Array.isArray(r.vals))
+        ? Object.assign({}, r, { vals: r.vals.map(remapFac) }) : r);
+    state.customTraits.push(nt);
+    traitByName.set(nameLc,nt); traitById.add(newId); addedT++;
+  });
+
+  // Units: remap faction id, dedupe by name+faction.
+  const unitById = new Set((state.customUnits||[]).map(u=>u.id));
+  const unitKey = u => String(u.name||"").toLowerCase()+"||"+String(u.faction||"").toLowerCase();
+  const unitKeys = new Set((state.customUnits||[]).map(unitKey));
+  (d.customUnits||[]).forEach(u=>{
+    const nu = Object.assign({}, u, { faction: remapFac(u.faction) });
+    if(unitKeys.has(unitKey(nu))){ skipU++; return; }
+    let newId = nu.id;
+    if(!newId || unitById.has(newId)) newId = "custom_"+uid();
+    nu.id = newId;
+    if(typeof migrateCustomUnit==="function") migrateCustomUnit(nu);
+    state.customUnits.push(nu);
+    unitById.add(newId); unitKeys.add(unitKey(nu)); addedU++;
+  });
+
+  saveState();
+  renderDataPage();
+  const skipped = skipF+skipU+skipT;
+  _dataMsg("data-import-msg","success",
+    `Imported ${addedF} faction(s), ${addedU} unit(s), ${addedT} trait(s).`+
+    (skipped?` Skipped ${skipped} item(s) already present.`:""));
+}
+
+function _dataMsg(id, type, html){
+  const el = document.getElementById(id);
+  if(!el) return;
+  const bg = type==="success" ? "rgba(46,160,67,.15)" : "rgba(248,81,73,.15)";
+  const bd = type==="success" ? "#2ea043" : "#f85149";
+  el.style.display="block";
+  el.innerHTML = `<div style="background:${bg};border:1px solid ${bd};border-radius:6px;padding:9px 12px;font-size:13px;color:#e0e0e0">${html}</div>`;
+}
+function _dataHideMsg(id){ const el=document.getElementById(id); if(el){ el.style.display="none"; el.innerHTML=""; } }
 
 function closeModal(id) { document.getElementById(id).classList.remove("open"); }
 function openModal(id) { document.getElementById(id).classList.add("open"); }
