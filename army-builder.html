@@ -433,13 +433,13 @@ label .trait-edit-btn{margin-left:6px}
 
 <!-- ===== LIBRARY PAGE ===== -->
 <div id="page-library" class="page">
-  <div class="card">
-    <div class="card-title">Unit Library
-      <div style="display:flex;gap:6px">
-        <!-- Import Unit hidden pending custom trait/faction handling -->
-        <button class="trait-edit-btn" onclick="resetBuilder();showPage('builder')">Create Unit</button>
-      </div>
+  <div class="card-title">Unit Library
+    <div style="display:flex;gap:6px">
+      <!-- Import Unit hidden pending custom trait/faction handling -->
+      <button class="trait-edit-btn" onclick="resetBuilder();showPage('builder')">Create Unit</button>
     </div>
+  </div>
+  <div class="card">
     <input class="search-bar" id="lib-search" placeholder="Search units..." oninput="renderLibrary()">
     <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px">
       <div style="display:flex;align-items:center;gap:8px">
