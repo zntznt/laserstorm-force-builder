@@ -5102,6 +5102,25 @@ function renderArmyDetail() {
   const deployedPts = armyDeployedPoints(army);
   const overPtsLimit = army.pointsLimit && deployedPts > army.pointsLimit;
   const bgCount = army.bgCount || 3;
+  const _ptsRatio = army.pointsLimit ? deployedPts / army.pointsLimit : null;
+  const _barPct   = _ptsRatio != null ? Math.min(_ptsRatio, 1) * 100 : 0;
+  const _barColor = _ptsRatio == null ? "#4a7adc" : _ptsRatio > 1 ? "#ef5350" : _ptsRatio > 0.85 ? "#ffa726" : "#4caf50";
+  const _remaining = army.pointsLimit ? army.pointsLimit - deployedPts : null;
+  const _remainLabel = _remaining == null ? ""
+    : overPtsLimit ? `<i class="fa-solid fa-triangle-exclamation" style="margin-right:3px"></i>+${-_remaining} over`
+    : _remaining === 0 ? "Exactly on target"
+    : `${_remaining} pts to go`;
+  const budgetBarHTML = army.pointsLimit
+    ? `<div style="margin-bottom:14px;padding:0 1px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+          <span style="font-size:10px;color:var(--text-faint);letter-spacing:.03em">${Math.round((_ptsRatio||0)*100)}%</span>
+          <span style="font-size:10px;color:${overPtsLimit?"#ef5350":_remaining===0?"#4caf50":"var(--text-faint)"};font-weight:${overPtsLimit||_remaining===0?"bold":"normal"}">${_remainLabel}</span>
+        </div>
+        <div style="height:5px;border-radius:3px;background:#1a1f2a;overflow:hidden">
+          <div style="height:100%;width:${_barPct.toFixed(1)}%;background:${_barColor};border-radius:3px;transition:width .25s ease"></div>
+        </div>
+      </div>`
+    : "";
   const tfs = (army.taskForceIds||[]).map(id=>state.taskForces.find(t=>t.id===id)).filter(Boolean);
   const bgViol = armyBGSizeViolations(army);
   const facViol = fp ? new Set() : armyFactionViolations(army);
@@ -5385,8 +5404,19 @@ function renderArmyDetail() {
     <div class="info-strip" style="${overPtsLimit?"border-color:#ef535055":""}">
       <div>
         <div class="info-strip-label">Deployed</div>
-        <div class="info-strip-pts" style="${overPtsLimit?"color:#ef5350":""}">${deployedPts}${army.pointsLimit?` <span style="font-size:14px;color:var(--text-muted);font-family:var(--font-body);letter-spacing:0">/ ${army.pointsLimit}</span>`:""}</div>
-        ${overPtsLimit?`<div style="font-size:10px;color:#ef5350;font-weight:bold;margin-top:1px"><i class="fa-solid fa-triangle-exclamation"></i> over limit</div>`:""}
+        <div class="info-strip-pts" style="${overPtsLimit?"color:#ef5350":""}">${deployedPts}</div>
+      </div>
+      <div class="info-strip-sep"></div>
+      <div>
+        <div class="info-strip-label">Target</div>
+        <div style="display:flex;align-items:center;gap:4px">
+          <input type="number" min="0" step="50" value="${army.pointsLimit||""}" placeholder="—"
+            title="Set a points target for this army"
+            style="width:64px;background:var(--surface-raised);border:1px solid var(--border-subtle);border-radius:4px;color:${overPtsLimit?"#ef5350":"var(--text-primary)"};font-size:14px;font-weight:bold;padding:1px 5px;text-align:right;font-family:inherit;-moz-appearance:textfield"
+            onchange="setArmyPtsLimit('${army.id}',this.value)"
+            onkeydown="if(event.key==='Enter')this.blur()">
+          <span style="font-size:11px;color:var(--text-muted)">pts</span>
+        </div>
       </div>
       ${!fp&&poolPts!==deployedPts?`<div class="info-strip-sep"></div><div><div class="info-strip-label">Pool</div><div class="info-strip-val">${poolPts} pts</div></div>`:""}
       <div class="info-strip-sep"></div>
@@ -5394,6 +5424,7 @@ function renderArmyDetail() {
       <div><div class="info-strip-label">Battle Groups</div><div class="info-strip-val">${bgCount}</div></div>
       ${army.faction?`<div class="info-strip-sep"></div><div style="display:flex;align-items:center">${factionPill(army.faction)}</div>`:""}
     </div>
+    ${budgetBarHTML}
     ${!fp?`<div style="margin-bottom:16px">
       <div class="sub-divider" style="margin-top:0">
         <div class="sub-divider-label"><i class="fa-solid fa-layer-group" style="color:#7986cb;font-size:9px"></i> Task Force Pool</div>
@@ -5963,6 +5994,16 @@ function openNewArmyModal() {
   modalMsg("army-modal-msg", "");
   _refreshArmyFactionSelect();
   openModal("modal-army");
+}
+
+function setArmyPtsLimit(armyId, rawVal) {
+  const army = state.armies.find(a => a.id === armyId);
+  if (!army) return;
+  const n = parseInt(rawVal, 10);
+  army.pointsLimit = (!isNaN(n) && n > 0) ? n : null;
+  saveState();
+  renderArmyList();
+  renderArmyDetail();
 }
 
 function openEditArmyModal(id) {
