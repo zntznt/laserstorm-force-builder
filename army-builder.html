@@ -515,20 +515,15 @@ label .trait-edit-btn{margin-left:6px}
 
 <!-- ===== ARMIES PAGE ===== -->
 <div id="page-armies" class="page">
-  <div class="grid-sidebar">
-    <div style="position:sticky;top:16px;display:flex;flex-direction:column;gap:12px">
-      <div class="card">
-        <div class="card-title">Armies
-          <button class="trait-edit-btn" onclick="openNewArmyModal()">New Army</button>
-        </div>
-        <div id="army-list"></div>
-      </div>
+  <div id="army-list-view">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <h2 style="font-family:var(--font-display);font-size:22px;letter-spacing:1px;color:var(--text-bright);margin:0">Armies</h2>
+      <button class="trait-edit-btn" onclick="openNewArmyModal()"><i class="fa-solid fa-plus"></i> New Army</button>
     </div>
-    <div id="army-detail-panel">
-      <div class="card">
-        <div class="empty"><div class="empty-icon"><i class="fa-solid fa-chess-rook"></i></div>Select an army to view</div>
-      </div>
-    </div>
+    <div id="army-list"></div>
+  </div>
+  <div id="army-detail-view" style="display:none">
+    <div id="army-detail-panel"></div>
   </div>
 </div>
 
@@ -1957,7 +1952,14 @@ function showPage(p) {
   document.getElementById("tab-"+p).classList.add("active");
   if(p==="library") renderLibrary();
   if(p==="taskforces") renderTFList();
-  if(p==="armies") renderArmyList();
+  if(p==="armies") {
+    currentArmyId = null;
+    const lv = document.getElementById("army-list-view");
+    const dv = document.getElementById("army-detail-view");
+    if (lv) lv.style.display = "";
+    if (dv) dv.style.display = "none";
+    renderArmyList();
+  }
   if(p==="forces") renderForceList();
   if(p==="data") renderDataPage();
 }
@@ -5048,35 +5050,89 @@ function cancelBGNameEdit() {
 
 function renderArmyList() {
   const list = document.getElementById("army-list");
-  if(!state.armies.length) { list.innerHTML=`<div class="empty"><div class="empty-icon"><i class="fa-solid fa-chess-rook"></i></div>No armies yet</div>`; return; }
+  if (!list) return;
+  if (!state.armies.length) {
+    list.innerHTML = `<div class="empty" style="padding:48px 0"><div class="empty-icon"><i class="fa-solid fa-chess-rook"></i></div>No armies yet — press <strong>New Army</strong> to create one</div>`;
+    return;
+  }
   list.innerHTML = state.armies.map(a => {
     const fp = isFreePick(a);
     const deployed = armyDeployedPoints(a);
-    const pool = armyPoints(a); // equals deployed for FP
     const overLimit = a.pointsLimit && deployed > a.pointsLimit;
-    const tfCount = (a.taskForceIds||[]).length;
-    const isCurrent = a.id===currentArmyId;
+    const bgCount = a.bgCount || 3;
+    const bgList = (a.battleGroups || []).slice(0, bgCount);
     const viol = armyBGSizeViolations(a);
     const facViolSize = fp ? fpArmyFactionViolations(a).size : armyFactionViolations(a).size;
     const notDeployable = !viol.ok || facViolSize > 0 || overLimit;
-    const typeTag = fp ? `<span style="font-size:9px;font-weight:bold;padding:1px 5px;border-radius:8px;background:#1a2a1a;color:#66bb6a;border:1px solid #66bb6a44">FREE PICK</span>` : "";
-    const meta = fp
-      ? `${a.bgCount||3} BGs &bull; <span style="${overLimit?"color:#ef5350;font-weight:bold":""}">${deployed}${a.pointsLimit?` / ${a.pointsLimit}`:""} pts</span>`
-      : `${tfCount} TF${tfCount!==1?"s":""} &bull; ${a.bgCount||3} BGs &bull; <span style="${overLimit?"color:#ef5350;font-weight:bold":""}">${deployed}${a.pointsLimit?` / ${a.pointsLimit}`:""} pts</span> deployed${pool!==deployed?` <span style="color:#666">(${pool} pooled)</span>`:""}`;
+
+    const ptsRatio = a.pointsLimit ? deployed / a.pointsLimit : null;
+    const barPct = ptsRatio != null ? Math.min(ptsRatio, 1) * 100 : 0;
+    const barColor = ptsRatio == null ? "#4a7adc" : ptsRatio > 1 ? "#ef5350" : ptsRatio > 0.85 ? "#ffa726" : "#4caf50";
+
     const armySym = a.symbol ? _bgSymLookup(a.symbol) : null;
-    const armyIconBadge = armySym
-      ? `<span style="display:inline-flex;width:20px;height:20px;border-radius:5px;background:${armySym.color}18;border:1px solid ${armySym.color}55;color:${armySym.color};align-items:center;justify-content:center;flex-shrink:0;font-size:10px">${_bgSymInner(armySym,10)}</span>`
+    const badgeHTML = armySym
+      ? `<div style="width:56px;height:56px;border-radius:12px;background:${armySym.color}1a;border:2px solid ${armySym.color}55;color:${armySym.color};display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;font-size:22px">${_bgSymInner(armySym,22)}</div>`
+      : `<div style="width:56px;height:56px;border-radius:12px;background:var(--surface-raised);border:2px dashed var(--border-default);color:var(--text-faint);display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;font-size:22px"><i class="fa-solid fa-chess-rook"></i></div>`;
+
+    const typeTag = fp
+      ? `<span style="font-size:9px;font-weight:bold;padding:1px 6px;border-radius:8px;background:#1a2a1a;color:#66bb6a;border:1px solid #66bb6a44;letter-spacing:.5px">FREE PICK</span>`
+      : `<span style="font-size:9px;font-weight:bold;padding:1px 6px;border-radius:8px;background:#0d1a2e;color:#4a7adc;border:1px solid #4a7adc44;letter-spacing:.5px">TASK FORCE</span>`;
+
+    const violBadge = notDeployable
+      ? `<span title="Not deployable — has rule violations" style="font-size:12px;color:#ef5350;flex-shrink:0"><i class="fa-solid fa-triangle-exclamation"></i></span>`
       : "";
-    return `<div class="sl-item${isCurrent?" sl-active":""}${notDeployable&&!isCurrent?" sl-warn":""}" style="${notDeployable&&!isCurrent?"border-color:#ef535044":""}" onclick="selectArmy('${a.id}')">
-      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:6px">
-        <div style="display:flex;align-items:center;gap:6px;min-width:0;flex:1">
-          ${armyIconBadge}
-          <div class="sl-name" style="flex:1;min-width:0">${esc(a.name)}</div>
+
+    const ptsLabel = a.pointsLimit ? `${deployed} / ${a.pointsLimit} pts` : `${deployed} pts deployed`;
+    const ptsColor = overLimit ? "#ef5350" : "var(--text-bright)";
+    const miniBar = a.pointsLimit
+      ? `<div style="height:3px;border-radius:2px;background:#1a1f2a;overflow:hidden;margin-top:4px">
+           <div style="height:100%;width:${barPct.toFixed(1)}%;background:${barColor};border-radius:2px"></div>
+         </div>`
+      : "";
+
+    const bgRows = bgList.length === 0
+      ? `<div style="font-size:11px;color:var(--text-faint);font-style:italic;padding:2px 0">No battle groups configured</div>`
+      : bgList.map(bg => {
+          const sd = bgDesignation(a, bg);
+          const bgPt = bgPoints(bg);
+          const bgSz = bgUnitCount(bg);
+          const symEl = `<div style="width:18px;height:18px;border-radius:4px;background:${sd.color}18;border:1px solid ${sd.color}44;color:${sd.color};display:inline-flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0">${_bgSymInner(sd,9)}</div>`;
+          return `<div style="display:flex;align-items:center;gap:7px;padding:3px 0">
+            ${symEl}
+            <span style="font-size:12px;font-weight:600;color:var(--text-primary);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(bg.name)}</span>
+            <span style="font-size:10px;color:var(--text-muted);white-space:nowrap;flex-shrink:0">${bgSz}u &middot; ${bgPt}pts</span>
+          </div>`;
+        }).join("");
+
+    const cardBorder = notDeployable ? "border-color:#ef535044" : "";
+    return `<div style="background:var(--surface-card);border:1px solid var(--border-default);border-radius:10px;margin-bottom:12px;overflow:hidden;cursor:pointer;transition:border-color .15s,background .15s;${cardBorder}"
+      onclick="selectArmy('${a.id}')"
+      onmouseover="this.style.borderColor='var(--accent)';this.style.background='var(--surface-raised)'"
+      onmouseout="this.style.borderColor='${notDeployable?"#ef535044":"var(--border-default)"}';this.style.background='var(--surface-card)'">
+      <div style="display:flex;align-items:center;gap:14px;padding:14px 16px;border-bottom:1px solid var(--border-subtle)">
+        ${badgeHTML}
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px">
+            <span style="font-family:var(--font-display);font-size:20px;letter-spacing:1px;color:var(--text-bright);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(a.name)}</span>
+            ${violBadge}
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:5px">
+            ${typeTag}
+            ${a.faction ? factionPill(a.faction) : ""}
+          </div>
+          <div>
+            <span style="font-size:12px;font-weight:bold;color:${ptsColor}">${ptsLabel}</span>
+          </div>
+          ${miniBar}
         </div>
-        ${notDeployable?`<span title="Not deployable — has rule violations" style="color:#ef5350;font-size:11px;flex-shrink:0;margin-top:2px"><i class="fa-solid fa-triangle-exclamation"></i></span>`:""}
+        <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0" onclick="event.stopPropagation()">
+          <button class="trait-edit-btn" onclick="openPrintArmyModal('${a.id}')" title="Print this army"><i class="fa-solid fa-print"></i> Print</button>
+          <button class="trait-edit-btn" onclick="selectArmy('${a.id}')" title="Open army detail" style="white-space:nowrap"><i class="fa-solid fa-arrow-right"></i> Open</button>
+        </div>
       </div>
-      <div class="sl-meta">${typeTag}${a.faction ? factionPill(a.faction) : ""}</div>
-      <div class="sl-meta">${meta}</div>
+      <div style="padding:8px 16px 10px;display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:0 24px">
+        ${bgRows}
+      </div>
     </div>`;
   }).join("");
 }
@@ -5088,14 +5144,37 @@ function selectArmy(id) {
   editingBGId = null;
   armyIconPickerOpen = false;
   activeBGTabId = null;
-  renderArmyList();
+  const lv = document.getElementById("army-list-view");
+  const dv = document.getElementById("army-detail-view");
+  if (lv) lv.style.display = "none";
+  if (dv) dv.style.display = "";
   renderArmyDetail();
+}
+
+function backToArmyList() {
+  currentArmyId = null;
+  tfRemoveBlockedId = null;
+  bgSymbolPickerBgId = null;
+  editingBGId = null;
+  armyIconPickerOpen = false;
+  activeBGTabId = null;
+  const lv = document.getElementById("army-list-view");
+  const dv = document.getElementById("army-detail-view");
+  if (lv) lv.style.display = "";
+  if (dv) dv.style.display = "none";
+  renderArmyList();
 }
 
 function renderArmyDetail() {
   const panel = document.getElementById("army-detail-panel");
+  if (!panel) return;
   const army = state.armies.find(a=>a.id===currentArmyId);
   if(!army) { panel.innerHTML=`<div class="card"><div class="empty"><div class="empty-icon"><i class="fa-solid fa-chess-rook"></i></div>Select an army to view</div></div>`; return; }
+  const breadcrumb = `<div style="margin-bottom:12px">
+    <button onclick="backToArmyList()" style="background:none;border:none;color:var(--text-muted);cursor:pointer;padding:0;font-size:13px;display:inline-flex;align-items:center;gap:6px;transition:color .15s" onmouseover="this.style.color='var(--text-primary)'" onmouseout="this.style.color='var(--text-muted)'">
+      <i class="fa-solid fa-arrow-left" style="font-size:11px"></i> Armies
+    </button>
+  </div>`;
   _ensureBGs(army);
   const fp = isFreePick(army);
   const poolPts = armyPoints(army);
@@ -5387,7 +5466,7 @@ function renderArmyDetail() {
   const efDeployedBadge = efDeploy
     ? `<span style="font-size:10px;color:#8b949e;display:flex;align-items:center;gap:5px;margin-top:4px"><i class="fa-solid fa-flag" style="color:#9c27b0;font-size:9px"></i>Deployed in <strong style="color:#ce93d8">${esc(efDeploy.force.name)}</strong> <span style="color:#555">/</span> <strong style="color:#ce93d8">${esc(efDeploy.ag.name)}</strong></span>`
     : `<span style="font-size:10px;color:#444;display:flex;align-items:center;gap:5px;margin-top:4px"><i class="fa-solid fa-flag" style="font-size:9px"></i>Not deployed in any expeditionary force</span>`;
-  panel.innerHTML = `<div class="card">
+  panel.innerHTML = breadcrumb + `<div class="card">
     <div class="card-title">
       <div>
         <span style="display:flex;align-items:center;gap:10px">${armyIconBtn}${esc(army.name)} ${fpTag}</span>
@@ -6081,12 +6160,19 @@ function saveArmy() {
 
 function deleteArmy(id) {
   state.armies = state.armies.filter(a=>a.id!==id);
-  if(currentArmyId===id) currentArmyId=null;
+  const wasActive = currentArmyId === id;
+  if(wasActive) currentArmyId = null;
   // Remove from any expeditionary force army groups
   (state.expeditionaryForces||[]).forEach(f=>(f.armyGroups||[]).forEach(ag=>{
     ag.armyIds = (ag.armyIds||[]).filter(aid=>aid!==id);
   }));
   saveState();
+  if(wasActive) {
+    const lv = document.getElementById("army-list-view");
+    const dv = document.getElementById("army-detail-view");
+    if (lv) lv.style.display = "";
+    if (dv) dv.style.display = "none";
+  }
   renderArmyList();
   renderArmyDetail();
   renderForceList();
