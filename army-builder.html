@@ -500,6 +500,7 @@ label .trait-edit-btn{margin-left:6px}
         </div>
       </div>
     </div>
+    <div id="lib-count" style="font-size:11px;color:var(--text-muted);margin-bottom:10px"></div>
     <div id="lib-list"></div>
   </div>
 </div>
@@ -3483,7 +3484,7 @@ function renderLibFactionFilters() {
   ];
   const customs = (state.customFactions||[]).map(f=>({v:f.id, l:`<i class="fa-solid fa-${f.icon}"></i> ${esc(f.name)}`, c:f.color}));
   const extras = [
-    {v:"none",   l:"&mdash; No Faction", c:"#888"},
+    {v:"none",   l:'<i class="fa-solid fa-ban"></i> No Faction', c:"#888"},
     {v:"custom", l:'<i class="fa-solid fa-pen"></i> Custom',     c:"#ffd700"},
   ];
   const all = [...builtins, ...customs, ...extras];
@@ -3528,9 +3529,12 @@ function renderLibrary() {
   if(libFilterClass!=="all") units = units.filter(u=>u.class===libFilterClass);
   if(search) units = units.filter(u=>u.name.toLowerCase().includes(search));
   // Hide units that have no cost for the current view type
+  let roleHidden = 0;
   if(libViewType !== "unit") {
     const pKey = VIEW_PTS_KEY[libViewType];
+    const before = units.length;
     units = units.filter(u => calcPoints(u)[pKey] != null);
+    roleHidden = before - units.length;
   }
   const classOrder = ["inf","cav","fg","scout","afv","ac","sh","beh"];
   units.sort((a,b) => {
@@ -3552,8 +3556,26 @@ function renderLibrary() {
       default:             return a.name.localeCompare(b.name);
     }
   });
+  const countEl = document.getElementById("lib-count");
+  if(countEl) {
+    const roleLabel = VIEW_LABELS[libViewType] || "Unit";
+    const roleNote = (libViewType !== "unit" && roleHidden > 0)
+      ? ` <span style="color:var(--text-faint)">&bull; ${roleHidden} can't be fielded as ${roleLabel}</span>`
+      : "";
+    countEl.innerHTML = units.length
+      ? `<strong style="color:var(--text-secondary)">${units.length}</strong> unit${units.length!==1?"s":""}${roleNote}`
+      : "";
+  }
   const list = document.getElementById("lib-list");
-  if(!units.length) { list.innerHTML=`<div class="empty"><div class="empty-icon"><i class="fa-solid fa-magnifying-glass"></i></div>No units found</div>`; return; }
+  if(!units.length) {
+    const msg = search
+      ? `No units match &ldquo;${esc(search)}&rdquo;`
+      : libFilterFaction==="custom"
+        ? "No custom units yet — use Create Unit to build one"
+        : "No units found";
+    list.innerHTML=`<div class="empty"><div class="empty-icon"><i class="fa-solid fa-magnifying-glass"></i></div>${msg}</div>`;
+    return;
+  }
   list.innerHTML = units.map(u => {
     const pts = calcPoints(u);
     const actions = `
