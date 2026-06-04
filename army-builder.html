@@ -155,7 +155,22 @@ input.input-error,textarea.input-error{border-color:#ef535066!important;outline:
 .pill{display:inline-flex;align-items:center;gap:5px;height:28px;padding:0 14px;box-sizing:border-box;border-radius:20px;cursor:pointer;font-size:11px;font-weight:bold;text-transform:uppercase;background:var(--surface-raised);color:var(--text-inactive);border:1px solid transparent;transition:all .2s;line-height:1}
 .pill:hover{color:var(--accent);border-color:var(--accent)}
 .pill.active{background:var(--accent);color:var(--text-bright);border-color:var(--accent)}
+.pill[style*="--fc"]:hover{color:var(--fc);border-color:color-mix(in srgb,var(--fc) 60%,transparent)}
+.pill[style*="--fc"].active{background:color-mix(in srgb,var(--fc) 18%,transparent);color:var(--fc);border-color:color-mix(in srgb,var(--fc) 50%,transparent)}
 .search-bar{width:100%;padding:7px 14px;background:var(--surface-page);border:1px solid var(--border-default);border-radius:20px;color:var(--text-primary);font-size:13px;margin-bottom:12px}
+.lib-search-wrap{position:relative;margin-bottom:10px}
+.lib-search-icon{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--text-faint);font-size:11px;pointer-events:none;z-index:1}
+.lib-search-clear{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-faint);cursor:pointer;font-size:13px;padding:2px 6px;line-height:1;border-radius:4px;transition:color .12s,background .12s;display:none}
+.lib-search-clear:hover{color:var(--text-primary);background:var(--surface-hover)}
+.lib-search-wrap .search-bar{margin-bottom:0;padding-left:30px;padding-right:28px;width:100%;box-sizing:border-box}
+.lib-filter-panel{background:var(--surface-raised);border:1px solid var(--border-subtle);border-radius:8px;padding:10px 12px;margin-bottom:12px;display:flex;flex-direction:column;gap:8px}
+.lib-filter-header{display:flex;align-items:center;gap:8px;padding-bottom:8px;border-bottom:1px solid var(--border-subtle)}
+.lib-filter-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--text-muted);white-space:nowrap}
+.lib-filter-active-badge{font-size:10px;font-weight:700;padding:1px 8px;background:var(--accent);color:var(--text-bright);border-radius:10px;line-height:1.6;display:none}
+.lib-filter-clear-btn{margin-left:auto;background:none;border:1px solid var(--border-subtle);color:var(--text-muted);border-radius:10px;padding:2px 10px;font-size:10px;font-weight:700;cursor:pointer;transition:color .12s,border-color .12s;white-space:nowrap;text-transform:uppercase;letter-spacing:.3px;display:none}
+.lib-filter-clear-btn:hover{color:var(--text-primary);border-color:var(--border-default)}
+.lib-filter-row{display:flex;flex-wrap:wrap;align-items:center}
+.lib-filter-row-bottom{justify-content:space-between;gap:8px}
 .scrolllist{max-height:360px;overflow-y:auto;border:1px solid var(--border-subtle);border-radius:6px;padding:8px}
 .weapon-builder{background:var(--surface-page);border:1px solid var(--border-subtle);border-radius:6px;padding:10px;margin-top:8px}
 .weapon-builder-row{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end}
@@ -454,31 +469,41 @@ label .trait-edit-btn{margin-left:6px}
 <div id="page-library" class="page">
   <div class="card-title">Unit Library
     <div style="display:flex;gap:6px">
-      <!-- Import Unit hidden pending custom trait/faction handling -->
-      <button class="trait-edit-btn" onclick="resetBuilder();showPage('builder')">Create Unit</button>
+      <button class="trait-edit-btn" onclick="openFactionModal(false)"><i class="fa-solid fa-gear"></i> Factions</button>
+      <button class="trait-edit-btn" onclick="resetBuilder();showPage('builder')"><i class="fa-solid fa-plus"></i> Create Unit</button>
     </div>
   </div>
   <div class="card">
-    <input class="search-bar" id="lib-search" placeholder="Search units..." oninput="renderLibrary()">
-    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px">
-      <div style="display:flex;align-items:center;gap:8px">
-        <div class="pill-group" id="lib-faction-filters" style="flex:1;margin-bottom:0"></div>
-        <button class="trait-edit-btn" style="white-space:nowrap;flex-shrink:0" onclick="openFactionModal(false)"><i class="fa-solid fa-gear"></i> Custom Factions</button>
+    <div class="lib-search-wrap">
+      <i class="fa-solid fa-magnifying-glass lib-search-icon"></i>
+      <input class="search-bar" id="lib-search" placeholder="Search units…" oninput="renderLibrary()">
+      <button class="lib-search-clear" id="lib-search-clear" onclick="clearLibSearch()" title="Clear search"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="lib-filter-panel" id="lib-filter-panel">
+      <div class="lib-filter-header">
+        <span class="lib-filter-title"><i class="fa-solid fa-sliders" style="opacity:.7;margin-right:3px"></i>Filters</span>
+        <span class="lib-filter-active-badge" id="lib-active-badge"></span>
+        <button class="lib-filter-clear-btn" id="lib-clear-filters" onclick="clearLibFilters()"><i class="fa-solid fa-xmark" style="font-size:8px"></i> Clear all</button>
       </div>
-      <div class="pill-group" id="lib-filters" style="margin-bottom:0">
-        <span class="pill-group-label">Class</span>
-        <div class="pill active" data-filter="all" onclick="setLibFilter(this,'all')">All</div>
-        <div class="pill" data-filter="inf" onclick="setLibFilter(this,'inf')">Infantry</div>
-        <div class="pill" data-filter="cav" onclick="setLibFilter(this,'cav')">Cavalry</div>
-        <div class="pill" data-filter="fg" onclick="setLibFilter(this,'fg')">Field Gun</div>
-        <div class="pill" data-filter="scout" onclick="setLibFilter(this,'scout')">Scout</div>
-        <div class="pill" data-filter="afv" onclick="setLibFilter(this,'afv')">AFV</div>
-        <div class="pill" data-filter="ac" onclick="setLibFilter(this,'ac')">Aircraft</div>
-        <div class="pill" data-filter="sh" onclick="setLibFilter(this,'sh')">Super Heavy</div>
-        <div class="pill" data-filter="beh" onclick="setLibFilter(this,'beh')">Behemoth</div>
+      <div class="lib-filter-row">
+        <div class="pill-group" id="lib-faction-filters" style="margin-bottom:0;flex:1"></div>
       </div>
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
-        <div class="pill-group" id="lib-view-filters" style="margin-bottom:0">
+      <div class="lib-filter-row">
+        <div class="pill-group" id="lib-filters" style="margin-bottom:0">
+          <span class="pill-group-label">Class</span>
+          <div class="pill active" data-filter="all" onclick="setLibFilter(this,'all')">All</div>
+          <div class="pill" data-filter="inf"   onclick="setLibFilter(this,'inf')"   style="--fc:#4caf50">Infantry</div>
+          <div class="pill" data-filter="cav"   onclick="setLibFilter(this,'cav')"   style="--fc:#64b5f6">Cavalry</div>
+          <div class="pill" data-filter="fg"    onclick="setLibFilter(this,'fg')"    style="--fc:#ba68c8">Field Gun</div>
+          <div class="pill" data-filter="scout" onclick="setLibFilter(this,'scout')" style="--fc:#4db6ac">Scout</div>
+          <div class="pill" data-filter="afv"   onclick="setLibFilter(this,'afv')"   style="--fc:#ffb74d">AFV</div>
+          <div class="pill" data-filter="ac"    onclick="setLibFilter(this,'ac')"    style="--fc:#26c6da">Aircraft</div>
+          <div class="pill" data-filter="sh"    onclick="setLibFilter(this,'sh')"    style="--fc:#ff7043">Super Heavy</div>
+          <div class="pill" data-filter="beh"   onclick="setLibFilter(this,'beh')"   style="--fc:#ef5350">Behemoth</div>
+        </div>
+      </div>
+      <div class="lib-filter-row lib-filter-row-bottom">
+        <div class="pill-group" id="lib-view-filters" style="margin-bottom:0;flex:1">
           <span class="pill-group-label">View as</span>
           <div class="pill active" data-view="unit"        onclick="setLibViewType(this,'unit')">Unit</div>
           <div class="pill"        data-view="independent" onclick="setLibViewType(this,'independent')">Independent</div>
@@ -489,21 +514,21 @@ label .trait-edit-btn{margin-left:6px}
         <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
           <span class="pill-group-label">Sort</span>
           <select id="lib-sort" onchange="libSort=this.value;renderLibrary()" style="width:auto">
-        <option value="name-asc">Name A → Z</option>
-        <option value="name-desc">Name Z → A</option>
-        <option value="pts-asc">Points: Low → High</option>
-        <option value="pts-desc">Points: High → Low</option>
-        <option value="class">Class</option>
-        <option value="speed-desc">Speed: Fast → Slow</option>
-        <option value="speed-asc">Speed: Slow → Fast</option>
-        <option value="aim-asc">Aim: Best → Worst</option>
-        <option value="aim-desc">Aim: Worst → Best</option>
-        <option value="save-asc">Save: Best → Worst</option>
-        <option value="save-desc">Save: Worst → Best</option>
-        <option value="morale-asc">Morale: Best → Worst</option>
-        <option value="morale-desc">Morale: Worst → Best</option>
-        <option value="assault-desc">Assault: High → Low</option>
-        <option value="assault-asc">Assault: Low → High</option>
+            <option value="name-asc">Name A → Z</option>
+            <option value="name-desc">Name Z → A</option>
+            <option value="pts-asc">Points: Low → High</option>
+            <option value="pts-desc">Points: High → Low</option>
+            <option value="class">Class</option>
+            <option value="speed-desc">Speed: Fast → Slow</option>
+            <option value="speed-asc">Speed: Slow → Fast</option>
+            <option value="aim-asc">Aim: Best → Worst</option>
+            <option value="aim-desc">Aim: Worst → Best</option>
+            <option value="save-asc">Save: Best → Worst</option>
+            <option value="save-desc">Save: Worst → Best</option>
+            <option value="morale-asc">Morale: Best → Worst</option>
+            <option value="morale-desc">Morale: Worst → Best</option>
+            <option value="assault-desc">Assault: High → Low</option>
+            <option value="assault-asc">Assault: Low → High</option>
           </select>
         </div>
       </div>
@@ -4027,8 +4052,43 @@ function setLibViewType(el, type) {
   renderLibrary();
 }
 
+function clearLibSearch() {
+  const el = document.getElementById("lib-search");
+  if(el) el.value = "";
+  renderLibrary();
+}
+
+function clearLibFilters() {
+  libFilterFaction = "all";
+  libFilterClass = "all";
+  libSort = "name-asc";
+  const searchEl = document.getElementById("lib-search");
+  if(searchEl) searchEl.value = "";
+  document.querySelectorAll("#lib-filters .pill").forEach(p=>p.classList.remove("active"));
+  const allPill = document.querySelector('#lib-filters .pill[data-filter="all"]');
+  if(allPill) allPill.classList.add("active");
+  const sortEl = document.getElementById("lib-sort");
+  if(sortEl) sortEl.value = "name-asc";
+  renderLibrary();
+}
+
+function _updateLibFilterIndicators() {
+  const searchVal = document.getElementById("lib-search")?.value || "";
+  const clearSearchBtn = document.getElementById("lib-search-clear");
+  if(clearSearchBtn) clearSearchBtn.style.display = searchVal ? "block" : "none";
+  let n = 0;
+  if(libFilterFaction !== "all") n++;
+  if(libFilterClass !== "all") n++;
+  if(searchVal) n++;
+  const badge = document.getElementById("lib-active-badge");
+  const clearBtn = document.getElementById("lib-clear-filters");
+  if(badge) { badge.style.display = n ? "inline-block" : "none"; if(n) badge.textContent = n + (n===1?" filter":" filters"); }
+  if(clearBtn) clearBtn.style.display = n ? "block" : "none";
+}
+
 function renderLibrary() {
   renderLibFactionFilters();
+  _updateLibFilterIndicators();
   const sortEl = document.getElementById("lib-sort");
   if(sortEl && sortEl.value !== libSort) sortEl.value = libSort;
   const search = (document.getElementById("lib-search")?.value||"").toLowerCase();
