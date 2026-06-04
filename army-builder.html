@@ -1496,16 +1496,19 @@ let bgSymbolPickerBgId = null;
 let editingBGId = null;
 let armyIconPickerOpen = false;
 let activeBGTabId = null;
+let bgViewMode = "tabs";   // "tabs" | "flat" — army detail Battle Groups
 // Transport picker state
 let _tpKind = null; let _tpTFId = null; let _tpSlotId = null;
 let _tpArmyId = null; let _tpBgId = null; let _tpEntryId = null;
 let _tpSelected = null; let _tpForUnit = null;
 let activeTFTab = "core";
+let tfViewMode = "tabs";    // "tabs" | "flat" — task force detail sections
 let _newTFTemplateId = null;
 let _savingTFTemplateFromId = null;
 let currentForceId = null;
 let editingForceId = null;
 let activeAGTabId = null;
+let agViewMode = "tabs";    // "tabs" | "flat" — expeditionary force army groups
 let agSymbolPickerAgId = null;
 let forceIconPickerOpen = false;
 let editingAGId = null;
@@ -4700,10 +4703,10 @@ function renderTFDetail() {
     }).join("")}
   </div>`;
 
-  // Build active section content
-  let activeSectionHTML = "";
-  {
-    const {role, label, shClass} = activeSection;
+  // Build the body for a given section. Used by the tabbed view (active section
+  // only) and the flat view (all sections stacked).
+  function _tfSectionBody(section) {
+    const {role, label, shClass} = section;
     const slots = (tf.units||[]).filter(u=>u.role===role||(role==="core"&&u.role==="commander"));
     // Limit badges (the detailed pills — the "screenshotted info")
     let limitBadges = "";
@@ -4765,7 +4768,7 @@ function renderTFDetail() {
           </div>`;
           return unitCardHTML(u, slotActions, slot.unitType||"unit");
         }).join("");
-    activeSectionHTML = `<div style="padding:12px 14px;background:var(--surface-card)">
+    return `<div style="padding:12px 14px;background:var(--surface-card)">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:${limitBadges?"10px":"12px"}">
         <div style="display:flex;gap:5px;flex-wrap:wrap;align-items:center">${limitBadges || `<span style="font-size:10px;color:#555;font-style:italic">No limits defined</span>`}</div>
         <button class="trait-edit-btn" style="flex-shrink:0" onclick="openAddUnitModal('${tf.id}','${role}')" ${sectionFull?`disabled style="opacity:0.4;cursor:not-allowed;flex-shrink:0"`:""}><i class="fa-solid fa-plus"></i> Add</button>
@@ -4773,10 +4776,34 @@ function renderTFDetail() {
       ${slotsContent}
     </div>`;
   }
+  const activeSectionHTML = _tfSectionBody(activeSection);
 
-  const slotsHTML = `<div style="border:1px solid var(--border-default);border-radius:8px;overflow:hidden;margin-bottom:8px">
-    ${tfTabsHTML}
-    <div style="border-top:1px solid var(--border-subtle)">${activeSectionHTML}</div>
+  const tfViewToggleBtn = `<button class="trait-edit-btn" onclick="toggleTFViewMode()" title="${tfViewMode==="flat"?"Switch to tabbed view":"Show all sections at once"}"><i class="fa-solid fa-${tfViewMode==="flat"?"table-columns":"list"}"></i> ${tfViewMode==="flat"?"Tabbed":"Show All"}</button>`;
+  // Flat view: every section stacked with its own labelled header
+  const tfFlatHTML = `<div style="display:flex;flex-direction:column;gap:10px">
+    ${sections.map(section => {
+      const st = _sectionStatus(section.role);
+      return `<div style="border:1px solid var(--border-default);border-radius:8px;overflow:hidden">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 12px;background:var(--surface-raised);border-bottom:1px solid var(--border-subtle)">
+          <span style="font-family:var(--font-display);font-size:13px;letter-spacing:.5px;color:var(--text-bright)">${section.label}</span>
+          <span style="font-size:9px;font-weight:700;color:${st.color};letter-spacing:.3px">${st.label}</span>
+        </div>
+        ${_tfSectionBody(section)}
+      </div>`;
+    }).join("")}
+  </div>`;
+
+  const slotsHTML = `<div style="margin-bottom:8px">
+    <div class="sub-divider" style="margin-top:0">
+      <div class="sub-divider-label"><i class="fa-solid fa-layer-group" style="color:var(--accent);font-size:9px"></i> Force Composition</div>
+      ${tfViewToggleBtn}
+    </div>
+    ${tfViewMode==="flat"
+      ? tfFlatHTML
+      : `<div style="border:1px solid var(--border-default);border-radius:8px;overflow:hidden">
+          ${tfTabsHTML}
+          <div style="border-top:1px solid var(--border-subtle)">${activeSectionHTML}</div>
+        </div>`}
   </div>`;
   const tfOverLimitNow = tf.pointsLimit && pts > tf.pointsLimit;
   const deployedArmy = armyOfTF(tf.id);
@@ -6067,6 +6094,11 @@ function selectTFTab(role) {
   renderTFDetail();
 }
 
+function toggleTFViewMode() {
+  tfViewMode = tfViewMode === "flat" ? "tabs" : "flat";
+  renderTFDetail();
+}
+
 function openBGSymbolPicker(armyId, bgId) {
   bgSymbolPickerBgId = bgSymbolPickerBgId === bgId ? null : bgId;
   renderArmyDetail();
@@ -6550,11 +6582,10 @@ function renderArmyDetail() {
   const bgIds = bgList.map(b => b.id);
   if(!activeBGTabId || !bgIds.includes(activeBGTabId)) activeBGTabId = bgIds[0] || null;
 
-  let bgCardBodyHTML = "";
-  // Compute card body for the active BG
-  {
-    const bg = bgList.find(b => b.id === activeBGTabId);
-    if(bg) {
+  // Compute the card body for a given BG. Used by both the tabbed view (active
+  // BG only) and the flat view (every BG stacked). In flat mode a symbol button
+  // is folded into the toolbar so the designation picker stays reachable.
+  function _armyBGCardBody(bg) {
       const bPts = bgPoints(bg);
       const bgSize = bgUnitCount(bg);
       const bgUndersize = bgViol.violatingIds.has(bg.id);
@@ -6655,7 +6686,13 @@ function renderArmyDetail() {
              onkeydown="if(event.key==='Enter')this.blur();if(event.key==='Escape')cancelBGNameEdit()">`
         : `<span style="font-family:var(--font-display);font-size:14px;letter-spacing:.6px;color:var(--text-bright);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(bg.name)}</span>
            <button onclick="startBGNameEdit('${bg.id}')" title="Rename battle group" style="background:none;border:none;color:#555;cursor:pointer;padding:0 4px;font-size:10px;line-height:1;flex-shrink:0;transition:color .15s" onmouseover="this.style.color='#aaa'" onmouseout="this.style.color='#555'"><i class="fa-solid fa-pencil"></i></button>`;
+      const flatSymStyle = `width:24px;height:24px;border-radius:5px;background:${symDef.color}1a;border:1.5px solid ${symDef.color}99;color:${symDef.color};display:inline-flex;align-items:center;justify-content:center;flex-shrink:0`;
+      const flatSymBtn = bgViewMode !== "flat" ? ""
+        : bgMode === "custom"
+          ? `<button onclick="openBGSymbolPicker('${army.id}','${bg.id}')" title="${symDef.label} — click to change" style="${flatSymStyle};cursor:pointer;padding:0;transition:background .15s" onmouseover="this.style.background='${symDef.color}33'" onmouseout="this.style.background='${symDef.color}1a'">${_bgSymInner(symDef,12)}</button>`
+          : `<div style="${flatSymStyle}">${_bgSymInner(symDef,12)}</div>`;
       const toolbarHTML = `<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border-subtle)">
+        ${flatSymBtn}
         <div style="flex:1;min-width:0;overflow:hidden">
           <div style="display:flex;align-items:center;gap:5px">${nameSection}</div>
           <div style="font-size:9px;color:var(--text-muted);margin-top:2px">${bPts} pts &bull; ${(()=>{
@@ -6694,9 +6731,10 @@ function renderArmyDetail() {
           Use <strong style="color:var(--text-muted)">Add Unit</strong> above to start building this group
         </div>`;
       })() : "";
-      bgCardBodyHTML = `${toolbarHTML}${pickerHTML}${bgHintHTML}${bgNotesHTML}${entriesHTML}${bgEmptyHTML}`;
-    }
+      return `${toolbarHTML}${pickerHTML}${bgHintHTML}${bgNotesHTML}${entriesHTML}${bgEmptyHTML}`;
   }
+  const activeBG = bgList.find(b => b.id === activeBGTabId);
+  const bgCardBodyHTML = activeBG ? _armyBGCardBody(activeBG) : "";
 
   // Equal-width grid tabs — each 1/N of total width
   const bgTabsHTML = `<div style="display:grid;grid-template-columns:repeat(${bgList.length},1fr);gap:1px;background:var(--border-subtle)">
@@ -6752,6 +6790,14 @@ function renderArmyDetail() {
   const bgCardHTML = `<div style="padding:12px 14px;background:var(--surface-card);border-top:1px solid var(--border-subtle)">
     ${bgCardBodyHTML}
   </div>`;
+  // Flat view: every BG stacked vertically (full overview, no tab switching)
+  const bgFlatHTML = `<div style="display:flex;flex-direction:column;gap:10px">
+    ${bgList.map(bg => {
+      const violThis = bgViol.violatingIds.has(bg.id);
+      return `<div style="border:1px solid ${violThis?"#ef535066":"var(--border-default)"};border-radius:8px;padding:12px 14px;background:var(--surface-card)">${_armyBGCardBody(bg)}</div>`;
+    }).join("")}
+  </div>`;
+  const bgViewToggleBtn = `<button class="trait-edit-btn" onclick="toggleBGViewMode()" title="${bgViewMode==="flat"?"Switch to tabbed view":"Show all battle groups at once"}"><i class="fa-solid fa-${bgViewMode==="flat"?"table-columns":"list"}"></i> ${bgViewMode==="flat"?"Tabbed":"Show All"}</button>`;
 
   const fpTag = fp ? `<span style="font-size:9px;font-weight:bold;padding:1px 6px;border-radius:8px;background:#1a2a1a;color:#66bb6a;border:1px solid #66bb6a44;letter-spacing:.5px">FREE PICK</span>` : "";
   // Army icon badge
@@ -6829,12 +6875,20 @@ function renderArmyDetail() {
     ${deployBannerHTML}
     <div class="sub-divider">
       <div class="sub-divider-label"><i class="fa-solid fa-chess-board" style="color:var(--accent);font-size:9px"></i> Battle Groups</div>
+      ${bgViewToggleBtn}
     </div>
-    <div style="border:1px solid ${bgViolActive?"#ef535066":"var(--border-default)"};border-radius:8px;overflow:hidden">
-      ${bgTabsHTML}
-      ${bgCardHTML}
-    </div>
+    ${bgViewMode==="flat"
+      ? bgFlatHTML
+      : `<div style="border:1px solid ${bgViolActive?"#ef535066":"var(--border-default)"};border-radius:8px;overflow:hidden">
+          ${bgTabsHTML}
+          ${bgCardHTML}
+        </div>`}
   </div>`;
+}
+
+function toggleBGViewMode() {
+  bgViewMode = bgViewMode === "flat" ? "tabs" : "flat";
+  renderArmyDetail();
 }
 
 // ============================================================
@@ -8036,10 +8090,10 @@ function renderForceDetail() {
   </div>`;
 
   // Active AG card body
-  let agCardBodyHTML = "";
-  {
-    const ag = agList.find(ag=>ag.id===activeAGTabId);
-    if(ag) {
+  // Compute the body for a given army group. Used by the tabbed view (active AG
+  // only) and the flat view (all AGs stacked). In flat mode a symbol button is
+  // folded into the toolbar so the designation picker stays reachable.
+  function _agCardBody(ag) {
       const agSize = (ag.armyIds||[]).length;
       const agUndersize = viol.violatingIds.has(ag.id);
       const pickerOpen = agSymbolPickerAgId===ag.id;
@@ -8104,7 +8158,12 @@ function renderForceDetail() {
              onkeydown="if(event.key==='Enter')this.blur();if(event.key==='Escape')cancelAGNameEdit()">`
         : `<span style="font-family:var(--font-display);font-size:14px;letter-spacing:.6px;color:var(--text-bright);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(ag.name)}</span>
            <button onclick="startAGNameEdit('${ag.id}')" title="Rename army group" style="background:none;border:none;color:#555;cursor:pointer;padding:0 4px;font-size:10px;line-height:1;flex-shrink:0;transition:color .15s" onmouseover="this.style.color='#aaa'" onmouseout="this.style.color='#555'"><i class="fa-solid fa-pencil"></i></button>`;
+      const symDefAG = _bgSymLookup(ag.symbol||ICON_SYMBOL_KEYS[0]);
+      const flatSymStyle = `width:24px;height:24px;border-radius:5px;background:${symDefAG.color}1a;border:1.5px solid ${symDefAG.color}99;color:${symDefAG.color};display:inline-flex;align-items:center;justify-content:center;flex-shrink:0`;
+      const flatSymBtn = agViewMode !== "flat" ? ""
+        : `<button onclick="openAGSymbolPicker('${force.id}','${ag.id}')" title="${symDefAG.label} — click to change" style="${flatSymStyle};cursor:pointer;padding:0;transition:background .15s" onmouseover="this.style.background='${symDefAG.color}33'" onmouseout="this.style.background='${symDefAG.color}1a'">${_bgSymInner(symDefAG,12)}</button>`;
       const toolbarHTML = `<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border-subtle)">
+        ${flatSymBtn}
         <div style="flex:1;min-width:0;overflow:hidden">
           <div style="display:flex;align-items:center;gap:5px">${nameSection}</div>
           <div style="font-size:9px;color:var(--text-muted);margin-top:2px">${agSize} arm${agSize!==1?"ies":"y"}</div>
@@ -8114,9 +8173,18 @@ function renderForceDetail() {
           <button class="trait-edit-btn" onclick="openEditAGDescModal('${force.id}','${ag.id}')"><i class="fa-solid fa-pen"></i> Description</button>
         </div>
       </div>`;
-      agCardBodyHTML = `${toolbarHTML}${pickerHTML}${agWarnStripHTML}${descHTML}${armyRowsHTML}`;
-    }
+      return `${toolbarHTML}${pickerHTML}${agWarnStripHTML}${descHTML}${armyRowsHTML}`;
   }
+  const activeAG = agList.find(ag=>ag.id===activeAGTabId);
+  const agCardBodyHTML = activeAG ? _agCardBody(activeAG) : "";
+
+  const agViewToggleBtn = `<button class="trait-edit-btn" onclick="toggleAGViewMode()" title="${agViewMode==="flat"?"Switch to tabbed view":"Show all army groups at once"}"><i class="fa-solid fa-${agViewMode==="flat"?"table-columns":"list"}"></i> ${agViewMode==="flat"?"Tabbed":"Show All"}</button>`;
+  const agFlatHTML = `<div style="display:flex;flex-direction:column;gap:10px">
+    ${agList.map(ag => {
+      const violThis = viol.violatingIds.has(ag.id);
+      return `<div style="border:1px solid ${violThis?"#ef535066":"var(--border-default)"};border-radius:8px;padding:12px 14px;background:var(--surface-card)">${_agCardBody(ag)}</div>`;
+    }).join("")}
+  </div>`;
 
   const agViolActive = viol.violatingIds.has(activeAGTabId||"");
   panel.innerHTML = breadcrumb + `<div class="card">
@@ -8137,11 +8205,14 @@ function renderForceDetail() {
     ${deployBannerHTML}
     <div class="sub-divider">
       <div class="sub-divider-label"><i class="fa-solid fa-layer-group" style="color:#9c27b0;font-size:9px"></i> Army Groups</div>
+      ${agViewToggleBtn}
     </div>
-    <div style="border:1px solid ${agViolActive?"#ef535066":"var(--border-default)"};border-radius:8px;overflow:hidden">
-      ${agTabsHTML}
-      <div style="padding:12px 14px;background:var(--surface-card);border-top:1px solid var(--border-subtle)">${agCardBodyHTML}</div>
-    </div>
+    ${agViewMode==="flat"
+      ? agFlatHTML
+      : `<div style="border:1px solid ${agViolActive?"#ef535066":"var(--border-default)"};border-radius:8px;overflow:hidden">
+          ${agTabsHTML}
+          <div style="padding:12px 14px;background:var(--surface-card);border-top:1px solid var(--border-subtle)">${agCardBodyHTML}</div>
+        </div>`}
   </div>`;
 }
 
@@ -8163,6 +8234,11 @@ function selectAGTab(forceId, agId) {
   activeAGTabId = agId;
   agSymbolPickerAgId = null;
   editingAGId = null;
+  renderForceDetail();
+}
+
+function toggleAGViewMode() {
+  agViewMode = agViewMode === "flat" ? "tabs" : "flat";
   renderForceDetail();
 }
 
