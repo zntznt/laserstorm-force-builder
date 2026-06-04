@@ -508,6 +508,7 @@ label .trait-edit-btn{margin-left:6px}
         </div>
       </div>
     </div>
+    <div id="lib-quick-add-ctx" style="display:none"></div>
     <div id="lib-count" style="font-size:11px;color:var(--text-muted);margin-bottom:10px"></div>
     <div id="lib-list"></div>
   </div>
@@ -4018,6 +4019,23 @@ function renderLibrary() {
       ? `<strong style="color:var(--text-secondary)">${units.length}</strong> unit${units.length!==1?"s":""}${roleNote}`
       : "";
   }
+  // Active free-pick army for quick-add feature
+  const _qaArmy = currentArmyId ? state.armies.find(a=>a.id===currentArmyId) : null;
+  const _qaFP   = _qaArmy && isFreePick(_qaArmy);
+  const ctxEl = document.getElementById("lib-quick-add-ctx");
+  if(ctxEl) {
+    if(_qaFP) {
+      ctxEl.style.display = "";
+      ctxEl.innerHTML = `<div style="display:flex;align-items:center;gap:8px;padding:7px 12px;border-radius:6px;background:var(--accent-tint);border:1px solid #007eff33;font-size:12px;color:var(--accent-light);margin-bottom:10px">
+        <i class="fa-solid fa-bolt" style="font-size:10px;flex-shrink:0"></i>
+        <span>Quick-add active — click <strong><i class="fa-solid fa-square-plus"></i> Add to BG</strong> on any card to add it to <strong>${esc(_qaArmy.name)}</strong>.</span>
+        <button onclick="showPage('armies');selectArmy('${_qaArmy.id}')" style="background:none;border:none;color:var(--accent-light);cursor:pointer;padding:0;font-size:11px;white-space:nowrap;text-decoration:underline;margin-left:auto;flex-shrink:0">Open army →</button>
+      </div>`;
+    } else {
+      ctxEl.style.display = "none";
+    }
+  }
+
   const list = document.getElementById("lib-list");
   if(!units.length) {
     const msg = search
@@ -4029,13 +4047,104 @@ function renderLibrary() {
     return;
   }
   list.innerHTML = units.map(u => {
-    const pts = calcPoints(u);
+    let qaBtn = "";
+    if(_qaArmy) {
+      if(!_qaFP) {
+        qaBtn = `<button class="trait-edit-btn" disabled title="Quick-add is only available for Free Pick armies" style="opacity:.35;cursor:not-allowed;margin-left:auto"><i class="fa-solid fa-square-plus"></i> Add to BG</button>`;
+      } else if(!fpUnitMatchesFaction(u, _qaArmy)) {
+        const uf = factionName(u.faction)||u.faction||"unaligned";
+        const af = factionName(_qaArmy.faction)||_qaArmy.faction;
+        qaBtn = `<button class="trait-edit-btn" disabled title="Faction mismatch — unit is ${uf}, army requires ${af}" style="opacity:.35;cursor:not-allowed;margin-left:auto"><i class="fa-solid fa-square-plus"></i> Add to BG</button>`;
+      } else {
+        qaBtn = `<button class="trait-edit-btn" onclick="openLibQuickAddPopover('${u.id}',this);event.stopPropagation()" title="Quick-add to a battle group"><i class="fa-solid fa-square-plus"></i> Add to BG</button>`;
+      }
+    }
     const actions = `
       ${u.builtIn?"":`<button class="trait-edit-btn" onclick="editUnit('${u.id}')">Edit</button>`}
       ${u.builtIn?"":`<button class="trait-edit-btn" onclick="confirmBtn(this,()=>deleteCustomUnit('${u.id}'))">Delete</button>`}
-      <!-- Export Unit hidden pending custom trait/faction handling -->`;
+      ${qaBtn}`;
     return unitCardHTML(u, actions, libViewType);
   }).join("");
+}
+
+function openLibQuickAddPopover(unitId, btnEl) {
+  const army = currentArmyId ? state.armies.find(a=>a.id===currentArmyId) : null;
+  if(!army || !isFreePick(army)) return;
+  const unit = unitById(unitId);
+  if(!unit) return;
+  const popover = document.getElementById("lib-quick-add-popover");
+  if(!popover) return;
+
+  const pts = calcPoints(unit);
+  const typeSpecs = [
+    {type:"unit",        label:"Unit",    key:"unitPts"},
+    {type:"independent", label:"Ind",     key:"indPts"},
+    {type:"hero",        label:"Hero",    key:"heroPts"},
+    {type:"command",     label:"Cmd",     key:"cmdPts"},
+    {type:"cmdHero",     label:"CmdHero", key:"cmdHeroPts"},
+  ];
+  const availTypes = typeSpecs.filter(t => pts[t.key] != null);
+
+  const bgs = army.battleGroups || [];
+  const bgRows = !bgs.length
+    ? `<div style="font-size:12px;color:var(--text-faint);font-style:italic;padding:2px 0">No battle groups — open the army to add them.</div>`
+    : bgs.map(bg => {
+        const btns = availTypes.map(t =>
+          `<button onclick="libQuickAddUnit('${unitId}','${bg.id}','${t.type}',this);event.stopPropagation()" class="trait-edit-btn" style="font-size:10px;padding:3px 8px;line-height:1.4;text-align:center;white-space:nowrap"><i class="fa-solid fa-plus" style="font-size:8px"></i> ${t.label} <span style="opacity:.65;font-size:9px">${pts[t.key]}p</span></button>`
+        ).join("");
+        return `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border-subtle)">
+          <span style="font-size:12px;font-weight:600;color:var(--text-primary);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(bg.name)}</span>
+          <div style="display:flex;gap:3px;flex-wrap:wrap;justify-content:flex-end;flex-shrink:0">${btns}</div>
+        </div>`;
+      }).join("");
+
+  popover.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 12px;border-bottom:1px solid var(--border-subtle);background:var(--surface-page)">
+      <div>
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);font-weight:700">Add to Battle Group</div>
+        <div style="font-size:13px;font-weight:bold;color:var(--text-primary);margin-top:1px">${esc(army.name)}</div>
+      </div>
+      <button onclick="closeLibQuickAddPopover()" style="background:none;border:none;color:var(--text-faint);cursor:pointer;font-size:16px;padding:2px 6px;line-height:1;transition:color .12s" onmouseover="this.style.color='var(--text-primary)'" onmouseout="this.style.color='var(--text-faint)'"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div style="padding:6px 12px 10px">${bgRows}</div>`;
+
+  popover.style.display = "block";
+  const rect = btnEl.getBoundingClientRect();
+  const pw = 320;
+  let left = Math.max(8, rect.right - pw);
+  let top = rect.bottom + 6;
+  if(top + popover.offsetHeight > window.innerHeight - 8) top = Math.max(8, rect.top - popover.offsetHeight - 6);
+  popover.style.left = left + "px";
+  popover.style.top = top + "px";
+  popover.style.width = pw + "px";
+}
+
+function closeLibQuickAddPopover() {
+  const p = document.getElementById("lib-quick-add-popover");
+  if(p) p.style.display = "none";
+}
+
+function libQuickAddUnit(unitId, bgId, unitType, btnEl) {
+  const army = state.armies.find(a=>a.id===currentArmyId);
+  const bg = army && (army.battleGroups||[]).find(b=>b.id===bgId);
+  if(!army || !bg) return;
+  bg.entries = bg.entries || [];
+  const existing = bg.entries.find(e => e.unitId === unitId && e.unitType === unitType);
+  if(existing) {
+    existing.qty = (existing.qty||1) + 1;
+  } else {
+    bg.entries.push({id:"fpe_"+uid(), unitId, unitType, qty:1});
+  }
+  saveState();
+  if(btnEl) {
+    const origHTML = btnEl.innerHTML;
+    const origBC = btnEl.style.borderColor;
+    const origC = btnEl.style.color;
+    btnEl.innerHTML = '<i class="fa-solid fa-check"></i>';
+    btnEl.style.borderColor = "#66bb6a55";
+    btnEl.style.color = "#66bb6a";
+    setTimeout(() => { btnEl.innerHTML=origHTML; btnEl.style.borderColor=origBC; btnEl.style.color=origC; }, 900);
+  }
 }
 
 function deleteCustomUnit(id) {
@@ -7906,8 +8015,17 @@ document.querySelectorAll(".modal-bg").forEach(mb=>{
   mb.addEventListener("click",function(e){ if(e.target===mb) mb.classList.remove("open"); });
 });
 
-// Undo keyboard shortcut (Ctrl+Z / Cmd+Z)
+// Close library quick-add popover on outside click
+document.addEventListener("mousedown", function(e) {
+  const pop = document.getElementById("lib-quick-add-popover");
+  if(pop && pop.style.display !== "none" && !pop.contains(e.target)) closeLibQuickAddPopover();
+});
+
+// Keyboard shortcuts
 document.addEventListener("keydown", function(e) {
+  // ESC closes quick-add popover
+  if(e.key === "Escape") closeLibQuickAddPopover();
+  // Undo (Ctrl+Z / Cmd+Z)
   if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key === "z") {
     const tag = document.activeElement && document.activeElement.tagName;
     if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
@@ -7917,5 +8035,6 @@ document.addEventListener("keydown", function(e) {
 });
 </script>
 <div id="undo-toast"></div>
+<div id="lib-quick-add-popover" style="display:none;position:fixed;z-index:2000;background:var(--surface-raised);border:1px solid var(--border-default);border-radius:10px;min-width:280px;max-width:340px;box-shadow:0 8px 32px rgba(0,0,0,.55);overflow:hidden"></div>
 </body>
 </html>
