@@ -58,10 +58,12 @@ body{font-family:var(--font-body);background:var(--surface-page);color:var(--tex
 a{color:var(--accent)}
 nav{background:var(--surface-nav);border-bottom:2px solid var(--accent);display:flex;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:50}
 .nav-brand{font-family:var(--font-display);color:var(--accent);font-size:22px;padding:10px 18px;letter-spacing:4px;white-space:nowrap}
-.nav-tabs{display:flex;flex-wrap:wrap}
-.nav-tab{padding:10px 16px;cursor:pointer;color:var(--text-inactive);border-bottom:3px solid transparent;font-weight:bold;font-size:12px;text-transform:uppercase;letter-spacing:1px;transition:all .2s}
+.nav-tabs{display:flex;flex-wrap:nowrap}
+.nav-tab{padding:10px 13px;cursor:pointer;color:var(--text-inactive);border-bottom:3px solid transparent;font-weight:bold;font-size:12px;text-transform:uppercase;letter-spacing:1px;transition:color .2s,border-color .2s;display:inline-flex;align-items:center;white-space:nowrap;user-select:none}
 .nav-tab:hover{color:var(--accent)}
 .nav-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.nav-label{overflow:hidden;max-width:0;opacity:0;margin-left:0;transition:max-width .22s ease,opacity .18s ease,margin-left .22s ease}
+.nav-tab:hover .nav-label,.nav-tab.active .nav-label{max-width:120px;opacity:1;margin-left:6px}
 .page{display:none;padding:20px;max-width:1200px;margin:0 auto}
 .page.active{display:block}
 .card{background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:8px;padding:16px;margin-bottom:16px}
@@ -271,12 +273,12 @@ label .trait-edit-btn{margin-left:6px}
 <nav>
   <div class="nav-brand">LaserStorm Force Builder</div>
   <div class="nav-tabs">
-    <div class="nav-tab" id="tab-builder" onclick="showPage('builder')">Unit Builder</div>
-    <div class="nav-tab" id="tab-library" onclick="showPage('library')">Unit Library</div>
-    <div class="nav-tab" id="tab-taskforces" onclick="showPage('taskforces')">Task Forces</div>
-    <div class="nav-tab" id="tab-armies" onclick="showPage('armies')">Armies</div>
-    <div class="nav-tab" id="tab-forces" onclick="showPage('forces')">Exp. Forces</div>
-    <div class="nav-tab" id="tab-data" onclick="showPage('data')" title="Import / Export data"><i class="fa-solid fa-database"></i> Data</div>
+    <div class="nav-tab" id="tab-builder" onclick="showPage('builder')" title="Unit Builder"><i class="fa-solid fa-hammer"></i><span class="nav-label">Unit Builder</span></div>
+    <div class="nav-tab" id="tab-library" onclick="showPage('library')" title="Unit Library"><i class="fa-solid fa-book-open"></i><span class="nav-label">Unit Library</span></div>
+    <div class="nav-tab" id="tab-taskforces" onclick="showPage('taskforces')" title="Task Forces"><i class="fa-solid fa-shield-halved"></i><span class="nav-label">Task Forces</span></div>
+    <div class="nav-tab" id="tab-armies" onclick="showPage('armies')" title="Armies"><i class="fa-solid fa-chess-rook"></i><span class="nav-label">Armies</span></div>
+    <div class="nav-tab" id="tab-forces" onclick="showPage('forces')" title="Expeditionary Forces"><i class="fa-solid fa-earth-americas"></i><span class="nav-label">Exp. Forces</span></div>
+    <div class="nav-tab" id="tab-data" onclick="showPage('data')" title="Data"><i class="fa-solid fa-database"></i><span class="nav-label">Data</span></div>
   </div>
   <button id="nav-undo-btn" onclick="undoState()" title="Undo last change (Ctrl+Z)"><i class="fa-solid fa-rotate-left"></i> Undo</button>
   <a href="https://www.wargamevault.com/product/476399/laserstorm-2nd-edition?affiliate_id=564654" target="_blank" rel="noopener" style="margin-left:auto;margin-right:12px;padding:5px 13px;background:#007eff;color:#fff;border-radius:20px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;text-decoration:none;white-space:nowrap;transition:background .2s" onmouseover="this.style.background='#0066cc'" onmouseout="this.style.background='#007eff'">Buy LaserStorm</a>
