@@ -515,21 +515,17 @@ label .trait-edit-btn{margin-left:6px}
 
 <!-- ===== TASK FORCES PAGE ===== -->
 <div id="page-taskforces" class="page">
-  <div class="grid-sidebar">
-    <div style="position:sticky;top:16px">
-      <div class="card">
-        <div class="card-title">Task Forces
-          <button class="trait-edit-btn" onclick="openNewTFModal()">New Task Force</button>
-        </div>
-        <div id="tf-scale-info"></div>
-        <div id="tf-list"></div>
+  <div id="tf-list-view">
+    <div class="card-title">Task Forces
+      <div style="display:flex;gap:6px">
+        <button class="trait-edit-btn" onclick="openImportTFModal()"><i class="fa-solid fa-file-import"></i> Import</button>
+        <button class="trait-edit-btn" onclick="openNewTFModal()"><i class="fa-solid fa-plus"></i> New Task Force</button>
       </div>
     </div>
-    <div id="tf-detail-panel">
-      <div class="card">
-        <div class="empty"><div class="empty-icon"><i class="fa-solid fa-users"></i></div>Select a Task Force to edit</div>
-      </div>
-    </div>
+    <div id="tf-list"></div>
+  </div>
+  <div id="tf-detail-view" style="display:none">
+    <div id="tf-detail-panel"></div>
   </div>
 </div>
 
@@ -639,6 +635,24 @@ label .trait-edit-btn{margin-left:6px}
     <div style="display:flex;justify-content:flex-end;gap:8px">
       <button class="btn btn-secondary" onclick="closeModal('modal-import-army')">Cancel</button>
       <button class="btn btn-primary" id="import-army-btn" onclick="doImportArmy()" disabled><i class="fa-solid fa-upload"></i> Import Army</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== IMPORT TASK FORCE MODAL ===== -->
+<div id="modal-import-tf" class="modal-bg">
+  <div class="modal" style="max-width:640px">
+    <div class="modal-header">Import Task Force <button class="modal-close" onclick="closeModal('modal-import-tf')"><i class="fa-solid fa-xmark"></i></button></div>
+    <p style="color:var(--text-muted);font-size:13px;margin:0 0 14px;line-height:1.5">Paste a previously exported task force JSON. Custom units, factions, traits, TF types and assets are merged automatically — duplicates (matched by name) are skipped.</p>
+    <div class="form-group" style="margin-bottom:12px">
+      <label>Paste Task Force JSON</label>
+      <textarea id="import-tf-text" placeholder="Paste task force JSON here..." oninput="onImportTFTextChange()" style="width:100%;min-height:140px;resize:vertical;font-family:monospace;font-size:12px;line-height:1.4;background:var(--surface-page);border:1px solid var(--border-default);border-radius:6px;color:var(--text-primary);padding:10px"></textarea>
+    </div>
+    <div id="import-tf-preview" style="display:none;background:var(--surface-raised);border:1px solid var(--border-default);border-radius:6px;padding:10px 14px;margin-bottom:12px;font-size:13px;line-height:1.55"></div>
+    <div id="import-tf-msg" style="display:none;margin-bottom:10px"></div>
+    <div style="display:flex;justify-content:flex-end;gap:8px">
+      <button class="btn btn-secondary" onclick="closeModal('modal-import-tf')">Cancel</button>
+      <button class="btn btn-primary" id="import-tf-btn" onclick="doImportTF()" disabled><i class="fa-solid fa-upload"></i> Import Task Force</button>
     </div>
   </div>
 </div>
@@ -1514,7 +1528,19 @@ function _rerenderCurrentPage() {
   if (!active) return;
   const id = active.id.replace("page-", "");
   if (id === "library") { renderLibrary(); return; }
-  if (id === "taskforces") { renderTFList(); return; }
+  if (id === "taskforces") {
+    if (currentTFId && state.taskForces.find(t => t.id === currentTFId)) {
+      renderTFDetail();
+    } else {
+      currentTFId = null;
+      const lv = document.getElementById("tf-list-view");
+      const dv = document.getElementById("tf-detail-view");
+      if(lv) lv.style.display = "";
+      if(dv) dv.style.display = "none";
+      renderTFList();
+    }
+    return;
+  }
   if (id === "builder") { calculateBuilder(); return; }
   if (id === "data") { renderDataPage(); return; }
   if (id === "armies") {
@@ -2088,7 +2114,14 @@ function showPage(p) {
   document.getElementById("page-"+p).classList.add("active");
   document.getElementById("tab-"+p).classList.add("active");
   if(p==="library") renderLibrary();
-  if(p==="taskforces") renderTFList();
+  if(p==="taskforces") {
+    currentTFId = null;
+    const lv = document.getElementById("tf-list-view");
+    const dv = document.getElementById("tf-detail-view");
+    if(lv) lv.style.display = "";
+    if(dv) dv.style.display = "none";
+    renderTFList();
+  }
   if(p==="armies") {
     currentArmyId = null;
     const lv = document.getElementById("army-list-view");
@@ -4080,47 +4113,85 @@ function _populateFactionSelect(selEl, currentVal) {
 
 function renderTFList() {
   const list = document.getElementById("tf-list");
-  const scaleEl = document.getElementById("tf-scale-info");
-  if(scaleEl) scaleEl.innerHTML = "";
-  if(!state.taskForces.length) {
-    list.innerHTML = `<div class="empty"><div class="empty-icon"><i class="fa-solid fa-users"></i></div>No task forces yet</div>`;
+  if (!list) return;
+  if (!state.taskForces.length) {
+    list.innerHTML = `<div class="empty" style="padding:48px 0"><div class="empty-icon"><i class="fa-solid fa-users"></i></div>No task forces yet — press <strong>New Task Force</strong> to create one</div>`;
     return;
   }
   const allAssets = allTacticalAssets();
   list.innerHTML = state.taskForces.map(tf => {
     const pts = tfPoints(tf);
     const unitCount = (tf.units||[]).reduce((s,u)=>s+u.quantity,0);
-    const isCurrent = tf.id === currentTFId;
     const typeLabel = tf.tfType ? _tfTypeLabel(tf.tfType) : "";
     const asset = tf.tacAsset ? allAssets.find(a=>a.id===tf.tacAsset) : null;
     const facPill = tf.faction ? factionPill(tf.faction) : "";
-    const rankBadge = tf.commanderRank === "lord"
+    const rank = tf.commanderRank || "regular";
+    const rankBadge = rank === "lord"
       ? `<span style="background:#7b1fa222;color:#ce93d8;border:1px solid #7b1fa255;padding:0 5px;border-radius:8px;font-size:9px;font-weight:bold;letter-spacing:.5px">LORD</span>`
-      : tf.commanderRank === "senior"
+      : rank === "senior"
       ? `<span style="background:#1a237e22;color:#90caf9;border:1px solid #1a237e55;padding:0 5px;border-radius:8px;font-size:9px;font-weight:bold;letter-spacing:.5px">SR. TFC</span>`
       : "";
-    const cmdAssetLine = (tf.commander || asset || rankBadge) ? `
-      <div style="font-size:11px;color:#6a7a6a;margin-top:2px;display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-        ${tf.commander?`<span><i class="fa-solid fa-person-military-pointing" style="color:#ffd54f;font-size:9px;margin-right:3px"></i>${esc(tf.commander)}</span>`:""}
-        ${rankBadge}
-        ${tf.commander && asset?`<span style="color:#333">&bull;</span>`:""}
-        ${asset?`<span><i class="fa-solid fa-chess" style="color:#ffd54f;font-size:9px;margin-right:3px"></i>${esc(asset.name)}</span>`:""}
-      </div>` : "";
     const overLimit = tf.pointsLimit && pts > tf.pointsLimit;
-    const ptsColor = overLimit ? "#ef5350" : "#8b949e";
-    const ptsText = tf.pointsLimit ? `${pts} / ${tf.pointsLimit} pts${overLimit?" ⚠":""}` : `${pts} pts`;
-    return `<div class="sl-item${isCurrent?" sl-active":""}${overLimit?" sl-warn":""}" style="${overLimit&&!isCurrent?"border-color:#ef535055":""}" onclick="selectTF('${tf.id}')">
-      <div class="sl-name">${esc(tf.name)}</div>
-      <div class="sl-meta">
-        <span style="color:#7986cb">${typeLabel?esc(typeLabel):"—"}</span>
-        ${facPill}
+    const ptsColor = overLimit ? "#ef5350" : "var(--accent)";
+    const ptsLabel = tf.pointsLimit ? `${pts} / ${tf.pointsLimit}` : `${pts}`;
+    const deployedArmy = armyOfTF(tf.id);
+    const deployBadge = deployedArmy
+      ? `<span style="font-size:10px;color:#8b949e;display:inline-flex;align-items:center;gap:4px"><i class="fa-solid fa-shield-halved" style="color:#7986cb;font-size:9px"></i> ${esc(deployedArmy.name)}</span>`
+      : `<span style="font-size:10px;color:#444">Undeployed</span>`;
+    const barHTML = tf.pointsLimit ? (()=>{
+      const pct = Math.min(pts / tf.pointsLimit, 1) * 100;
+      const barColor = overLimit ? "#ef5350" : pts / tf.pointsLimit > 0.85 ? "#ffa726" : "#4caf50";
+      return `<div style="height:3px;border-radius:2px;background:#1a1f2a;overflow:hidden;margin-top:6px">
+        <div style="height:100%;width:${pct.toFixed(1)}%;background:${barColor};border-radius:2px"></div>
+      </div>`;
+    })() : "";
+    const cardBorder = overLimit ? "border-color:#ef535055" : "";
+    return `<div style="background:var(--surface-card);border:1px solid var(--border-default);border-radius:10px;margin-bottom:12px;overflow:hidden;cursor:pointer;transition:border-color .15s,background .15s;${cardBorder}"
+      onclick="selectTF('${tf.id}')"
+      onmouseover="this.style.borderColor='var(--accent)';this.style.background='var(--surface-raised)'"
+      onmouseout="this.style.borderColor='${overLimit?"#ef535055":"var(--border-default)"}';this.style.background='var(--surface-card)'">
+      <div style="display:flex;align-items:flex-start;gap:12px;padding:14px 16px">
+        <div style="min-width:0;flex:1">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px">
+            <span style="font-family:var(--font-display);font-size:20px;letter-spacing:.5px;color:var(--text-bright)">${esc(tf.name)}</span>
+            ${typeLabel?`<span style="font-size:10px;padding:1px 7px;border-radius:8px;background:#1a2030;color:#7986cb;border:1px solid #2a3a5a;font-weight:bold;letter-spacing:.3px;white-space:nowrap">${esc(typeLabel)}</span>`:""}
+            ${facPill}
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:5px">
+            ${tf.commander?`<span style="font-size:11px;color:#8b949e;display:inline-flex;align-items:center;gap:4px"><i class="fa-solid fa-person-military-pointing" style="color:#ffd54f;font-size:9px"></i>${esc(tf.commander)}</span>`:""}
+            ${rankBadge}
+            ${asset?`<span style="font-size:11px;color:#8b949e;display:inline-flex;align-items:center;gap:4px"><i class="fa-solid fa-chess" style="color:#ffd54f;font-size:9px"></i>${esc(asset.name)}</span>`:""}
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            ${deployBadge}
+            <span style="color:#444;font-size:10px">&bull;</span>
+            <span style="font-size:11px;color:#8b949e">${unitCount} unit${unitCount!==1?"s":""}</span>
+          </div>
+          ${barHTML}
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;justify-content:space-between;gap:8px;flex-shrink:0" onclick="event.stopPropagation()">
+          <div style="text-align:right">
+            <div style="font-size:22px;font-family:var(--font-display);color:${ptsColor};line-height:1">${ptsLabel}</div>
+            <div style="font-size:10px;color:var(--text-faint);letter-spacing:.03em">pts</div>
+            ${overLimit?`<div style="font-size:10px;color:#ef5350;font-weight:bold"><i class="fa-solid fa-triangle-exclamation"></i> over</div>`:""}
+          </div>
+          <div style="display:flex;flex-direction:column;gap:5px">
+            <button class="trait-edit-btn" onclick="selectTF('${tf.id}')" style="white-space:nowrap"><i class="fa-solid fa-arrow-right"></i> Open</button>
+            <button class="trait-edit-btn" onclick="exportTF('${tf.id}')" title="Export task force JSON"><i class="fa-solid fa-share-nodes"></i> Export</button>
+          </div>
+        </div>
       </div>
-      <div class="sl-meta" style="color:${ptsColor};margin-top:1px">
-        ${unitCount} unit${unitCount!==1?"s":""} &bull; <span class="sl-pts" style="color:${ptsColor}">${ptsText}</span>
-      </div>
-      ${cmdAssetLine}
     </div>`;
   }).join("");
+}
+
+function backToTFList() {
+  currentTFId = null;
+  const lv = document.getElementById("tf-list-view");
+  const dv = document.getElementById("tf-detail-view");
+  if(lv) lv.style.display = "";
+  if(dv) dv.style.display = "none";
+  renderTFList();
 }
 
 function availableTypesFor(cls, role) {
@@ -4332,7 +4403,10 @@ function _tfRankPillsHTML(tf, slots) {
 function selectTF(id) {
   currentTFId = id;
   activeTFTab = "core";
-  renderTFList();
+  const lv = document.getElementById("tf-list-view");
+  const dv = document.getElementById("tf-detail-view");
+  if(lv) lv.style.display = "none";
+  if(dv) dv.style.display = "";
   renderTFDetail();
 }
 
@@ -4550,13 +4624,19 @@ function renderTFDetail() {
         <i class="fa-solid fa-shield-halved" style="font-size:9px"></i>
         Not deployed in any army
        </span>`;
-  panel.innerHTML = `<div class="card">
+  const breadcrumb = `<div style="margin-bottom:12px">
+    <button onclick="backToTFList()" style="background:none;border:none;color:var(--text-muted);cursor:pointer;padding:0;font-size:13px;display:inline-flex;align-items:center;gap:6px;transition:color .15s" onmouseover="this.style.color='var(--text-primary)'" onmouseout="this.style.color='var(--text-muted)'">
+      <i class="fa-solid fa-arrow-left" style="font-size:11px"></i> Task Forces
+    </button>
+  </div>`;
+  panel.innerHTML = breadcrumb + `<div class="card">
     <div class="card-title">
       <div>
         <span>${esc(tf.name)}</span>
         ${deployedBadge}
       </div>
       <div style="display:flex;gap:6px">
+        <button class="trait-edit-btn" onclick="exportTF('${tf.id}')"><i class="fa-solid fa-share-nodes"></i> Export</button>
         <button class="trait-edit-btn" onclick="openEditTFModal('${tf.id}')"><i class="fa-solid fa-pen"></i> Edit</button>
         <button class="trait-edit-btn" style="border-color:#8b000066;color:#ef5350;background:#2a0a0a" onclick="confirmBtn(this,()=>deleteTF('${tf.id}'))"><i class="fa-solid fa-trash"></i> Delete</button>
       </div>
@@ -4655,27 +4735,32 @@ function createTaskForce() {
     const tf = state.taskForces.find(t=>t.id===editingTFId);
     if(tf) { tf.name = name; tf.tfType = tfType; tf.commander = commander; tf.faction = faction; tf.notes = notes; tf.pointsLimit = pointsLimit; }
     editingTFId = null;
+    saveState();
+    closeModal("modal-tf");
+    renderTFDetail();
   } else {
     const tf = { id:"tf_"+uid(), name, tfType, commander, faction, notes, pointsLimit, units:[] };
     state.taskForces.push(tf);
-    currentTFId = tf.id;
+    saveState();
+    closeModal("modal-tf");
+    selectTF(tf.id);
   }
-  saveState();
-  closeModal("modal-tf");
-  renderTFList();
-  renderTFDetail();
 }
 
 function deleteTF(id) {
   state.taskForces = state.taskForces.filter(t=>t.id!==id);
   state.armies.forEach(a => { a.taskForceIds = a.taskForceIds.filter(tid=>tid!==id); });
   pruneOrphanedBGEntries();
-  if(currentTFId===id) currentTFId=null;
+  const wasCurrent = currentTFId === id;
+  if(wasCurrent) currentTFId = null;
   saveState();
-  renderTFList();
-  renderTFDetail();
   renderArmyList();
   if(currentArmyId) renderArmyDetail();
+  if(wasCurrent) {
+    backToTFList();
+  } else {
+    renderTFList();
+  }
 }
 
 function openAddUnitModal(tfId, role) {
@@ -4953,6 +5038,226 @@ function deleteCustomTFType(id) {
   saveState();
   _renderCustomTFTypeList();
   _populateTFTypeSelect(document.getElementById("tf-type"), document.getElementById("tf-type").value);
+}
+
+// ---- Task Force export / import ----
+function collectTFBundle(tfId) {
+  const tf = (state.taskForces||[]).find(t=>t.id===tfId);
+  if(!tf) return null;
+  const unitIdSet = new Set();
+  (tf.units||[]).forEach(slot=>{
+    if(slot.unitId) unitIdSet.add(slot.unitId);
+    if(slot.transport) unitIdSet.add(slot.transport);
+  });
+  const customUnits = (state.customUnits||[]).filter(u=>unitIdSet.has(u.id));
+  const facIdSet = new Set(customUnits.map(u=>u.faction).filter(Boolean));
+  const customFactions = (state.customFactions||[]).filter(f=>facIdSet.has(f.id));
+  const traitNames = new Set();
+  customUnits.forEach(u=>{
+    (u.standTraits||[]).forEach(t=>{ if(t&&t[0]!=null) traitNames.add(String(t[0]).toLowerCase()); });
+    (u.weapons||[]).forEach(w=>(w.traits||[]).forEach(t=>{ if(t&&t[0]!=null) traitNames.add(String(t[0]).toLowerCase()); }));
+  });
+  const customTraits = (state.customTraits||[]).filter(t=>traitNames.has(String(t.name).toLowerCase()));
+  const customTFTypes = [];
+  if(tf.tfType && (state.customTFTypes||[]).some(ct=>ct.id===tf.tfType)) {
+    const ct = state.customTFTypes.find(t=>t.id===tf.tfType);
+    if(ct) customTFTypes.push(ct);
+  }
+  const customTacticalAssets = [];
+  if(tf.tacAsset && tf.tacAsset.startsWith("custom_")) {
+    const bareId = tf.tacAsset.slice(7);
+    const asset = (state.customTacticalAssets||[]).find(a=>a.id===bareId);
+    if(asset) customTacticalAssets.push(asset);
+  }
+  return { taskForce:tf, customTFTypes, customTacticalAssets, customUnits, customFactions, customTraits };
+}
+
+function exportTF(tfId) {
+  const bundle = collectTFBundle(tfId);
+  if(!bundle) return;
+  const payload = {
+    app:"laserstorm-army-builder", kind:"taskforce", version:1,
+    exportedAt:new Date().toISOString(), tfName:bundle.taskForce.name,
+    data:bundle
+  };
+  const json = JSON.stringify(payload, null, 2);
+  const ta = document.getElementById("export-json-text");
+  if(ta) ta.value = json;
+  const ttl = document.getElementById("export-json-title");
+  if(ttl) ttl.textContent = `Export — ${esc(bundle.taskForce.name)}`;
+  const sum = document.getElementById("export-json-summary");
+  if(sum) {
+    const parts = [];
+    if(bundle.customUnits.length) parts.push(`${bundle.customUnits.length} custom unit${bundle.customUnits.length!==1?"s":""}`);
+    if(bundle.customFactions.length) parts.push(`${bundle.customFactions.length} custom faction${bundle.customFactions.length!==1?"s":""}`);
+    if(bundle.customTraits.length) parts.push(`${bundle.customTraits.length} custom trait${bundle.customTraits.length!==1?"s":""}`);
+    if(bundle.customTFTypes.length) parts.push(`${bundle.customTFTypes.length} custom TF type`);
+    if(bundle.customTacticalAssets.length) parts.push(`${bundle.customTacticalAssets.length} custom asset${bundle.customTacticalAssets.length!==1?"s":""}`);
+    sum.textContent = parts.length ? parts.join(", ") : "no custom dependencies";
+  }
+  const copyBtn = document.getElementById("export-copy-btn");
+  if(copyBtn){ copyBtn.innerHTML='<i class="fa-solid fa-copy"></i> Copy to clipboard'; copyBtn.disabled=false; }
+  openModal("modal-export-json");
+}
+
+function openImportTFModal() {
+  const ta = document.getElementById("import-tf-text");
+  if(ta) ta.value = "";
+  const prev = document.getElementById("import-tf-preview");
+  if(prev) prev.style.display = "none";
+  _dataHideMsg("import-tf-msg");
+  const btn = document.getElementById("import-tf-btn");
+  if(btn){ btn.disabled=true; btn.innerHTML='<i class="fa-solid fa-upload"></i> Import Task Force'; }
+  _pendingTFImport = null;
+  openModal("modal-import-tf");
+}
+
+let _pendingTFImport = null;
+let _importTFDebounce = null;
+function onImportTFTextChange() {
+  clearTimeout(_importTFDebounce);
+  _importTFDebounce = setTimeout(_parseImportTFText, 120);
+}
+
+function _parseImportTFText() {
+  const ta = document.getElementById("import-tf-text");
+  const btn = document.getElementById("import-tf-btn");
+  const prev = document.getElementById("import-tf-preview");
+  _pendingTFImport = null;
+  if(btn){ btn.disabled=true; btn.innerHTML='<i class="fa-solid fa-upload"></i> Import Task Force'; }
+  _dataHideMsg("import-tf-msg");
+  if(prev) prev.style.display = "none";
+  const raw = ta && ta.value.trim();
+  if(!raw) return;
+  let payload;
+  try { payload = JSON.parse(raw); }
+  catch(e){ _dataMsg("import-tf-msg","error","Not valid JSON — check for missing brackets or commas."); return; }
+  if(!payload||payload.app!=="laserstorm-army-builder"||!payload.data){
+    _dataMsg("import-tf-msg","error","This doesn't look like a LaserStorm export — missing required fields."); return;
+  }
+  if(payload.kind!=="taskforce"){
+    _dataMsg("import-tf-msg","error",`This is a <strong>${esc(payload.kind)}</strong> export, not a task force export. Use the appropriate importer.`); return;
+  }
+  const d = payload.data;
+  const tf = d.taskForce||{};
+  const parts = [
+    `<strong>${esc(tf.name||"Unnamed Task Force")}</strong>`,
+    tf.tfType ? `type: ${esc(_tfTypeLabel(tf.tfType))}` : null,
+    tf.faction ? `faction: ${esc(factionName(tf.faction)||tf.faction)}` : null,
+    d.customUnits&&d.customUnits.length ? `${d.customUnits.length} custom unit${d.customUnits.length!==1?"s":""}` : null,
+    d.customFactions&&d.customFactions.length ? `${d.customFactions.length} custom faction${d.customFactions.length!==1?"s":""}` : null,
+    d.customTraits&&d.customTraits.length ? `${d.customTraits.length} custom trait${d.customTraits.length!==1?"s":""}` : null,
+    d.customTFTypes&&d.customTFTypes.length ? `${d.customTFTypes.length} custom TF type` : null,
+    d.customTacticalAssets&&d.customTacticalAssets.length ? `${d.customTacticalAssets.length} custom asset${d.customTacticalAssets.length!==1?"s":""}` : null,
+  ].filter(Boolean);
+  if(prev){ prev.innerHTML = parts.join(" &bull; "); prev.style.display=""; }
+  if(btn) btn.disabled = false;
+  _pendingTFImport = payload;
+}
+
+function doImportTF() {
+  if(!_pendingTFImport||_pendingTFImport.kind!=="taskforce"){ _dataMsg("import-tf-msg","error","Paste valid task force JSON first."); return; }
+  const newTF = importTF(_pendingTFImport);
+  closeModal("modal-import-tf");
+  selectTF(newTF.id);
+}
+
+function importTF(payload) {
+  const d = payload.data;
+
+  // 1. Merge factions (dedup by name)
+  const facById = new Map((state.customFactions||[]).map(f=>[f.id,f]));
+  const facByName = new Map((state.customFactions||[]).map(f=>[String(f.name).toLowerCase(),f]));
+  const facIdMap = {};
+  (d.customFactions||[]).forEach(f=>{
+    const k = String(f.name||"").toLowerCase();
+    const ex = facByName.get(k);
+    if(ex){ facIdMap[f.id]=ex.id; return; }
+    let newId = (!f.id||facById.has(f.id)) ? "fac_"+uid() : f.id;
+    const nf = Object.assign({},f,{id:newId});
+    state.customFactions.push(nf); facById.set(newId,nf); facByName.set(k,nf);
+    facIdMap[f.id]=newId;
+  });
+  const remapFac = id=>(id&&facIdMap[id])?facIdMap[id]:id;
+
+  // 2. Merge traits (dedup by name)
+  const traitByName = new Map((state.customTraits||[]).map(t=>[String(t.name).toLowerCase(),t]));
+  const traitById = new Set((state.customTraits||[]).map(t=>t.id));
+  (d.customTraits||[]).forEach(t=>{
+    const k = String(t.name||"").toLowerCase();
+    if(traitByName.has(k)) return;
+    let newId = (!t.id||traitById.has(t.id)) ? uid() : t.id;
+    const nt = Object.assign({},t,{id:newId});
+    if(nt.faction) nt.faction=remapFac(nt.faction);
+    if(Array.isArray(nt.reqs)) nt.reqs=nt.reqs.map(r=>(r&&r.type==="faction"&&Array.isArray(r.vals))?Object.assign({},r,{vals:r.vals.map(remapFac)}):r);
+    state.customTraits.push(nt); traitByName.set(k,nt); traitById.add(newId);
+  });
+
+  // 3. Merge units (dedup by name+faction combo)
+  const unitByIdMap = new Map((state.customUnits||[]).map(u=>[u.id,u]));
+  const unitKey = u=>String(u.name||"").toLowerCase()+"||"+String(u.faction||"").toLowerCase();
+  const unitKeyToId = new Map((state.customUnits||[]).map(u=>[unitKey(u),u.id]));
+  const unitIdMap = {};
+  (d.customUnits||[]).forEach(u=>{
+    const nu = Object.assign({},u,{faction:remapFac(u.faction)});
+    const k = unitKey(nu);
+    if(unitKeyToId.has(k)){ unitIdMap[u.id]=unitKeyToId.get(k); return; }
+    let newId = (!nu.id||unitByIdMap.has(nu.id)) ? "custom_"+uid() : nu.id;
+    nu.id=newId;
+    if(typeof migrateCustomUnit==="function") migrateCustomUnit(nu);
+    state.customUnits.push(nu); unitByIdMap.set(newId,nu); unitKeyToId.set(k,newId);
+    unitIdMap[u.id]=newId;
+  });
+  const remapUnit = id=>(id&&unitIdMap[id])?unitIdMap[id]:id;
+
+  // 4. Merge custom TF types (dedup by name)
+  const tfTypeByName = new Map((state.customTFTypes||[]).map(t=>[String(t.name).toLowerCase(),t]));
+  const tfTypeById = new Map((state.customTFTypes||[]).map(t=>[t.id,t]));
+  const tfTypeIdMap = {};
+  (d.customTFTypes||[]).forEach(t=>{
+    const k = String(t.name||"").toLowerCase();
+    const ex = tfTypeByName.get(k);
+    if(ex){ tfTypeIdMap[t.id]=ex.id; return; }
+    let newId = (!t.id||tfTypeById.has(t.id)) ? "ctft_"+uid() : t.id;
+    const nt = Object.assign({},t,{id:newId});
+    state.customTFTypes.push(nt); tfTypeByName.set(k,nt); tfTypeById.set(newId,nt);
+    tfTypeIdMap[t.id]=newId;
+  });
+  const remapTFType = id=>(id&&tfTypeIdMap[id])?tfTypeIdMap[id]:id;
+
+  // 5. Merge custom tactical assets (dedup by name)
+  const assetByName = new Map((state.customTacticalAssets||[]).map(a=>[String(a.name).toLowerCase(),a]));
+  const assetById = new Map((state.customTacticalAssets||[]).map(a=>[a.id,a]));
+  const assetIdMap = {};
+  (d.customTacticalAssets||[]).forEach(a=>{
+    const k = String(a.name||"").toLowerCase();
+    const ex = assetByName.get(k);
+    if(ex){ assetIdMap[a.id]=ex.id; return; }
+    let newId = (!a.id||assetById.has(a.id)) ? uid() : a.id;
+    const na = Object.assign({},a,{id:newId});
+    state.customTacticalAssets.push(na); assetByName.set(k,na); assetById.set(newId,na);
+    assetIdMap[a.id]=newId;
+  });
+  const remapTacAsset = raw=>{
+    if(!raw) return raw;
+    if(raw.startsWith("custom_")){ const bare=raw.slice(7); return "custom_"+(assetIdMap[bare]||bare); }
+    return raw;
+  };
+
+  // 6. Import the task force with a fresh ID
+  const orig = d.taskForce;
+  const newTF = Object.assign({},orig,{
+    id:"tf_"+uid(),
+    tfType:remapTFType(orig.tfType),
+    tacAsset:remapTacAsset(orig.tacAsset),
+    units:(orig.units||[]).map(slot=>Object.assign({},slot,{
+      unitId:remapUnit(slot.unitId),
+      transport:slot.transport?remapUnit(slot.transport):slot.transport
+    }))
+  });
+  state.taskForces.push(newTF);
+  saveState();
+  return newTF;
 }
 
 // ============================================================
