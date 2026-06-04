@@ -275,7 +275,7 @@ label .trait-edit-btn{margin-left:6px}
   <div class="nav-tabs">
     <div class="nav-tab" id="tab-builder" onclick="showPage('builder')" title="Unit Builder"><i class="fa-solid fa-hammer"></i><span class="nav-label">Unit Builder</span></div>
     <div class="nav-tab" id="tab-library" onclick="showPage('library')" title="Unit Library"><i class="fa-solid fa-book-open"></i><span class="nav-label">Unit Library</span></div>
-    <div class="nav-tab" id="tab-taskforces" onclick="showPage('taskforces')" title="Task Forces"><i class="fa-solid fa-shield-halved"></i><span class="nav-label">Task Forces</span></div>
+    <div class="nav-tab" id="tab-taskforces" onclick="showPage('taskforces')" title="Task Forces"><i class="fa-solid fa-users"></i><span class="nav-label">Task Forces</span></div>
     <div class="nav-tab" id="tab-armies" onclick="showPage('armies')" title="Armies"><i class="fa-solid fa-chess-rook"></i><span class="nav-label">Armies</span></div>
     <div class="nav-tab" id="tab-forces" onclick="showPage('forces')" title="Expeditionary Forces"><i class="fa-solid fa-earth-americas"></i><span class="nav-label">Exp. Forces</span></div>
     <div class="nav-tab" id="tab-data" onclick="showPage('data')" title="Data"><i class="fa-solid fa-database"></i><span class="nav-label">Data</span></div>
@@ -7058,7 +7058,7 @@ function renderForceList() {
   const list = document.getElementById("force-list");
   if(!list) return;
   if(!(state.expeditionaryForces||[]).length) {
-    list.innerHTML = `<div class="empty" style="padding:48px 0"><div class="empty-icon"><i class="fa-solid fa-flag"></i></div>No expeditionary forces yet — press <strong>New Force</strong> to create one</div>`;
+    list.innerHTML = `<div class="empty" style="padding:48px 0"><div class="empty-icon"><i class="fa-solid fa-earth-americas"></i></div>No expeditionary forces yet — press <strong>New Force</strong> to create one</div>`;
     return;
   }
   list.innerHTML = (state.expeditionaryForces||[]).map(force => {
@@ -7071,7 +7071,7 @@ function renderForceList() {
     const forceSym = force.symbol ? _bgSymLookup(force.symbol) : null;
     const badgeHTML = forceSym
       ? `<div style="width:56px;height:56px;border-radius:12px;background:${forceSym.color}1a;border:2px solid ${forceSym.color}55;color:${forceSym.color};display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;font-size:22px">${_bgSymInner(forceSym,22)}</div>`
-      : `<div style="width:56px;height:56px;border-radius:12px;background:var(--surface-raised);border:2px dashed var(--border-default);color:var(--text-faint);display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;font-size:22px"><i class="fa-solid fa-flag"></i></div>`;
+      : `<div style="width:56px;height:56px;border-radius:12px;background:var(--surface-raised);border:2px dashed var(--border-default);color:var(--text-faint);display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;font-size:22px"><i class="fa-solid fa-earth-americas"></i></div>`;
 
     const violBadge = notDeployable
       ? `<span title="Not deployable — has army group size violations" style="font-size:12px;color:#ef5350;flex-shrink:0"><i class="fa-solid fa-triangle-exclamation"></i></span>`
@@ -7151,7 +7151,7 @@ function renderForceDetail() {
   if(!panel) return;
   const force = (state.expeditionaryForces||[]).find(f=>f.id===currentForceId);
   if(!force) {
-    panel.innerHTML = `<div class="card"><div class="empty"><div class="empty-icon"><i class="fa-solid fa-flag"></i></div>Select a force to view</div></div>`;
+    panel.innerHTML = `<div class="card"><div class="empty"><div class="empty-icon"><i class="fa-solid fa-earth-americas"></i></div>Select a force to view</div></div>`;
     return;
   }
   const breadcrumb = `<div style="margin-bottom:12px">
