@@ -540,20 +540,14 @@ label .trait-edit-btn{margin-left:6px}
 
 <!-- ===== EXPEDITIONARY FORCES PAGE ===== -->
 <div id="page-forces" class="page">
-  <div class="grid-sidebar">
-    <div style="position:sticky;top:16px;display:flex;flex-direction:column;gap:12px">
-      <div class="card">
-        <div class="card-title" style="font-size:13px;letter-spacing:.5px;white-space:nowrap">Expeditionary Forces
-          <button class="trait-edit-btn" style="flex-shrink:0;white-space:nowrap" onclick="openNewForceModal()">New Force</button>
-        </div>
-        <div id="force-list"></div>
-      </div>
+  <div id="force-list-view">
+    <div class="card-title">Expeditionary Forces
+      <button class="trait-edit-btn" onclick="openNewForceModal()"><i class="fa-solid fa-plus"></i> New Force</button>
     </div>
-    <div id="force-detail-panel">
-      <div class="card">
-        <div class="empty"><div class="empty-icon"><i class="fa-solid fa-flag"></i></div>Select a force to view</div>
-      </div>
-    </div>
+    <div id="force-list"></div>
+  </div>
+  <div id="force-detail-view" style="display:none">
+    <div id="force-detail-panel"></div>
   </div>
 </div>
 
@@ -1973,7 +1967,14 @@ function showPage(p) {
     if (dv) dv.style.display = "none";
     renderArmyList();
   }
-  if(p==="forces") renderForceList();
+  if(p==="forces") {
+    currentForceId = null;
+    const lv = document.getElementById("force-list-view");
+    const dv = document.getElementById("force-detail-view");
+    if (lv) lv.style.display = "";
+    if (dv) dv.style.display = "none";
+    renderForceList();
+  }
   if(p==="data") renderDataPage();
 }
 
@@ -6208,6 +6209,11 @@ function saveArmy() {
     state.armies.push(army);
     _ensureBGs(army);
     currentArmyId = army.id;
+    // Jump straight into the new army's detail view
+    const lv = document.getElementById("army-list-view");
+    const dv = document.getElementById("army-detail-view");
+    if (lv) lv.style.display = "none";
+    if (dv) dv.style.display = "";
   }
   saveState();
   closeModal("modal-army");
@@ -6591,29 +6597,64 @@ function renderForceList() {
   const list = document.getElementById("force-list");
   if(!list) return;
   if(!(state.expeditionaryForces||[]).length) {
-    list.innerHTML = `<div class="empty"><div class="empty-icon"><i class="fa-solid fa-flag"></i></div>No expeditionary forces yet</div>`;
+    list.innerHTML = `<div class="empty" style="padding:48px 0"><div class="empty-icon"><i class="fa-solid fa-flag"></i></div>No expeditionary forces yet — press <strong>New Force</strong> to create one</div>`;
     return;
   }
   list.innerHTML = (state.expeditionaryForces||[]).map(force => {
     const agCount = force.agCount || 3;
-    const ags = (force.armyGroups||[]).slice(0, agCount);
-    const totalArmies = ags.reduce((s,ag)=>s+(ag.armyIds||[]).length, 0);
+    const agList = (force.armyGroups||[]).slice(0, agCount);
+    const totalArmies = agList.reduce((s,ag)=>s+(ag.armyIds||[]).length, 0);
     const viol = efAGViolations(force);
     const notDeployable = !viol.ok;
-    const isCurrent = force.id === currentForceId;
+
     const forceSym = force.symbol ? _bgSymLookup(force.symbol) : null;
-    const forceIconBadge = forceSym
-      ? `<span style="display:inline-flex;width:20px;height:20px;border-radius:5px;background:${forceSym.color}18;border:1px solid ${forceSym.color}55;color:${forceSym.color};align-items:center;justify-content:center;flex-shrink:0;font-size:10px">${_bgSymInner(forceSym,10)}</span>`
+    const badgeHTML = forceSym
+      ? `<div style="width:56px;height:56px;border-radius:12px;background:${forceSym.color}1a;border:2px solid ${forceSym.color}55;color:${forceSym.color};display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;font-size:22px">${_bgSymInner(forceSym,22)}</div>`
+      : `<div style="width:56px;height:56px;border-radius:12px;background:var(--surface-raised);border:2px dashed var(--border-default);color:var(--text-faint);display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;font-size:22px"><i class="fa-solid fa-flag"></i></div>`;
+
+    const violBadge = notDeployable
+      ? `<span title="Not deployable — has army group size violations" style="font-size:12px;color:#ef5350;flex-shrink:0"><i class="fa-solid fa-triangle-exclamation"></i></span>`
       : "";
-    return `<div class="sl-item${isCurrent?" sl-active":""}${notDeployable&&!isCurrent?" sl-warn":""}" style="${notDeployable&&!isCurrent?"border-color:#ef535044":""}" onclick="selectForce('${force.id}')">
-      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:6px">
-        <div style="display:flex;align-items:center;gap:6px;min-width:0;flex:1">
-          ${forceIconBadge}
-          <div class="sl-name" style="flex:1;min-width:0">${esc(force.name)}</div>
+
+    const agRows = agList.length === 0
+      ? `<div style="font-size:11px;color:var(--text-faint);font-style:italic;padding:2px 0">No army groups configured</div>`
+      : agList.map(ag => {
+          const sd = _bgSymLookup(ag.symbol || ICON_SYMBOL_KEYS[0]);
+          const agSize = (ag.armyIds||[]).length;
+          const symEl = `<div style="width:18px;height:18px;border-radius:4px;background:${sd.color}18;border:1px solid ${sd.color}44;color:${sd.color};display:inline-flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0">${_bgSymInner(sd,9)}</div>`;
+          return `<div style="display:flex;align-items:center;gap:7px;padding:3px 0">
+            ${symEl}
+            <span style="font-size:12px;font-weight:600;color:var(--text-primary);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(ag.name)}</span>
+            <span style="font-size:10px;color:var(--text-muted);white-space:nowrap;flex-shrink:0">${agSize} arm${agSize!==1?"ies":"y"}</span>
+          </div>`;
+        }).join("");
+
+    const cardBorder = notDeployable ? "border-color:#ef535044" : "";
+    return `<div style="background:var(--surface-card);border:1px solid var(--border-default);border-radius:10px;margin-bottom:12px;overflow:hidden;cursor:pointer;transition:border-color .15s,background .15s;${cardBorder}"
+      onclick="selectForce('${force.id}')"
+      onmouseover="this.style.borderColor='var(--accent)';this.style.background='var(--surface-raised)'"
+      onmouseout="this.style.borderColor='${notDeployable?"#ef535044":"var(--border-default)"}';this.style.background='var(--surface-card)'">
+      <div style="display:flex;align-items:center;gap:14px;padding:14px 16px;border-bottom:1px solid var(--border-subtle)">
+        ${badgeHTML}
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px">
+            <span style="font-family:var(--font-display);font-size:20px;letter-spacing:1px;color:var(--text-bright);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(force.name)}</span>
+            ${violBadge}
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:5px">
+            <span style="font-size:9px;font-weight:bold;padding:1px 6px;border-radius:8px;background:#1a0d2e;color:#ce93d8;border:1px solid #9c27b044;letter-spacing:.5px">EXP. FORCE</span>
+          </div>
+          <div>
+            <span style="font-size:12px;font-weight:bold;color:var(--text-bright)">${agCount} army group${agCount!==1?"s":""} &middot; ${totalArmies} arm${totalArmies!==1?"ies":"y"}</span>
+          </div>
         </div>
-        ${notDeployable?`<span title="Army group size violation" style="color:#ef5350;font-size:11px;flex-shrink:0;margin-top:2px"><i class="fa-solid fa-triangle-exclamation"></i></span>`:""}
+        <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0" onclick="event.stopPropagation()">
+          <button class="trait-edit-btn" onclick="selectForce('${force.id}')" title="Open force detail" style="white-space:nowrap"><i class="fa-solid fa-arrow-right"></i> Open</button>
+        </div>
       </div>
-      <div class="sl-meta">${agCount} Army Groups &bull; ${totalArmies} arm${totalArmies!==1?"ies":"y"}</div>
+      <div style="padding:8px 16px 10px;display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:0 24px">
+        ${agRows}
+      </div>
     </div>`;
   }).join("");
 }
@@ -6624,8 +6665,24 @@ function selectForce(id) {
   editingAGId = null;
   forceIconPickerOpen = false;
   activeAGTabId = null;
-  renderForceList();
+  const lv = document.getElementById("force-list-view");
+  const dv = document.getElementById("force-detail-view");
+  if (lv) lv.style.display = "none";
+  if (dv) dv.style.display = "";
   renderForceDetail();
+}
+
+function backToForceList() {
+  currentForceId = null;
+  agSymbolPickerAgId = null;
+  editingAGId = null;
+  forceIconPickerOpen = false;
+  activeAGTabId = null;
+  const lv = document.getElementById("force-list-view");
+  const dv = document.getElementById("force-detail-view");
+  if (lv) lv.style.display = "";
+  if (dv) dv.style.display = "none";
+  renderForceList();
 }
 
 function renderForceDetail() {
@@ -6636,6 +6693,11 @@ function renderForceDetail() {
     panel.innerHTML = `<div class="card"><div class="empty"><div class="empty-icon"><i class="fa-solid fa-flag"></i></div>Select a force to view</div></div>`;
     return;
   }
+  const breadcrumb = `<div style="margin-bottom:12px">
+    <button onclick="backToForceList()" style="background:none;border:none;color:var(--text-muted);cursor:pointer;padding:0;font-size:13px;display:inline-flex;align-items:center;gap:6px;transition:color .15s" onmouseover="this.style.color='var(--text-primary)'" onmouseout="this.style.color='var(--text-muted)'">
+      <i class="fa-solid fa-arrow-left" style="font-size:11px"></i> Expeditionary Forces
+    </button>
+  </div>`;
   _ensureAGs(force);
   const agCount = force.agCount || 3;
   const agList = (force.armyGroups||[]).slice(0, agCount);
@@ -6800,7 +6862,7 @@ function renderForceDetail() {
   }
 
   const agViolActive = viol.violatingIds.has(activeAGTabId||"");
-  panel.innerHTML = `<div class="card">
+  panel.innerHTML = breadcrumb + `<div class="card">
     <div class="card-title">
       <span style="display:flex;align-items:center;gap:10px">${forceIconBtn}${esc(force.name)}</span>
       <div style="display:flex;gap:6px">
@@ -7027,6 +7089,11 @@ function saveForce() {
     state.expeditionaryForces.push(force);
     _ensureAGs(force);
     currentForceId = force.id;
+    // Jump straight into the new force's detail view
+    const lv = document.getElementById("force-list-view");
+    const dv = document.getElementById("force-detail-view");
+    if (lv) lv.style.display = "none";
+    if (dv) dv.style.display = "";
   }
   saveState();
   closeModal("modal-force");
@@ -7036,8 +7103,15 @@ function saveForce() {
 
 function deleteForce(id) {
   state.expeditionaryForces=(state.expeditionaryForces||[]).filter(f=>f.id!==id);
-  if(currentForceId===id) currentForceId=null;
+  const wasActive = currentForceId===id;
+  if(wasActive) currentForceId=null;
   saveState();
+  if(wasActive) {
+    const lv = document.getElementById("force-list-view");
+    const dv = document.getElementById("force-detail-view");
+    if (lv) lv.style.display = "";
+    if (dv) dv.style.display = "none";
+  }
   renderForceList();
   renderForceDetail();
 }
