@@ -565,7 +565,7 @@ label .trait-edit-btn{margin-left:6px}
     <div class="card" style="margin-bottom:18px">
       <div class="card-title">Export Data</div>
       <p style="color:#8b949e;font-size:13px;margin:0 0 16px;line-height:1.5">
-        Download your custom content as a JSON file. Back up everything, or export a single faction together with all of its custom units and the custom traits they rely on.
+        Generate JSON you can copy and share or keep as a backup. Export everything, or export a single faction with its units and custom traits.
       </p>
       <div class="form-group" style="margin-bottom:14px">
         <label style="display:block;margin-bottom:8px">What to export</label>
@@ -584,24 +584,39 @@ label .trait-edit-btn{margin-left:6px}
         <div id="export-faction-summary" style="font-size:12px;color:#8b949e;margin-top:6px"></div>
       </div>
       <div id="data-export-msg" style="display:none;margin-bottom:12px"></div>
-      <button class="btn btn-primary" onclick="doExport()"><i class="fa-solid fa-download"></i> Export JSON</button>
+      <button class="btn btn-primary" onclick="doExport()"><i class="fa-solid fa-code"></i> Generate JSON</button>
     </div>
 
     <!-- IMPORT CARD -->
     <div class="card">
       <div class="card-title">Import Data</div>
       <p style="color:#8b949e;font-size:13px;margin:0 0 16px;line-height:1.5">
-        Load a previously exported JSON file. A <strong>faction</strong> export is merged into your current data (items whose name already exists are skipped). A <strong>full backup</strong> replaces everything you currently have.
+        Paste a previously exported JSON below. A <strong>faction</strong> export is merged into your current data (items whose name already exists are skipped). A <strong>full backup</strong> replaces everything you currently have.
       </p>
       <div class="form-group" style="margin-bottom:14px">
-        <label>JSON file</label>
-        <input type="file" id="import-file" accept="application/json,.json" onchange="onImportFileChange()" style="width:100%">
+        <label>Paste JSON</label>
+        <textarea id="import-text" placeholder="Paste exported JSON here..." oninput="onImportTextChange()" style="width:100%;min-height:160px;resize:vertical;font-family:monospace;font-size:12px;line-height:1.4;background:var(--surface-page);border:1px solid var(--border-default);border-radius:6px;color:var(--text-primary);padding:10px"></textarea>
       </div>
       <div id="import-preview" style="display:none;background:var(--surface-raised);border:1px solid var(--border-default);border-radius:6px;padding:12px 14px;margin-bottom:14px;font-size:13px;line-height:1.6"></div>
       <div id="data-import-msg" style="display:none;margin-bottom:12px"></div>
       <button class="btn btn-primary" id="import-btn" onclick="doImport()" disabled><i class="fa-solid fa-upload"></i> Import</button>
     </div>
 
+  </div>
+</div>
+
+<!-- ===== EXPORT JSON MODAL ===== -->
+<div id="modal-export-json" class="modal-bg">
+  <div class="modal" style="max-width:700px">
+    <div class="modal-header">
+      <span id="export-json-title">Export JSON</span>
+      <button class="modal-close" onclick="closeModal('modal-export-json')"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:10px">
+      <span id="export-json-summary" style="font-size:12px;color:var(--text-muted);flex:1;min-width:0"></span>
+      <button class="btn btn-primary btn-sm" id="export-copy-btn" onclick="copyExportJSON()"><i class="fa-solid fa-copy"></i> Copy to clipboard</button>
+    </div>
+    <textarea id="export-json-text" readonly onclick="this.select()" style="width:100%;min-height:340px;resize:vertical;font-family:monospace;font-size:11px;line-height:1.45;background:var(--surface-page);border:1px solid var(--border-default);border-radius:6px;color:var(--text-secondary);padding:10px;cursor:text"></textarea>
   </div>
 </div>
 
@@ -2082,8 +2097,8 @@ function renderDataPage(){
   populateExportFactionSelect();
   onExportScopeChange();
   _dataHideMsg("data-export-msg");
-  const fileInput = document.getElementById("import-file");
-  if(fileInput) fileInput.value = "";
+  const importText = document.getElementById("import-text");
+  if(importText) importText.value = "";
   _pendingImport = null;
   _fullImportArmed = false;
   const prev = document.getElementById("import-preview");
@@ -2135,34 +2150,23 @@ function collectFactionBundle(faction){
   return { faction, customFactions:[faction], customUnits:units, customTraits:traits };
 }
 
-function _dataSlug(s){ return String(s||"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"") || "export"; }
-
-function downloadJSON(filename, obj){
-  const blob = new Blob([JSON.stringify(obj,null,2)], {type:"application/json"});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url; a.download = filename;
-  document.body.appendChild(a); a.click(); document.body.removeChild(a);
-  setTimeout(()=>URL.revokeObjectURL(url), 1000);
-}
-
 function doExport(){
   const scope = (document.querySelector('input[name="export-scope"]:checked')||{}).value || "all";
-  const stamp = new Date().toISOString().slice(0,10);
+  let payload, title, summary;
   if(scope==="faction"){
     const sel = document.getElementById("export-faction-select");
     const fac = (state.customFactions||[]).find(f=>f.id===(sel&&sel.value));
     if(!fac){ _dataMsg("data-export-msg","error","Select a faction to export."); return; }
     const b = collectFactionBundle(fac);
-    const payload = {
+    payload = {
       app:"laserstorm-army-builder", kind:"faction", version:1,
       exportedAt:new Date().toISOString(), faction:fac.name,
       data:{ customFactions:b.customFactions, customTraits:b.customTraits, customUnits:b.customUnits }
     };
-    downloadJSON(`laserstorm-faction-${_dataSlug(fac.name)}-${stamp}.json`, payload);
-    _dataMsg("data-export-msg","success",`Exported "${esc(fac.name)}" &mdash; ${b.customUnits.length} unit(s), ${b.customTraits.length} trait(s).`);
+    title = `Export — ${esc(fac.name)}`;
+    summary = `${b.customUnits.length} unit(s), ${b.customTraits.length} custom trait(s)`;
   } else {
-    const payload = {
+    payload = {
       app:"laserstorm-army-builder", kind:"full", version:1,
       exportedAt:new Date().toISOString(),
       data:{
@@ -2172,54 +2176,76 @@ function doExport(){
         armies:state.armies||[], expeditionaryForces:state.expeditionaryForces||[]
       }
     };
-    downloadJSON(`laserstorm-backup-${stamp}.json`, payload);
-    _dataMsg("data-export-msg","success","Exported full backup.");
+    const d = payload.data;
+    title = "Export — Full Backup";
+    summary = `${(d.customUnits||[]).length} unit(s), ${(d.customFactions||[]).length} faction(s), ${(d.taskForces||[]).length} task force(s), ${(d.armies||[]).length} army(ies)`;
   }
+  const json = JSON.stringify(payload, null, 2);
+  const ta = document.getElementById("export-json-text");
+  if(ta){ ta.value = json; }
+  const ttl = document.getElementById("export-json-title");
+  if(ttl) ttl.textContent = title;
+  const sum = document.getElementById("export-json-summary");
+  if(sum) sum.textContent = summary;
+  const copyBtn = document.getElementById("export-copy-btn");
+  if(copyBtn){ copyBtn.innerHTML = '<i class="fa-solid fa-copy"></i> Copy to clipboard'; copyBtn.disabled = false; }
+  openModal("modal-export-json");
 }
 
-function onImportFileChange(){
-  const input = document.getElementById("import-file");
+function copyExportJSON(){
+  const ta = document.getElementById("export-json-text");
+  if(!ta) return;
+  const btn = document.getElementById("export-copy-btn");
+  navigator.clipboard.writeText(ta.value).then(()=>{
+    if(btn){ btn.innerHTML = '<i class="fa-solid fa-check"></i> Copied!'; btn.disabled = true; }
+    setTimeout(()=>{
+      if(btn){ btn.innerHTML = '<i class="fa-solid fa-copy"></i> Copy to clipboard'; btn.disabled = false; }
+    }, 2000);
+  }).catch(()=>{
+    ta.select();
+    if(btn){ btn.innerHTML = '<i class="fa-solid fa-copy"></i> Select all &amp; copy manually'; }
+  });
+}
+
+function onImportTextChange(){
+  const ta = document.getElementById("import-text");
   const ib = document.getElementById("import-btn");
   const prev = document.getElementById("import-preview");
   _pendingImport = null; _fullImportArmed = false;
   if(ib){ ib.disabled = true; ib.innerHTML = '<i class="fa-solid fa-upload"></i> Import'; }
   _dataHideMsg("data-import-msg");
-  if(prev) prev.style.display="none";
-  const file = input && input.files && input.files[0];
-  if(!file) return;
-  const reader = new FileReader();
-  reader.onload = e=>{
-    let payload;
-    try { payload = JSON.parse(e.target.result); }
-    catch(err){ _dataMsg("data-import-msg","error","Could not parse file &mdash; not valid JSON."); return; }
-    if(!payload || payload.app!=="laserstorm-army-builder" || !payload.data){
-      _dataMsg("data-import-msg","error","This doesn't look like a LaserStorm export file."); return;
-    }
-    _pendingImport = payload;
-    const d = payload.data;
-    const nf=(d.customFactions||[]).length, nt=(d.customTraits||[]).length, nu=(d.customUnits||[]).length;
-    let html;
-    if(payload.kind==="full"){
-      html = `<strong>Full backup</strong> detected.<br>`+
-        `${nu} unit(s), ${nf} faction(s), ${nt} trait(s), ${(d.customTFTypes||[]).length} TF type(s), ${(d.customTacticalAssets||[]).length} asset(s),<br>`+
-        `${(d.taskForces||[]).length} task force(s), ${(d.armies||[]).length} army(ies), ${(d.expeditionaryForces||[]).length} force(s).<br>`+
-        `<span style="color:#f85149;font-weight:bold">Importing will REPLACE all of your current data.</span>`;
-      if(ib) ib.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Replace all data';
-    } else if(payload.kind==="faction"){
-      html = `<strong>Faction export</strong>: ${esc(payload.faction||((d.customFactions||[])[0]||{}).name||"&mdash;")}.<br>`+
-        `${nf} faction(s), ${nu} unit(s), ${nt} trait(s) will be merged (duplicates skipped).`;
-      if(ib) ib.innerHTML = '<i class="fa-solid fa-upload"></i> Import faction';
-    } else {
-      _dataMsg("data-import-msg","error","Unknown export kind."); return;
-    }
-    if(prev){ prev.innerHTML = html; prev.style.display=""; }
-    if(ib) ib.disabled = false;
-  };
-  reader.readAsText(file);
+  if(prev) prev.style.display = "none";
+  const raw = ta && ta.value.trim();
+  if(!raw) return;
+  let payload;
+  try { payload = JSON.parse(raw); }
+  catch(err){ _dataMsg("data-import-msg","error","Not valid JSON &mdash; check for missing brackets or commas."); return; }
+  if(!payload || payload.app!=="laserstorm-army-builder" || !payload.data){
+    _dataMsg("data-import-msg","error","This doesn't look like a LaserStorm export &mdash; missing required fields."); return;
+  }
+  _pendingImport = payload;
+  const d = payload.data;
+  const nf=(d.customFactions||[]).length, nt=(d.customTraits||[]).length, nu=(d.customUnits||[]).length;
+  let html;
+  if(payload.kind==="full"){
+    html = `<strong>Full backup</strong> detected &mdash; `+
+      `${nu} unit(s), ${nf} faction(s), ${nt} trait(s), ${(d.customTFTypes||[]).length} TF type(s), ${(d.customTacticalAssets||[]).length} asset(s), `+
+      `${(d.taskForces||[]).length} task force(s), ${(d.armies||[]).length} army(ies), ${(d.expeditionaryForces||[]).length} force(s).<br>`+
+      `<span style="color:#f85149;font-weight:bold">Importing will REPLACE all of your current data.</span>`;
+    if(ib) ib.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Replace all data';
+  } else if(payload.kind==="faction"){
+    html = `<strong>Faction export</strong>: ${esc(payload.faction||((d.customFactions||[])[0]||{}).name||"&mdash;")} &mdash; `+
+      `${nf} faction(s), ${nu} unit(s), ${nt} trait(s) will be merged (duplicates skipped).`;
+    if(ib) ib.innerHTML = '<i class="fa-solid fa-upload"></i> Import faction';
+  } else {
+    _dataMsg("data-import-msg","error","Unknown export kind."); return;
+  }
+  if(prev){ prev.innerHTML = html; prev.style.display=""; }
+  if(ib) ib.disabled = false;
 }
 
 function doImport(){
-  if(!_pendingImport){ _dataMsg("data-import-msg","error","Choose a file first."); return; }
+  if(!_pendingImport){ _dataMsg("data-import-msg","error","Paste valid JSON first."); return; }
   const payload = _pendingImport;
   if(payload.kind==="full"){
     if(!_fullImportArmed){
