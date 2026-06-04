@@ -1262,7 +1262,7 @@ function renderClassProfile() {
   const el = document.getElementById("b-class-profile");
   if(!el || !cp) { if(el) el.innerHTML=""; return; }
   el.innerHTML = `
-    <div class="cp-head"><i class="fa-solid fa-circle-info"></i> <b>${cp.cat}</b> &mdash; represents ${cp.represents} &bull; <span style="color:var(--text-faint)">read-only class rules</span></div>
+    <div class="cp-head"><i class="fa-solid fa-circle-info"></i> <b>${cp.cat}</b> represents ${cp.represents} &bull; <span style="color:var(--text-faint)">read-only class rules</span></div>
     <div class="cp-tags">
       <span class="cp-tag"><b>Save</b><span>${cp.save}</span></span>
       <span class="cp-tag"><b>Double-Time</b><span>${cp.dtime}</span></span>
