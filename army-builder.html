@@ -535,7 +535,10 @@ label .trait-edit-btn{margin-left:6px}
 <div id="page-armies" class="page">
   <div id="army-list-view">
     <div class="card-title">Armies
-      <button class="trait-edit-btn" onclick="openNewArmyModal()"><i class="fa-solid fa-plus"></i> New Army</button>
+      <div style="display:flex;gap:6px">
+        <button class="trait-edit-btn" onclick="openImportArmyModal()"><i class="fa-solid fa-file-import"></i> Import</button>
+        <button class="trait-edit-btn" onclick="openNewArmyModal()"><i class="fa-solid fa-plus"></i> New Army</button>
+      </div>
     </div>
     <div id="army-list"></div>
   </div>
@@ -617,6 +620,24 @@ label .trait-edit-btn{margin-left:6px}
       <button class="btn btn-primary btn-sm" id="export-copy-btn" onclick="copyExportJSON()"><i class="fa-solid fa-copy"></i> Copy to clipboard</button>
     </div>
     <textarea id="export-json-text" readonly onclick="this.select()" style="width:100%;min-height:340px;resize:vertical;font-family:monospace;font-size:11px;line-height:1.45;background:var(--surface-page);border:1px solid var(--border-default);border-radius:6px;color:var(--text-secondary);padding:10px;cursor:text"></textarea>
+  </div>
+</div>
+
+<!-- ===== IMPORT ARMY MODAL ===== -->
+<div id="modal-import-army" class="modal-bg">
+  <div class="modal" style="max-width:640px">
+    <div class="modal-header">Import Army <button class="modal-close" onclick="closeModal('modal-import-army')"><i class="fa-solid fa-xmark"></i></button></div>
+    <p style="color:var(--text-muted);font-size:13px;margin:0 0 14px;line-height:1.5">Paste a previously exported army JSON. Custom units, factions, traits, task forces and assets are merged automatically — duplicates (matched by name) are skipped.</p>
+    <div class="form-group" style="margin-bottom:12px">
+      <label>Paste Army JSON</label>
+      <textarea id="import-army-text" placeholder="Paste army JSON here..." oninput="onImportArmyTextChange()" style="width:100%;min-height:140px;resize:vertical;font-family:monospace;font-size:12px;line-height:1.4;background:var(--surface-page);border:1px solid var(--border-default);border-radius:6px;color:var(--text-primary);padding:10px"></textarea>
+    </div>
+    <div id="import-army-preview" style="display:none;background:var(--surface-raised);border:1px solid var(--border-default);border-radius:6px;padding:10px 14px;margin-bottom:12px;font-size:13px;line-height:1.55"></div>
+    <div id="import-army-msg" style="display:none;margin-bottom:10px"></div>
+    <div style="display:flex;justify-content:flex-end;gap:8px">
+      <button class="btn btn-secondary" onclick="closeModal('modal-import-army')">Cancel</button>
+      <button class="btn btn-primary" id="import-army-btn" onclick="doImportArmy()" disabled><i class="fa-solid fa-upload"></i> Import Army</button>
+    </div>
   </div>
 </div>
 
@@ -2227,6 +2248,9 @@ function onImportTextChange(){
   const d = payload.data;
   const nf=(d.customFactions||[]).length, nt=(d.customTraits||[]).length, nu=(d.customUnits||[]).length;
   let html;
+  if(payload.kind==="army"){
+    _dataMsg("data-import-msg","error",`This is an army export. Use the <strong>Armies</strong> page &rarr; <em>Import</em> button to import it.`); return;
+  }
   if(payload.kind==="full"){
     html = `<strong>Full backup</strong> detected &mdash; `+
       `${nu} unit(s), ${nf} faction(s), ${nt} trait(s), ${(d.customTFTypes||[]).length} TF type(s), ${(d.customTacticalAssets||[]).length} asset(s), `+
@@ -2345,6 +2369,280 @@ function _dataMsg(id, type, html){
   el.innerHTML = `<div style="background:${bg};border:1px solid ${bd};border-radius:6px;padding:9px 12px;font-size:13px;color:#e0e0e0">${html}</div>`;
 }
 function _dataHideMsg(id){ const el=document.getElementById(id); if(el){ el.style.display="none"; el.innerHTML=""; } }
+
+// ── Per-army export / import ─────────────────────────────────────────────────
+
+function collectArmyBundle(armyId) {
+  const army = (state.armies||[]).find(a=>a.id===armyId);
+  if(!army) return null;
+  const fp = isFreePick(army);
+
+  // Collect task forces used by this army (TF armies only)
+  const tfIdSet = new Set(army.taskForceIds||[]);
+  const tfs = (state.taskForces||[]).filter(tf=>tfIdSet.has(tf.id));
+
+  // Gather all unit IDs referenced in the army
+  const unitIdSet = new Set();
+  if(fp) {
+    (army.battleGroups||[]).forEach(bg=>(bg.entries||[]).forEach(e=>{
+      if(e.unitId) unitIdSet.add(e.unitId);
+      if(e.transport) unitIdSet.add(e.transport);
+    }));
+  } else {
+    tfs.forEach(tf=>(tf.units||[]).forEach(slot=>{
+      if(slot.unitId) unitIdSet.add(slot.unitId);
+      if(slot.transport) unitIdSet.add(slot.transport);
+    }));
+  }
+
+  // Custom units only (built-in units are always present, don't need bundling)
+  const customUnits = (state.customUnits||[]).filter(u=>unitIdSet.has(u.id));
+
+  // Factions those units belong to
+  const facIdSet = new Set(customUnits.map(u=>u.faction).filter(Boolean));
+  const customFactions = (state.customFactions||[]).filter(f=>facIdSet.has(f.id));
+
+  // Custom traits referenced by those units (matched by name)
+  const traitNames = new Set();
+  customUnits.forEach(u=>{
+    (u.standTraits||[]).forEach(t=>{ if(t&&t[0]!=null) traitNames.add(String(t[0]).toLowerCase()); });
+    (u.weapons||[]).forEach(w=>(w.traits||[]).forEach(t=>{ if(t&&t[0]!=null) traitNames.add(String(t[0]).toLowerCase()); }));
+  });
+  const customTraits = (state.customTraits||[]).filter(t=>traitNames.has(String(t.name).toLowerCase()));
+
+  // Custom TF types used by the army's task forces
+  const tfTypeIds = new Set();
+  tfs.forEach(tf=>{ if(tf.tfType && (state.customTFTypes||[]).some(ct=>ct.id===tf.tfType)) tfTypeIds.add(tf.tfType); });
+  const customTFTypes = (state.customTFTypes||[]).filter(t=>tfTypeIds.has(t.id));
+
+  // Custom tactical assets used by the army's task forces
+  const assetIds = new Set();
+  tfs.forEach(tf=>{ if(tf.tacAsset&&tf.tacAsset.startsWith("custom_")) assetIds.add(tf.tacAsset.slice(7)); });
+  const customTacticalAssets = (state.customTacticalAssets||[]).filter(a=>assetIds.has(a.id));
+
+  return { army, taskForces:tfs, customTFTypes, customTacticalAssets, customUnits, customFactions, customTraits };
+}
+
+function exportArmy(armyId) {
+  const bundle = collectArmyBundle(armyId);
+  if(!bundle) return;
+  const payload = {
+    app:"laserstorm-army-builder", kind:"army", version:1,
+    exportedAt:new Date().toISOString(), armyName:bundle.army.name,
+    data:bundle
+  };
+  const json = JSON.stringify(payload, null, 2);
+  const ta = document.getElementById("export-json-text");
+  if(ta) ta.value = json;
+  const ttl = document.getElementById("export-json-title");
+  if(ttl) ttl.textContent = `Export — ${esc(bundle.army.name)}`;
+  const sum = document.getElementById("export-json-summary");
+  if(sum) {
+    const parts = [];
+    if(bundle.taskForces.length) parts.push(`${bundle.taskForces.length} task force${bundle.taskForces.length!==1?"s":""}`);
+    if(bundle.customUnits.length) parts.push(`${bundle.customUnits.length} custom unit${bundle.customUnits.length!==1?"s":""}`);
+    if(bundle.customFactions.length) parts.push(`${bundle.customFactions.length} custom faction${bundle.customFactions.length!==1?"s":""}`);
+    if(bundle.customTraits.length) parts.push(`${bundle.customTraits.length} custom trait${bundle.customTraits.length!==1?"s":""}`);
+    sum.textContent = parts.length ? parts.join(", ") : "no custom dependencies";
+  }
+  const copyBtn = document.getElementById("export-copy-btn");
+  if(copyBtn){ copyBtn.innerHTML='<i class="fa-solid fa-copy"></i> Copy to clipboard'; copyBtn.disabled=false; }
+  openModal("modal-export-json");
+}
+
+function openImportArmyModal() {
+  const ta = document.getElementById("import-army-text");
+  if(ta) ta.value = "";
+  const prev = document.getElementById("import-army-preview");
+  if(prev) prev.style.display="none";
+  _dataHideMsg("import-army-msg");
+  const btn = document.getElementById("import-army-btn");
+  if(btn){ btn.disabled=true; btn.innerHTML='<i class="fa-solid fa-upload"></i> Import Army'; }
+  _pendingImport = null;
+  openModal("modal-import-army");
+}
+
+let _importArmyDebounce = null;
+function onImportArmyTextChange() {
+  clearTimeout(_importArmyDebounce);
+  _importArmyDebounce = setTimeout(_parseImportArmyText, 120);
+}
+
+function _parseImportArmyText() {
+  const ta = document.getElementById("import-army-text");
+  const btn = document.getElementById("import-army-btn");
+  const prev = document.getElementById("import-army-preview");
+  _pendingImport = null;
+  if(btn){ btn.disabled=true; btn.innerHTML='<i class="fa-solid fa-upload"></i> Import Army'; }
+  _dataHideMsg("import-army-msg");
+  if(prev) prev.style.display="none";
+  const raw = ta&&ta.value.trim();
+  if(!raw) return;
+  let payload;
+  try { payload = JSON.parse(raw); }
+  catch(e){ _dataMsg("import-army-msg","error","Not valid JSON — check for missing brackets or commas."); return; }
+  if(!payload||payload.app!=="laserstorm-army-builder"||!payload.data){
+    _dataMsg("import-army-msg","error","This doesn't look like a LaserStorm export — missing required fields."); return;
+  }
+  if(payload.kind!=="army"){
+    _dataMsg("import-army-msg","error",`This is a <strong>${payload.kind}</strong> export, not an army export. Use the Data page to import it.`); return;
+  }
+  const d = payload.data;
+  const a = d.army||{};
+  const fp = a.armyType==="fp";
+  const parts = [
+    `<strong>${esc(a.name||"Unnamed Army")}</strong>`,
+    fp ? "Free Pick army" : "Task Force army",
+    a.faction ? `faction: ${esc(factionName(a.faction)||a.faction)}` : null,
+    d.taskForces&&d.taskForces.length ? `${d.taskForces.length} task force${d.taskForces.length!==1?"s":""}` : null,
+    d.customUnits&&d.customUnits.length ? `${d.customUnits.length} custom unit${d.customUnits.length!==1?"s":""}` : null,
+    d.customFactions&&d.customFactions.length ? `${d.customFactions.length} custom faction${d.customFactions.length!==1?"s":""}` : null,
+    d.customTraits&&d.customTraits.length ? `${d.customTraits.length} custom trait${d.customTraits.length!==1?"s":""}` : null,
+    d.customTFTypes&&d.customTFTypes.length ? `${d.customTFTypes.length} custom TF type${d.customTFTypes.length!==1?"s":""}` : null,
+    d.customTacticalAssets&&d.customTacticalAssets.length ? `${d.customTacticalAssets.length} custom asset${d.customTacticalAssets.length!==1?"s":""}` : null,
+  ].filter(Boolean);
+  if(prev){ prev.innerHTML = parts.join(" &bull; "); prev.style.display=""; }
+  if(btn){ btn.disabled=false; }
+  _pendingImport = payload;
+}
+
+function doImportArmy() {
+  if(!_pendingImport||_pendingImport.kind!=="army"){ _dataMsg("import-army-msg","error","Paste valid army JSON first."); return; }
+  const newArmy = importArmy(_pendingImport);
+  closeModal("modal-import-army");
+  // Navigate to the new army
+  const lv = document.getElementById("army-list-view");
+  const dv = document.getElementById("army-detail-view");
+  if(lv) lv.style.display="none";
+  if(dv) dv.style.display="";
+  currentArmyId = newArmy.id;
+  renderArmyDetail();
+}
+
+function importArmy(payload) {
+  const d = payload.data;
+
+  // 1. Merge factions (dedup by name)
+  const facById = new Map((state.customFactions||[]).map(f=>[f.id,f]));
+  const facByName = new Map((state.customFactions||[]).map(f=>[String(f.name).toLowerCase(),f]));
+  const facIdMap = {};
+  (d.customFactions||[]).forEach(f=>{
+    const k = String(f.name||"").toLowerCase();
+    const ex = facByName.get(k);
+    if(ex){ facIdMap[f.id]=ex.id; return; }
+    let newId = (!f.id||facById.has(f.id)) ? "fac_"+uid() : f.id;
+    const nf = Object.assign({},f,{id:newId});
+    state.customFactions.push(nf); facById.set(newId,nf); facByName.set(k,nf);
+    facIdMap[f.id]=newId;
+  });
+  const remapFac = id=>(id&&facIdMap[id])?facIdMap[id]:id;
+
+  // 2. Merge traits (dedup by name)
+  const traitByName = new Map((state.customTraits||[]).map(t=>[String(t.name).toLowerCase(),t]));
+  const traitById = new Set((state.customTraits||[]).map(t=>t.id));
+  (d.customTraits||[]).forEach(t=>{
+    const k = String(t.name||"").toLowerCase();
+    if(traitByName.has(k)) return;
+    let newId = (!t.id||traitById.has(t.id)) ? uid() : t.id;
+    const nt = Object.assign({},t,{id:newId});
+    if(nt.faction) nt.faction=remapFac(nt.faction);
+    if(Array.isArray(nt.reqs)) nt.reqs=nt.reqs.map(r=>(r&&r.type==="faction"&&Array.isArray(r.vals))?Object.assign({},r,{vals:r.vals.map(remapFac)}):r);
+    state.customTraits.push(nt); traitByName.set(k,nt); traitById.add(newId);
+  });
+
+  // 3. Merge units (dedup by name+faction combo)
+  const unitById = new Map((state.customUnits||[]).map(u=>[u.id,u]));
+  const unitKey = u=>String(u.name||"").toLowerCase()+"||"+String(u.faction||"").toLowerCase();
+  const unitKeyToId = new Map((state.customUnits||[]).map(u=>[unitKey(u),u.id]));
+  const unitIdMap = {};
+  (d.customUnits||[]).forEach(u=>{
+    const nu = Object.assign({},u,{faction:remapFac(u.faction)});
+    const k = unitKey(nu);
+    if(unitKeyToId.has(k)){ unitIdMap[u.id]=unitKeyToId.get(k); return; }
+    let newId = (!nu.id||unitById.has(nu.id)) ? "custom_"+uid() : nu.id;
+    nu.id=newId;
+    if(typeof migrateCustomUnit==="function") migrateCustomUnit(nu);
+    state.customUnits.push(nu); unitById.set(newId,nu); unitKeyToId.set(k,newId);
+    unitIdMap[u.id]=newId;
+  });
+  const remapUnit = id=>(id&&unitIdMap[id])?unitIdMap[id]:id;
+
+  // 4. Merge custom TF types (dedup by name)
+  const tfTypeByName = new Map((state.customTFTypes||[]).map(t=>[String(t.name).toLowerCase(),t]));
+  const tfTypeById = new Map((state.customTFTypes||[]).map(t=>[t.id,t]));
+  const tfTypeIdMap = {};
+  (d.customTFTypes||[]).forEach(t=>{
+    const k = String(t.name||"").toLowerCase();
+    const ex = tfTypeByName.get(k);
+    if(ex){ tfTypeIdMap[t.id]=ex.id; return; }
+    let newId = (!t.id||tfTypeById.has(t.id)) ? "ctft_"+uid() : t.id;
+    const nt = Object.assign({},t,{id:newId});
+    state.customTFTypes.push(nt); tfTypeByName.set(k,nt); tfTypeById.set(newId,nt);
+    tfTypeIdMap[t.id]=newId;
+  });
+  const remapTFType = id=>(id&&tfTypeIdMap[id])?tfTypeIdMap[id]:id;
+
+  // 5. Merge custom tactical assets (dedup by name)
+  const assetByName = new Map((state.customTacticalAssets||[]).map(a=>[String(a.name).toLowerCase(),a]));
+  const assetById = new Map((state.customTacticalAssets||[]).map(a=>[a.id,a]));
+  const assetIdMap = {};
+  (d.customTacticalAssets||[]).forEach(a=>{
+    const k = String(a.name||"").toLowerCase();
+    const ex = assetByName.get(k);
+    if(ex){ assetIdMap[a.id]=ex.id; return; }
+    let newId = (!a.id||assetById.has(a.id)) ? uid() : a.id;
+    const na = Object.assign({},a,{id:newId});
+    state.customTacticalAssets.push(na); assetByName.set(k,na); assetById.set(newId,na);
+    assetIdMap[a.id]=newId;
+  });
+  // tacAsset field in a TF is stored as "custom_<id>", so remap accordingly
+  const remapTacAsset = raw=>{
+    if(!raw) return raw;
+    if(raw.startsWith("custom_")){
+      const bare=raw.slice(7);
+      return "custom_"+(assetIdMap[bare]||bare);
+    }
+    return raw;
+  };
+
+  // 6. Import task forces with fresh IDs (always new — armies own their TFs)
+  const tfIdMap = {};
+  (d.taskForces||[]).forEach(tf=>{
+    const newTFId = "tf_"+uid();
+    tfIdMap[tf.id]=newTFId;
+    const newTF = Object.assign({},tf,{
+      id:newTFId,
+      tfType:remapTFType(tf.tfType),
+      tacAsset:remapTacAsset(tf.tacAsset),
+      units:(tf.units||[]).map(slot=>Object.assign({},slot,{
+        unitId:remapUnit(slot.unitId),
+        transport:slot.transport?remapUnit(slot.transport):slot.transport
+      }))
+    });
+    state.taskForces.push(newTF);
+  });
+  const remapTF = id=>(id&&tfIdMap[id])?tfIdMap[id]:id;
+
+  // 7. Import the army with a fresh ID, remapping all internal references
+  const orig = d.army;
+  const newArmy = Object.assign({},orig,{
+    id:"army_"+uid(),
+    taskForceIds:(orig.taskForceIds||[]).map(remapTF),
+    battleGroups:(orig.battleGroups||[]).map(bg=>Object.assign({},bg,{
+      id:"bg_"+uid(),
+      entries:(bg.entries||[]).map(e=>{
+        const ne = Object.assign({},e,{id:"e_"+uid()});
+        if(ne.tfId)  ne.tfId  = remapTF(ne.tfId);
+        if(ne.unitId) ne.unitId = remapUnit(ne.unitId);
+        if(ne.transport) ne.transport = remapUnit(ne.transport);
+        return ne;
+      })
+    }))
+  });
+  state.armies.push(newArmy);
+  saveState();
+  return newArmy;
+}
 
 function closeModal(id) { document.getElementById(id).classList.remove("open"); }
 function openModal(id) { document.getElementById(id).classList.add("open"); }
@@ -5304,6 +5602,7 @@ function renderArmyList() {
         <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0" onclick="event.stopPropagation()">
           <button class="trait-edit-btn" onclick="openPrintArmyModal('${a.id}')" title="Print this army"><i class="fa-solid fa-print"></i> Print</button>
           <button class="trait-edit-btn" onclick="selectArmy('${a.id}')" title="Open army detail" style="white-space:nowrap"><i class="fa-solid fa-arrow-right"></i> Open</button>
+          <button class="trait-edit-btn" onclick="exportArmy('${a.id}')" title="Export army JSON"><i class="fa-solid fa-share-nodes"></i> Export</button>
         </div>
       </div>
       <div style="padding:8px 16px 10px;display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:0 24px">
@@ -5650,6 +5949,7 @@ function renderArmyDetail() {
       </div>
       <div style="display:flex;gap:6px">
         <button class="trait-edit-btn" onclick="openPrintArmyModal('${army.id}')"><i class="fa-solid fa-print"></i> Print</button>
+        <button class="trait-edit-btn" onclick="exportArmy('${army.id}')"><i class="fa-solid fa-share-nodes"></i> Export</button>
         <button class="trait-edit-btn" onclick="openEditArmyModal('${army.id}')"><i class="fa-solid fa-pen"></i> Edit</button>
         <button class="trait-edit-btn" style="border-color:#8b000066;color:#ef5350;background:#2a0a0a" onclick="confirmBtn(this,()=>deleteArmy('${army.id}'))"><i class="fa-solid fa-trash"></i> Delete</button>
       </div>
