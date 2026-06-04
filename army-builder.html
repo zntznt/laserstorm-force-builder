@@ -260,6 +260,11 @@ label .trait-edit-btn{margin-left:6px}
 .builder-preview-label{font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--text-faint);font-weight:700;margin-bottom:6px}
 .builder-breakdown-toggle{display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--text-muted);font-weight:700;padding:8px 0;border-top:1px solid var(--border-subtle);transition:color .15s}
 .builder-breakdown-toggle:hover{color:var(--text-primary)}
+/* ── Undo toast ───────────────────────────────────────────────────────── */
+#undo-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(6px);background:var(--surface-raised);color:var(--text-primary);padding:7px 16px;border-radius:20px;font-size:12px;font-weight:600;letter-spacing:.3px;border:1px solid var(--border-default);opacity:0;transition:opacity .18s,transform .18s;pointer-events:none;z-index:9999;white-space:nowrap}
+#undo-toast.visible{opacity:1;transform:translateX(-50%) translateY(0)}
+#nav-undo-btn{display:none;align-items:center;gap:4px;background:none;border:1px solid var(--border-default);color:var(--text-muted);padding:4px 10px;border-radius:6px;cursor:pointer;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;transition:all .15s;margin-left:6px;white-space:nowrap}
+#nav-undo-btn:hover{background:var(--surface-raised);color:var(--text-primary);border-color:var(--accent)}
 </style>
 </head>
 <body>
@@ -273,6 +278,7 @@ label .trait-edit-btn{margin-left:6px}
     <div class="nav-tab" id="tab-forces" onclick="showPage('forces')">Exp. Forces</div>
     <div class="nav-tab" id="tab-data" onclick="showPage('data')" title="Import / Export data"><i class="fa-solid fa-database"></i> Data</div>
   </div>
+  <button id="nav-undo-btn" onclick="undoState()" title="Undo last change (Ctrl+Z)"><i class="fa-solid fa-rotate-left"></i> Undo</button>
   <a href="https://www.wargamevault.com/product/476399/laserstorm-2nd-edition?affiliate_id=564654" target="_blank" rel="noopener" style="margin-left:auto;margin-right:12px;padding:5px 13px;background:#007eff;color:#fff;border-radius:20px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;text-decoration:none;white-space:nowrap;transition:background .2s" onmouseover="this.style.background='#0066cc'" onmouseout="this.style.background='#007eff'">Buy LaserStorm</a>
 </nav>
 
@@ -1422,8 +1428,94 @@ function migrateCustomUnit(u) {
     if(_transMigMap[t[0]]  !== undefined) u.standTraits[i] = ["Transport",1.5,_TRANS_DESC,_transMigMap[t[0]]];
   });
 }
+// ── Undo stack ───────────────────────────────────────────────────────────
+const _UNDO_LIMIT = 30;
+const _undoStack = [];
+
+const _EMPTY_STATE = JSON.stringify({customUnits:[],customFactions:[],customTraits:[],customTFTypes:[],customTacticalAssets:[],taskForces:[],armies:[],expeditionaryForces:[]});
+
 function saveState() {
+  const prev = localStorage.getItem("ls_army_builder") || _EMPTY_STATE;
+  _undoStack.push(prev);
+  if (_undoStack.length > _UNDO_LIMIT) _undoStack.shift();
+  _updateUndoBtn();
   localStorage.setItem("ls_army_builder", JSON.stringify(state));
+}
+
+function undoState() {
+  if (!_undoStack.length) return;
+  const prev = _undoStack.pop();
+  localStorage.setItem("ls_army_builder", prev);
+  const saved = JSON.parse(prev);
+  state.customUnits = saved.customUnits || [];
+  state.customFactions = saved.customFactions || [];
+  state.customTraits = saved.customTraits || [];
+  state.customTFTypes = saved.customTFTypes || [];
+  state.customTacticalAssets = saved.customTacticalAssets || [];
+  state.taskForces = saved.taskForces || [];
+  state.armies = saved.armies || [];
+  state.expeditionaryForces = saved.expeditionaryForces || [];
+  _updateUndoBtn();
+  _rerenderCurrentPage();
+  _showUndoToast();
+}
+
+function _updateUndoBtn() {
+  const btn = document.getElementById("nav-undo-btn");
+  if (!btn) return;
+  if (_undoStack.length) {
+    btn.style.display = "inline-flex";
+    btn.title = `Undo last change (${_undoStack.length} step${_undoStack.length !== 1 ? "s" : ""} available) — Ctrl+Z`;
+  } else {
+    btn.style.display = "none";
+  }
+}
+
+function _rerenderCurrentPage() {
+  const active = document.querySelector(".page.active");
+  if (!active) return;
+  const id = active.id.replace("page-", "");
+  if (id === "library") { renderLibrary(); return; }
+  if (id === "taskforces") { renderTFList(); return; }
+  if (id === "builder") { calculateBuilder(); return; }
+  if (id === "data") { renderDataPage(); return; }
+  if (id === "armies") {
+    if (currentArmyId && state.armies.find(a => a.id === currentArmyId)) {
+      renderArmyDetail();
+    } else {
+      currentArmyId = null;
+      const lv = document.getElementById("army-list-view");
+      const dv = document.getElementById("army-detail-view");
+      if (lv) lv.style.display = "";
+      if (dv) dv.style.display = "none";
+      renderArmyList();
+    }
+    return;
+  }
+  if (id === "forces") {
+    if (currentForceId && state.expeditionaryForces.find(f => f.id === currentForceId)) {
+      renderForceDetail();
+    } else {
+      currentForceId = null;
+      const lv = document.getElementById("force-list-view");
+      const dv = document.getElementById("force-detail-view");
+      if (lv) lv.style.display = "";
+      if (dv) dv.style.display = "none";
+      renderForceList();
+    }
+  }
+}
+
+let _undoToastTimer = null;
+function _showUndoToast() {
+  const toast = document.getElementById("undo-toast");
+  if (!toast) return;
+  toast.textContent = _undoStack.length
+    ? `Undone — ${_undoStack.length} more step${_undoStack.length !== 1 ? "s" : ""} available`
+    : "Undone — no more history";
+  toast.classList.add("visible");
+  clearTimeout(_undoToastTimer);
+  _undoToastTimer = setTimeout(() => toast.classList.remove("visible"), 2200);
 }
 function loadState() {
   const raw = localStorage.getItem("ls_army_builder");
@@ -7139,6 +7231,17 @@ showPage("builder");
 document.querySelectorAll(".modal-bg").forEach(mb=>{
   mb.addEventListener("click",function(e){ if(e.target===mb) mb.classList.remove("open"); });
 });
+
+// Undo keyboard shortcut (Ctrl+Z / Cmd+Z)
+document.addEventListener("keydown", function(e) {
+  if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key === "z") {
+    const tag = document.activeElement && document.activeElement.tagName;
+    if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+    e.preventDefault();
+    undoState();
+  }
+});
 </script>
+<div id="undo-toast"></div>
 </body>
 </html>
