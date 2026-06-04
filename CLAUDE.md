@@ -1,0 +1,206 @@
+# CLAUDE.md
+
+Guidance for working in this repository.
+
+## What this is
+
+**LaserStorm Force Builder** — a single-page army list builder for the
+tabletop wargame *LaserStorm (2nd Edition)*. Players design custom units,
+assemble them into task forces and armies, and print game-ready reference
+sheets.
+
+The **entire application is one file**: `army-builder.html` (~7,500 lines).
+HTML, CSS, and JavaScript are all inline. There is no build step, no
+framework, no bundler. Open the file in a browser and it runs.
+
+## Repo layout
+
+```
+army-builder.html        The whole app. This is what you edit.
+factions/                Shareable faction export JSONs (e.g. mechanicum-taghmata.json)
+LICENSE
+package.json             Only dependency is Playwright (for testing the app)
+.claude/                 Worktrees / agent scratch — ignore
+node_modules/            Playwright only
+```
+
+`node_modules/`, `.claude/`, `package-lock.json`, and `package.json` are
+gitignored.
+
+## Running & testing
+
+There is no dev server built into the app — serve the file statically:
+
+```bash
+python3 -m http.server 3000        # then open http://localhost:3000/army-builder.html
+```
+
+For browser automation tests, Playwright is installed. Notes from
+experience:
+
+- The system `chromium-browser` is a snap stub and does **not** work. Use
+  the Playwright-bundled browser: `python3 -m playwright install chromium`.
+- The HTTP server can die between runs — restart it before each test and
+  give it `sleep 1-2` to come up.
+- Google Fonts / Font Awesome load from CDNs. In a sandboxed headless
+  browser these fail with `ERR_CERT_AUTHORITY_INVALID`. **These errors are
+  expected and harmless** — filter them out when checking the console for
+  real errors.
+- Seed state by writing to localStorage before reload:
+  `localStorage.setItem('ls_army_builder', <json>)` then `page.reload()`.
+
+## Persistence
+
+- All data lives in **`localStorage` under the key `ls_army_builder`**
+  (NOT `laserstorm-army-builder-state` — that's a common mistake).
+- The in-memory state is a module-level `let state` object (line ~1382).
+- `saveState()` is the **single persistence chokepoint** — every mutation
+  goes through it. It also drives the undo stack (see below).
+- `loadState()` runs migrations on load (legacy trait formats, BG entry
+  ids, emoji→FontAwesome icon names, etc.). When changing a data shape,
+  add a migration here rather than breaking old saves.
+
+### State shape
+
+```js
+state = {
+  customUnits: [],          // user-built units
+  customFactions: [],       // user-defined factions
+  customTraits: [],         // user-defined traits
+  customTFTypes: [],        // user-defined task-force type templates
+  customTacticalAssets: [], // user-defined tactical assets
+  taskForces: [],           // task forces
+  armies: [],               // armies (TF-type or Free-Pick)
+  expeditionaryForces: []   // groups of armies
+}
+```
+
+## File map (`army-builder.html`)
+
+Everything is in one `<script>`. Major sections, marked by
+`// ===...` banner comments:
+
+| Section | ~line | Contents |
+|---|---|---|
+| DATA: TRAITS | 1176 | Built-in trait definitions |
+| DATA: BUILT-IN UNITS | 1319 | Representative stock units |
+| STATE | 1382 | `state` object + all module-level globals |
+| PERSISTENCE | 1455 | `saveState`/`loadState`, migrations, **undo stack** |
+| UTILITY | 1606 | `esc`, `uid`, `confirmBtn`, `unitById`, `calcPoints` |
+| NAVIGATION | 2081 | `showPage()` |
+| DATA IMPORT / EXPORT | 2110 | Data page export/import, **per-army export/import** |
+| UNIT BUILDER | 2666 | The builder page + `calculateBuilder()` |
+| FACTIONS | 3189 | Faction CRUD |
+| LIBRARY | 3890 | Unit library page |
+| TASK FORCES | 4049 | TF CRUD, `TF_TYPES`, slots |
+| TACTICAL ASSETS | 4957 | Asset CRUD |
+| ARMIES | 5149 | Army list/detail, battle groups |
+| PRINT | 6002 | Print layout generation |
+| EXPEDITIONARY FORCES | 6974 | Force list/detail |
+| INIT | 7538 | Bootstrap: `loadState()`, `showPage("builder")`, keybindings |
+
+### Pages (tabs)
+
+`#page-builder`, `#page-library`, `#page-taskforces`, `#page-armies`,
+`#page-forces`, `#page-data`. Switching is done by `showPage(p)`, which
+toggles `.active` on `.page` and `.nav-tab` elements and calls the matching
+render function.
+
+## Key data model & references
+
+Understanding how things reference each other matters — IDs are threaded
+through everything.
+
+- **Unit** — `id` (`custom_*` for user units), `name`, `class`, stats,
+  `faction` (faction id), `standTraits[]`, `weapons[]`. Built-in units have
+  `builtIn:true`; custom ones don't.
+- **Trait** — referenced **by name** (case-insensitive) inside a unit's
+  `standTraits[]` and each weapon's `traits[]`. The trait array's first
+  element is the name.
+- **Task Force** — `id` (`tf_*`), `tfType` (key into `TF_TYPES` or a custom
+  type id), `tacAsset` (stored as `"custom_<id>"` for custom assets),
+  `units[]` of **slots**.
+  - **Slot** — `id` (`slot_*`), `unitId`, `role`
+    (core/specialist/command/support), `unitType`, `quantity`, optional
+    `transport` (unitId of a mechanized transport).
+- **Army** — `id` (`army_*`), `armyType` (`"tf"` or `"fp"`),
+  `taskForceIds[]` (TF armies), `battleGroups[]`.
+  - `isFreePick(army)` → `army.armyType === 'fp'`.
+  - **Battle Group** — `id` (`bg_*`), `name`, `symbol`, `entries[]`.
+    - **TF entry** (`e_*`): `tfId` + `slotId` + `qty` — references a slot
+      inside a task force.
+    - **Free-Pick entry** (`fpe_*`): `unitId` + `unitType` + `qty` +
+      optional `transport` — references a unit directly.
+
+### Points / role helpers
+
+- `calcPoints(unit)` returns per-role point costs.
+- Role/view mapping constants: `VIEW_PTS_KEY`, `VIEW_LABELS`,
+  `ROLE_COST_MAP` (~line 3398). View types: `unit`, `independent`, `hero`,
+  `command`, `cmdHero`.
+- `unitById(id)` resolves built-in or custom units.
+
+## Features to be aware of
+
+- **Undo stack** — `saveState()` pushes the prior serialized state onto
+  `_undoStack` (max 30). `undoState()` pops and restores. Triggered by the
+  nav **Undo** button (`#nav-undo-btn`, hidden when stack empty) or
+  **Ctrl/Cmd+Z** (ignored while focused in an input/textarea/select). A
+  toast (`#undo-toast`) confirms. The stack is in-memory only — it does not
+  survive a page reload.
+- **Data page export/import** — copy-paste JSON via modals (no file
+  download/upload). Export opens `#modal-export-json` with a
+  "Copy to clipboard" button. Import is a `<textarea>` that parses live.
+  Two kinds: `full` (replaces everything) and `faction` (merges, dedup by
+  name).
+- **Per-army export/import** — Export/Import buttons on the Armies page.
+  `collectArmyBundle()` gathers the army plus **all dependencies**: its task
+  forces, custom TF types, tactical assets, custom units, those units'
+  factions, and the custom traits they reference. `importArmy()` merges
+  dependencies (dedup by name), generates **fresh IDs** for the army/TFs,
+  and remaps every internal reference. Export kind is `"army"`.
+- **Two-view list/detail pattern** (Armies & Forces) — each page has a
+  full-width `#X-list-view` (rich cards) and a `#X-detail-view`
+  (`display:none` by default) with a breadcrumb back-button. Clicking a tab
+  always resets to the list; creating/importing an item jumps to its detail
+  view; deleting the current item returns to the list.
+
+## Conventions
+
+- **Styling** uses CSS custom properties (design tokens) defined in
+  `:root` at the top of the `<style>` block — surfaces, borders, text
+  shades, accent, semantic colors. There's a documented comment block
+  explaining each. **Reuse tokens** (`var(--accent)`, `var(--text-muted)`,
+  etc.) rather than hardcoding hex, except for the per-class/role identity
+  colors which are intentionally hardcoded.
+- **Page headers** use the `.card-title` class (Bebas Neue, accent, bottom
+  border, flex space-between). Keep new pages consistent with it.
+- **Fonts**: `--font-display` (Bebas Neue) for headers/display,
+  `--font-body` (Barlow) for everything else.
+- **Buttons**: `.btn` family for primary actions; `.trait-edit-btn` for the
+  small outline header buttons.
+- **HTML is generated by string templates** in render functions, then
+  assigned to `.innerHTML`. **Always `esc()` user-supplied strings** to
+  avoid breaking markup / injection.
+- **IDs** are made with `uid()` (`Date.now().toString(36)` + random) and
+  prefixed by type (`army_`, `tf_`, `bg_`, `slot_`, `custom_`, `fac_`,
+  `e_`, `fpe_`, `ctft_`).
+- **Confirmations**: `confirmBtn(btn, action)` gives a two-click confirm on
+  destructive buttons.
+- After any state mutation: call `saveState()`, then re-render the affected
+  view.
+
+## Git workflow
+
+- Remote: `zntznt/laserstorm-army-builder`.
+- **Do not commit or push unless asked.** When pushing, use
+  `git push -u origin <branch>`.
+- Do not open a PR unless explicitly asked.
+
+## Verifying changes
+
+Because the app is one file with no tests, the reliable way to confirm a
+change works is to **drive it in a browser with Playwright**: serve the
+file, seed localStorage, exercise the feature, screenshot, and assert on
+DOM/state. Save screenshots to `/tmp/design_*.png` when a visual record is
+useful. Filter out the CDN cert console errors noted above.
