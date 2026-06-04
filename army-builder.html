@@ -520,6 +520,7 @@ label .trait-edit-btn{margin-left:6px}
     <div class="card-title">Task Forces
       <div style="display:flex;gap:6px">
         <button class="trait-edit-btn" onclick="openImportTFModal()"><i class="fa-solid fa-file-import"></i> Import</button>
+        <button class="trait-edit-btn" id="btn-tf-templates" onclick="openTFTemplatesModal()"><i class="fa-solid fa-layer-group"></i> Templates</button>
         <button class="trait-edit-btn" onclick="openNewTFModal()"><i class="fa-solid fa-plus"></i> New Task Force</button>
       </div>
     </div>
@@ -670,6 +671,32 @@ label .trait-edit-btn{margin-left:6px}
     </div>
     <input class="search-bar" id="trait-picker-search" placeholder="Filter traits..." oninput="refreshTraitPickerList()" style="margin-bottom:4px">
     <div id="trait-modal-list"></div>
+  </div>
+</div>
+
+<!-- ===== SAVE TF AS TEMPLATE MODAL ===== -->
+<div id="modal-tf-save-template" class="modal-bg">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header">Save as Template <button class="modal-close" onclick="closeModal('modal-tf-save-template')"><i class="fa-solid fa-xmark"></i></button></div>
+    <p style="color:var(--text-muted);font-size:13px;margin:0 0 14px;line-height:1.5">Saves this task force's unit composition, type and faction as a reusable template. You can then create new task forces pre-filled with the same units.</p>
+    <div class="form-group" style="margin-bottom:16px">
+      <label>Template Name</label>
+      <input type="text" id="tf-template-save-name" placeholder="e.g. Standard Infantry Block" style="width:100%">
+      <span class="field-error" id="tf-template-save-name-err"></span>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px">
+      <button class="btn btn-secondary" onclick="closeModal('modal-tf-save-template')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveTFTemplate()"><i class="fa-solid fa-floppy-disk"></i> Save Template</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TF TEMPLATES PICKER MODAL ===== -->
+<div id="modal-tf-templates" class="modal-bg">
+  <div class="modal" style="max-width:580px">
+    <div class="modal-header">Task Force Templates <button class="modal-close" onclick="closeModal('modal-tf-templates')"><i class="fa-solid fa-xmark"></i></button></div>
+    <p style="color:var(--text-muted);font-size:13px;margin:0 0 14px;line-height:1.5">Choose a template to pre-fill a new task force with its unit composition. You'll still set the name and commander.</p>
+    <div id="tf-template-list"></div>
   </div>
 </div>
 
@@ -1405,7 +1432,8 @@ let state = {
   customTacticalAssets: [],
   taskForces: [],
   armies: [],
-  expeditionaryForces: []
+  expeditionaryForces: [],
+  tfTemplates: []
 };
 
 let currentBuilderTraits = [];
@@ -1451,6 +1479,8 @@ let _tpKind = null; let _tpTFId = null; let _tpSlotId = null;
 let _tpArmyId = null; let _tpBgId = null; let _tpEntryId = null;
 let _tpSelected = null; let _tpForUnit = null;
 let activeTFTab = "core";
+let _newTFTemplateId = null;
+let _savingTFTemplateFromId = null;
 let currentForceId = null;
 let editingForceId = null;
 let activeAGTabId = null;
@@ -1485,7 +1515,7 @@ function migrateCustomUnit(u) {
 const _UNDO_LIMIT = 30;
 const _undoStack = [];
 
-const _EMPTY_STATE = JSON.stringify({customUnits:[],customFactions:[],customTraits:[],customTFTypes:[],customTacticalAssets:[],taskForces:[],armies:[],expeditionaryForces:[]});
+const _EMPTY_STATE = JSON.stringify({customUnits:[],customFactions:[],customTraits:[],customTFTypes:[],customTacticalAssets:[],taskForces:[],armies:[],expeditionaryForces:[],tfTemplates:[]});
 
 function saveState() {
   const prev = localStorage.getItem("ls_army_builder") || _EMPTY_STATE;
@@ -1508,6 +1538,7 @@ function undoState() {
   state.taskForces = saved.taskForces || [];
   state.armies = saved.armies || [];
   state.expeditionaryForces = saved.expeditionaryForces || [];
+  state.tfTemplates = saved.tfTemplates || [];
   _updateUndoBtn();
   _rerenderCurrentPage();
   _showUndoToast();
@@ -1599,6 +1630,7 @@ function loadState() {
       state.taskForces = saved.taskForces || [];
       state.armies = saved.armies || [];
       state.expeditionaryForces = saved.expeditionaryForces || [];
+      state.tfTemplates = saved.tfTemplates || [];
       // Migration: ensure every slot has a stable id (older data may lack one)
       state.taskForces.forEach(tf => (tf.units||[]).forEach(s=>{ if(!s.id) s.id="slot_"+uid(); }));
       // Cleanup: drop any army BG entries left dangling by earlier deletions
@@ -4225,6 +4257,7 @@ function renderTFList() {
   if (!list) return;
   if (!state.taskForces.length) {
     list.innerHTML = `<div class="empty" style="padding:48px 0"><div class="empty-icon"><i class="fa-solid fa-users"></i></div>No task forces yet — press <strong>New Task Force</strong> to create one</div>`;
+    _updateTFTemplatesBadge();
     return;
   }
   const allAssets = allTacticalAssets();
@@ -4292,6 +4325,7 @@ function renderTFList() {
       </div>
     </div>`;
   }).join("");
+  _updateTFTemplatesBadge();
 }
 
 function backToTFList() {
@@ -4745,6 +4779,7 @@ function renderTFDetail() {
         ${deployedBadge}
       </div>
       <div style="display:flex;gap:6px">
+        <button class="trait-edit-btn" onclick="openSaveTFTemplateModal('${tf.id}')"><i class="fa-solid fa-layer-group"></i> Save as Template</button>
         <button class="trait-edit-btn" onclick="exportTF('${tf.id}')"><i class="fa-solid fa-share-nodes"></i> Export</button>
         <button class="trait-edit-btn" onclick="openEditTFModal('${tf.id}')"><i class="fa-solid fa-pen"></i> Edit</button>
         <button class="trait-edit-btn" style="border-color:#8b000066;color:#ef5350;background:#2a0a0a" onclick="confirmBtn(this,()=>deleteTF('${tf.id}'))"><i class="fa-solid fa-trash"></i> Delete</button>
@@ -4769,15 +4804,21 @@ function renderTFDetail() {
 
 function openNewTFModal() {
   editingTFId = null;
+  const tmpl = _newTFTemplateId ? (state.tfTemplates||[]).find(t=>t.id===_newTFTemplateId) : null;
   document.getElementById("tf-new-name").value = "";
   document.getElementById("tf-commander").value = "";
   document.getElementById("tf-notes").value = "";
-  document.getElementById("tf-points-limit").value = "";
+  document.getElementById("tf-points-limit").value = tmpl?.pointsLimit || "";
   clearFieldErr("tf-new-name"); clearFieldErr("tf-commander");
-  document.getElementById("modal-tf-title").textContent = "New Task Force";
+  const titleEl = document.getElementById("modal-tf-title");
+  if(tmpl) {
+    titleEl.innerHTML = `New Task Force <span style="font-size:11px;color:var(--accent);font-family:var(--font-body);font-weight:normal;letter-spacing:0;text-transform:none;margin-left:6px"><i class="fa-solid fa-layer-group"></i> from "${esc(tmpl.name)}"</span>`;
+  } else {
+    titleEl.textContent = "New Task Force";
+  }
   document.getElementById("tf-modal-submit").textContent = "Create";
-  _populateTFTypeSelect(document.getElementById("tf-type"), "infantry");
-  _populateFactionSelect(document.getElementById("tf-faction"), "");
+  _populateTFTypeSelect(document.getElementById("tf-type"), tmpl?.tfType || "infantry");
+  _populateFactionSelect(document.getElementById("tf-faction"), tmpl?.faction || "");
   openModal("modal-tf");
 }
 
@@ -4849,6 +4890,18 @@ function createTaskForce() {
     renderTFDetail();
   } else {
     const tf = { id:"tf_"+uid(), name, tfType, commander, faction, notes, pointsLimit, units:[] };
+    if(_newTFTemplateId) {
+      const tmpl = (state.tfTemplates||[]).find(t=>t.id===_newTFTemplateId);
+      if(tmpl) {
+        tf.units = (tmpl.units||[]).map(s=>({
+          id:"slot_"+uid(),
+          unitId:s.unitId, role:s.role, unitType:s.unitType,
+          quantity:s.quantity,
+          ...(s.transport ? {transport:s.transport} : {})
+        }));
+      }
+      _newTFTemplateId = null;
+    }
     state.taskForces.push(tf);
     saveState();
     closeModal("modal-tf");
@@ -5147,6 +5200,126 @@ function deleteCustomTFType(id) {
   saveState();
   _renderCustomTFTypeList();
   _populateTFTypeSelect(document.getElementById("tf-type"), document.getElementById("tf-type").value);
+}
+
+// ---- Task Force templates ----
+
+function openSaveTFTemplateModal(tfId) {
+  const tf = state.taskForces.find(t=>t.id===tfId);
+  if(!tf) return;
+  _savingTFTemplateFromId = tfId;
+  clearFieldErr("tf-template-save-name");
+  document.getElementById("tf-template-save-name").value = tf.name;
+  openModal("modal-tf-save-template");
+  setTimeout(()=>{
+    const inp = document.getElementById("tf-template-save-name");
+    if(inp){ inp.focus(); inp.select(); }
+  }, 80);
+}
+
+function saveTFTemplate() {
+  const name = (document.getElementById("tf-template-save-name")?.value||"").trim();
+  if(!name){ showFieldErr("tf-template-save-name","Template name is required."); return; }
+  const tf = state.taskForces.find(t=>t.id===_savingTFTemplateFromId);
+  if(!tf){ closeModal("modal-tf-save-template"); return; }
+  const template = {
+    id: "tft_"+uid(),
+    name,
+    tfType: tf.tfType||"",
+    faction: tf.faction||"",
+    pointsLimit: tf.pointsLimit||null,
+    // Strip slot IDs — they'll be regenerated on use
+    units: (tf.units||[]).map(s=>({unitId:s.unitId, role:s.role, unitType:s.unitType, quantity:s.quantity, transport:s.transport||undefined}))
+  };
+  state.tfTemplates = state.tfTemplates || [];
+  state.tfTemplates.push(template);
+  saveState();
+  closeModal("modal-tf-save-template");
+  _savingTFTemplateFromId = null;
+  _updateTFTemplatesBadge();
+  // Flash confirmation on the Save as Template button in the detail view
+  const btn = document.querySelector(`#tf-detail-panel button[onclick*="openSaveTFTemplateModal"]`);
+  if(btn) {
+    const orig = btn.innerHTML;
+    btn.innerHTML = '<i class="fa-solid fa-check"></i> Saved!';
+    btn.style.borderColor="#66bb6a55"; btn.style.color="#66bb6a";
+    setTimeout(()=>{ btn.innerHTML=orig; btn.style.borderColor=""; btn.style.color=""; }, 1500);
+  }
+}
+
+function _updateTFTemplatesBadge() {
+  const btn = document.getElementById("btn-tf-templates");
+  if(!btn) return;
+  const n = (state.tfTemplates||[]).length;
+  btn.innerHTML = n
+    ? `<i class="fa-solid fa-layer-group"></i> Templates <span style="display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:var(--accent);color:#fff;font-size:9px;font-weight:bold;margin-left:2px">${n}</span>`
+    : `<i class="fa-solid fa-layer-group"></i> Templates`;
+}
+
+function openTFTemplatesModal() {
+  _renderTFTemplateList();
+  openModal("modal-tf-templates");
+}
+
+function _renderTFTemplateList() {
+  const el = document.getElementById("tf-template-list");
+  if(!el) return;
+  const templates = state.tfTemplates || [];
+  if(!templates.length) {
+    el.innerHTML = `<div class="empty" style="padding:32px 0">
+      <div class="empty-icon"><i class="fa-solid fa-layer-group"></i></div>
+      <p>No templates saved yet.</p>
+      <p style="font-size:12px;color:var(--text-faint)">Open any task force and click <strong>Save as Template</strong> to create one.</p>
+    </div>`;
+    return;
+  }
+  el.innerHTML = templates.map(t=>{
+    const typeLabel = t.tfType ? _tfTypeLabel(t.tfType) : "";
+    const facPill = t.faction ? factionPill(t.faction) : "";
+    const unitCount = (t.units||[]).reduce((s,u)=>s+u.quantity,0);
+    const roleBreakdown = ["core","specialist","command","support"].map(role=>{
+      const n = (t.units||[]).filter(u=>u.role===role).reduce((s,u)=>s+u.quantity,0);
+      return n ? `${n} ${role}` : null;
+    }).filter(Boolean).join(" · ") || "empty";
+    // Estimated pts
+    const estPts = (t.units||[]).reduce((sum,slot)=>{
+      const u = unitById(slot.unitId);
+      if(!u) return sum;
+      const pts = calcPoints(u);
+      const typeKey = {unit:"unitPts",independent:"indPts",hero:"heroPts",command:"cmdPts",cmdHero:"cmdHeroPts"}[slot.unitType||"unit"];
+      return sum + ((pts[typeKey]??pts.unitPts)??0)*slot.quantity;
+    },0);
+    const missingUnits = (t.units||[]).filter(s=>!unitById(s.unitId)).length;
+    const warnHTML = missingUnits ? `<div style="font-size:10px;color:#ffa726;margin-top:3px"><i class="fa-solid fa-triangle-exclamation"></i> ${missingUnits} unit${missingUnits!==1?"s":""} no longer in library</div>` : "";
+    return `<div style="background:var(--surface-card);border:1px solid var(--border-default);border-radius:8px;padding:12px 14px;margin-bottom:10px;display:flex;align-items:flex-start;gap:12px">
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px">
+          <span style="font-family:var(--font-display);font-size:17px;color:var(--text-bright)">${esc(t.name)}</span>
+          ${typeLabel?`<span style="font-size:10px;padding:1px 7px;border-radius:8px;background:#1a2030;color:#7986cb;border:1px solid #2a3a5a;font-weight:bold">${esc(typeLabel)}</span>`:""}
+          ${facPill}
+        </div>
+        <div style="font-size:11px;color:var(--text-muted)">${roleBreakdown} &bull; ~${estPts} pts</div>
+        ${warnHTML}
+      </div>
+      <div style="display:flex;flex-direction:column;gap:5px;flex-shrink:0;align-items:flex-end">
+        <button class="btn btn-primary btn-sm" onclick="useTFTemplate('${t.id}')"><i class="fa-solid fa-plus"></i> Use</button>
+        <button class="trait-edit-btn" style="border-color:#8b000066;color:#ef5350;background:#2a0a0a;font-size:10px" onclick="confirmBtn(this,()=>deleteTFTemplate('${t.id}'))"><i class="fa-solid fa-trash"></i></button>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function useTFTemplate(templateId) {
+  _newTFTemplateId = templateId;
+  closeModal("modal-tf-templates");
+  openNewTFModal();
+}
+
+function deleteTFTemplate(id) {
+  state.tfTemplates = (state.tfTemplates||[]).filter(t=>t.id!==id);
+  saveState();
+  _renderTFTemplateList();
+  _updateTFTemplatesBadge();
 }
 
 // ---- Task Force export / import ----
