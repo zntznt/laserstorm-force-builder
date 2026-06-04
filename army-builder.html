@@ -5781,10 +5781,23 @@ function renderArmyDetail() {
             </div>
           </div>`).join("")}
       </div>` : "";
-      const bgWarnStripHTML = bgUndersize ? `<div style="margin-bottom:8px;padding:5px 8px;border-radius:4px;background:#1a0505;border:1px solid #ef535055;font-size:11px;color:#ef9a9a;display:flex;align-items:flex-start;gap:6px">
-        <i class="fa-solid fa-triangle-exclamation" style="color:#ef5350;flex-shrink:0;margin-top:1px"></i>
-        <span>Has ${bgSize} unit${bgSize!==1?"s":""} — needs at least <strong style="color:#ef5350">${bgViol.minAllowed}</strong> (half of ${esc(bgViol.largestName)}'s ${bgViol.largest}, rounded up)</span>
-      </div>` : "";
+      const bgHintHTML = (()=>{
+        if(bgSize === 0 && bgViol.minAllowed > 0) {
+          // Empty BG while other BGs have units — soft guidance, not an alarm
+          return `<div style="margin-bottom:8px;padding:6px 9px;border-radius:4px;background:var(--accent-tint);border:1px solid #007eff33;font-size:11px;color:var(--accent-light);display:flex;align-items:flex-start;gap:6px">
+            <i class="fa-solid fa-circle-info" style="flex-shrink:0;margin-top:1px"></i>
+            <span>Needs at least <strong>${bgViol.minAllowed}</strong> unit${bgViol.minAllowed!==1?"s":""} to deploy — half of <strong>${esc(bgViol.largestName)}</strong>'s ${bgViol.largest}, rounded up</span>
+          </div>`;
+        }
+        if(bgSize > 0 && bgUndersize) {
+          // Has units but not enough — red error (user has made an active mistake)
+          return `<div style="margin-bottom:8px;padding:5px 8px;border-radius:4px;background:#1a0505;border:1px solid #ef535055;font-size:11px;color:#ef9a9a;display:flex;align-items:flex-start;gap:6px">
+            <i class="fa-solid fa-triangle-exclamation" style="color:#ef5350;flex-shrink:0;margin-top:1px"></i>
+            <span>Has ${bgSize} unit${bgSize!==1?"s":""} — needs at least <strong style="color:#ef5350">${bgViol.minAllowed}</strong> (half of ${esc(bgViol.largestName)}'s ${bgViol.largest}, rounded up)</span>
+          </div>`;
+        }
+        return "";
+      })();
       const entriesHTML = fp
         ? (bg.entries||[]).map(e => {
             const u = unitById(e.unitId);
@@ -5848,7 +5861,14 @@ function renderArmyDetail() {
       const toolbarHTML = `<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border-subtle)">
         <div style="flex:1;min-width:0;overflow:hidden">
           <div style="display:flex;align-items:center;gap:5px">${nameSection}</div>
-          <div style="font-size:9px;color:var(--text-muted);margin-top:2px">${bPts} pts &bull; ${bgSize} unit${bgSize!==1?"s":""}</div>
+          <div style="font-size:9px;color:var(--text-muted);margin-top:2px">${bPts} pts &bull; ${(()=>{
+            if(bgViol.minAllowed > 0) {
+              const met = bgSize >= bgViol.minAllowed;
+              const col = bgSize === 0 ? "var(--accent-light)" : met ? "#66bb6a" : "#ef5350";
+              return `<span style="color:${col}">${bgSize}/${bgViol.minAllowed}</span> unit${bgSize!==1?"s":""}`;
+            }
+            return `${bgSize} unit${bgSize!==1?"s":""}`;
+          })()}</div>
         </div>
         <div style="display:flex;gap:4px;flex-shrink:0">
           ${fp
@@ -5862,7 +5882,22 @@ function renderArmyDetail() {
         </div>
       </div>`;
       const bgNotesHTML = bg.notes ? `<div style="background:#0d0f14;border:1px solid #1e2530;border-radius:6px;padding:8px 10px;margin-bottom:10px;font-size:12px;color:#8b949e;line-height:1.6;font-style:italic">${esc(bg.notes).replace(/\n/g,"<br>")}</div>` : "";
-      bgCardBodyHTML = `${toolbarHTML}${pickerHTML}${bgWarnStripHTML}${bgNotesHTML}${entriesHTML || `<div style="font-size:11px;color:#555;font-style:italic;padding:10px 0;text-align:center"><i class="fa-solid fa-circle-plus" style="color:#333;margin-right:5px"></i>No units assigned</div>`}`;
+      const bgEmptyHTML = bgSize === 0 ? (()=>{
+        // When minimum already established (other BGs have units), bgHintHTML covers the guidance.
+        // Only show a supplemental prompt when the hint isn't already there.
+        if(bgViol.minAllowed > 0) return ""; // hint already shown above entries
+        if(!fp && tfs.length === 0) {
+          return `<div style="padding:20px 0;text-align:center;color:var(--text-faint);font-size:12px">
+            <i class="fa-solid fa-layer-group" style="font-size:18px;display:block;margin-bottom:8px;color:#333"></i>
+            Add task forces to the pool above, then assign units here
+          </div>`;
+        }
+        return `<div style="padding:20px 0;text-align:center;color:var(--text-faint);font-size:12px">
+          <i class="fa-solid fa-circle-plus" style="font-size:18px;display:block;margin-bottom:8px;color:#333"></i>
+          Use <strong style="color:var(--text-muted)">Add Unit</strong> above to start building this group
+        </div>`;
+      })() : "";
+      bgCardBodyHTML = `${toolbarHTML}${pickerHTML}${bgHintHTML}${bgNotesHTML}${entriesHTML}${bgEmptyHTML}`;
     }
   }
 
@@ -5875,12 +5910,18 @@ function renderArmyDetail() {
       const bgUndersize = bgViol.violatingIds.has(bg.id);
       const bgMode = army.bgIconMode || "custom";
       const symDef = bgDesignation(army, bg);
-      const hasWarn = bgUndersize;
+      const hasWarn = bgUndersize && bgSize > 0; // only red when has units but not enough
       const symInner = _bgSymInner(symDef, 10);
       const symStyle = `width:20px;height:20px;border-radius:4px;background:${symDef.color}${isActive?"22":"14"};border:1.5px solid ${symDef.color}${isActive?"99":"44"};color:${symDef.color};display:inline-flex;align-items:center;justify-content:center;flex-shrink:0`;
-      // Status badge: color + label based on unit count and warnings
-      const stColor = hasWarn ? "#ef5350" : bgSize > 0 ? "#66bb6a" : "#555";
-      const stLabel = hasWarn ? `⚠ ${bgSize}` : bgSize > 0 ? `${bgSize}u` : "—";
+      // Status badge: reflect build progress
+      const stColor = hasWarn ? "#ef5350"
+        : bgSize > 0 ? "#66bb6a"
+        : bgViol.minAllowed > 0 ? "#58a6ff"  // empty but min known — blue guidance
+        : "#555";
+      const stLabel = hasWarn ? `⚠ ${bgSize}`
+        : bgSize > 0 ? `${bgSize}u`
+        : bgViol.minAllowed > 0 ? `min ${bgViol.minAllowed}`  // show what's needed
+        : "—";
       const statusBadge = `<span style="font-size:8px;font-weight:700;color:${stColor};flex-shrink:0;letter-spacing:.3px">${stLabel}</span>`;
       if(isActive) {
         // Active: compact single-row, accent top border
