@@ -253,6 +253,9 @@ label .trait-edit-btn{margin-left:6px}
 .warn-strip strong{color:#ef5350}
 /* ── Page card headings ──────────────────────────────────────────────── */
 .card-title{font-family:var(--font-display);color:var(--accent);font-size:18px;letter-spacing:1.5px;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border-subtle);display:flex;justify-content:space-between;align-items:center}
+.builder-preview-label{font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--text-faint);font-weight:700;margin-bottom:6px}
+.builder-breakdown-toggle{display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--text-muted);font-weight:700;padding:8px 0;border-top:1px solid var(--border-subtle);transition:color .15s}
+.builder-breakdown-toggle:hover{color:var(--text-primary)}
 </style>
 </head>
 <body>
@@ -1346,6 +1349,7 @@ let currentBuilderTraits = [];
 let builderFactionPrev = "";
 let builderMobilityPrev = "";
 let builderSelectedRole = "unit";
+let builderBreakdownOpen = false;
 let editingCustomTraitId = null;
 let editingCustomFactionId = null;
 let currentWeaponTraits = {};
@@ -2223,6 +2227,14 @@ function toggleCostRef() {
   chev.innerHTML = open ? '<i class="fa-solid fa-chevron-down"></i>' : '<i class="fa-solid fa-chevron-right"></i>';
 }
 
+function toggleBuilderBreakdown() {
+  builderBreakdownOpen = !builderBreakdownOpen;
+  const body = document.getElementById("builder-breakdown-body");
+  const chev = document.getElementById("builder-breakdown-chev");
+  if (body) body.style.display = builderBreakdownOpen ? "" : "none";
+  if (chev) chev.innerHTML = builderBreakdownOpen ? '<i class="fa-solid fa-chevron-down"></i>' : '<i class="fa-solid fa-chevron-right"></i>';
+}
+
 // ============================================================
 // UNIT BUILDER
 // ============================================================
@@ -2682,11 +2694,22 @@ function calculateBuilder() {
       ${typeRow}`;
   })() : "";
 
+  // Live card preview reflecting the selected role/view
+  const ROLE_TO_VIEW = {unit:"unit", ind:"independent", cmd:"command", hero:"hero", cmdHero:"cmdHero"};
+  const previewView = ROLE_TO_VIEW[builderSelectedRole] || "unit";
+  const previewHTML = unitCardHTML(unit, "", previewView);
+
   document.getElementById("b-result").innerHTML = `
-    <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:12px">
+    <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:14px">
       ${tilesHTML}
     </div>
-    ${bdHTML}`;
+    <div class="builder-preview-label">Preview</div>
+    <div style="margin-bottom:14px">${previewHTML}</div>
+    <div class="builder-breakdown-toggle" onclick="toggleBuilderBreakdown()">
+      <span>Cost Breakdown</span>
+      <span id="builder-breakdown-chev" style="color:#555">${builderBreakdownOpen ? '<i class="fa-solid fa-chevron-down"></i>' : '<i class="fa-solid fa-chevron-right"></i>'}</span>
+    </div>
+    <div id="builder-breakdown-body" style="display:${builderBreakdownOpen ? "" : "none"};margin-top:8px">${bdHTML}</div>`;
 }
 
 function saveAsNewUnit() {
