@@ -223,6 +223,25 @@ input.input-error,textarea.input-error{border-color:#ef535066!important;outline:
 .fac-section-count{background:var(--surface-raised);border:1px solid var(--border-subtle);border-radius:9px;padding:0 7px;font-size:10px;font-weight:700;color:var(--text-mid);line-height:1.8}
 .fac-unit-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 @media(max-width:640px){.fac-unit-grid{grid-template-columns:1fr}}
+@media(max-width:640px){
+  nav{flex-wrap:nowrap;overflow:hidden}
+  .nav-brand{font-size:14px;letter-spacing:1px;padding:7px 10px;flex-shrink:0;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:130px}
+  .nav-tabs{overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;flex:1;min-width:0;flex-wrap:nowrap}
+  .nav-tabs::-webkit-scrollbar{display:none}
+  .nav-tab{padding:7px 9px;font-size:10px;flex-shrink:0}
+  .nav-label{max-width:80px!important;opacity:1!important;margin-left:4px!important;transition:none!important}
+  #nav-undo-btn{flex-shrink:0;font-size:11px;padding:5px 8px}
+  .page.active{padding:12px 10px}
+  .modal-bg{padding:10px 6px;align-items:flex-start}
+  .modal{max-width:100%!important;padding:14px;margin:0}
+  .card-title{flex-wrap:wrap;gap:6px}
+  .card-title > div{flex-wrap:wrap;gap:4px}
+  .card-title > div > button,.card-title > div > .trait-edit-btn{white-space:nowrap}
+  .stat{min-width:38px;padding:3px 5px}
+  .stat-name{font-size:8px}
+  .stat-val{font-size:12px}
+  .nav-buy-link{display:none}
+}
 .fac-trait-row{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:7px;margin-bottom:5px}
 .fac-trait-name{font-size:13px;font-weight:600;color:var(--text-primary);flex:1;min-width:0}
 .fac-trait-cost{font-size:11px;font-weight:700;color:var(--accent-light);flex-shrink:0;white-space:nowrap}
@@ -361,7 +380,7 @@ label .trait-edit-btn{margin-left:6px}
     <div class="nav-tab" id="tab-data" onclick="showPage('data')" title="Data"><i class="fa-solid fa-database"></i><span class="nav-label">Data</span></div>
   </div>
   <button id="nav-undo-btn" onclick="undoState()" title="Undo last change (Ctrl+Z)"><i class="fa-solid fa-rotate-left"></i> Undo</button>
-  <a href="https://www.wargamevault.com/product/476399/laserstorm-2nd-edition?affiliate_id=564654" target="_blank" rel="noopener" style="margin-left:auto;margin-right:12px;padding:5px 13px;background:#007eff;color:#fff;border-radius:20px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;text-decoration:none;white-space:nowrap;transition:background .2s" onmouseover="this.style.background='#0066cc'" onmouseout="this.style.background='#007eff'">Buy LaserStorm</a>
+  <a href="https://www.wargamevault.com/product/476399/laserstorm-2nd-edition?affiliate_id=564654" target="_blank" rel="noopener" class="nav-buy-link" style="margin-left:auto;margin-right:12px;padding:5px 13px;background:#007eff;color:#fff;border-radius:20px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;text-decoration:none;white-space:nowrap;transition:background .2s" onmouseover="this.style.background='#0066cc'" onmouseout="this.style.background='#007eff'">Buy LaserStorm</a>
 </nav>
 
 <!-- ===== UNIT BUILDER PAGE ===== -->
@@ -7427,7 +7446,7 @@ function renderArmyDetail() {
             return `${bgSize} unit${bgSize!==1?"s":""}`;
           })()}</div>
         </div>
-        <div style="display:flex;gap:4px;flex-shrink:0">
+        <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end">
           ${fp
             ? `<button class="trait-edit-btn" onclick="openFPBGUnitModal('${army.id}','${bg.id}')">Add Unit</button>`
             : `<button class="trait-edit-btn" onclick="openArmyBGUnitModal('${army.id}','${bg.id}')">Add Unit</button>
@@ -9066,7 +9085,7 @@ function renderForceDetail() {
           <div style="display:flex;align-items:center;gap:5px">${nameSection}</div>
           <div style="font-size:9px;color:var(--text-muted);margin-top:2px">${agSize} arm${agSize!==1?"ies":"y"}</div>
         </div>
-        <div style="display:flex;gap:4px;flex-shrink:0">
+        <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end">
           <button class="trait-edit-btn" onclick="openAddArmyEFModal('${force.id}','${ag.id}')"><i class="fa-solid fa-plus"></i> Add Army</button>
           <button class="trait-edit-btn" onclick="openEditAGDescModal('${force.id}','${ag.id}')"><i class="fa-solid fa-pen"></i> Description</button>
         </div>
