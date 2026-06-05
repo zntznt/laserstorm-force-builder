@@ -560,7 +560,7 @@ label .trait-edit-btn{margin-left:6px}
   <div class="card">
     <div class="lib-search-wrap">
       <i class="fa-solid fa-magnifying-glass lib-search-icon"></i>
-      <input class="search-bar" id="lib-search" placeholder="Search units…" oninput="renderLibrary()">
+      <input class="search-bar" id="lib-search" placeholder="Search units…" oninput="onLibSearchChange()">
       <button class="lib-search-clear" id="lib-search-clear" onclick="clearLibSearch()" title="Clear search"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <div class="lib-filter-panel" id="lib-filter-panel">
@@ -830,7 +830,7 @@ label .trait-edit-btn{margin-left:6px}
         <button class="modal-close" onclick="closeTraitModal()"><i class="fa-solid fa-xmark"></i></button>
       </div>
     </div>
-    <input class="search-bar" id="trait-picker-search" placeholder="Filter traits..." oninput="refreshTraitPickerList()" style="margin-bottom:4px">
+    <input class="search-bar" id="trait-picker-search" placeholder="Filter traits..." oninput="onTraitPickerSearchChange()" style="margin-bottom:4px">
     <div id="trait-modal-list"></div>
   </div>
 </div>
@@ -932,7 +932,7 @@ label .trait-edit-btn{margin-left:6px}
         <button class="modal-close" onclick="closeModal('modal-add-unit')"><i class="fa-solid fa-xmark"></i></button>
       </div>
     </div>
-    <input class="search-bar" id="addunit-search" placeholder="Search..." oninput="renderAddUnitList()">
+    <input class="search-bar" id="addunit-search" placeholder="Search..." oninput="onAddUnitSearchChange()">
     <div class="scrolllist" id="addunit-list"></div>
     <div id="addunit-type-selector" style="display:none;margin-top:10px;padding:10px;background:var(--surface-page);border-radius:6px;border:1px solid var(--border-subtle)">
       <div style="font-size:11px;color:#8b949e;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">Unit Type</div>
@@ -2674,14 +2674,21 @@ function copyExportJSON(){
   });
 }
 
+let _importDataDebounce = null;
 function onImportTextChange(){
-  const ta = document.getElementById("import-text");
   const ib = document.getElementById("import-btn");
   const prev = document.getElementById("import-preview");
   _pendingImport = null; _fullImportArmed = false;
   if(ib){ ib.disabled = true; ib.innerHTML = '<i class="fa-solid fa-upload"></i> Import'; }
   _dataHideMsg("data-import-msg");
   if(prev) prev.style.display = "none";
+  clearTimeout(_importDataDebounce);
+  _importDataDebounce = setTimeout(_parseImportDataText, 150);
+}
+function _parseImportDataText(){
+  const ta = document.getElementById("import-text");
+  const ib = document.getElementById("import-btn");
+  const prev = document.getElementById("import-preview");
   const raw = ta && ta.value.trim();
   if(!raw) return;
   let payload;
@@ -3400,6 +3407,8 @@ function removeWeapon(i) {
   calculateBuilder();
 }
 
+let _traitPickerDebounce = null;
+function onTraitPickerSearchChange() { clearTimeout(_traitPickerDebounce); _traitPickerDebounce = setTimeout(refreshTraitPickerList, 150); }
 function refreshTraitPickerList() {
   const list = document.getElementById("trait-modal-list");
   list.innerHTML = "";
@@ -4557,6 +4566,8 @@ function _updateLibFilterIndicators() {
   if(clearBtn) clearBtn.style.display = n ? "block" : "none";
 }
 
+let _libSearchDebounce = null;
+function onLibSearchChange() { clearTimeout(_libSearchDebounce); _libSearchDebounce = setTimeout(renderLibrary, 150); }
 function renderLibrary() {
   renderLibFactionFilters();
   _updateLibFilterIndicators();
@@ -5766,6 +5777,8 @@ function toggleAddUnitShowUnavailable() {
   renderAddUnitList();
 }
 
+let _addUnitSearchDebounce = null;
+function onAddUnitSearchChange() { clearTimeout(_addUnitSearchDebounce); _addUnitSearchDebounce = setTimeout(renderAddUnitList, 150); }
 function renderAddUnitList() {
   const search = (document.getElementById("addunit-search")?.value||"").toLowerCase();
   const tf = state.taskForces.find(t=>t.id===addUnitTargetTFId);
