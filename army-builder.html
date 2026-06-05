@@ -1686,6 +1686,7 @@ const _EMPTY_STATE = JSON.stringify({customUnits:[],customFactions:[],customTrai
 function saveState() {
   _unitIdCache = null;
   _calcPtsCache = null;
+  _slotAssignedMap = null;
   const prev = localStorage.getItem("ls_army_builder") || _EMPTY_STATE;
   _undoStack.push(prev);
   if (_undoStack.length > _UNDO_LIMIT) _undoStack.shift();
@@ -1696,6 +1697,7 @@ function saveState() {
 function undoState() {
   _unitIdCache = null;
   _calcPtsCache = null;
+  _slotAssignedMap = null;
   if (!_undoStack.length) return;
   const prev = _undoStack.pop();
   localStorage.setItem("ls_army_builder", prev);
@@ -1786,6 +1788,7 @@ function _showUndoToast() {
 function loadState() {
   _unitIdCache = null;
   _calcPtsCache = null;
+  _slotAssignedMap = null;
   const raw = localStorage.getItem("ls_army_builder");
   if (raw) {
     try {
@@ -6620,10 +6623,21 @@ function entryPointValue(e) {
   }
 }
 // Units of a slot already placed across all of this army's battle groups.
+// The map is built lazily on first call for a given army and cached until
+// saveState/loadState/undoState invalidates it (same lifecycle as _unitIdCache).
+let _slotAssignedMapArmyId = null;
+let _slotAssignedMap = null;
 function slotAssignedQty(army, slotId) {
-  let n = 0;
-  (army.battleGroups||[]).forEach(bg => (bg.entries||[]).forEach(e => { if(e.slotId===slotId) n += (e.qty||0); }));
-  return n;
+  if (_slotAssignedMapArmyId !== army.id || !_slotAssignedMap) {
+    _slotAssignedMap = new Map();
+    _slotAssignedMapArmyId = army.id;
+    (army.battleGroups||[]).forEach(bg =>
+      (bg.entries||[]).forEach(e => {
+        if (e.slotId) _slotAssignedMap.set(e.slotId, (_slotAssignedMap.get(e.slotId)||0) + (e.qty||0));
+      })
+    );
+  }
+  return _slotAssignedMap.get(slotId) || 0;
 }
 // Units of a slot not yet placed in any of this army's battle groups.
 function slotRemainingQty(army, slot) {
@@ -6796,9 +6810,9 @@ function armyBGSizeViolations(army) {
   const largest = Math.max(...sizes, 0);
   if(largest === 0) return { violatingIds: new Set(), minAllowed: 0, largest: 0, largestName: "", ok: true };
   const minAllowed = Math.ceil(largest / 2);
-  const largestBG = bgs.find(bg => bgUnitCount(bg) === largest);
-  const largestName = largestBG ? largestBG.name : "";
-  const violatingIds = new Set(bgs.filter(bg => bgUnitCount(bg) < minAllowed).map(bg => bg.id));
+  const largestIdx = sizes.indexOf(largest);
+  const largestName = largestIdx >= 0 ? bgs[largestIdx].name : "";
+  const violatingIds = new Set(bgs.filter((_,i) => sizes[i] < minAllowed).map(bg => bg.id));
   return { violatingIds, minAllowed, largest, largestName, ok: violatingIds.size === 0 };
 }
 
