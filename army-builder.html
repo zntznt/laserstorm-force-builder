@@ -1189,6 +1189,10 @@ label .trait-edit-btn{margin-left:6px}
           <option value="5">5 Groups</option>
         </select>
       </div>
+      <div class="form-group">
+        <label>Points Budget <span style="font-size:10px;color:#8b949e;font-weight:normal">(optional)</span></label>
+        <input type="number" id="force-points-target" min="0" step="500" placeholder="e.g. 15000" style="width:100%">
+      </div>
     </div>
     <div class="form-group" style="margin-bottom:16px">
       <label>Description <span style="font-size:10px;color:#8b949e;font-weight:normal">(optional)</span></label>
@@ -8896,6 +8900,20 @@ function efAGViolations(force) {
   return {violatingIds, minAllowed, largest, largestName:largestAG?.name||"", ok:violatingIds.size===0};
 }
 
+function agPoolPoints(ag) {
+  return (ag.armyIds||[]).reduce((sum,id)=>{
+    const a = state.armies.find(ar=>ar.id===id);
+    return sum + (a ? armyPoints(a) : 0);
+  }, 0);
+}
+
+function forcePoolPoints(force) {
+  return ((force.armyGroups||[]).flatMap(ag=>ag.armyIds||[])).reduce((sum,id)=>{
+    const a = state.armies.find(ar=>ar.id===id);
+    return sum + (a ? armyPoints(a) : 0);
+  }, 0);
+}
+
 function renderForceList() {
   const list = document.getElementById("force-list");
   if(!list) return;
@@ -8907,6 +8925,7 @@ function renderForceList() {
     const agCount = force.agCount || 3;
     const agList = (force.armyGroups||[]).slice(0, agCount);
     const totalArmies = agList.reduce((s,ag)=>s+(ag.armyIds||[]).length, 0);
+    const forcePts = forcePoolPoints(force);
     const viol = efAGViolations(force);
     const notDeployable = !viol.ok;
 
@@ -8924,11 +8943,12 @@ function renderForceList() {
       : agList.map(ag => {
           const sd = _bgSymLookup(ag.symbol || ICON_SYMBOL_KEYS[0]);
           const agSize = (ag.armyIds||[]).length;
+          const agPts = agPoolPoints(ag);
           const symEl = `<div style="width:18px;height:18px;border-radius:4px;background:${sd.color}18;border:1px solid ${sd.color}44;color:${sd.color};display:inline-flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0">${_bgSymInner(sd,9)}</div>`;
           return `<div style="display:flex;align-items:center;gap:7px;padding:3px 0">
             ${symEl}
             <span style="font-size:12px;font-weight:600;color:var(--text-primary);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(ag.name)}</span>
-            <span style="font-size:10px;color:var(--text-muted);white-space:nowrap;flex-shrink:0">${agSize} arm${agSize!==1?"ies":"y"}</span>
+            <span style="font-size:10px;color:var(--text-muted);white-space:nowrap;flex-shrink:0">${agSize} arm${agSize!==1?"ies":"y"}${agPts?" &middot; "+agPts+" pts":""}</span>
           </div>`;
         }).join("");
 
@@ -8948,7 +8968,7 @@ function renderForceList() {
             <span style="font-size:9px;font-weight:bold;padding:1px 6px;border-radius:8px;background:#1a0d2e;color:#ce93d8;border:1px solid #9c27b044;letter-spacing:.5px">EXP. FORCE</span>
           </div>
           <div>
-            <span style="font-size:12px;font-weight:bold;color:var(--text-bright)">${agCount} army group${agCount!==1?"s":""} &middot; ${totalArmies} arm${totalArmies!==1?"ies":"y"}</span>
+            <span style="font-size:12px;font-weight:bold;color:var(--text-bright)">${agCount} army group${agCount!==1?"s":""} &middot; ${totalArmies} arm${totalArmies!==1?"ies":"y"} &middot; ${forcePts} pts</span>
           </div>
         </div>
         <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0" onclick="event.stopPropagation()">
@@ -9008,6 +9028,28 @@ function renderForceDetail() {
   const agIds = agList.map(ag=>ag.id);
   const viol = efAGViolations(force);
   const totalArmies = agList.reduce((s,ag)=>s+(ag.armyIds||[]).length, 0);
+  const forcePts = forcePoolPoints(force);
+  const forceTarget = force.pointsTarget||null;
+  const _fRatio = forceTarget ? forcePts / forceTarget : null;
+  const _fBarPct = _fRatio != null ? Math.min(_fRatio, 1) * 100 : 0;
+  const _fBarColor = _fRatio == null ? "#4a7adc" : _fRatio > 1 ? "#ef5350" : _fRatio > 0.85 ? "#ffa726" : "#4caf50";
+  const _fOver = forceTarget && forcePts > forceTarget;
+  const _fRemain = forceTarget ? forceTarget - forcePts : null;
+  const _fRemainLabel = _fRemain == null ? ""
+    : _fOver ? `<i class="fa-solid fa-triangle-exclamation" style="margin-right:3px"></i>+${-_fRemain} over`
+    : _fRemain === 0 ? "Exactly on target"
+    : `${_fRemain} pts remaining`;
+  const forceBudgetBarHTML = forceTarget
+    ? `<div style="margin-bottom:14px;padding:0 1px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+          <span style="font-size:10px;color:var(--text-faint);letter-spacing:.03em">${Math.round((_fRatio||0)*100)}%</span>
+          <span style="font-size:10px;color:${_fOver?"#ef5350":_fRemain===0?"#4caf50":"var(--text-faint)"};font-weight:${_fOver||_fRemain===0?"bold":"normal"}">${_fRemainLabel}</span>
+        </div>
+        <div style="height:5px;border-radius:3px;background:#1a1f2a;overflow:hidden">
+          <div style="height:100%;width:${_fBarPct.toFixed(1)}%;background:${_fBarColor};border-radius:3px;transition:width .25s ease"></div>
+        </div>
+      </div>`
+    : "";
 
   if(!activeAGTabId || !agIds.includes(activeAGTabId)) activeAGTabId = agIds[0] || null;
 
@@ -9088,6 +9130,7 @@ function renderForceDetail() {
   // folded into the toolbar so the designation picker stays reachable.
   function _agCardBody(ag) {
       const agSize = (ag.armyIds||[]).length;
+      const agPts = agPoolPoints(ag);
       const agUndersize = viol.violatingIds.has(ag.id);
       const pickerOpen = agSymbolPickerAgId===ag.id;
       const usedByOthers = new Set(agList.filter(g=>g.id!==ag.id).map(g=>g.symbol).filter(Boolean));
@@ -9119,14 +9162,14 @@ function renderForceDetail() {
             const army = state.armies.find(a=>a.id===armyId);
             if(!army) return "";
             const fp = isFreePick(army);
-            const deployedPts = armyDeployedPoints(army);
+            const poolPts = armyPoints(army);
             const tfCount = (army.taskForceIds||[]).length;
             const armySym = army.symbol ? _bgSymLookup(army.symbol) : null;
             const armyIconEl = armySym
               ? `<span style="display:inline-flex;width:24px;height:24px;border-radius:5px;background:${armySym.color}18;border:1px solid ${armySym.color}55;color:${armySym.color};align-items:center;justify-content:center;flex-shrink:0;font-size:11px">${_bgSymInner(armySym,11)}</span>`
               : `<span style="display:inline-flex;width:24px;height:24px;border-radius:5px;background:var(--surface-raised);border:1px solid var(--border-subtle);align-items:center;justify-content:center;flex-shrink:0;font-size:11px;color:var(--text-faint)"><i class="fa-solid fa-chess-rook"></i></span>`;
             const fpTag = fp ? `<span style="font-size:9px;font-weight:bold;padding:1px 5px;border-radius:8px;background:#1a2a1a;color:#66bb6a;border:1px solid #66bb6a44">FP</span>` : "";
-            const meta = fp ? `${deployedPts} pts` : `${tfCount} TF${tfCount!==1?"s":""} &bull; ${deployedPts} pts`;
+            const meta = fp ? `${poolPts} pts` : `${tfCount} TF${tfCount!==1?"s":""} &bull; ${poolPts} pts`;
             return `<div class="list-row">
               <div style="min-width:0;flex:1;display:flex;align-items:center;gap:8px">
                 ${armyIconEl}
@@ -9159,7 +9202,7 @@ function renderForceDetail() {
         ${flatSymBtn}
         <div style="flex:1;min-width:0;overflow:hidden">
           <div style="display:flex;align-items:center;gap:5px">${nameSection}</div>
-          <div style="font-size:9px;color:var(--text-muted);margin-top:2px">${agSize} arm${agSize!==1?"ies":"y"}</div>
+          <div style="font-size:9px;color:var(--text-muted);margin-top:2px">${agSize} arm${agSize!==1?"ies":"y"}${agPts?" &middot; "+agPts+" pts":""}</div>
         </div>
         <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end">
           <button class="trait-edit-btn" onclick="openAddArmyEFModal('${force.id}','${ag.id}')"><i class="fa-solid fa-plus"></i> Add Army</button>
@@ -9196,7 +9239,11 @@ function renderForceDetail() {
       <div><div class="info-strip-label">Army Groups</div><div class="info-strip-val">${agCount}</div></div>
       <div class="info-strip-sep"></div>
       <div><div class="info-strip-label">Total Armies</div><div class="info-strip-val">${totalArmies}</div></div>
+      <div class="info-strip-sep"></div>
+      <div><div class="info-strip-label">Total Points</div><div class="info-strip-val" style="color:${_fOver?"#ef5350":_fRemain===0?"#4caf50":"var(--text-bright)"}">${forcePts}</div></div>
+      ${forceTarget?`<div class="info-strip-sep"></div><div><div class="info-strip-label">Budget</div><div class="info-strip-val">${forceTarget}</div></div>`:""}
     </div>
+    ${forceBudgetBarHTML}
     ${deployBannerHTML}
     <div class="sub-divider">
       <div class="sub-divider-label"><i class="fa-solid fa-layer-group" style="color:#9c27b0;font-size:9px"></i> Army Groups</div>
@@ -9368,6 +9415,7 @@ function openNewForceModal() {
   document.getElementById("force-modal-submit").textContent = "Create";
   document.getElementById("force-new-name").value = "";
   document.getElementById("force-ag-count").value = "3";
+  document.getElementById("force-points-target").value = "";
   document.getElementById("force-description").value = "";
   clearFieldErr("force-new-name");
   modalMsg("force-modal-msg","");
@@ -9382,6 +9430,7 @@ function openEditForceModal(id) {
   document.getElementById("force-modal-submit").textContent = "Save Changes";
   document.getElementById("force-new-name").value = force.name;
   document.getElementById("force-ag-count").value = String(force.agCount||3);
+  document.getElementById("force-points-target").value = force.pointsTarget||"";
   document.getElementById("force-description").value = force.description||"";
   clearFieldErr("force-new-name");
   modalMsg("force-modal-msg","");
@@ -9393,6 +9442,7 @@ function saveForce() {
   const name = document.getElementById("force-new-name").value.trim();
   if(!name) { showFieldErr("force-new-name","Enter a force name."); return; }
   const agCount = parseInt(document.getElementById("force-ag-count").value)||3;
+  const pointsTarget = parseInt(document.getElementById("force-points-target").value)||null;
   const description = document.getElementById("force-description").value.trim();
   if(editingForceId) {
     const force = (state.expeditionaryForces||[]).find(f=>f.id===editingForceId);
@@ -9407,12 +9457,12 @@ function saveForce() {
         }
         force.armyGroups=(force.armyGroups||[]).slice(0,agCount);
       }
-      force.name=name; force.agCount=agCount; force.description=description;
+      force.name=name; force.agCount=agCount; force.pointsTarget=pointsTarget; force.description=description;
       _ensureAGs(force);
     }
     editingForceId = null;
   } else {
-    const force = {id:"ef_"+uid(), name, agCount, description, symbol:null, armyGroups:[]};
+    const force = {id:"ef_"+uid(), name, agCount, pointsTarget, description, symbol:null, armyGroups:[]};
     if(!state.expeditionaryForces) state.expeditionaryForces=[];
     state.expeditionaryForces.push(force);
     _ensureAGs(force);
