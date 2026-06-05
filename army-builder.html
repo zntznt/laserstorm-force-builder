@@ -4611,6 +4611,7 @@ function renderLibrary() {
     }
     const actions = `
       ${u.builtIn?"":`<button class="trait-edit-btn" onclick="editUnit('${u.id}')">Edit</button>`}
+      <button class="trait-edit-btn" onclick="cloneUnit('${u.id}')"><i class="fa-solid fa-copy"></i> Clone</button>
       ${u.builtIn?"":`<button class="trait-edit-btn" onclick="confirmBtn(this,()=>deleteCustomUnit('${u.id}'))">Delete</button>`}
       ${qaBtn}`;
     return unitCardHTML(u, actions, libViewType);
@@ -4707,6 +4708,21 @@ function deleteCustomUnit(id) {
   if(currentTFId) renderTFDetail();
   renderArmyList();
   if(currentArmyId) renderArmyDetail();
+}
+
+function cloneUnit(id) {
+  const src = unitById(id);
+  if (!src) return;
+  const clone = JSON.parse(JSON.stringify(src));
+  clone.id = "custom_" + uid();
+  clone.builtIn = false;
+  const baseName = "Copy of " + src.name;
+  let name = baseName, n = 2;
+  while (state.customUnits.some(u => u.name === name)) name = baseName + " (" + n++ + ")";
+  clone.name = name;
+  state.customUnits.push(clone);
+  saveState();
+  editUnit(clone.id);
 }
 
 function editUnit(id) {
@@ -4856,8 +4872,10 @@ function renderFactionDetail() {
   } else {
     const cards = units.map(u => {
       const actions = u.builtIn
-        ? `<button class="trait-edit-btn" onclick="libFilterFaction='${id}';showPage('library')" title="View in library">View in Library</button>`
-        : `<button class="trait-edit-btn" onclick="editUnit('${u.id}')">Edit</button>`;
+        ? `<button class="trait-edit-btn" onclick="libFilterFaction='${id}';showPage('library')" title="View in library">View in Library</button>
+           <button class="trait-edit-btn" onclick="cloneUnit('${u.id}')"><i class="fa-solid fa-copy"></i> Clone</button>`
+        : `<button class="trait-edit-btn" onclick="editUnit('${u.id}')">Edit</button>
+           <button class="trait-edit-btn" onclick="cloneUnit('${u.id}')"><i class="fa-solid fa-copy"></i> Clone</button>`;
       return unitCardHTML(u, actions, "unit");
     }).join("");
     const createBtn = isBuiltin ? ""
