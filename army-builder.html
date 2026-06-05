@@ -204,6 +204,37 @@ input.input-error,textarea.input-error{border-color:#ef535066!important;outline:
 .exp-empty{padding:20px;text-align:center;color:var(--text-faint);font-size:12px;font-style:italic}
 .danger-zone{border:1px solid #8b000055}
 .danger-zone .card-title{color:#ef5350;border-bottom-color:#8b000033}
+/* Factions page */
+.fac-card{background:var(--surface-card);border:1px solid var(--border-default);border-radius:10px;margin-bottom:10px;overflow:hidden;transition:border-color .15s,background .15s;cursor:pointer}
+.fac-card:hover{border-color:var(--accent);background:var(--surface-raised)}
+.fac-card-header{display:flex;align-items:center;gap:13px;padding:13px 15px}
+.fac-icon-box{width:46px;height:46px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.fac-card-name{font-family:var(--font-display);font-size:19px;letter-spacing:.8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fac-card-desc{font-size:11px;color:var(--text-muted);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fac-card-meta{display:flex;align-items:center;gap:12px;padding:6px 15px 12px 74px}
+.fac-card-meta-chip{font-size:10px;font-weight:700;color:var(--text-muted);display:flex;align-items:center;gap:4px}
+.fac-card-actions{display:flex;align-items:center;gap:6px;margin-left:auto;flex-shrink:0}
+.fac-hero{display:flex;align-items:flex-start;gap:16px;padding:18px;background:var(--surface-card);border:1px solid var(--border-default);border-radius:10px;margin-bottom:16px}
+.fac-hero-icon{width:64px;height:64px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0}
+.fac-hero-name{font-family:var(--font-display);font-size:28px;letter-spacing:1.5px;line-height:1}
+.fac-hero-desc{font-size:12px;color:var(--text-muted);margin-top:6px;line-height:1.5}
+.fac-section{margin-bottom:20px}
+.fac-section-head{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--text-muted);margin-bottom:8px;display:flex;align-items:center;gap:7px}
+.fac-section-count{background:var(--surface-raised);border:1px solid var(--border-subtle);border-radius:9px;padding:0 7px;font-size:10px;font-weight:700;color:var(--text-mid);line-height:1.8}
+.fac-unit-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:640px){.fac-unit-grid{grid-template-columns:1fr}}
+.fac-trait-row{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:7px;margin-bottom:5px}
+.fac-trait-name{font-size:13px;font-weight:600;color:var(--text-primary);flex:1;min-width:0}
+.fac-trait-cost{font-size:11px;font-weight:700;color:var(--accent-light);flex-shrink:0;white-space:nowrap}
+.fac-trait-type{font-size:10px;color:var(--text-faint);flex-shrink:0;text-transform:uppercase;letter-spacing:.4px}
+.fac-tf-row{display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:7px;margin-bottom:5px;cursor:pointer;transition:background .12s,border-color .12s}
+.fac-tf-row:hover{background:var(--surface-raised);border-color:var(--accent)}
+.fac-tf-name{font-size:13px;font-weight:600;color:var(--text-primary);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fac-tf-slots{font-size:10px;color:var(--text-faint);flex-shrink:0;white-space:nowrap}
+.fac-builtin-row{display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:8px;margin-bottom:7px;cursor:pointer;transition:background .12s,border-color .12s}
+.fac-builtin-row:hover{background:var(--surface-raised);border-color:var(--border-default)}
+.fac-builtin-icon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.fac-builtin-name{font-family:var(--font-display);font-size:16px;letter-spacing:.5px;flex:1}
 .scrolllist{max-height:360px;overflow-y:auto;border:1px solid var(--border-subtle);border-radius:6px;padding:8px}
 .weapon-builder{background:var(--surface-page);border:1px solid var(--border-subtle);border-radius:6px;padding:10px;margin-top:8px}
 .weapon-builder-row{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end}
@@ -323,6 +354,7 @@ label .trait-edit-btn{margin-left:6px}
   <div class="nav-tabs">
     <div class="nav-tab" id="tab-builder" onclick="showPage('builder')" title="Unit Builder"><i class="fa-solid fa-hammer"></i><span class="nav-label">Unit Builder</span></div>
     <div class="nav-tab" id="tab-library" onclick="showPage('library')" title="Unit Library"><i class="fa-solid fa-book-open"></i><span class="nav-label">Unit Library</span></div>
+    <div class="nav-tab" id="tab-factions" onclick="showPage('factions')" title="Factions"><i class="fa-solid fa-flag"></i><span class="nav-label">Factions</span></div>
     <div class="nav-tab" id="tab-taskforces" onclick="showPage('taskforces')" title="Task Forces"><i class="fa-solid fa-users"></i><span class="nav-label">Task Forces</span></div>
     <div class="nav-tab" id="tab-armies" onclick="showPage('armies')" title="Armies"><i class="fa-solid fa-chess-rook"></i><span class="nav-label">Armies</span></div>
     <div class="nav-tab" id="tab-forces" onclick="showPage('forces')" title="Expeditionary Forces"><i class="fa-solid fa-earth-americas"></i><span class="nav-label">Expeditionary Forces</span></div>
@@ -502,7 +534,7 @@ label .trait-edit-btn{margin-left:6px}
 <div id="page-library" class="page">
   <div class="card-title">Unit Library
     <div style="display:flex;gap:6px">
-      <button class="trait-edit-btn" onclick="openFactionModal(false)"><i class="fa-solid fa-gear"></i> Factions</button>
+      <button class="trait-edit-btn" onclick="showPage('factions')"><i class="fa-solid fa-flag"></i> Factions</button>
       <button class="trait-edit-btn" onclick="resetBuilder();showPage('builder')"><i class="fa-solid fa-plus"></i> Create Unit</button>
     </div>
   </div>
@@ -569,6 +601,19 @@ label .trait-edit-btn{margin-left:6px}
     <div id="lib-quick-add-ctx" style="display:none"></div>
     <div id="lib-count" style="font-size:11px;color:var(--text-muted);margin-bottom:10px"></div>
     <div id="lib-list"></div>
+  </div>
+</div>
+
+<!-- ===== FACTIONS PAGE ===== -->
+<div id="page-factions" class="page">
+  <div id="fac-list-view">
+    <div class="card-title">Factions
+      <button class="trait-edit-btn" onclick="openFactionModal(false)"><i class="fa-solid fa-plus"></i> New Faction</button>
+    </div>
+    <div id="fac-list-content"></div>
+  </div>
+  <div id="fac-detail-view" style="display:none">
+    <div id="fac-detail-panel"></div>
   </div>
 </div>
 
@@ -1545,6 +1590,7 @@ let traitPickerTarget = null;
 let traitPickerStepperCounts = {};
 let traitPickerWeaponIdx = null;
 let currentTFId = null;
+let currentFactionId = null;
 let editingTFId = null;
 let editingCustomTFTypeId = null;
 let assetPickerTFId = null;
@@ -2247,6 +2293,14 @@ function showPage(p) {
   document.getElementById("page-"+p).classList.add("active");
   document.getElementById("tab-"+p).classList.add("active");
   if(p==="library") renderLibrary();
+  if(p==="factions") {
+    currentFactionId = null;
+    const lv = document.getElementById("fac-list-view");
+    const dv = document.getElementById("fac-detail-view");
+    if(lv) lv.style.display = "";
+    if(dv) dv.style.display = "none";
+    renderFactionList();
+  }
   if(p==="taskforces") {
     currentTFId = null;
     const lv = document.getElementById("tf-list-view");
@@ -4083,6 +4137,7 @@ function saveCustomFaction() {
   rebuildFactionSelect(selectId);
   renderLibFactionFilters();
   renderFactionModalContent();
+  _refreshFactionPage();
 }
 
 function deleteCustomFaction(id) {
@@ -4109,6 +4164,8 @@ function deleteCustomFaction(id) {
   renderLibFactionFilters();
   renderFactionModalContent();
   if(libFilterFaction===id) { libFilterFaction="all"; renderLibrary(); }
+  if(currentFactionId===id) showFactionList();
+  else _refreshFactionPage();
 }
 
 function _ctReqSections() {
@@ -4679,6 +4736,217 @@ function editUnit(id) {
   setEditMode(unit);
   calculateBuilder();
   showPage("builder");
+}
+
+// ============================================================
+// FACTIONS PAGE
+// ============================================================
+
+function renderFactionList() {
+  const list = document.getElementById("fac-list-content");
+  if(!list) return;
+
+  const unitsByFac = {};
+  allUnits().forEach(u => { const k = u.faction||"_none"; unitsByFac[k] = (unitsByFac[k]||0)+1; });
+
+  const traitsByFac = {};
+  (state.customTraits||[]).forEach(t => {
+    const fid = t.faction || (t.reqs||[]).find(r=>r.type==="faction")?.vals?.[0];
+    if(fid) traitsByFac[fid] = (traitsByFac[fid]||0)+1;
+  });
+
+  const tfsByFac = {};
+  (state.taskForces||[]).forEach(tf => {
+    if(tf.faction && tf.faction !== "any") tfsByFac[tf.faction] = (tfsByFac[tf.faction]||0)+1;
+  });
+
+  const builtins = [
+    {id:"standard",  label:"Standard",  icon:BUILTIN_FACTION_ICONS.standard,  color:FACTION_COLORS.standard},
+    {id:"precursor", label:"Precursor", icon:BUILTIN_FACTION_ICONS.precursor, color:FACTION_COLORS.precursor},
+    {id:"soulless",  label:"Soulless",  icon:BUILTIN_FACTION_ICONS.soulless,  color:FACTION_COLORS.soulless},
+    {id:"swarm",     label:"Swarm",     icon:BUILTIN_FACTION_ICONS.swarm,     color:FACTION_COLORS.swarm},
+    {id:"warrior",   label:"Warrior",   icon:BUILTIN_FACTION_ICONS.warrior,   color:FACTION_COLORS.warrior},
+  ];
+
+  const builtinHTML = builtins.map(f => {
+    const n = unitsByFac[f.id]||0;
+    return `<div class="fac-builtin-row" onclick="showFactionDetail('${f.id}')">
+      <div class="fac-builtin-icon" style="background:${f.color}1a;color:${f.color}"><i class="fa-solid fa-${f.icon}"></i></div>
+      <span class="fac-builtin-name" style="color:${f.color}">${f.label}</span>
+      <span style="font-size:10px;color:var(--text-faint)">${n} unit${n!==1?"s":""}</span>
+      <i class="fa-solid fa-chevron-right" style="color:var(--text-faint);font-size:10px;margin-left:2px"></i>
+    </div>`;
+  }).join("");
+
+  const custom = state.customFactions||[];
+  const customHTML = custom.length
+    ? custom.map(f => {
+        const n  = unitsByFac[f.id]||0;
+        const nt = traitsByFac[f.id]||0;
+        const ntf = tfsByFac[f.id]||0;
+        const chips = [
+          `<span class="fac-card-meta-chip"><i class="fa-solid fa-chess-pawn" style="font-size:9px"></i>${n} unit${n!==1?"s":""}</span>`,
+          nt  ? `<span class="fac-card-meta-chip"><i class="fa-solid fa-star" style="font-size:9px"></i>${nt} trait${nt!==1?"s":""}</span>` : "",
+          ntf ? `<span class="fac-card-meta-chip"><i class="fa-solid fa-shield-halved" style="font-size:9px"></i>${ntf} TF${ntf!==1?"s":""}</span>` : "",
+        ].filter(Boolean).join("");
+        return `<div class="fac-card" onclick="showFactionDetail('${f.id}')">
+          <div class="fac-card-header">
+            <div class="fac-icon-box" style="background:${f.color}1a;color:${f.color}"><i class="fa-solid fa-${f.icon}"></i></div>
+            <div style="flex:1;min-width:0">
+              <div class="fac-card-name" style="color:${f.color}">${esc(f.name)}</div>
+              ${f.description ? `<div class="fac-card-desc">${esc(f.description)}</div>` : ""}
+            </div>
+            <div class="fac-card-actions" onclick="event.stopPropagation()">
+              <button class="trait-edit-btn" onclick="editCustomFaction('${f.id}');openModal('modal-faction')"><i class="fa-solid fa-pencil"></i> Edit</button>
+              <button class="trait-edit-btn" style="border-color:#8b000066;color:#ef5350" onclick="confirmBtn(this,()=>deleteCustomFaction('${f.id}'))"><i class="fa-solid fa-trash"></i></button>
+            </div>
+          </div>
+          ${chips ? `<div class="fac-card-meta">${chips}</div>` : ""}
+        </div>`;
+      }).join("")
+    : `<div class="empty"><div class="empty-icon"><i class="fa-solid fa-flag"></i></div>No custom factions yet<br><span style="font-size:12px;font-weight:normal">Press <strong>New Faction</strong> to create one</span></div>`;
+
+  list.innerHTML = `
+    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--text-muted);margin-bottom:8px;margin-top:4px">Built-in</div>
+    ${builtinHTML}
+    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--text-muted);margin-bottom:8px;margin-top:20px">Custom</div>
+    ${customHTML}`;
+}
+
+function showFactionDetail(id) {
+  currentFactionId = id;
+  document.getElementById("fac-list-view").style.display = "none";
+  document.getElementById("fac-detail-view").style.display = "";
+  renderFactionDetail();
+}
+
+function showFactionList() {
+  currentFactionId = null;
+  document.getElementById("fac-list-view").style.display = "";
+  document.getElementById("fac-detail-view").style.display = "none";
+  renderFactionList();
+}
+
+function renderFactionDetail() {
+  const panel = document.getElementById("fac-detail-panel");
+  if(!panel) return;
+  const id = currentFactionId;
+  const isBuiltin = !!FACTION_COLORS[id];
+  const cf = isBuiltin ? null : (state.customFactions||[]).find(f=>f.id===id);
+  if(!isBuiltin && !cf) { showFactionList(); return; }
+
+  const name  = isBuiltin ? BUILTIN_FACTION_LABELS[id]      : cf.name;
+  const icon  = isBuiltin ? BUILTIN_FACTION_ICONS[id]       : (cf.icon||"shield");
+  const color = isBuiltin ? FACTION_COLORS[id]              : (cf.color||"#888");
+  const desc  = isBuiltin ? ""                              : (cf.description||"");
+
+  const units  = allUnits().filter(u => u.faction === id);
+  const traits = (state.customTraits||[]).filter(t =>
+    t.faction === id || (t.reqs||[]).some(r=>r.type==="faction"&&r.vals.includes(id))
+  );
+  const tfs = (state.taskForces||[]).filter(tf => tf.faction === id);
+
+  // Units HTML
+  let unitsHTML;
+  if(!units.length) {
+    const createBtn = isBuiltin ? ""
+      : `<div style="margin-top:10px"><button class="trait-edit-btn" onclick="goCreateUnitForFaction('${id}')"><i class="fa-solid fa-plus"></i> Create Unit</button></div>`;
+    unitsHTML = `<div style="color:var(--text-faint);font-size:12px;font-style:italic">No units for this faction yet.</div>${createBtn}`;
+  } else {
+    const cards = units.map(u => {
+      const actions = u.builtIn
+        ? `<button class="trait-edit-btn" onclick="libFilterFaction='${id}';showPage('library')" title="View in library">View in Library</button>`
+        : `<button class="trait-edit-btn" onclick="editUnit('${u.id}')">Edit</button>`;
+      return unitCardHTML(u, actions, "unit");
+    }).join("");
+    const createBtn = isBuiltin ? ""
+      : `<div style="margin-top:10px"><button class="trait-edit-btn" onclick="goCreateUnitForFaction('${id}')"><i class="fa-solid fa-plus"></i> Create Unit</button></div>`;
+    unitsHTML = `<div class="fac-unit-grid">${cards}</div>${createBtn}`;
+  }
+
+  // Traits HTML (custom factions only)
+  let traitsSection = "";
+  if(!isBuiltin) {
+    let traitsHTML;
+    if(!traits.length) {
+      traitsHTML = `<div style="color:var(--text-faint);font-size:12px;font-style:italic">No custom traits gated to this faction.</div>`;
+    } else {
+      traitsHTML = traits.map(t => {
+        const cost = (t.cost >= 0 ? "+" : "") + t.cost + "p";
+        const typeLabel = t.type === "weapon" ? "Weapon" : "Stand";
+        return `<div class="fac-trait-row">
+          <span class="fac-trait-name">${esc(t.name)}</span>
+          <span class="fac-trait-type">${typeLabel}</span>
+          <span class="fac-trait-cost">${cost}</span>
+          <button class="trait-edit-btn" onclick="editCustomTrait('${t.id}');openModal('modal-custom-trait')"><i class="fa-solid fa-pencil"></i></button>
+        </div>`;
+      }).join("");
+    }
+    traitsSection = `<div class="fac-section">
+      <div class="fac-section-head"><i class="fa-solid fa-star" style="font-size:9px"></i> Faction Traits <span class="fac-section-count">${traits.length}</span></div>
+      ${traitsHTML}
+    </div>`;
+  }
+
+  // Task Forces HTML
+  let tfsSection = "";
+  if(tfs.length) {
+    tfsSection = `<div class="fac-section">
+      <div class="fac-section-head"><i class="fa-solid fa-shield-halved" style="font-size:9px"></i> Task Forces Restricted to this Faction <span class="fac-section-count">${tfs.length}</span></div>
+      ${tfs.map(tf=>`<div class="fac-tf-row" onclick="showPage('taskforces');selectTF('${tf.id}')">
+        <i class="fa-solid fa-shield-halved" style="color:var(--text-faint);font-size:12px"></i>
+        <span class="fac-tf-name">${esc(tf.name)}</span>
+        <span class="fac-tf-slots">${(tf.units||[]).length} slot${(tf.units||[]).length!==1?"s":""}</span>
+        <i class="fa-solid fa-chevron-right" style="color:var(--text-faint);font-size:10px"></i>
+      </div>`).join("")}
+    </div>`;
+  }
+
+  const headerBtns = isBuiltin ? "" : `<div style="display:flex;gap:6px">
+    <button class="trait-edit-btn" onclick="editCustomFaction('${id}');openModal('modal-faction')"><i class="fa-solid fa-pencil"></i> Edit</button>
+    <button class="trait-edit-btn" style="border-color:#8b000066;color:#ef5350" onclick="confirmBtn(this,()=>deleteCustomFaction('${id}'))"><i class="fa-solid fa-trash"></i> Delete</button>
+  </div>`;
+
+  panel.innerHTML = `
+    <div class="card-title">
+      <button class="trait-edit-btn" onclick="showFactionList()"><i class="fa-solid fa-chevron-left"></i> Factions</button>
+      ${headerBtns}
+    </div>
+
+    <div class="fac-hero">
+      <div class="fac-hero-icon" style="background:${color}1a;border:2px solid ${color}44;color:${color}">
+        <i class="fa-solid fa-${icon}"></i>
+      </div>
+      <div style="flex:1;min-width:0">
+        <div class="fac-hero-name" style="color:${color}">${esc(name)}</div>
+        ${desc ? `<div class="fac-hero-desc">${esc(desc)}</div>` : ""}
+        ${isBuiltin ? `<div style="margin-top:8px"><span style="font-size:10px;font-weight:700;padding:2px 9px;border-radius:8px;background:var(--surface-raised);color:var(--text-muted);border:1px solid var(--border-subtle);letter-spacing:.5px">BUILT-IN</span></div>` : ""}
+      </div>
+    </div>
+
+    <div class="fac-section">
+      <div class="fac-section-head"><i class="fa-solid fa-chess-pawn" style="font-size:9px"></i> Units <span class="fac-section-count">${units.length}</span></div>
+      ${unitsHTML}
+    </div>
+
+    ${traitsSection}
+    ${tfsSection}`;
+}
+
+function goCreateUnitForFaction(factionId) {
+  resetBuilder();
+  showPage("builder");
+  const el = document.getElementById("b-faction");
+  if(el) { el.value = factionId; calculateBuilder(); }
+}
+
+function _refreshFactionPage() {
+  if(!document.getElementById("page-factions")?.classList.contains("active")) return;
+  if(document.getElementById("fac-detail-view")?.style.display !== "none") {
+    renderFactionDetail();
+  } else {
+    renderFactionList();
+  }
 }
 
 // ============================================================
