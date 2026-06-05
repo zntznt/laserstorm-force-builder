@@ -7269,6 +7269,7 @@ function renderArmyDetail() {
   </div>`;
   _ensureBGs(army);
   const fp = isFreePick(army);
+  const allAssets = allTacticalAssets();
   const poolPts = armyPoints(army);
   const deployedPts = armyDeployedPoints(army);
   const overPtsLimit = army.pointsLimit && deployedPts > army.pointsLimit;
@@ -7318,7 +7319,6 @@ function renderArmyDetail() {
           <i class="fa-solid fa-triangle-exclamation" style="margin-right:4px;color:#ef5350"></i>Doesn't match this army's ${factionPill(army.faction)} restriction — remove it, or change the restriction.
         </div>` : "";
         const tfSlots = tfRankSlots(tf.id);
-        const allAssets = allTacticalAssets();
         const tfAsset = tf.tacAsset ? allAssets.find(a=>a.id===tf.tacAsset) : null;
         const assetLineHTML = tfAsset ? `<div style="font-size:10px;color:#8b949e;display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-top:3px">
           <i class="fa-solid fa-chess" style="color:#ffd54f;font-size:9px"></i>
@@ -7444,7 +7444,7 @@ function renderArmyDetail() {
             const unit = unitById(slot.unitId);
             if(!unit) return "";
             const tfColor = FACTION_COLORS[tf.faction] || "#555";
-            const bgAsset = tf.tacAsset ? allTacticalAssets().find(a=>a.id===tf.tacAsset) : null;
+            const bgAsset = tf.tacAsset ? allAssets.find(a=>a.id===tf.tacAsset) : null;
             const slotTU = slot.transport ? unitById(slot.transport) : null;
             const tfBadge = bgAsset
               ? `<span style="display:inline-flex;align-items:center;gap:4px;flex-wrap:wrap">
