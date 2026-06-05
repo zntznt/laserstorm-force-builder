@@ -1215,11 +1215,12 @@ label .trait-edit-btn{margin-left:6px}
   </div>
 </div>
 
-<!-- ===== PRINT ARMY MODAL ===== -->
-<div id="modal-print-army" class="modal-bg">
+<!-- ===== PRINT MODAL ===== -->
+<div id="modal-print" class="modal-bg">
   <div class="modal" style="max-width:420px">
-    <div class="modal-header">Print Army <button class="modal-close" onclick="closeModal('modal-print-army')"><i class="fa-solid fa-xmark"></i></button></div>
-    <input type="hidden" id="print-army-id">
+    <div class="modal-header"><span id="modal-print-title">Print</span> <button class="modal-close" onclick="closeModal('modal-print')"><i class="fa-solid fa-xmark"></i></button></div>
+    <input type="hidden" id="print-target-type">
+    <input type="hidden" id="print-target-id">
     <div class="form-group" style="margin-bottom:14px">
       <label>Paper Size</label>
       <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:6px">
@@ -1235,8 +1236,8 @@ label .trait-edit-btn{margin-left:6px}
       </div>
     </div>
     <div style="display:flex;justify-content:flex-end;gap:8px">
-      <button class="btn btn-secondary" onclick="closeModal('modal-print-army')">Cancel</button>
-      <button class="btn btn-primary" onclick="doPrintArmy()"><i class="fa-solid fa-print"></i> Print</button>
+      <button class="btn btn-secondary" onclick="closeModal('modal-print')">Cancel</button>
+      <button class="btn btn-primary" onclick="doPrint()"><i class="fa-solid fa-print"></i> Print</button>
     </div>
   </div>
 </div>
@@ -5531,6 +5532,7 @@ function renderTFDetail() {
         ${deployedBadge}
       </div>
       <div style="display:flex;gap:6px">
+        <button class="trait-edit-btn" onclick="openPrintModal('tf','${tf.id}')"><i class="fa-solid fa-print"></i> Print</button>
         <button class="trait-edit-btn" onclick="openSaveTFTemplateModal('${tf.id}')"><i class="fa-solid fa-layer-group"></i> Save as Template</button>
         <button class="trait-edit-btn" onclick="exportTF('${tf.id}')"><i class="fa-solid fa-share-nodes"></i> Export</button>
         <button class="trait-edit-btn" onclick="openEditTFModal('${tf.id}')"><i class="fa-solid fa-pen"></i> Edit</button>
@@ -7597,31 +7599,31 @@ function toggleBGViewMode() {
 // ============================================================
 // PRINT
 // ============================================================
-function openPrintArmyModal(armyId) {
-  document.getElementById("print-army-id").value = armyId;
-  openModal("modal-print-army");
-}
 
-function doPrintArmy() {
-  const armyId   = document.getElementById("print-army-id").value;
+// ── Modal orchestration ───────────────────────────────────
+function openPrintModal(type, id) {
+  document.getElementById("print-target-type").value = type;
+  document.getElementById("print-target-id").value = id;
+  const titles = {army:"Print Army", tf:"Print Task Force", force:"Print Expeditionary Force"};
+  document.getElementById("modal-print-title").textContent = titles[type] || "Print";
+  openModal("modal-print");
+}
+function openPrintArmyModal(armyId) { openPrintModal("army", armyId); }
+
+function doPrint() {
+  const type      = document.getElementById("print-target-type").value;
+  const id        = document.getElementById("print-target-id").value;
   const paperSize = document.querySelector('input[name="print-paper"]:checked')?.value || "letter";
   const inkMode   = document.querySelector('input[name="print-ink"]:checked')?.value  || "color";
-  closeModal("modal-print-army");
-  printArmy(armyId, paperSize, inkMode);
+  closeModal("modal-print");
+  if (type === "army")  printArmy(id, paperSize, inkMode);
+  if (type === "tf")    printTF(id, paperSize, inkMode);
+  if (type === "force") printForce(id, paperSize, inkMode);
 }
 
-function printArmy(armyId, paperSize, inkMode) {
-  const army = state.armies.find(a => a.id === armyId);
-  if (!army) return;
-  _ensureBGs(army);
-  const fp          = isFreePick(army);
-  const bgCount     = army.bgCount || 3;
-  const bgList      = army.battleGroups.slice(0, bgCount);
-  const tfs         = (army.taskForceIds || []).map(id => state.taskForces.find(t => t.id === id)).filter(Boolean);
-  const allAssets   = allTacticalAssets();
-  const deployedPts = armyDeployedPoints(army);
-  const gray        = inkMode === "gray";
-
+// ── Shared palette ────────────────────────────────────────
+function _printPalette(inkMode) {
+  const gray = inkMode === "gray";
   const pal = gray ? {
     pageText:"#111",headBg:"#222",headText:"#fff",cardBg:"#fff",cardBorder:"#aaa",
     sectionHead:"#333",statBg:"#f0f0f0",statBorder:"#ccc",wepBg:"#f5f5f5",wepBorder:"#ddd",
@@ -7633,80 +7635,142 @@ function printArmy(armyId, paperSize, inkMode) {
     mutedText:"#546080",ptsBoxBg:"#162040",ptsBoxText:"#fff",accentLine:"#4a7adc",
     tfRowBg:"#f3f7fd",assetColor:"#8a5a00",symBg:"#162040",symBorder:"#3060a8",symColor:"#fff",
   };
+  return { pal, gray };
+}
 
-  const pageSize   = paperSize === "a4" ? "210mm 297mm" : "8.5in 11in";
-  const pageMargin = "0.5in";
+// ── Shared element renderers ──────────────────────────────
+function _pSymBadge(sd, size, pal, gray) {
+  if (!sd) return "";
+  const c    = gray ? "#fff" : sd.color;
+  const bg   = gray ? "#444" : (sd.color + "1a");
+  const bord = gray ? "#666" : (sd.color + "99");
+  const fs   = size * 0.55;
+  const inner = sd.text
+    ? `<span style="font-family:'Bebas Neue',sans-serif;font-size:${sd.text.length>2?Math.round(fs*.9):fs}px;font-weight:bold;line-height:1;letter-spacing:0">${sd.text}</span>`
+    : `<i class="${sd.icon}" style="font-size:${fs}px"></i>`;
+  return `<div style="width:${size}px;height:${size}px;border-radius:${Math.round(size*.2)}px;background:${bg};border:2.5px solid ${bord};color:${c};display:inline-flex;align-items:center;justify-content:center;flex-shrink:0">${inner}</div>`;
+}
 
-  function symBadge(sd, size) {
-    if (!sd) return "";
-    const c    = gray ? "#fff" : sd.color;
-    const bg   = gray ? "#444" : (sd.color + "1a");
-    const bord = gray ? "#666" : (sd.color + "99");
-    const fs   = size * 0.55;
-    const inner = sd.text
-      ? `<span style="font-family:'Bebas Neue',sans-serif;font-size:${sd.text.length>2?Math.round(fs*.9):fs}px;font-weight:bold;line-height:1;letter-spacing:0">${sd.text}</span>`
-      : `<i class="${sd.icon}" style="font-size:${fs}px"></i>`;
-    return `<div style="width:${size}px;height:${size}px;border-radius:${Math.round(size*.2)}px;background:${bg};border:2.5px solid ${bord};color:${c};display:inline-flex;align-items:center;justify-content:center;flex-shrink:0">${inner}</div>`;
-  }
+function _pFacPill(factionId, pal, gray) {
+  if (!factionId) return "";
+  const name  = BUILTIN_FACTION_LABELS[factionId] || (state.customFactions||[]).find(f=>f.id===factionId)?.name || factionId;
+  const icon  = BUILTIN_FACTION_ICONS[factionId]  || (state.customFactions||[]).find(f=>f.id===factionId)?.icon;
+  const label = icon ? `<i class="fa-solid fa-${icon}"></i> ${esc(name)}` : esc(name);
+  if (gray) return `<span style="display:inline-block;padding:1px 7px;border-radius:10px;font-size:10px;font-weight:bold;background:#e0e0e0;color:#333;border:1px solid #bbb">${label}</span>`;
+  const color = FACTION_COLORS[factionId] || (state.customFactions||[]).find(f=>f.id===factionId)?.color || "#888";
+  return `<span style="display:inline-block;padding:1px 7px;border-radius:10px;font-size:10px;font-weight:bold;background:${color}22;color:${color};border:1px solid ${color}55">${label}</span>`;
+}
 
-  function printFacPill(factionId) {
-    if (!factionId) return "";
-    const name  = BUILTIN_FACTION_LABELS[factionId] || (state.customFactions||[]).find(f=>f.id===factionId)?.name || factionId;
-    const icon  = BUILTIN_FACTION_ICONS[factionId]  || (state.customFactions||[]).find(f=>f.id===factionId)?.icon;
-    const label = icon ? `<i class="fa-solid fa-${icon}"></i> ${esc(name)}` : esc(name);
-    if (gray) return `<span style="display:inline-block;padding:1px 7px;border-radius:10px;font-size:10px;font-weight:bold;background:#e0e0e0;color:#333;border:1px solid #bbb">${label}</span>`;
-    const color = FACTION_COLORS[factionId] || (state.customFactions||[]).find(f=>f.id===factionId)?.color || "#888";
-    return `<span style="display:inline-block;padding:1px 7px;border-radius:10px;font-size:10px;font-weight:bold;background:${color}22;color:${color};border:1px solid ${color}55">${label}</span>`;
-  }
+function _pClassBadge(c, gray) {
+  const label = classLabel(c);
+  if (gray) return `<span style="display:inline-block;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:bold;text-transform:uppercase;background:#e0e0e0;color:#222;border:1px solid #bbb">${label}</span>`;
+  const CLASS_BG_P   = {inf:"#1a3a1a",cav:"#1a2a4a",fg:"#2a1a3a",scout:"#1a3a3a",afv:"#3a2a0a",ac:"#1a3a3a",sh:"#3a1a0a",beh:"#3a0a0a",core:"#0a2a0a",specialist:"#0a0a3a",command:"#2a1a0a",support:"#1a0a2a",commander:"#3a0a0a"};
+  const CLASS_TEXT_P = {inf:"#4caf50",cav:"#64b5f6",fg:"#ba68c8",scout:"#4db6ac",afv:"#ffb74d",ac:"#26c6da",sh:"#ff7043",beh:"#ef5350",core:"#4caf50",specialist:"#64b5f6",command:"#ffb74d",support:"#ba68c8",commander:"#ef5350"};
+  return `<span style="display:inline-block;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:bold;text-transform:uppercase;background:${CLASS_BG_P[c]||"#222"};color:${CLASS_TEXT_P[c]||"#aaa"}">${label}</span>`;
+}
 
-  function printClassBadge(c) {
-    const label = classLabel(c);
-    if (gray) return `<span style="display:inline-block;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:bold;text-transform:uppercase;background:#e0e0e0;color:#222;border:1px solid #bbb">${label}</span>`;
-    const CLASS_BG_P   = {inf:"#1a3a1a",cav:"#1a2a4a",fg:"#2a1a3a",scout:"#1a3a3a",afv:"#3a2a0a",ac:"#1a3a3a",sh:"#3a1a0a",beh:"#3a0a0a",core:"#0a2a0a",specialist:"#0a0a3a",command:"#2a1a0a",support:"#1a0a2a",commander:"#3a0a0a"};
-    const CLASS_TEXT_P = {inf:"#4caf50",cav:"#64b5f6",fg:"#ba68c8",scout:"#4db6ac",afv:"#ffb74d",ac:"#26c6da",sh:"#ff7043",beh:"#ef5350",core:"#4caf50",specialist:"#64b5f6",command:"#ffb74d",support:"#ba68c8",commander:"#ef5350"};
-    return `<span style="display:inline-block;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:bold;text-transform:uppercase;background:${CLASS_BG_P[c]||"#222"};color:${CLASS_TEXT_P[c]||"#aaa"}">${label}</span>`;
-  }
+function _pTraitPills(traitArr, allTraits, pal, gray) {
+  if (!traitArr || !traitArr.length) return `<span style="color:${pal.mutedText};font-size:10px;font-style:italic">None</span>`;
+  return traitArr.map(t => {
+    const name = t[0];
+    const cnt  = traitCount(t);
+    const disp = cnt > 1 ? `${name} ${cnt}` : name;
+    const [, entry] = Object.entries(allTraits).find(([,v])=>v[0]===name) || [];
+    const fac = entry ? traitFactionKey(entry) : null;
+    if (gray) return `<span style="display:inline-block;padding:2px 7px;border-radius:8px;font-size:10px;font-weight:500;background:#e0e0e0;color:#333;border:1px solid #bbb;margin:1px 2px 1px 0">${esc(disp)}</span>`;
+    const color = fac ? (FACTION_COLORS[fac] || (state.customFactions||[]).find(f=>f.id===fac)?.color || "#888") : null;
+    const bg   = color ? `${color}18` : "#e8f0fb";
+    const bord = color ? `${color}44` : "#b8cae8";
+    const tc   = color ? color : "#1a3a6e";
+    return `<span style="display:inline-block;padding:2px 7px;border-radius:8px;font-size:10px;font-weight:500;background:${bg};color:${tc};border:1px solid ${bord};margin:1px 2px 1px 0">${esc(disp)}</span>`;
+  }).join("");
+}
 
-  function printTraitPills(traitArr, allTraits) {
-    if (!traitArr || !traitArr.length) return `<span style="color:${pal.mutedText};font-size:10px;font-style:italic">None</span>`;
-    return traitArr.map(t => {
-      const name = t[0];
-      const cnt  = traitCount(t);
-      const disp = cnt > 1 ? `${name} ${cnt}` : name;
-      const [, entry] = Object.entries(allTraits).find(([,v])=>v[0]===name) || [];
-      const fac = entry ? traitFactionKey(entry) : null;
-      if (gray) return `<span style="display:inline-block;padding:2px 7px;border-radius:8px;font-size:10px;font-weight:500;background:#e0e0e0;color:#333;border:1px solid #bbb;margin:1px 2px 1px 0">${esc(disp)}</span>`;
-      const color = fac ? (FACTION_COLORS[fac] || (state.customFactions||[]).find(f=>f.id===fac)?.color || "#888") : null;
-      const bg   = color ? `${color}18` : "#e8f0fb";
-      const bord = color ? `${color}44` : "#b8cae8";
-      const tc   = color ? color : "#1a3a6e";
-      return `<span style="display:inline-block;padding:2px 7px;border-radius:8px;font-size:10px;font-weight:500;background:${bg};color:${tc};border:1px solid ${bord};margin:1px 2px 1px 0">${esc(disp)}</span>`;
-    }).join("");
-  }
+function _pUnitCard(unit, viewType, tfBadgeHTML, opts, pal, gray) {
+  opts = opts || {};
+  const pts    = calcPoints(unit);
+  const pKey   = VIEW_PTS_KEY[viewType] || "unitPts";
+  const pVal   = opts.ptsVal != null ? opts.ptsVal : (pts[pKey] != null ? pts[pKey] : "—");
+  const pLabel = opts.ptsLabel || VIEW_LABELS[viewType] || "Unit";
+  const minSpd = unit.mobility === "grav" ? Math.ceil(unit.speed/2) : unit.mobility === "air" ? Math.ceil(unit.speed*3/4) : null;
+  const traitsHTML  = _pTraitPills(unit.standTraits||[], allStandTraits(), pal, gray);
+  const weaponsHTML = (unit.weapons||[]).length === 0
+    ? `<div style="padding:4px 8px;font-size:10px;color:${pal.mutedText};font-style:italic;background:${pal.wepBg};border-radius:4px;margin-top:3px">No ranged weapons — assault only</div>`
+    : unit.weapons.map(w => {
+        const wtPills = (w.traits||[]).length ? " | " + _pTraitPills(w.traits, allWeaponTraits(), pal, gray) : "";
+        const wName   = w.name ? `<strong>${esc(w.name)}</strong> ` : "";
+        return `<div style="padding:4px 8px;font-size:10px;background:${pal.wepBg};border:1px solid ${pal.wepBorder};border-radius:4px;margin-top:3px;line-height:1.5"><span style="color:${pal.pageText}">${wName}<span style="color:${pal.mutedText};font-weight:normal">${w.mode.toUpperCase()}/${w.type.toUpperCase()}</span> | Rng <strong>${rangeLabel(w.range)}</strong> | Shots <strong>${w.shots}</strong> | Impact <strong>+${w.impact}</strong>${wtPills}</span></div>`;
+      }).join("");
+  const descHTML    = unit.description ? `<div style="font-size:10px;color:${pal.mutedText};font-style:italic;line-height:1.4;padding:3px 0 4px">${esc(unit.description)}</div>` : "";
+  const unitSizeStr = opts.tag ? "" : (viewType === "unit" ? ` <span style="font-size:10px;color:${pal.mutedText};font-weight:normal">${pts.unitSize} stand${pts.unitSize>1?"s":""}</span>` : "");
+  const tagHTML = opts.tag ? `<span style="display:inline-block;padding:1px 6px;border-radius:8px;font-size:8px;font-weight:bold;letter-spacing:.5px;text-transform:uppercase;background:${gray?"#e0e0e0":"#e3f2fd"};color:${gray?"#333":"#1565c0"};border:1px solid ${gray?"#bbb":"#90caf9"}">${esc(opts.tag)}</span>` : "";
+  return `<div style="background:${pal.cardBg};border:1.5px solid ${pal.cardBorder};border-radius:8px;padding:10px;break-inside:avoid;page-break-inside:avoid">
+    <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:6px">
+      <div style="flex:1;min-width:0">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:.4px;color:${pal.pageText};line-height:1.15">${esc(unit.name)}${unitSizeStr}</div>
+        <div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:3px">${_pClassBadge(unit.class,gray)}${_pFacPill(unit.faction,pal,gray)}${tagHTML}${tfBadgeHTML||""}</div>
+        ${descHTML}
+      </div>
+      <div style="background:${pal.ptsBoxBg};color:${pal.ptsBoxText};border-radius:6px;padding:4px 7px;text-align:center;flex-shrink:0;min-width:36px">
+        <div style="font-size:13px;font-weight:bold;line-height:1.1">${pVal}</div>
+        <div style="font-size:8px;text-transform:uppercase;letter-spacing:.04em;opacity:.75">${pLabel}</div>
+      </div>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;background:${pal.statBg};border:1px solid ${pal.statBorder};border-radius:6px;padding:5px 6px;margin-bottom:6px;gap:2px">
+      ${[
+        ["Spd", `${unit.speed}"${minSpd!==null?` <small style="font-size:9px;color:${pal.mutedText}">min ${minSpd}"</small>`:"" }`],
+        ["Mob", unit.mobility],
+        ["Aim", `${unit.aim}+`],
+        ["Assault", `+${unit.assault}`],
+        ["Save", `${pts.saveDice}D6/${unit.saveNumber}+`],
+        ["Morale", `${unit.morale}+`],
+      ].map(([label,val])=>`<div style="text-align:center;flex:1;min-width:34px;padding:1px 2px"><div style="font-size:7.5px;text-transform:uppercase;color:${pal.mutedText};letter-spacing:.05em;font-weight:700">${label}</div><div style="font-size:12px;font-weight:bold;color:${pal.pageText};line-height:1.15">${val}</div></div>`).join("")}
+    </div>
+    <div style="margin-bottom:5px">
+      <div style="font-size:8px;text-transform:uppercase;letter-spacing:.05em;color:${pal.mutedText};font-weight:700;margin-bottom:3px">Stand Traits</div>
+      <div style="display:flex;flex-wrap:wrap;gap:2px">${traitsHTML}</div>
+    </div>
+    <div>
+      <div style="font-size:8px;text-transform:uppercase;letter-spacing:.05em;color:${pal.mutedText};font-weight:700;margin-bottom:2px">Weapons</div>
+      ${weaponsHTML}
+    </div>
+  </div>`;
+}
 
-  function printUnitCard(unit, viewType, tfBadgeHTML, opts={}) {
-    const pts    = calcPoints(unit);
-    const pKey   = VIEW_PTS_KEY[viewType] || "unitPts";
-    const pVal   = opts.ptsVal != null ? opts.ptsVal : (pts[pKey] != null ? pts[pKey] : "—");
-    const pLabel = opts.ptsLabel || VIEW_LABELS[viewType] || "Unit";
-    const minSpd = unit.mobility === "grav" ? Math.ceil(unit.speed/2) : unit.mobility === "air" ? Math.ceil(unit.speed*3/4) : null;
-    const traitsHTML  = printTraitPills(unit.standTraits||[], allStandTraits());
+function _pMechPair(carrier, viewType, tu, n, badgeHTML, pal, gray) {
+  const connBg   = gray ? "#e8e8e8" : "#e8f5e9";
+  const connFg   = gray ? "#555"    : "#2e7d32";
+  const connBord = gray ? "#ccc"    : "#a5d6a7";
+  function halfContent(unit, vt, extra) {
+    extra = extra || {};
+    const pts = calcPoints(unit);
+    const pKey = VIEW_PTS_KEY[vt] || "unitPts";
+    const pVal = extra.ptsVal != null ? extra.ptsVal : (pts[pKey] != null ? pts[pKey] : "—");
+    const pLabel = extra.ptsLabel || VIEW_LABELS[vt] || "Unit";
+    const minSpd = unit.mobility === "grav" ? Math.ceil(unit.speed/2)
+                 : unit.mobility === "air"  ? Math.ceil(unit.speed*3/4) : null;
+    const traitsHTML = _pTraitPills(unit.standTraits||[], allStandTraits(), pal, gray);
     const weaponsHTML = (unit.weapons||[]).length === 0
       ? `<div style="padding:4px 8px;font-size:10px;color:${pal.mutedText};font-style:italic;background:${pal.wepBg};border-radius:4px;margin-top:3px">No ranged weapons — assault only</div>`
       : unit.weapons.map(w => {
-          const wtPills = (w.traits||[]).length ? " | " + printTraitPills(w.traits, allWeaponTraits()) : "";
-          const wName   = w.name ? `<strong>${esc(w.name)}</strong> ` : "";
+          const wtPills = (w.traits||[]).length ? " | " + _pTraitPills(w.traits, allWeaponTraits(), pal, gray) : "";
+          const wName = w.name ? `<strong>${esc(w.name)}</strong> ` : "";
           return `<div style="padding:4px 8px;font-size:10px;background:${pal.wepBg};border:1px solid ${pal.wepBorder};border-radius:4px;margin-top:3px;line-height:1.5"><span style="color:${pal.pageText}">${wName}<span style="color:${pal.mutedText};font-weight:normal">${w.mode.toUpperCase()}/${w.type.toUpperCase()}</span> | Rng <strong>${rangeLabel(w.range)}</strong> | Shots <strong>${w.shots}</strong> | Impact <strong>+${w.impact}</strong>${wtPills}</span></div>`;
         }).join("");
-    const descHTML    = unit.description ? `<div style="font-size:10px;color:${pal.mutedText};font-style:italic;line-height:1.4;padding:3px 0 4px">${esc(unit.description)}</div>` : "";
-    const unitSizeStr = opts.tag ? "" : (viewType === "unit" ? ` <span style="font-size:10px;color:${pal.mutedText};font-weight:normal">${pts.unitSize} stand${pts.unitSize>1?"s":""}</span>` : "");
-    const tagHTML = opts.tag ? `<span style="display:inline-block;padding:1px 6px;border-radius:8px;font-size:8px;font-weight:bold;letter-spacing:.5px;text-transform:uppercase;background:${gray?"#e0e0e0":"#e3f2fd"};color:${gray?"#333":"#1565c0"};border:1px solid ${gray?"#bbb":"#90caf9"}">${esc(opts.tag)}</span>` : "";
-    return `<div style="background:${pal.cardBg};border:1.5px solid ${pal.cardBorder};border-radius:8px;padding:10px;break-inside:avoid;page-break-inside:avoid">
+    const descHTML = unit.description ? `<div style="font-size:10px;color:${pal.mutedText};font-style:italic;line-height:1.4;padding:3px 0 4px">${esc(unit.description)}</div>` : "";
+    const tagHTML = extra.tag ? `<span style="display:inline-block;padding:1px 6px;border-radius:8px;font-size:8px;font-weight:bold;letter-spacing:.5px;text-transform:uppercase;background:${connBg};color:${connFg};border:1px solid ${connBord}">${esc(extra.tag)}</span>` : "";
+    const countHTML = extra.countBadge != null
+      ? `<div style="margin-top:5px;font-size:14px;font-weight:bold;color:${connFg}">&times;${extra.countBadge}<span style="font-size:9px;font-weight:normal;color:${pal.mutedText}"> stands</span></div>`
+      : "";
+    const unitSizeStr = extra.countBadge == null && vt === "unit"
+      ? ` <span style="font-size:10px;color:${pal.mutedText};font-weight:normal">${pts.unitSize} stand${pts.unitSize>1?"s":""}</span>`
+      : "";
+    return `<div style="flex:1;min-width:0;padding:10px">
       <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:6px">
         <div style="flex:1;min-width:0">
           <div style="font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:.4px;color:${pal.pageText};line-height:1.15">${esc(unit.name)}${unitSizeStr}</div>
-          <div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:3px">${printClassBadge(unit.class)}${printFacPill(unit.faction)}${tagHTML}${tfBadgeHTML||""}</div>
-          ${descHTML}
+          <div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:3px">${_pClassBadge(unit.class,gray)}${_pFacPill(unit.faction,pal,gray)}${tagHTML}${extra.badge||""}</div>
+          ${descHTML}${countHTML}
         </div>
         <div style="background:${pal.ptsBoxBg};color:${pal.ptsBoxText};border-radius:6px;padding:4px 7px;text-align:center;flex-shrink:0;min-width:36px">
           <div style="font-size:13px;font-weight:bold;line-height:1.1">${pVal}</div>
@@ -7714,14 +7778,7 @@ function printArmy(armyId, paperSize, inkMode) {
         </div>
       </div>
       <div style="display:flex;flex-wrap:wrap;background:${pal.statBg};border:1px solid ${pal.statBorder};border-radius:6px;padding:5px 6px;margin-bottom:6px;gap:2px">
-        ${[
-          ["Spd", `${unit.speed}"${minSpd!==null?` <small style="font-size:9px;color:${pal.mutedText}">min ${minSpd}"</small>`:"" }`],
-          ["Mob", unit.mobility],
-          ["Aim", `${unit.aim}+`],
-          ["Assault", `+${unit.assault}`],
-          ["Save", `${pts.saveDice}D6/${unit.saveNumber}+`],
-          ["Morale", `${unit.morale}+`],
-        ].map(([label,val])=>`<div style="text-align:center;flex:1;min-width:34px;padding:1px 2px"><div style="font-size:7.5px;text-transform:uppercase;color:${pal.mutedText};letter-spacing:.05em;font-weight:700">${label}</div><div style="font-size:12px;font-weight:bold;color:${pal.pageText};line-height:1.15">${val}</div></div>`).join("")}
+        ${[["Spd",`${unit.speed}"${minSpd!==null?` <small style="font-size:9px;color:${pal.mutedText}">min ${minSpd}"</small>`:""}`],["Mob",unit.mobility],["Aim",`${unit.aim}+`],["Assault",`+${unit.assault}`],["Save",`${pts.saveDice}D6/${unit.saveNumber}+`],["Morale",`${unit.morale}+`]].map(([l,v])=>`<div style="text-align:center;flex:1;min-width:34px;padding:1px 2px"><div style="font-size:7.5px;text-transform:uppercase;color:${pal.mutedText};letter-spacing:.05em;font-weight:700">${l}</div><div style="font-size:12px;font-weight:bold;color:${pal.pageText};line-height:1.15">${v}</div></div>`).join("")}
       </div>
       <div style="margin-bottom:5px">
         <div style="font-size:8px;text-transform:uppercase;letter-spacing:.05em;color:${pal.mutedText};font-weight:700;margin-bottom:3px">Stand Traits</div>
@@ -7733,215 +7790,51 @@ function printArmy(armyId, paperSize, inkMode) {
       </div>
     </div>`;
   }
-
-  function printMechPair(carrier, viewType, tu, n, badgeHTML) {
-    const connBg   = gray ? "#e8e8e8" : "#e8f5e9";
-    const connFg   = gray ? "#555"    : "#2e7d32";
-    const connBord = gray ? "#ccc"    : "#a5d6a7";
-    function halfContent(unit, vt, extra={}) {
-      const pts = calcPoints(unit);
-      const pKey = VIEW_PTS_KEY[vt] || "unitPts";
-      const pVal = extra.ptsVal != null ? extra.ptsVal : (pts[pKey] != null ? pts[pKey] : "—");
-      const pLabel = extra.ptsLabel || VIEW_LABELS[vt] || "Unit";
-      const minSpd = unit.mobility === "grav" ? Math.ceil(unit.speed/2)
-                   : unit.mobility === "air"  ? Math.ceil(unit.speed*3/4) : null;
-      const traitsHTML = printTraitPills(unit.standTraits||[], allStandTraits());
-      const weaponsHTML = (unit.weapons||[]).length === 0
-        ? `<div style="padding:4px 8px;font-size:10px;color:${pal.mutedText};font-style:italic;background:${pal.wepBg};border-radius:4px;margin-top:3px">No ranged weapons — assault only</div>`
-        : unit.weapons.map(w => {
-            const wtPills = (w.traits||[]).length ? " | " + printTraitPills(w.traits, allWeaponTraits()) : "";
-            const wName = w.name ? `<strong>${esc(w.name)}</strong> ` : "";
-            return `<div style="padding:4px 8px;font-size:10px;background:${pal.wepBg};border:1px solid ${pal.wepBorder};border-radius:4px;margin-top:3px;line-height:1.5"><span style="color:${pal.pageText}">${wName}<span style="color:${pal.mutedText};font-weight:normal">${w.mode.toUpperCase()}/${w.type.toUpperCase()}</span> | Rng <strong>${rangeLabel(w.range)}</strong> | Shots <strong>${w.shots}</strong> | Impact <strong>+${w.impact}</strong>${wtPills}</span></div>`;
-          }).join("");
-      const descHTML = unit.description ? `<div style="font-size:10px;color:${pal.mutedText};font-style:italic;line-height:1.4;padding:3px 0 4px">${esc(unit.description)}</div>` : "";
-      const tagHTML = extra.tag ? `<span style="display:inline-block;padding:1px 6px;border-radius:8px;font-size:8px;font-weight:bold;letter-spacing:.5px;text-transform:uppercase;background:${connBg};color:${connFg};border:1px solid ${connBord}">${esc(extra.tag)}</span>` : "";
-      const countHTML = extra.countBadge != null
-        ? `<div style="margin-top:5px;font-size:14px;font-weight:bold;color:${connFg}">&times;${extra.countBadge}<span style="font-size:9px;font-weight:normal;color:${pal.mutedText}"> stands</span></div>`
-        : "";
-      const unitSizeStr = extra.countBadge == null && vt === "unit"
-        ? ` <span style="font-size:10px;color:${pal.mutedText};font-weight:normal">${pts.unitSize} stand${pts.unitSize>1?"s":""}</span>`
-        : "";
-      return `<div style="flex:1;min-width:0;padding:10px">
-        <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:6px">
-          <div style="flex:1;min-width:0">
-            <div style="font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:.4px;color:${pal.pageText};line-height:1.15">${esc(unit.name)}${unitSizeStr}</div>
-            <div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:3px">${printClassBadge(unit.class)}${printFacPill(unit.faction)}${tagHTML}${extra.badge||""}</div>
-            ${descHTML}${countHTML}
-          </div>
-          <div style="background:${pal.ptsBoxBg};color:${pal.ptsBoxText};border-radius:6px;padding:4px 7px;text-align:center;flex-shrink:0;min-width:36px">
-            <div style="font-size:13px;font-weight:bold;line-height:1.1">${pVal}</div>
-            <div style="font-size:8px;text-transform:uppercase;letter-spacing:.04em;opacity:.75">${pLabel}</div>
-          </div>
-        </div>
-        <div style="display:flex;flex-wrap:wrap;background:${pal.statBg};border:1px solid ${pal.statBorder};border-radius:6px;padding:5px 6px;margin-bottom:6px;gap:2px">
-          ${[["Spd",`${unit.speed}"${minSpd!==null?` <small style="font-size:9px;color:${pal.mutedText}">min ${minSpd}"</small>`:""}`],["Mob",unit.mobility],["Aim",`${unit.aim}+`],["Assault",`+${unit.assault}`],["Save",`${pts.saveDice}D6/${unit.saveNumber}+`],["Morale",`${unit.morale}+`]].map(([l,v])=>`<div style="text-align:center;flex:1;min-width:34px;padding:1px 2px"><div style="font-size:7.5px;text-transform:uppercase;color:${pal.mutedText};letter-spacing:.05em;font-weight:700">${l}</div><div style="font-size:12px;font-weight:bold;color:${pal.pageText};line-height:1.15">${v}</div></div>`).join("")}
-        </div>
-        <div style="margin-bottom:5px">
-          <div style="font-size:8px;text-transform:uppercase;letter-spacing:.05em;color:${pal.mutedText};font-weight:700;margin-bottom:3px">Stand Traits</div>
-          <div style="display:flex;flex-wrap:wrap;gap:2px">${traitsHTML}</div>
-        </div>
-        <div>
-          <div style="font-size:8px;text-transform:uppercase;letter-spacing:.05em;color:${pal.mutedText};font-weight:700;margin-bottom:2px">Weapons</div>
-          ${weaponsHTML}
-        </div>
-      </div>`;
-    }
-    const tuPtsPerStand = calcPoints(tu).perStand;
-    return `<div class="mech-pair-print" style="display:flex;background:${pal.cardBg};border:1.5px solid ${pal.cardBorder};border-radius:8px;overflow:hidden;break-inside:avoid;page-break-inside:avoid">
-      ${halfContent(carrier, viewType, {badge: badgeHTML||""})}
-      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px 4px;background:${connBg};border-left:1px solid ${connBord};border-right:1px solid ${connBord};gap:4px;min-width:26px;flex-shrink:0">
-        <i class="fa-solid fa-truck" style="color:${connFg};font-size:12px"></i>
-        <span style="font-size:7px;font-weight:bold;text-transform:uppercase;letter-spacing:.5px;color:${connFg};writing-mode:vertical-rl;transform:rotate(180deg)">Mechanized</span>
-      </div>
-      ${halfContent(tu, "unit", {countBadge: n, tag: "Transport", ptsVal: tuPtsPerStand, ptsLabel: "/ Stand"})}
-    </div>`;
-  }
-
-  // ── Army overview page ────────────────────────────────────
-  const armySym    = army.symbol ? _bgSymLookup(army.symbol) : null;
-  const armySymEl  = armySym
-    ? symBadge(armySym, 72)
-    : `<div style="width:72px;height:72px;border-radius:14px;background:${pal.symBg};border:2px solid ${pal.symBorder};display:inline-flex;align-items:center;justify-content:center;color:${pal.symColor};font-size:28px;flex-shrink:0"><i class="fa-solid fa-chess-rook"></i></div>`;
-
-  const tfRows = tfs.length === 0
-    ? `<div style="color:${pal.mutedText};font-style:italic;font-size:12px">No task forces</div>`
-    : tfs.map(tf => {
-        const asset    = tf.tacAsset ? allAssets.find(a=>a.id===tf.tacAsset) : null;
-        const tfColor  = gray ? "#555" : (FACTION_COLORS[tf.faction]||"#555");
-        const useColor = u => {
-          if (gray) return "#555";
-          return {activation:"#9c27b0",deployment:"#2196f3",end:"#4caf50",reaction:"#f44336"}[u.toLowerCase()]||"#888";
-        };
-        const assetPills = asset ? (asset.use||[]).map(u=>`<span style="display:inline-block;padding:1px 6px;border-radius:8px;font-size:9px;font-weight:bold;text-transform:uppercase;letter-spacing:.4px;background:${useColor(u)}22;color:${useColor(u)};border:1px solid ${useColor(u)}55">${esc(u)}</span>`).join("") : "";
-        return `<div style="display:flex;align-items:flex-start;gap:8px;padding:8px 10px;background:${pal.tfRowBg};border:1px solid ${pal.cardBorder};border-radius:6px;margin-bottom:6px">
-          <div style="flex:1;min-width:0">
-            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-              <span style="font-weight:700;font-size:13px;color:${pal.pageText}">${esc(tf.name)}</span>
-              ${tf.faction ? printFacPill(tf.faction) : ""}
-              <span style="font-size:10px;color:${pal.mutedText}">${(tf.units||[]).reduce((s,u)=>s+u.quantity,0)} units</span>
-            </div>
-            ${asset ? `<div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-top:4px"><i class="fa-solid fa-chess" style="color:${pal.assetColor};font-size:10px"></i><span style="font-size:11px;font-weight:bold;color:${pal.assetColor}">${esc(asset.name)}</span>${assetPills}</div>` : ""}
-          </div>
-        </div>`;
-      }).join("");
-
-  const bgSummaryRows = bgList.map(bg => {
-    const sd   = bgDesignation(army, bg);
-    const bgPt = bgPoints(bg);
-    const bgSz = bgUnitCount(bg);
-    return `<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:${pal.tfRowBg};border:1px solid ${pal.cardBorder};border-radius:6px;margin-bottom:4px">
-      ${symBadge(sd, 28)}
-      <span style="font-weight:700;font-size:13px;color:${pal.pageText}">${esc(bg.name)}</span>
-      <span style="font-size:10px;color:${pal.mutedText};margin-left:auto">${bgSz} unit${bgSz!==1?"s":""} · ${bgPt} pts</span>
-    </div>`;
-  }).join("");
-
-  const overviewPage = `<div class="print-page">
-    <div style="background:${pal.headBg};color:${pal.headText};border-radius:10px;padding:18px 22px;margin-bottom:18px;display:flex;align-items:center;gap:18px">
-      ${armySymEl}
-      <div style="flex:1;min-width:0">
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:2px;line-height:1;margin-bottom:5px">${esc(army.name)}</div>
-        <div style="font-size:10px;letter-spacing:.8px;opacity:.65;text-transform:uppercase;margin-bottom:6px">${fp?"Free Pick Army":"Task Force Army"}</div>
-        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-          <span style="font-size:13px;font-weight:600">${deployedPts} pts deployed</span>
-          ${army.faction ? printFacPill(army.faction) : ""}
-          ${fp?`<span style="display:inline-block;padding:2px 8px;border-radius:8px;font-size:10px;font-weight:bold;background:#4caf5022;color:#4caf50;border:1px solid #4caf5055;letter-spacing:.5px">FREE PICK</span>`:""}
-        </div>
-      </div>
+  const tuPtsPerStand = calcPoints(tu).perStand;
+  return `<div class="mech-pair-print" style="display:flex;background:${pal.cardBg};border:1.5px solid ${pal.cardBorder};border-radius:8px;overflow:hidden;break-inside:avoid;page-break-inside:avoid">
+    ${halfContent(carrier, viewType, {badge: badgeHTML||""})}
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px 4px;background:${connBg};border-left:1px solid ${connBord};border-right:1px solid ${connBord};gap:4px;min-width:26px;flex-shrink:0">
+      <i class="fa-solid fa-truck" style="color:${connFg};font-size:12px"></i>
+      <span style="font-size:7px;font-weight:bold;text-transform:uppercase;letter-spacing:.5px;color:${connFg};writing-mode:vertical-rl;transform:rotate(180deg)">Mechanized</span>
     </div>
-    ${army.notes?`<div style="padding:10px 14px;background:${pal.tfRowBg};border:1px solid ${pal.cardBorder};border-radius:6px;margin-bottom:16px;font-size:12px;color:${pal.mutedText};line-height:1.6;font-style:italic">${esc(army.notes).replace(/\n/g,"<br>")}</div>`:""}
-    ${!fp?`<div style="margin-bottom:16px">
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:1px;color:${pal.sectionHead};border-bottom:2px solid ${pal.accentLine};padding-bottom:4px;margin-bottom:10px">Task Forces</div>
-      ${tfRows}
-    </div>`:""}
-    <div>
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:1px;color:${pal.sectionHead};border-bottom:2px solid ${pal.accentLine};padding-bottom:4px;margin-bottom:10px">Battle Groups</div>
-      ${bgSummaryRows}
-    </div>
+    ${halfContent(tu, "unit", {countBadge: n, tag: "Transport", ptsVal: tuPtsPerStand, ptsLabel: "/ Stand"})}
   </div>`;
+}
 
-  // ── Battlegroup pages ─────────────────────────────────────
-  const bgPages = bgList.map(bg => {
-    const sd      = bgDesignation(army, bg);
-    const bgPt    = bgPoints(bg);
-    const bgSz    = bgUnitCount(bg);
-    const symColor = gray ? "#888" : (sd?.color || "#4a7adc");
-    const hdrBg   = gray ? "#e0e0e0" : (sd?.color ? sd.color + "0e" : "#edf2fb");
-    const hdrBord = gray ? "#bbb"    : (sd?.color ? sd.color + "55" : "#c0cce8");
-
-    const withTransport = (carrier, viewType, tu, badgeHTML) => {
-      if (!tu) return [{html: printUnitCard(carrier, viewType, badgeHTML||""), full: false}];
-      return [{html: printMechPair(carrier, viewType, tu, mechanizedCount(carrier, tu), badgeHTML||""), full: true}];
-    };
-    const unitCards = (bg.entries||[]).flatMap(e => {
-      if (fp) {
-        const u = unitById(e.unitId);
-        if (!u) return [];
-        const qty = e.qty || 1;
-        const tu = ((e.unitType||"unit")==="unit" && e.transport) ? unitById(e.transport) : null;
-        return Array.from({length:qty}).flatMap(() => withTransport(u, e.unitType||"unit", tu, ""));
-      } else {
-        const tf   = state.taskForces.find(t=>t.id===e.tfId);
-        const slot = tf && (tf.units||[]).find(s=>s.id===e.slotId);
-        const u    = slot && unitById(slot.unitId);
-        if (!u) return [];
-        const qty     = e.qty || slot.quantity || 1;
-        const tfColor = gray ? "#555" : (FACTION_COLORS[tf.faction]||"#555");
-        const asset   = tf.tacAsset ? allAssets.find(a=>a.id===tf.tacAsset) : null;
-        const tfBadge = asset
-          ? `<span style="display:inline-flex;align-items:center;gap:3px;flex-wrap:wrap"><span style="display:inline-block;padding:1px 6px;border-radius:8px;font-size:9px;font-weight:bold;background:${tfColor}18;color:${tfColor};border:1px solid ${tfColor}44">${esc(tf.name)}</span><span style="display:inline-block;padding:1px 6px;border-radius:8px;font-size:9px;font-weight:bold;background:${pal.assetColor}18;color:${pal.assetColor};border:1px solid ${pal.assetColor}44"><i class="fa-solid fa-chess" style="font-size:7px;margin-right:2px"></i>${esc(asset.name)}</span></span>`
-          : `<span style="display:inline-block;padding:1px 6px;border-radius:8px;font-size:9px;font-weight:bold;background:${tfColor}18;color:${tfColor};border:1px solid ${tfColor}44">${esc(tf.name)}</span>`;
-        const tu = ((slot.unitType||"unit")==="unit" && slot.transport) ? unitById(slot.transport) : null;
-        return Array.from({length:qty}).flatMap(() => withTransport(u, slot.unitType||"unit", tu, tfBadge));
-      }
-    });
-
-    // Chunk cards into rows so each row is a self-contained block that the
-    // browser can keep together (break-inside:avoid) and page-break BETWEEN.
-    // Block-flow fragmentation works in every engine — unlike flex/grid
-    // containers, which WebKit refuses to split across pages. Full-width
-    // mechanized pairs get their own row; normal cards pair up two per row.
-    const rows = [];
-    let pending = null;
-    for (const c of unitCards) {
-      if (c.full) {
-        if (pending) { rows.push([pending]); pending = null; }
-        rows.push([c]);
-      } else if (pending) {
-        rows.push([pending, c]); pending = null;
-      } else {
-        pending = c;
-      }
+function _pCardGrid(unitCards, pal) {
+  // Chunk cards into rows: full-width mech pairs get their own row, normal cards pair up two per row.
+  // Block-flow fragmentation works in every engine — unlike flex/grid containers, which WebKit refuses to split across pages.
+  const rows = [];
+  let pending = null;
+  for (const c of unitCards) {
+    if (c.full) {
+      if (pending) { rows.push([pending]); pending = null; }
+      rows.push([c]);
+    } else if (pending) {
+      rows.push([pending, c]); pending = null;
+    } else {
+      pending = c;
     }
-    if (pending) rows.push([pending]);
-    const grid = unitCards.length
-      ? rows.map(r => r[0].full
-          ? `<div class="card-row">${r[0].html}</div>`
-          : `<div class="card-row"><div class="card-cell">${r[0].html}</div><div class="card-cell">${r[1]?r[1].html:""}</div></div>`
-        ).join("")
-      : `<div style="padding:16px;text-align:center;color:${pal.mutedText};font-style:italic">No units assigned to this battle group</div>`;
+  }
+  if (pending) rows.push([pending]);
+  return unitCards.length
+    ? rows.map(r => r[0].full
+        ? `<div class="card-row">${r[0].html}</div>`
+        : `<div class="card-row"><div class="card-cell">${r[0].html}</div><div class="card-cell">${r[1]?r[1].html:""}</div></div>`
+      ).join("")
+    : `<div style="padding:16px;text-align:center;color:${pal.mutedText};font-style:italic">No units</div>`;
+}
 
-    return `<div class="print-page page-break">
-      <div class="bg-header" style="display:flex;align-items:stretch;background:${hdrBg};border:2px solid ${hdrBord};border-radius:10px;overflow:hidden;margin-bottom:16px">
-        <div style="flex:1;padding:14px 18px">
-          <div style="font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:1.5px;color:${pal.pageText};line-height:1.1;margin-bottom:5px">${esc(bg.name)}</div>
-          ${bg.notes?`<div style="font-size:12px;color:${pal.mutedText};line-height:1.5;font-style:italic;margin-bottom:6px">${esc(bg.notes).replace(/\n/g,"<br>")}</div>`:""}
-          <div style="font-size:11px;color:${pal.mutedText}">${bgSz} unit${bgSz!==1?"s":""} · ${bgPt} pts</div>
-        </div>
-        <div style="padding:14px 20px;display:flex;align-items:center;justify-content:center;border-left:1px solid ${hdrBord};background:${gray?"#d0d0d0":sd?.color?sd.color+"22":"#dde6f8"}">
-          ${symBadge(sd, 72)}
-        </div>
-      </div>
-      ${grid}
-    </div>`;
-  }).join("");
-
-  // ── Assemble & open ───────────────────────────────────────
-  const html = `<!DOCTYPE html>
+function _printShell(title, bodyContent, paperSize, pal) {
+  const pageSize   = paperSize === "a4" ? "210mm 297mm" : "8.5in 11in";
+  const pageMargin = "0.5in";
+  const PAGE_H_PX  = paperSize === "a4" ? 1123 : 1056;
+  const PAGE_W_PX  = paperSize === "a4" ? 794  : 816;
+  return `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>${esc(army.name)} — Print</title>
+<title>${esc(title)} — Print</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -7961,14 +7854,13 @@ body{font-family:'Barlow',sans-serif;background:#fff;color:${pal.pageText};-webk
 </style>
 </head>
 <body>
-${overviewPage}
-${bgPages}
+${bodyContent}
 <script>
 (function(){
   var MARGIN_PX = 48;
-  var PAGE_H_PX = ${paperSize==="a4"?1123:1056};
-  var PAGE_W_PX = ${paperSize==="a4"?794:816};
-  var CONTENT_H = PAGE_H_PX - 2*MARGIN_PX - 10; /* 10px safety buffer */
+  var PAGE_H_PX = ${PAGE_H_PX};
+  var PAGE_W_PX = ${PAGE_W_PX};
+  var CONTENT_H = PAGE_H_PX - 2*MARGIN_PX - 10;
 
   function splitOverflowingPages(){
     var pages = Array.from(document.querySelectorAll('.print-page'));
@@ -8018,9 +7910,294 @@ ${bgPages}
 <\/script>
 </body>
 </html>`;
+}
+
+// ── Army print ────────────────────────────────────────────
+function _buildArmyPrintContent(army, pal, gray) {
+  _ensureBGs(army);
+  const fp          = isFreePick(army);
+  const bgCount     = army.bgCount || 3;
+  const bgList      = army.battleGroups.slice(0, bgCount);
+  const tfs         = (army.taskForceIds || []).map(id => state.taskForces.find(t => t.id === id)).filter(Boolean);
+  const allAssets   = allTacticalAssets();
+  const deployedPts = armyDeployedPoints(army);
+
+  const armySym    = army.symbol ? _bgSymLookup(army.symbol) : null;
+  const armySymEl  = armySym
+    ? _pSymBadge(armySym, 72, pal, gray)
+    : `<div style="width:72px;height:72px;border-radius:14px;background:${pal.symBg};border:2px solid ${pal.symBorder};display:inline-flex;align-items:center;justify-content:center;color:${pal.symColor};font-size:28px;flex-shrink:0"><i class="fa-solid fa-chess-rook"></i></div>`;
+
+  const tfRows = tfs.length === 0
+    ? `<div style="color:${pal.mutedText};font-style:italic;font-size:12px">No task forces</div>`
+    : tfs.map(tf => {
+        const asset    = tf.tacAsset ? allAssets.find(a=>a.id===tf.tacAsset) : null;
+        const tfColor  = gray ? "#555" : (FACTION_COLORS[tf.faction]||"#555");
+        const useColor = u => {
+          if (gray) return "#555";
+          return {activation:"#9c27b0",deployment:"#2196f3",end:"#4caf50",reaction:"#f44336"}[u.toLowerCase()]||"#888";
+        };
+        const assetPills = asset ? (asset.use||[]).map(u=>`<span style="display:inline-block;padding:1px 6px;border-radius:8px;font-size:9px;font-weight:bold;text-transform:uppercase;letter-spacing:.4px;background:${useColor(u)}22;color:${useColor(u)};border:1px solid ${useColor(u)}55">${esc(u)}</span>`).join("") : "";
+        return `<div style="display:flex;align-items:flex-start;gap:8px;padding:8px 10px;background:${pal.tfRowBg};border:1px solid ${pal.cardBorder};border-radius:6px;margin-bottom:6px">
+          <div style="flex:1;min-width:0">
+            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+              <span style="font-weight:700;font-size:13px;color:${pal.pageText}">${esc(tf.name)}</span>
+              ${tf.faction ? _pFacPill(tf.faction, pal, gray) : ""}
+              <span style="font-size:10px;color:${pal.mutedText}">${(tf.units||[]).reduce((s,u)=>s+u.quantity,0)} units</span>
+            </div>
+            ${asset ? `<div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-top:4px"><i class="fa-solid fa-chess" style="color:${pal.assetColor};font-size:10px"></i><span style="font-size:11px;font-weight:bold;color:${pal.assetColor}">${esc(asset.name)}</span>${assetPills}</div>` : ""}
+          </div>
+        </div>`;
+      }).join("");
+
+  const bgSummaryRows = bgList.map(bg => {
+    const sd   = bgDesignation(army, bg);
+    const bgPt = bgPoints(bg);
+    const bgSz = bgUnitCount(bg);
+    return `<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:${pal.tfRowBg};border:1px solid ${pal.cardBorder};border-radius:6px;margin-bottom:4px">
+      ${_pSymBadge(sd, 28, pal, gray)}
+      <span style="font-weight:700;font-size:13px;color:${pal.pageText}">${esc(bg.name)}</span>
+      <span style="font-size:10px;color:${pal.mutedText};margin-left:auto">${bgSz} unit${bgSz!==1?"s":""} · ${bgPt} pts</span>
+    </div>`;
+  }).join("");
+
+  const overviewPage = `<div class="print-page">
+    <div style="background:${pal.headBg};color:${pal.headText};border-radius:10px;padding:18px 22px;margin-bottom:18px;display:flex;align-items:center;gap:18px">
+      ${armySymEl}
+      <div style="flex:1;min-width:0">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:2px;line-height:1;margin-bottom:5px">${esc(army.name)}</div>
+        <div style="font-size:10px;letter-spacing:.8px;opacity:.65;text-transform:uppercase;margin-bottom:6px">${fp?"Free Pick Army":"Task Force Army"}</div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <span style="font-size:13px;font-weight:600">${deployedPts} pts deployed</span>
+          ${army.faction ? _pFacPill(army.faction, pal, gray) : ""}
+          ${fp?`<span style="display:inline-block;padding:2px 8px;border-radius:8px;font-size:10px;font-weight:bold;background:#4caf5022;color:#4caf50;border:1px solid #4caf5055;letter-spacing:.5px">FREE PICK</span>`:""}
+        </div>
+      </div>
+    </div>
+    ${army.notes?`<div style="padding:10px 14px;background:${pal.tfRowBg};border:1px solid ${pal.cardBorder};border-radius:6px;margin-bottom:16px;font-size:12px;color:${pal.mutedText};line-height:1.6;font-style:italic">${esc(army.notes).replace(/\n/g,"<br>")}</div>`:""}
+    ${!fp?`<div style="margin-bottom:16px">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:1px;color:${pal.sectionHead};border-bottom:2px solid ${pal.accentLine};padding-bottom:4px;margin-bottom:10px">Task Forces</div>
+      ${tfRows}
+    </div>`:""}
+    <div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:1px;color:${pal.sectionHead};border-bottom:2px solid ${pal.accentLine};padding-bottom:4px;margin-bottom:10px">Battle Groups</div>
+      ${bgSummaryRows}
+    </div>
+  </div>`;
+
+  const bgPages = bgList.map(bg => {
+    const sd      = bgDesignation(army, bg);
+    const bgPt    = bgPoints(bg);
+    const bgSz    = bgUnitCount(bg);
+    const hdrBg   = gray ? "#e0e0e0" : (sd?.color ? sd.color + "0e" : "#edf2fb");
+    const hdrBord = gray ? "#bbb"    : (sd?.color ? sd.color + "55" : "#c0cce8");
+
+    const withTransport = (carrier, viewType, tu, badgeHTML) => {
+      if (!tu) return [{html: _pUnitCard(carrier, viewType, badgeHTML||"", {}, pal, gray), full: false}];
+      return [{html: _pMechPair(carrier, viewType, tu, mechanizedCount(carrier, tu), badgeHTML||"", pal, gray), full: true}];
+    };
+    const unitCards = (bg.entries||[]).flatMap(e => {
+      if (fp) {
+        const u = unitById(e.unitId);
+        if (!u) return [];
+        const qty = e.qty || 1;
+        const tu = ((e.unitType||"unit")==="unit" && e.transport) ? unitById(e.transport) : null;
+        return Array.from({length:qty}).flatMap(() => withTransport(u, e.unitType||"unit", tu, ""));
+      } else {
+        const tf   = state.taskForces.find(t=>t.id===e.tfId);
+        const slot = tf && (tf.units||[]).find(s=>s.id===e.slotId);
+        const u    = slot && unitById(slot.unitId);
+        if (!u) return [];
+        const qty     = e.qty || slot.quantity || 1;
+        const tfColor = gray ? "#555" : (FACTION_COLORS[tf.faction]||"#555");
+        const asset   = tf.tacAsset ? allAssets.find(a=>a.id===tf.tacAsset) : null;
+        const tfBadge = asset
+          ? `<span style="display:inline-flex;align-items:center;gap:3px;flex-wrap:wrap"><span style="display:inline-block;padding:1px 6px;border-radius:8px;font-size:9px;font-weight:bold;background:${tfColor}18;color:${tfColor};border:1px solid ${tfColor}44">${esc(tf.name)}</span><span style="display:inline-block;padding:1px 6px;border-radius:8px;font-size:9px;font-weight:bold;background:${pal.assetColor}18;color:${pal.assetColor};border:1px solid ${pal.assetColor}44"><i class="fa-solid fa-chess" style="font-size:7px;margin-right:2px"></i>${esc(asset.name)}</span></span>`
+          : `<span style="display:inline-block;padding:1px 6px;border-radius:8px;font-size:9px;font-weight:bold;background:${tfColor}18;color:${tfColor};border:1px solid ${tfColor}44">${esc(tf.name)}</span>`;
+        const tu = ((slot.unitType||"unit")==="unit" && slot.transport) ? unitById(slot.transport) : null;
+        return Array.from({length:qty}).flatMap(() => withTransport(u, slot.unitType||"unit", tu, tfBadge));
+      }
+    });
+
+    return `<div class="print-page page-break">
+      <div class="bg-header" style="display:flex;align-items:stretch;background:${hdrBg};border:2px solid ${hdrBord};border-radius:10px;overflow:hidden;margin-bottom:16px">
+        <div style="flex:1;padding:14px 18px">
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:1.5px;color:${pal.pageText};line-height:1.1;margin-bottom:5px">${esc(bg.name)}</div>
+          ${bg.notes?`<div style="font-size:12px;color:${pal.mutedText};line-height:1.5;font-style:italic;margin-bottom:6px">${esc(bg.notes).replace(/\n/g,"<br>")}</div>`:""}
+          <div style="font-size:11px;color:${pal.mutedText}">${bgSz} unit${bgSz!==1?"s":""} · ${bgPt} pts</div>
+        </div>
+        <div style="padding:14px 20px;display:flex;align-items:center;justify-content:center;border-left:1px solid ${hdrBord};background:${gray?"#d0d0d0":sd?.color?sd.color+"22":"#dde6f8"}">
+          ${_pSymBadge(sd, 72, pal, gray)}
+        </div>
+      </div>
+      ${_pCardGrid(unitCards, pal)}
+    </div>`;
+  }).join("");
+
+  return overviewPage + bgPages;
+}
+
+function printArmy(armyId, paperSize, inkMode) {
+  const army = state.armies.find(a => a.id === armyId);
+  if (!army) return;
+  const { pal, gray } = _printPalette(inkMode);
+  const content = _buildArmyPrintContent(army, pal, gray);
+  const w = window.open("", "_blank");
+  if (w) { w.document.write(_printShell(army.name, content, paperSize, pal)); w.document.close(); }
+}
+
+// ── Task Force print ──────────────────────────────────────
+function printTF(tfId, paperSize, inkMode) {
+  const tf = state.taskForces.find(t => t.id === tfId);
+  if (!tf) return;
+  const { pal, gray } = _printPalette(inkMode);
+  const allAssets = allTacticalAssets();
+  const asset     = tf.tacAsset ? allAssets.find(a=>a.id===tf.tacAsset) : null;
+  const pts       = tfPoints(tf);
+  const typeLabel = tf.tfType ? _tfTypeLabel(tf.tfType) : "";
+  const ROLE_COLORS = {core:"#4caf50",specialist:"#64b5f6",command:"#ffb74d",support:"#ba68c8"};
+
+  const useColor = u => {
+    if (gray) return "#555";
+    return {activation:"#9c27b0",deployment:"#2196f3",end:"#4caf50",reaction:"#f44336"}[u.toLowerCase()]||"#888";
+  };
+  const assetBlock = asset ? `<div style="padding:10px 14px;background:${pal.tfRowBg};border:1px solid ${pal.cardBorder};border-radius:6px;margin-bottom:14px">
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+      <i class="fa-solid fa-chess" style="color:${pal.assetColor}"></i>
+      <span style="font-weight:700;font-size:13px;color:${pal.assetColor}">${esc(asset.name)}</span>
+      ${(asset.use||[]).map(u=>`<span style="display:inline-block;padding:1px 6px;border-radius:8px;font-size:9px;font-weight:bold;text-transform:uppercase;letter-spacing:.4px;background:${useColor(u)}22;color:${useColor(u)};border:1px solid ${useColor(u)}55">${esc(u)}</span>`).join("")}
+    </div>
+    ${asset.description?`<div style="font-size:11px;color:${pal.mutedText};margin-top:5px;line-height:1.5">${esc(asset.description)}</div>`:""}
+  </div>` : "";
+
+  const roleGroups = {};
+  for (const slot of (tf.units||[])) {
+    const r = slot.role || "core";
+    if (!roleGroups[r]) roleGroups[r] = [];
+    roleGroups[r].push(slot);
+  }
+  const rosterRows = Object.entries(roleGroups).map(([role, slots]) => {
+    const rc = gray ? "#555" : (ROLE_COLORS[role]||"#555");
+    return slots.map(slot => {
+      const u = unitById(slot.unitId);
+      const name = u ? esc(u.name) : `<em style="color:${pal.mutedText}">Unknown</em>`;
+      return `<tr style="border-bottom:1px solid ${pal.cardBorder}">
+        <td style="padding:5px 8px;font-size:11px"><span style="display:inline-block;padding:1px 7px;border-radius:8px;font-size:9px;font-weight:bold;text-transform:uppercase;background:${rc}18;color:${rc};border:1px solid ${rc}44">${role}</span></td>
+        <td style="padding:5px 8px;font-size:12px;font-weight:600;color:${pal.pageText}">${name}</td>
+        <td style="padding:5px 8px;font-size:11px;color:${pal.mutedText};text-align:center">${slot.quantity}</td>
+        <td style="padding:5px 8px;font-size:11px;color:${pal.mutedText};text-align:right">${slot.unitType||"unit"}</td>
+      </tr>`;
+    }).join("");
+  }).join("");
+
+  const overviewPage = `<div class="print-page">
+    <div style="background:${pal.headBg};color:${pal.headText};border-radius:10px;padding:18px 22px;margin-bottom:18px;display:flex;align-items:center;gap:18px">
+      <div style="flex:1;min-width:0">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:2px;line-height:1;margin-bottom:5px">${esc(tf.name)}</div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          ${tf.faction ? _pFacPill(tf.faction, pal, gray) : ""}
+          ${typeLabel ? `<span style="display:inline-block;padding:2px 8px;border-radius:8px;font-size:10px;font-weight:bold;background:${gray?"#e0e0e0":"#7986cb22"};color:${gray?"#333":"#7986cb"};border:1px solid ${gray?"#bbb":"#7986cb55"}">${esc(typeLabel)}</span>` : ""}
+        </div>
+      </div>
+      <div style="background:${pal.ptsBoxBg};color:${pal.ptsBoxText};border-radius:8px;padding:8px 14px;text-align:center;flex-shrink:0">
+        <div style="font-size:22px;font-weight:bold;line-height:1.1">${pts}</div>
+        <div style="font-size:9px;text-transform:uppercase;letter-spacing:.05em;opacity:.75">Total Pts</div>
+      </div>
+    </div>
+    ${tf.notes?`<div style="padding:10px 14px;background:${pal.tfRowBg};border:1px solid ${pal.cardBorder};border-radius:6px;margin-bottom:14px;font-size:12px;color:${pal.mutedText};line-height:1.6;font-style:italic">${esc(tf.notes).replace(/\n/g,"<br>")}</div>`:""}
+    ${assetBlock}
+    <div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:1px;color:${pal.sectionHead};border-bottom:2px solid ${pal.accentLine};padding-bottom:4px;margin-bottom:10px">Roster</div>
+      <table style="width:100%;border-collapse:collapse;border:1px solid ${pal.cardBorder};border-radius:6px;overflow:hidden">
+        <thead><tr style="background:${pal.statBg}">
+          <th style="padding:5px 8px;font-size:9px;text-transform:uppercase;letter-spacing:.05em;color:${pal.mutedText};font-weight:700;text-align:left">Role</th>
+          <th style="padding:5px 8px;font-size:9px;text-transform:uppercase;letter-spacing:.05em;color:${pal.mutedText};font-weight:700;text-align:left">Unit</th>
+          <th style="padding:5px 8px;font-size:9px;text-transform:uppercase;letter-spacing:.05em;color:${pal.mutedText};font-weight:700;text-align:center">Qty</th>
+          <th style="padding:5px 8px;font-size:9px;text-transform:uppercase;letter-spacing:.05em;color:${pal.mutedText};font-weight:700;text-align:right">Type</th>
+        </tr></thead>
+        <tbody>${rosterRows}</tbody>
+      </table>
+    </div>
+  </div>`;
+
+  const ROLE_ORDER = ["core","specialist","command","support"];
+  const unitPages = ROLE_ORDER.filter(role => roleGroups[role]).map(role => {
+    const slots = roleGroups[role];
+    const rc    = gray ? "#555" : (ROLE_COLORS[role]||"#555");
+    const hdrBg   = gray ? "#e0e0e0" : `${rc}0e`;
+    const hdrBord = gray ? "#bbb"    : `${rc}55`;
+    const unitCards = slots.flatMap(slot => {
+      const u = unitById(slot.unitId);
+      if (!u) return [];
+      const tu = ((slot.unitType||"unit")==="unit" && slot.transport) ? unitById(slot.transport) : null;
+      if (tu) return [{html: _pMechPair(u, slot.unitType||"unit", tu, mechanizedCount(u, tu), "", pal, gray), full: true}];
+      return [{html: _pUnitCard(u, slot.unitType||"unit", "", {}, pal, gray), full: false}];
+    });
+    return `<div class="print-page page-break">
+      <div class="bg-header" style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:${hdrBg};border:2px solid ${hdrBord};border-radius:10px;margin-bottom:16px">
+        <span style="font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:1.2px;color:${rc};text-transform:capitalize">${role}</span>
+        <span style="font-size:11px;color:${pal.mutedText}">${slots.reduce((s,sl)=>s+sl.quantity,0)} stands</span>
+      </div>
+      ${_pCardGrid(unitCards, pal)}
+    </div>`;
+  }).join("");
 
   const w = window.open("", "_blank");
-  if (w) { w.document.write(html); w.document.close(); }
+  if (w) { w.document.write(_printShell(tf.name, overviewPage + unitPages, paperSize, pal)); w.document.close(); }
+}
+
+// ── Expeditionary Force print ─────────────────────────────
+function printForce(forceId, paperSize, inkMode) {
+  const force = (state.expeditionaryForces||[]).find(f => f.id === forceId);
+  if (!force) return;
+  _ensureAGs(force);
+  const { pal, gray } = _printPalette(inkMode);
+  const agCount = force.agCount || 3;
+  const agList  = (force.armyGroups||[]).slice(0, agCount);
+
+  const agSummaryRows = agList.map(ag => {
+    const armyList = (ag.armyIds||[]).map(id=>state.armies.find(a=>a.id===id)).filter(Boolean);
+    const agPts = armyList.reduce((s,a)=>s+armyDeployedPoints(a),0);
+    return `<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:${pal.tfRowBg};border:1px solid ${pal.cardBorder};border-radius:6px;margin-bottom:4px">
+      <span style="font-weight:700;font-size:13px;color:${pal.pageText}">${esc(ag.name||"Army Group")}</span>
+      <span style="font-size:10px;color:${pal.mutedText};margin-left:auto">${armyList.length} arm${armyList.length!==1?"ies":"y"} · ${agPts} pts</span>
+    </div>`;
+  }).join("");
+
+  const overviewPage = `<div class="print-page">
+    <div style="background:${pal.headBg};color:${pal.headText};border-radius:10px;padding:18px 22px;margin-bottom:18px">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:2px;line-height:1;margin-bottom:5px">${esc(force.name)}</div>
+      <div style="font-size:10px;letter-spacing:.8px;opacity:.65;text-transform:uppercase">Expeditionary Force</div>
+    </div>
+    ${force.description?`<div style="padding:10px 14px;background:${pal.tfRowBg};border:1px solid ${pal.cardBorder};border-radius:6px;margin-bottom:16px;font-size:12px;color:${pal.mutedText};line-height:1.6;font-style:italic">${esc(force.description)}</div>`:""}
+    <div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:1px;color:${pal.sectionHead};border-bottom:2px solid ${pal.accentLine};padding-bottom:4px;margin-bottom:10px">Army Groups</div>
+      ${agSummaryRows}
+    </div>
+  </div>`;
+
+  const agPages = agList.map((ag, agIdx) => {
+    const armyList = (ag.armyIds||[]).map(id=>state.armies.find(a=>a.id===id)).filter(Boolean);
+    if (!armyList.length) return "";
+    const agBanner = `<div style="background:${gray?"#2a2a2a":"#1e2a4a"};color:#fff;border-radius:8px;padding:10px 16px;margin-bottom:12px;display:flex;align-items:center;gap:10px">
+      <i class="fa-solid fa-layer-group" style="font-size:14px;opacity:.8"></i>
+      <span style="font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:1.2px">${esc(ag.name||"Army Group")}</span>
+    </div>`;
+    return armyList.map((army, armyIdx) => {
+      let content = _buildArmyPrintContent(army, pal, gray);
+      if (armyIdx === 0) {
+        // inject AG banner at start of first army's overview page
+        content = content.replace('<div class="print-page">', `<div class="print-page">${agBanner}`);
+      }
+      if (agIdx > 0 && armyIdx === 0) {
+        // page break between army groups
+        content = content.replace('<div class="print-page">', '<div class="print-page page-break">');
+      }
+      return content;
+    }).join("");
+  }).join("");
+
+  const w = window.open("", "_blank");
+  if (w) { w.document.write(_printShell(force.name, overviewPage + agPages, paperSize, pal)); w.document.close(); }
 }
 
 // ===== FREE-PICK UNIT MODAL =====
@@ -8894,6 +9071,7 @@ function renderForceDetail() {
     <div class="card-title">
       <span style="display:flex;align-items:center;gap:10px">${forceIconBtn}${esc(force.name)}</span>
       <div style="display:flex;gap:6px">
+        <button class="trait-edit-btn" onclick="openPrintModal('force','${force.id}')"><i class="fa-solid fa-print"></i> Print</button>
         <button class="trait-edit-btn" onclick="openEditForceModal('${force.id}')"><i class="fa-solid fa-pen"></i> Edit</button>
         <button class="trait-edit-btn" style="border-color:#8b000066;color:#ef5350;background:#2a0a0a" onclick="confirmBtn(this,()=>deleteForce('${force.id}'))"><i class="fa-solid fa-trash"></i> Delete</button>
       </div>
