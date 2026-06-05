@@ -171,6 +171,39 @@ input.input-error,textarea.input-error{border-color:#ef535066!important;outline:
 .lib-filter-clear-btn:hover{color:var(--text-primary);border-color:var(--border-default)}
 .lib-filter-row{display:flex;flex-wrap:wrap;align-items:center}
 .lib-filter-row-bottom{justify-content:space-between;gap:8px}
+/* ── Data page: overview, export picker, danger zone ── */
+.data-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px}
+.data-stat{background:var(--surface-page);border:1px solid var(--border-subtle);border-radius:7px;padding:10px 12px;display:flex;align-items:center;gap:10px}
+.data-stat-icon{width:30px;height:30px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px;background:var(--accent-tint);color:var(--accent-light);flex-shrink:0}
+.data-stat-val{font-family:var(--font-display);font-size:21px;line-height:1;color:var(--text-bright);letter-spacing:.5px}
+.data-stat-label{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);margin-top:2px}
+.data-stat.zero{opacity:.45}
+.data-stat.zero .data-stat-icon{background:var(--surface-raised);color:var(--text-faint)}
+.exp-toolbar{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.exp-mini-btn{background:var(--surface-raised);border:1px solid var(--border-subtle);color:var(--text-mid);border-radius:6px;padding:4px 10px;font-size:11px;font-weight:600;cursor:pointer;transition:color .12s,border-color .12s}
+.exp-mini-btn:hover{color:var(--text-bright);border-color:var(--border-default)}
+.exp-summary{font-size:12px;color:var(--text-muted);margin-left:auto;text-align:right}
+.exp-summary strong{color:var(--accent-light)}
+.exp-tree{border:1px solid var(--border-subtle);border-radius:8px;overflow:hidden;background:var(--surface-page)}
+.exp-cat + .exp-cat{border-top:1px solid var(--border-subtle)}
+.exp-cat-head{display:flex;align-items:center;gap:9px;padding:9px 12px;cursor:pointer;user-select:none;transition:background .12s}
+.exp-cat-head:hover{background:var(--surface-raised)}
+.exp-cat-icon{width:22px;text-align:center;color:var(--text-muted);font-size:12px;flex-shrink:0}
+.exp-cat-name{font-size:13px;font-weight:600;color:var(--text-primary)}
+.exp-cat-count{font-size:10px;font-weight:700;color:var(--text-muted);background:var(--surface-raised);border-radius:9px;padding:1px 8px}
+.exp-cat-sel{font-size:10px;font-weight:700;color:var(--accent-light);background:var(--accent-tint);border-radius:9px;padding:1px 8px;display:none}
+.exp-cat-chev{margin-left:auto;color:var(--text-faint);font-size:11px;transition:transform .15s}
+.exp-cat.open .exp-cat-chev{transform:rotate(90deg)}
+.exp-items{display:none;padding:2px 12px 8px 40px;flex-direction:column;gap:1px}
+.exp-cat.open .exp-items{display:flex}
+.exp-item{display:flex;align-items:center;gap:9px;padding:5px 6px;border-radius:5px;cursor:pointer;transition:background .12s}
+.exp-item:hover{background:var(--surface-raised)}
+.exp-item-name{font-size:12px;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.exp-item-meta{font-size:10px;color:var(--text-faint);margin-left:auto;flex-shrink:0;white-space:nowrap}
+.exp-cb{width:15px;height:15px;flex-shrink:0;accent-color:var(--accent);cursor:pointer;margin:0}
+.exp-empty{padding:20px;text-align:center;color:var(--text-faint);font-size:12px;font-style:italic}
+.danger-zone{border:1px solid #8b000055}
+.danger-zone .card-title{color:#ef5350;border-bottom-color:#8b000033}
 .scrolllist{max-height:360px;overflow-y:auto;border:1px solid var(--border-subtle);border-radius:6px;padding:8px}
 .weapon-builder{background:var(--surface-page);border:1px solid var(--border-subtle);border-radius:6px;padding:10px;margin-top:8px}
 .weapon-builder-row{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end}
@@ -588,40 +621,45 @@ label .trait-edit-btn{margin-left:6px}
 
 <!-- ===== DATA (IMPORT / EXPORT) PAGE ===== -->
 <div id="page-data" class="page">
-  <div style="max-width:760px;margin:0 auto">
+  <div style="max-width:820px;margin:0 auto">
+
+    <!-- OVERVIEW CARD -->
+    <div class="card" style="margin-bottom:18px">
+      <div class="card-title">Your Data
+        <button class="trait-edit-btn" onclick="doExportFullBackup()"><i class="fa-solid fa-database"></i> Full Backup</button>
+      </div>
+      <p style="color:#8b949e;font-size:13px;margin:0 0 14px;line-height:1.5">
+        Everything you've created lives in your browser. Use <strong>Full Backup</strong> for a complete snapshot you can restore later, or pick specific items below to share with another player.
+      </p>
+      <div class="data-stats" id="data-overview"></div>
+    </div>
 
     <!-- EXPORT CARD -->
     <div class="card" style="margin-bottom:18px">
-      <div class="card-title">Export Data</div>
-      <p style="color:#8b949e;font-size:13px;margin:0 0 16px;line-height:1.5">
-        Generate JSON you can copy and share or keep as a backup. Export everything, or export a single faction with its units and custom traits.
+      <div class="card-title">Export Selection</div>
+      <p style="color:#8b949e;font-size:13px;margin:0 0 14px;line-height:1.5">
+        Tick whatever you want to share &mdash; whole categories or individual items. Anything those items depend on (factions, traits, units, task forces&hellip;) is bundled in automatically, so the export always lands intact.
       </p>
-      <div class="form-group" style="margin-bottom:14px">
-        <label style="display:block;margin-bottom:8px">What to export</label>
-        <label style="display:flex;align-items:flex-start;gap:8px;font-weight:normal;margin-bottom:8px;cursor:pointer;text-transform:none;letter-spacing:0">
-          <input type="radio" name="export-scope" value="all" checked onchange="onExportScopeChange()" style="margin:3px 0 0">
-          <span>Everything <span style="color:#8b949e;font-size:12px">(full backup &mdash; all custom units, factions, traits, TF types, assets, task forces, armies &amp; forces)</span></span>
-        </label>
-        <label style="display:flex;align-items:flex-start;gap:8px;font-weight:normal;cursor:pointer;text-transform:none;letter-spacing:0">
-          <input type="radio" name="export-scope" value="faction" onchange="onExportScopeChange()" style="margin:3px 0 0">
-          <span>Single faction <span style="color:#8b949e;font-size:12px">(the faction + its custom units + required custom traits)</span></span>
-        </label>
+      <div class="exp-toolbar">
+        <button class="exp-mini-btn" onclick="exportSelectAll()"><i class="fa-solid fa-check-double" style="font-size:10px"></i> Select all</button>
+        <button class="exp-mini-btn" onclick="exportSelectNone()"><i class="fa-solid fa-xmark" style="font-size:10px"></i> Clear</button>
+        <span class="exp-summary" id="export-summary">Nothing selected</span>
       </div>
-      <div class="form-group" id="export-faction-row" style="margin-bottom:16px;display:none">
-        <label>Faction</label>
-        <select id="export-faction-select" style="width:100%" onchange="updateExportFactionSummary()"></select>
-        <div id="export-faction-summary" style="font-size:12px;color:#8b949e;margin-top:6px"></div>
-      </div>
-      <div id="data-export-msg" style="display:none;margin-bottom:12px"></div>
-      <button class="btn btn-primary" onclick="doExport()"><i class="fa-solid fa-code"></i> Generate JSON</button>
+      <div class="exp-tree" id="export-picker"></div>
+      <div id="data-export-msg" style="display:none;margin:12px 0 0"></div>
+      <button class="btn btn-primary" id="export-gen-btn" onclick="doExportSelection()" disabled style="margin-top:14px"><i class="fa-solid fa-code"></i> Generate JSON</button>
     </div>
 
     <!-- IMPORT CARD -->
-    <div class="card">
+    <div class="card" style="margin-bottom:18px">
       <div class="card-title">Import Data</div>
-      <p style="color:#8b949e;font-size:13px;margin:0 0 16px;line-height:1.5">
-        Paste a previously exported JSON below. A <strong>faction</strong> export is merged into your current data (items whose name already exists are skipped). A <strong>full backup</strong> replaces everything you currently have.
+      <p style="color:#8b949e;font-size:13px;margin:0 0 14px;line-height:1.5">
+        Paste exported JSON, or upload a <code>.json</code> file. A <strong>selection</strong> or <strong>faction</strong> export is merged into your data (items whose name already exists are skipped). A <strong>full backup</strong> replaces everything you currently have.
       </p>
+      <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+        <button class="exp-mini-btn" onclick="document.getElementById('import-file').click()"><i class="fa-solid fa-file-arrow-up" style="font-size:10px"></i> Upload .json file</button>
+        <input type="file" id="import-file" accept=".json,application/json" style="display:none" onchange="onImportFileChange(event)">
+      </div>
       <div class="form-group" style="margin-bottom:14px">
         <label>Paste JSON</label>
         <textarea id="import-text" placeholder="Paste exported JSON here..." oninput="onImportTextChange()" style="width:100%;min-height:160px;resize:vertical;font-family:monospace;font-size:12px;line-height:1.4;background:var(--surface-page);border:1px solid var(--border-default);border-radius:6px;color:var(--text-primary);padding:10px"></textarea>
@@ -629,6 +667,15 @@ label .trait-edit-btn{margin-left:6px}
       <div id="import-preview" style="display:none;background:var(--surface-raised);border:1px solid var(--border-default);border-radius:6px;padding:12px 14px;margin-bottom:14px;font-size:13px;line-height:1.6"></div>
       <div id="data-import-msg" style="display:none;margin-bottom:12px"></div>
       <button class="btn btn-primary" id="import-btn" onclick="doImport()" disabled><i class="fa-solid fa-upload"></i> Import</button>
+    </div>
+
+    <!-- DANGER ZONE -->
+    <div class="card danger-zone">
+      <div class="card-title">Danger Zone</div>
+      <p style="color:#8b949e;font-size:13px;margin:0 0 14px;line-height:1.5">
+        Permanently delete <strong>all</strong> of your custom units, factions, traits, task forces, armies and forces. This cannot be undone &mdash; export a Full Backup first if you might want it back.
+      </p>
+      <button class="btn btn-danger" onclick="confirmBtn(this,resetAllData)"><i class="fa-solid fa-trash"></i> Reset all data</button>
     </div>
 
   </div>
@@ -643,7 +690,10 @@ label .trait-edit-btn{margin-left:6px}
     </div>
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:10px">
       <span id="export-json-summary" style="font-size:12px;color:var(--text-muted);flex:1;min-width:0"></span>
-      <button class="btn btn-primary btn-sm" id="export-copy-btn" onclick="copyExportJSON()"><i class="fa-solid fa-copy"></i> Copy to clipboard</button>
+      <div style="display:flex;gap:8px;flex-shrink:0">
+        <button class="btn btn-secondary btn-sm" id="export-download-btn" onclick="downloadExportJSON()"><i class="fa-solid fa-download"></i> Download .json</button>
+        <button class="btn btn-primary btn-sm" id="export-copy-btn" onclick="copyExportJSON()"><i class="fa-solid fa-copy"></i> Copy to clipboard</button>
+      </div>
     </div>
     <textarea id="export-json-text" readonly onclick="this.select()" style="width:100%;min-height:340px;resize:vertical;font-family:monospace;font-size:11px;line-height:1.45;background:var(--surface-page);border:1px solid var(--border-default);border-radius:6px;color:var(--text-secondary);padding:10px;cursor:text"></textarea>
   </div>
@@ -2229,15 +2279,35 @@ function showPage(p) {
 // ============================================================
 let _pendingImport = null;     // parsed payload awaiting import
 let _fullImportArmed = false;  // two-step confirm for destructive full import
+let _exportJSONStr = "";       // last generated export JSON (download fallback)
+let _exportFilename = "laserstorm-export.json";
+
+// Categories shown in the selective export picker, listed roughly in
+// dependency order. Each entry: state key, label, FontAwesome icon, and
+// per-item name/meta accessors used to render the checkbox rows.
+const EXPORT_CATS = [
+  { key:"customFactions",       label:"Factions",             icon:"flag",           name:f=>f.name, meta:()=>"" },
+  { key:"customTraits",         label:"Custom Traits",        icon:"star",           name:t=>t.name, meta:t=>(t.cost>=0?"+":"")+t.cost+"p" },
+  { key:"customUnits",          label:"Units",                icon:"chess-pawn",     name:u=>u.name, meta:u=>factionName(u.faction)||"" },
+  { key:"customTFTypes",        label:"TF Types",             icon:"sitemap",        name:t=>t.name, meta:()=>"" },
+  { key:"customTacticalAssets", label:"Tactical Assets",      icon:"bolt",           name:a=>a.name, meta:()=>"" },
+  { key:"taskForces",           label:"Task Forces",          icon:"shield-halved",  name:t=>t.name, meta:t=>(t.units||[]).length+" slot"+((t.units||[]).length!==1?"s":"") },
+  { key:"armies",               label:"Armies",               icon:"chess-rook",     name:a=>a.name, meta:a=>isFreePick(a)?"Free Pick":"Task Force" },
+  { key:"expeditionaryForces",  label:"Expeditionary Forces", icon:"flag-checkered", name:f=>f.name, meta:f=>(f.armyGroups||[]).length+" group"+((f.armyGroups||[]).length!==1?"s":"") },
+];
+let _exportSel = {};        // { catKey: Set(ids) } — items the user ticked
+let _exportOpenCats = {};   // { catKey: bool }     — which categories are expanded
 
 function renderDataPage(){
-  const allRadio = document.querySelector('input[name="export-scope"][value="all"]');
-  if(allRadio) allRadio.checked = true;
-  populateExportFactionSelect();
-  onExportScopeChange();
+  _exportSel = {}; EXPORT_CATS.forEach(c=>_exportSel[c.key]=new Set());
+  _exportOpenCats = {};
+  renderDataOverview();
+  renderExportPicker();
   _dataHideMsg("data-export-msg");
   const importText = document.getElementById("import-text");
   if(importText) importText.value = "";
+  const importFile = document.getElementById("import-file");
+  if(importFile) importFile.value = "";
   _pendingImport = null;
   _fullImportArmed = false;
   const prev = document.getElementById("import-preview");
@@ -2247,88 +2317,253 @@ function renderDataPage(){
   _dataHideMsg("data-import-msg");
 }
 
-function populateExportFactionSelect(){
-  const sel = document.getElementById("export-faction-select");
-  if(!sel) return;
-  const facs = (state.customFactions||[]).slice().sort((a,b)=>a.name.localeCompare(b.name));
-  sel.innerHTML = facs.length
-    ? facs.map(f=>`<option value="${esc(f.id)}">${esc(f.name)}</option>`).join("")
-    : '<option value="">No custom factions</option>';
-  updateExportFactionSummary();
+function renderDataOverview(){
+  const el = document.getElementById("data-overview");
+  if(!el) return;
+  el.innerHTML = EXPORT_CATS.map(c=>{
+    const n = (state[c.key]||[]).length;
+    return `<div class="data-stat${n?"":" zero"}">
+      <div class="data-stat-icon"><i class="fa-solid fa-${c.icon}"></i></div>
+      <div><div class="data-stat-val">${n}</div><div class="data-stat-label">${esc(c.label)}</div></div>
+    </div>`;
+  }).join("");
 }
 
-function updateExportFactionSummary(){
-  const sel = document.getElementById("export-faction-select");
-  const out = document.getElementById("export-faction-summary");
-  if(!sel||!out) return;
-  const fac = (state.customFactions||[]).find(f=>f.id===sel.value);
-  if(!fac){ out.textContent = ""; return; }
-  const b = collectFactionBundle(fac);
-  out.textContent = `Includes ${b.customUnits.length} unit(s) and ${b.customTraits.length} custom trait(s).`;
-}
-
-function onExportScopeChange(){
-  const scope = (document.querySelector('input[name="export-scope"]:checked')||{}).value;
-  const row = document.getElementById("export-faction-row");
-  if(row) row.style.display = (scope==="faction") ? "" : "none";
-}
-
-// Gather a custom faction + its units + the custom traits those units rely on.
-// `faction` is the custom faction object. A unit references its faction by id
-// (unit.faction === faction.id). Traits on a unit are stored as arrays whose
-// first element is the trait name, in unit.standTraits[] and each weapon.traits[].
-function collectFactionBundle(faction){
-  if(!faction) return { faction:null, customFactions:[], customUnits:[], customTraits:[] };
-  const units = (state.customUnits||[]).filter(u=>u.faction===faction.id);
-  const refNames = new Set();
-  units.forEach(u=>{
-    (u.standTraits||[]).forEach(t=>{ if(t && t[0]!=null) refNames.add(String(t[0]).toLowerCase()); });
-    (u.weapons||[]).forEach(w=>(w.traits||[]).forEach(t=>{ if(t && t[0]!=null) refNames.add(String(t[0]).toLowerCase()); }));
-  });
-  const traits = (state.customTraits||[]).filter(t=>refNames.has(String(t.name).toLowerCase()));
-  return { faction, customFactions:[faction], customUnits:units, customTraits:traits };
-}
-
-function doExport(){
-  const scope = (document.querySelector('input[name="export-scope"]:checked')||{}).value || "all";
-  let payload, title, summary;
-  if(scope==="faction"){
-    const sel = document.getElementById("export-faction-select");
-    const fac = (state.customFactions||[]).find(f=>f.id===(sel&&sel.value));
-    if(!fac){ _dataMsg("data-export-msg","error","Select a faction to export."); return; }
-    const b = collectFactionBundle(fac);
-    payload = {
-      app:"laserstorm-army-builder", kind:"faction", version:1,
-      exportedAt:new Date().toISOString(), faction:fac.name,
-      data:{ customFactions:b.customFactions, customTraits:b.customTraits, customUnits:b.customUnits }
-    };
-    title = `Export — ${esc(fac.name)}`;
-    summary = `${b.customUnits.length} unit(s), ${b.customTraits.length} custom trait(s)`;
-  } else {
-    payload = {
-      app:"laserstorm-army-builder", kind:"full", version:1,
-      exportedAt:new Date().toISOString(),
-      data:{
-        customUnits:state.customUnits||[], customFactions:state.customFactions||[],
-        customTraits:state.customTraits||[], customTFTypes:state.customTFTypes||[],
-        customTacticalAssets:state.customTacticalAssets||[], taskForces:state.taskForces||[],
-        armies:state.armies||[], expeditionaryForces:state.expeditionaryForces||[]
-      }
-    };
-    const d = payload.data;
-    title = "Export — Full Backup";
-    summary = `${(d.customUnits||[]).length} unit(s), ${(d.customFactions||[]).length} faction(s), ${(d.taskForces||[]).length} task force(s), ${(d.armies||[]).length} army(ies)`;
+function renderExportPicker(){
+  const el = document.getElementById("export-picker");
+  if(!el) return;
+  const cats = EXPORT_CATS.filter(c=>(state[c.key]||[]).length);
+  if(!cats.length){
+    el.innerHTML = `<div class="exp-empty">Nothing to export yet — create some units, factions or armies first.</div>`;
+    updateExportSummary();
+    return;
   }
+  el.innerHTML = cats.map(c=>{
+    const items = state[c.key]||[];
+    const sel = _exportSel[c.key];
+    const open = !!_exportOpenCats[c.key];
+    const itemsHTML = items.map(it=>{
+      const meta = c.meta(it);
+      return `<label class="exp-item">
+        <input type="checkbox" class="exp-cb" ${sel.has(it.id)?"checked":""} onclick="toggleExportItem('${c.key}','${esc(it.id)}',event)">
+        <span class="exp-item-name">${esc(c.name(it)||"—")}</span>
+        ${meta?`<span class="exp-item-meta">${esc(meta)}</span>`:""}
+      </label>`;
+    }).join("");
+    return `<div class="exp-cat${open?" open":""}" data-cat="${c.key}">
+      <div class="exp-cat-head" onclick="toggleExportCatCollapse('${c.key}')">
+        <input type="checkbox" class="exp-cb" id="exp-cat-cb-${c.key}" onclick="toggleExportCategory('${c.key}',event)">
+        <span class="exp-cat-icon"><i class="fa-solid fa-${c.icon}"></i></span>
+        <span class="exp-cat-name">${esc(c.label)}</span>
+        <span class="exp-cat-count">${items.length}</span>
+        <span class="exp-cat-sel" id="exp-cat-sel-${c.key}" ${sel.size?'':'style="display:none"'}>${sel.size} picked</span>
+        <span class="exp-cat-chev"><i class="fa-solid fa-chevron-right"></i></span>
+      </div>
+      <div class="exp-items">${itemsHTML}</div>
+    </div>`;
+  }).join("");
+  cats.forEach(c=>_syncExportCatCheckbox(c.key));
+  updateExportSummary();
+}
+
+function _syncExportCatCheckbox(catKey){
+  const items = state[catKey]||[];
+  const sel = _exportSel[catKey];
+  const cb = document.getElementById("exp-cat-cb-"+catKey);
+  if(cb){ cb.checked = sel.size>0 && sel.size===items.length; cb.indeterminate = sel.size>0 && sel.size<items.length; }
+  const selEl = document.getElementById("exp-cat-sel-"+catKey);
+  if(selEl){ selEl.textContent = sel.size+" picked"; selEl.style.display = sel.size?"":"none"; }
+}
+
+function toggleExportItem(catKey, id, ev){
+  if(ev) ev.stopPropagation();
+  const sel = _exportSel[catKey];
+  if(sel.has(id)) sel.delete(id); else sel.add(id);
+  _syncExportCatCheckbox(catKey);
+  updateExportSummary();
+}
+
+function toggleExportCategory(catKey, ev){
+  if(ev) ev.stopPropagation();
+  const items = state[catKey]||[];
+  const sel = _exportSel[catKey];
+  const selectAll = sel.size !== items.length;  // partial or empty -> select all
+  sel.clear();
+  if(selectAll) items.forEach(it=>sel.add(it.id));
+  const itemsBox = document.querySelector('.exp-cat[data-cat="'+catKey+'"] .exp-items');
+  if(itemsBox) itemsBox.querySelectorAll('.exp-cb').forEach(c=>c.checked=selectAll);
+  _syncExportCatCheckbox(catKey);
+  updateExportSummary();
+}
+
+function toggleExportCatCollapse(catKey){
+  _exportOpenCats[catKey] = !_exportOpenCats[catKey];
+  const catEl = document.querySelector('.exp-cat[data-cat="'+catKey+'"]');
+  if(catEl) catEl.classList.toggle("open", !!_exportOpenCats[catKey]);
+}
+
+function exportSelectAll(){
+  EXPORT_CATS.forEach(c=>{ _exportSel[c.key] = new Set((state[c.key]||[]).map(it=>it.id)); });
+  renderExportPicker();
+}
+function exportSelectNone(){
+  EXPORT_CATS.forEach(c=>_exportSel[c.key] = new Set());
+  renderExportPicker();
+}
+
+function updateExportSummary(){
+  const explicit = EXPORT_CATS.reduce((s,c)=>s+_exportSel[c.key].size,0);
+  const bundle = collectSelectionBundle();
+  const total = EXPORT_CATS.reduce((s,c)=>s+(bundle[c.key]||[]).length,0);
+  const dep = total - explicit;
+  const el = document.getElementById("export-summary");
+  if(el){
+    el.innerHTML = explicit
+      ? `<strong>${explicit}</strong> selected${dep>0?` <span style="color:var(--text-faint)">+${dep} dependenc${dep!==1?"ies":"y"}</span>`:""}`
+      : "Nothing selected";
+  }
+  const genBtn = document.getElementById("export-gen-btn");
+  if(genBtn) genBtn.disabled = explicit===0;
+}
+
+// Expand the user's explicit selections into a complete, self-contained bundle
+// by transitively pulling in everything the selected items reference. Returns
+// an object { catKey: [items...] } preserving each category's state order.
+function collectSelectionBundle(){
+  const out = {}; EXPORT_CATS.forEach(c=>out[c.key]=new Set(_exportSel[c.key]));
+  const mapOf = key => new Map((state[key]||[]).map(x=>[x.id,x]));
+  const facMap=mapOf("customFactions"), unitMap=mapOf("customUnits"),
+        tfMap=mapOf("taskForces"), armyMap=mapOf("armies"),
+        assetMap=mapOf("customTacticalAssets"), tfTypeMap=mapOf("customTFTypes"),
+        forceMap=mapOf("expeditionaryForces");
+  const traitByName = new Map((state.customTraits||[]).map(t=>[String(t.name).toLowerCase(),t]));
+  const traitMap = mapOf("customTraits");
+
+  const addUnitDeps = u => {
+    if(u.faction && facMap.has(u.faction)) out.customFactions.add(u.faction);
+    const names = new Set();
+    (u.standTraits||[]).forEach(t=>{ if(t&&t[0]!=null) names.add(String(t[0]).toLowerCase()); });
+    (u.weapons||[]).forEach(w=>(w.traits||[]).forEach(t=>{ if(t&&t[0]!=null) names.add(String(t[0]).toLowerCase()); }));
+    names.forEach(nm=>{ const tr=traitByName.get(nm); if(tr) out.customTraits.add(tr.id); });
+  };
+  const addTFDeps = tf => {
+    if(tf.tfType && tfTypeMap.has(tf.tfType)) out.customTFTypes.add(tf.tfType);
+    if(tf.tacAsset && tf.tacAsset.startsWith("custom_")){ const b=tf.tacAsset.slice(7); if(assetMap.has(b)) out.customTacticalAssets.add(b); }
+    (tf.units||[]).forEach(s=>[s.unitId,s.transport].forEach(id=>{ if(id&&unitMap.has(id)) out.customUnits.add(id); }));
+  };
+  const addArmyDeps = a => {
+    (a.taskForceIds||[]).forEach(id=>{ if(tfMap.has(id)) out.taskForces.add(id); });
+    (a.battleGroups||[]).forEach(bg=>(bg.entries||[]).forEach(e=>{
+      [e.unitId,e.transport].forEach(id=>{ if(id&&unitMap.has(id)) out.customUnits.add(id); });
+      if(e.tfId && tfMap.has(e.tfId)) out.taskForces.add(e.tfId);
+    }));
+  };
+
+  // An explicitly-chosen faction also drags in its units (mirrors the original
+  // "export a faction" feature). A faction pulled in only as a unit's dependency
+  // does NOT back-fill its sibling units.
+  new Set(_exportSel.customFactions).forEach(fid=>{
+    (state.customUnits||[]).forEach(u=>{ if(u.faction===fid) out.customUnits.add(u.id); });
+  });
+
+  let changed=true, guard=0;
+  while(changed && guard++<16){
+    const before = EXPORT_CATS.reduce((s,c)=>s+out[c.key].size,0);
+    out.expeditionaryForces.forEach(id=>{ const f=forceMap.get(id); if(f) (f.armyGroups||[]).forEach(g=>(g.armyIds||[]).forEach(aid=>{ if(armyMap.has(aid)) out.armies.add(aid); })); });
+    out.armies.forEach(id=>{ const a=armyMap.get(id); if(a) addArmyDeps(a); });
+    out.taskForces.forEach(id=>{ const tf=tfMap.get(id); if(tf) addTFDeps(tf); });
+    out.customUnits.forEach(id=>{ const u=unitMap.get(id); if(u) addUnitDeps(u); });
+    out.customTraits.forEach(id=>{ const t=traitMap.get(id); if(t&&t.faction&&facMap.has(t.faction)) out.customFactions.add(t.faction); });
+    out.customTacticalAssets.forEach(id=>{ const a=assetMap.get(id); if(a&&a.faction&&facMap.has(a.faction)) out.customFactions.add(a.faction); });
+    const after = EXPORT_CATS.reduce((s,c)=>s+out[c.key].size,0);
+    changed = after!==before;
+  }
+
+  const result={}; EXPORT_CATS.forEach(c=>{ result[c.key]=(state[c.key]||[]).filter(x=>out[c.key].has(x.id)); });
+  return result;
+}
+
+function doExportSelection(){
+  const explicit = EXPORT_CATS.reduce((s,c)=>s+_exportSel[c.key].size,0);
+  if(!explicit){ _dataMsg("data-export-msg","error","Tick at least one item to export."); return; }
+  const bundle = collectSelectionBundle();
+  const data={}; EXPORT_CATS.forEach(c=>{ if(bundle[c.key].length) data[c.key]=bundle[c.key]; });
+  const payload = { app:"laserstorm-army-builder", kind:"selection", version:1, exportedAt:new Date().toISOString(), data };
+  const summary = EXPORT_CATS.filter(c=>bundle[c.key].length).map(c=>`${bundle[c.key].length} ${c.label.toLowerCase()}`).join(", ");
+  _openExportModal(payload, "Export — Selection", summary, "laserstorm-selection");
+}
+
+function doExportFullBackup(){
+  const data = {
+    customUnits:state.customUnits||[], customFactions:state.customFactions||[],
+    customTraits:state.customTraits||[], customTFTypes:state.customTFTypes||[],
+    customTacticalAssets:state.customTacticalAssets||[], taskForces:state.taskForces||[],
+    armies:state.armies||[], expeditionaryForces:state.expeditionaryForces||[]
+  };
+  const payload = { app:"laserstorm-army-builder", kind:"full", version:1, exportedAt:new Date().toISOString(), data };
+  const summary = `${data.customUnits.length} unit(s), ${data.customFactions.length} faction(s), ${data.taskForces.length} task force(s), ${data.armies.length} army(ies)`;
+  _openExportModal(payload, "Export — Full Backup", summary, "laserstorm-backup");
+}
+
+function _openExportModal(payload, title, summary, fnameBase){
   const json = JSON.stringify(payload, null, 2);
-  const ta = document.getElementById("export-json-text");
-  if(ta){ ta.value = json; }
-  const ttl = document.getElementById("export-json-title");
-  if(ttl) ttl.textContent = title;
-  const sum = document.getElementById("export-json-summary");
-  if(sum) sum.textContent = summary;
-  const copyBtn = document.getElementById("export-copy-btn");
-  if(copyBtn){ copyBtn.innerHTML = '<i class="fa-solid fa-copy"></i> Copy to clipboard'; copyBtn.disabled = false; }
+  _exportJSONStr = json;
+  _exportFilename = `${fnameBase}-${new Date().toISOString().slice(0,10)}.json`;
+  const ta = document.getElementById("export-json-text"); if(ta) ta.value = json;
+  const ttl = document.getElementById("export-json-title"); if(ttl) ttl.textContent = title;
+  const sum = document.getElementById("export-json-summary"); if(sum) sum.textContent = summary;
+  const copyBtn = document.getElementById("export-copy-btn"); if(copyBtn){ copyBtn.innerHTML='<i class="fa-solid fa-copy"></i> Copy to clipboard'; copyBtn.disabled=false; }
+  const dlBtn = document.getElementById("export-download-btn"); if(dlBtn) dlBtn.innerHTML='<i class="fa-solid fa-download"></i> Download .json';
   openModal("modal-export-json");
+}
+
+// Derive a filename from whatever JSON is currently shown, so this works for
+// army / task force exports (opened from their own pages) too.
+function downloadExportJSON(){
+  const ta = document.getElementById("export-json-text");
+  const json = ta ? ta.value : _exportJSONStr;
+  if(!json) return;
+  let fname = _exportFilename;
+  try {
+    const p = JSON.parse(json);
+    const stamp = new Date().toISOString().slice(0,10);
+    const base =
+      p.kind==="army"      ? "laserstorm-army-"+(p.armyName||"") :
+      p.kind==="taskforce" ? "laserstorm-tf-"+(p.taskForceName||(p.data&&p.data.taskForce&&p.data.taskForce.name)||"") :
+      p.kind==="full"      ? "laserstorm-backup" :
+      p.kind==="faction"   ? "laserstorm-faction-"+(p.faction||"") :
+                             "laserstorm-selection";
+    fname = (base.replace(/[^a-z0-9\-]+/gi,"_").replace(/_+/g,"_").replace(/^_|_$/g,"")||"laserstorm-export")+"-"+stamp+".json";
+  } catch(e){}
+  const blob = new Blob([json], {type:"application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = fname; document.body.appendChild(a); a.click();
+  document.body.removeChild(a); setTimeout(()=>URL.revokeObjectURL(url), 1000);
+  const btn = document.getElementById("export-download-btn");
+  if(btn){ btn.innerHTML='<i class="fa-solid fa-check"></i> Downloaded'; setTimeout(()=>{ btn.innerHTML='<i class="fa-solid fa-download"></i> Download .json'; },1800); }
+}
+
+function onImportFileChange(ev){
+  const file = ev.target.files && ev.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const ta = document.getElementById("import-text");
+    if(ta){ ta.value = e.target.result; onImportTextChange(); }
+  };
+  reader.onerror = () => _dataMsg("data-import-msg","error","Couldn't read that file.");
+  reader.readAsText(file);
+  ev.target.value = "";  // allow re-selecting the same file later
+}
+
+function resetAllData(){
+  state.customUnits=[]; state.customFactions=[]; state.customTraits=[];
+  state.customTFTypes=[]; state.customTacticalAssets=[];
+  state.taskForces=[]; state.armies=[]; state.expeditionaryForces=[];
+  saveState();
+  renderDataPage();
+  _dataMsg("data-import-msg","success","All data has been reset to empty.");
 }
 
 function copyExportJSON(){
@@ -2379,6 +2614,17 @@ function onImportTextChange(){
     html = `<strong>Faction export</strong>: ${esc(payload.faction||((d.customFactions||[])[0]||{}).name||"&mdash;")} &mdash; `+
       `${nf} faction(s), ${nu} unit(s), ${nt} trait(s) will be merged (duplicates skipped).`;
     if(ib) ib.innerHTML = '<i class="fa-solid fa-upload"></i> Import faction';
+  } else if(payload.kind==="selection"){
+    const parts = [
+      nu?`${nu} unit(s)`:null, nf?`${nf} faction(s)`:null, nt?`${nt} trait(s)`:null,
+      (d.customTFTypes||[]).length?`${d.customTFTypes.length} TF type(s)`:null,
+      (d.customTacticalAssets||[]).length?`${d.customTacticalAssets.length} asset(s)`:null,
+      (d.taskForces||[]).length?`${d.taskForces.length} task force(s)`:null,
+      (d.armies||[]).length?`${d.armies.length} army(ies)`:null,
+      (d.expeditionaryForces||[]).length?`${d.expeditionaryForces.length} force(s)`:null,
+    ].filter(Boolean);
+    html = `<strong>Selection export</strong> &mdash; ${parts.length?parts.join(", "):"empty"} will be merged into your data (duplicates skipped).`;
+    if(ib) ib.innerHTML = '<i class="fa-solid fa-upload"></i> Import selection';
   } else {
     _dataMsg("data-import-msg","error","Unknown export kind."); return;
   }
@@ -2398,6 +2644,8 @@ function doImport(){
       return;
     }
     importFull(payload.data);
+  } else if(payload.kind==="selection"){
+    importSelection(payload.data);
   } else {
     importFaction(payload.data);
   }
@@ -2476,6 +2724,133 @@ function importFaction(d){
   _dataMsg("data-import-msg","success",
     `Imported ${addedF} faction(s), ${addedU} unit(s), ${addedT} trait(s).`+
     (skipped?` Skipped ${skipped} item(s) already present.`:""));
+}
+
+// Merge a selection bundle (any mix of the eight categories) into current data.
+// Library-style items (factions, traits, units, TF types, assets) dedupe by
+// name and remap ids; container items (task forces, armies, forces) always get
+// fresh ids with their internal references remapped — same rules as the
+// per-army / per-task-force importers, applied across every category at once.
+function importSelection(d){
+  const counts = { factions:0, traits:0, units:0, tfTypes:0, assets:0, taskForces:0, armies:0, forces:0, skipped:0 };
+
+  // 1. Factions (dedupe by name)
+  const facById = new Map((state.customFactions||[]).map(f=>[f.id,f]));
+  const facByName = new Map((state.customFactions||[]).map(f=>[String(f.name).toLowerCase(),f]));
+  const facIdMap = {};
+  (d.customFactions||[]).forEach(f=>{
+    const k=String(f.name||"").toLowerCase(); const ex=facByName.get(k);
+    if(ex){ facIdMap[f.id]=ex.id; counts.skipped++; return; }
+    let id=(!f.id||facById.has(f.id))?"fac_"+uid():f.id;
+    const nf=Object.assign({},f,{id}); state.customFactions.push(nf); facById.set(id,nf); facByName.set(k,nf); facIdMap[f.id]=id; counts.factions++;
+  });
+  const remapFac=id=>(id&&facIdMap[id])?facIdMap[id]:id;
+
+  // 2. Traits (dedupe by name)
+  const traitByName=new Map((state.customTraits||[]).map(t=>[String(t.name).toLowerCase(),t]));
+  const traitById=new Set((state.customTraits||[]).map(t=>t.id));
+  (d.customTraits||[]).forEach(t=>{
+    const k=String(t.name||"").toLowerCase(); if(traitByName.has(k)){ counts.skipped++; return; }
+    let id=(!t.id||traitById.has(t.id))?uid():t.id;
+    const nt=Object.assign({},t,{id});
+    if(nt.faction) nt.faction=remapFac(nt.faction);
+    if(Array.isArray(nt.reqs)) nt.reqs=nt.reqs.map(r=>(r&&r.type==="faction"&&Array.isArray(r.vals))?Object.assign({},r,{vals:r.vals.map(remapFac)}):r);
+    state.customTraits.push(nt); traitByName.set(k,nt); traitById.add(id); counts.traits++;
+  });
+
+  // 3. Units (dedupe by name+faction)
+  const unitById=new Map((state.customUnits||[]).map(u=>[u.id,u]));
+  const unitKey=u=>String(u.name||"").toLowerCase()+"||"+String(u.faction||"").toLowerCase();
+  const unitKeyToId=new Map((state.customUnits||[]).map(u=>[unitKey(u),u.id]));
+  const unitIdMap={};
+  (d.customUnits||[]).forEach(u=>{
+    const nu=Object.assign({},u,{faction:remapFac(u.faction)}); const k=unitKey(nu);
+    if(unitKeyToId.has(k)){ unitIdMap[u.id]=unitKeyToId.get(k); counts.skipped++; return; }
+    let id=(!nu.id||unitById.has(nu.id))?"custom_"+uid():nu.id; nu.id=id;
+    if(typeof migrateCustomUnit==="function") migrateCustomUnit(nu);
+    state.customUnits.push(nu); unitById.set(id,nu); unitKeyToId.set(k,id); unitIdMap[u.id]=id; counts.units++;
+  });
+  const remapUnit=id=>(id&&unitIdMap[id])?unitIdMap[id]:id;
+
+  // 4. TF types (dedupe by name)
+  const tfTypeByName=new Map((state.customTFTypes||[]).map(t=>[String(t.name).toLowerCase(),t]));
+  const tfTypeById=new Map((state.customTFTypes||[]).map(t=>[t.id,t]));
+  const tfTypeIdMap={};
+  (d.customTFTypes||[]).forEach(t=>{
+    const k=String(t.name||"").toLowerCase(); const ex=tfTypeByName.get(k);
+    if(ex){ tfTypeIdMap[t.id]=ex.id; counts.skipped++; return; }
+    let id=(!t.id||tfTypeById.has(t.id))?"ctft_"+uid():t.id;
+    const nt=Object.assign({},t,{id}); state.customTFTypes.push(nt); tfTypeByName.set(k,nt); tfTypeById.set(id,nt); tfTypeIdMap[t.id]=id; counts.tfTypes++;
+  });
+  const remapTFType=id=>(id&&tfTypeIdMap[id])?tfTypeIdMap[id]:id;
+
+  // 5. Tactical assets (dedupe by name)
+  const assetByName=new Map((state.customTacticalAssets||[]).map(a=>[String(a.name).toLowerCase(),a]));
+  const assetById=new Map((state.customTacticalAssets||[]).map(a=>[a.id,a]));
+  const assetIdMap={};
+  (d.customTacticalAssets||[]).forEach(a=>{
+    const k=String(a.name||"").toLowerCase(); const ex=assetByName.get(k);
+    if(ex){ assetIdMap[a.id]=ex.id; counts.skipped++; return; }
+    let id=(!a.id||assetById.has(a.id))?uid():a.id;
+    const na=Object.assign({},a,{id}); state.customTacticalAssets.push(na); assetByName.set(k,na); assetById.set(id,na); assetIdMap[a.id]=id; counts.assets++;
+  });
+  const remapTacAsset=raw=>{ if(!raw) return raw; if(raw.startsWith("custom_")){ const b=raw.slice(7); return "custom_"+(assetIdMap[b]||b);} return raw; };
+
+  // 6. Task forces (fresh ids, references remapped)
+  const tfIdMap={};
+  (d.taskForces||[]).forEach(tf=>{
+    const id="tf_"+uid(); tfIdMap[tf.id]=id;
+    state.taskForces.push(Object.assign({},tf,{
+      id, tfType:remapTFType(tf.tfType), tacAsset:remapTacAsset(tf.tacAsset),
+      units:(tf.units||[]).map(s=>Object.assign({},s,{unitId:remapUnit(s.unitId),transport:s.transport?remapUnit(s.transport):s.transport}))
+    }));
+    counts.taskForces++;
+  });
+  const remapTF=id=>(id&&tfIdMap[id])?tfIdMap[id]:id;
+
+  // 7. Armies (fresh ids, references remapped)
+  const armyIdMap={};
+  (d.armies||[]).forEach(a=>{
+    const id="army_"+uid(); armyIdMap[a.id]=id;
+    state.armies.push(Object.assign({},a,{
+      id,
+      taskForceIds:(a.taskForceIds||[]).map(remapTF),
+      battleGroups:(a.battleGroups||[]).map(bg=>Object.assign({},bg,{
+        id:"bg_"+uid(),
+        entries:(bg.entries||[]).map(e=>{ const ne=Object.assign({},e,{id:"e_"+uid()});
+          if(ne.tfId) ne.tfId=remapTF(ne.tfId);
+          if(ne.unitId) ne.unitId=remapUnit(ne.unitId);
+          if(ne.transport) ne.transport=remapUnit(ne.transport);
+          return ne; })
+      }))
+    }));
+    counts.armies++;
+  });
+  const remapArmy=id=>(id&&armyIdMap[id])?armyIdMap[id]:id;
+
+  // 8. Expeditionary forces (fresh ids, army refs remapped)
+  (d.expeditionaryForces||[]).forEach(f=>{
+    state.expeditionaryForces.push(Object.assign({},f,{
+      id:"ef_"+uid(),
+      armyGroups:(f.armyGroups||[]).map(g=>Object.assign({},g,{ id:"ag_"+uid(), armyIds:(g.armyIds||[]).map(remapArmy) }))
+    }));
+    counts.forces++;
+  });
+
+  saveState();
+  renderDataPage();
+  const parts=[];
+  if(counts.units) parts.push(`${counts.units} unit(s)`);
+  if(counts.factions) parts.push(`${counts.factions} faction(s)`);
+  if(counts.traits) parts.push(`${counts.traits} trait(s)`);
+  if(counts.tfTypes) parts.push(`${counts.tfTypes} TF type(s)`);
+  if(counts.assets) parts.push(`${counts.assets} asset(s)`);
+  if(counts.taskForces) parts.push(`${counts.taskForces} task force(s)`);
+  if(counts.armies) parts.push(`${counts.armies} army(ies)`);
+  if(counts.forces) parts.push(`${counts.forces} force(s)`);
+  _dataMsg("data-import-msg","success",
+    (parts.length?`Imported ${parts.join(", ")}.`:"Nothing new to import.")+
+    (counts.skipped?` Skipped ${counts.skipped} duplicate(s).`:""));
 }
 
 function _dataMsg(id, type, html){

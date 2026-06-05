@@ -148,11 +148,24 @@ through everything.
   **Ctrl/Cmd+Z** (ignored while focused in an input/textarea/select). A
   toast (`#undo-toast`) confirms. The stack is in-memory only — it does not
   survive a page reload.
-- **Data page export/import** — copy-paste JSON via modals (no file
-  download/upload). Export opens `#modal-export-json` with a
-  "Copy to clipboard" button. Import is a `<textarea>` that parses live.
-  Two kinds: `full` (replaces everything) and `faction` (merges, dedup by
-  name).
+- **Data page** — four cards: a **data overview** (`renderDataOverview()`,
+  per-category counts), a **selective export picker**, **import**, and a
+  **danger zone** (`resetAllData()`, two-click confirm).
+  - **Export picker** (`renderExportPicker()`, driven by the `EXPORT_CATS`
+    config + `_exportSel` sets) is a tri-state checkbox tree over all eight
+    categories — tick whole categories or individual items.
+    `collectSelectionBundle()` transitively pulls in every dependency
+    (an explicitly-ticked faction also grabs its units). Emits export kind
+    `selection`. A separate **Full Backup** button emits kind `full`.
+  - **Export modal** (`#modal-export-json`) has **Copy to clipboard** and
+    **Download .json** (`downloadExportJSON()` derives the filename from the
+    shown JSON, so it works for army/TF exports too).
+  - **Import** is a `<textarea>` that parses live, plus **Upload .json**
+    (`onImportFileChange()` reads a file into the textarea). Kinds handled:
+    `full` (replaces everything), `faction` and `selection` (both merge,
+    dedup library items by name; `importSelection()` gives containers — task
+    forces/armies/forces — fresh IDs with remapped refs). `army` exports are
+    still imported from the Armies page.
 - **Per-army export/import** — Export/Import buttons on the Armies page.
   `collectArmyBundle()` gathers the army plus **all dependencies**: its task
   forces, custom TF types, tactical assets, custom units, those units'
