@@ -5186,6 +5186,9 @@ function slotPointValue(slot) {
     const tu = unitById(slot.transport);
     if (tu) basePts += mechanizedCount(u, tu) * calcPoints(tu).perStand;
   }
+  // Support Units pay a 10% premium on their final cost, rounded up to the
+  // nearest 5 (cross-attached from outside the task force's normal slots).
+  if (slot.role === "support") basePts = roundToFive(basePts * 1.10);
   return basePts * slot.quantity;
 }
 
@@ -6624,6 +6627,23 @@ function bgUnitCount(bg) {
   return (bg.entries||[]).reduce((sum,e) => sum + (e.qty||0), 0);
 }
 
+// Rules-adjusted unit count used only for the minimum-battle-group-size check:
+// "Count every 3 Independent Stands as one Unit for this purpose." Multi-stand
+// Units count their full quantity; single-stand independent/command/hero
+// entries are grouped 3-to-1. (Display counts elsewhere stay raw.)
+function _bgEntryUnitType(e) {
+  if(e.slotId) { const s = entrySlot(e); return (s && s.unitType) || "unit"; }
+  return e.unitType || "unit";
+}
+function bgSizingUnits(bg) {
+  let regular = 0, indep = 0;
+  (bg.entries||[]).forEach(e => {
+    const q = e.qty||0;
+    if(_bgEntryUnitType(e) === "unit") regular += q; else indep += q;
+  });
+  return regular + Math.round(indep/3);
+}
+
 function entrySlot(e) {
   const tf = state.taskForces.find(t=>t.id===e.tfId);
   return tf ? (tf.units||[]).find(s=>s.id===e.slotId) : null;
@@ -6641,6 +6661,7 @@ function entryPointValue(e) {
       const tu = unitById(slot.transport);
       if (tu) basePts += mechanizedCount(u, tu) * calcPoints(tu).perStand;
     }
+    if (slot.role === "support") basePts = roundToFive(basePts * 1.10);
     return basePts * (e.qty||0);
   } else {
     const u = unitById(e.unitId);
@@ -6839,7 +6860,7 @@ function pruneOrphanedBGEntries() {
 
 function armyBGSizeViolations(army) {
   const bgs = (army.battleGroups||[]).slice(0, army.bgCount||3);
-  const sizes = bgs.map(bg => bgUnitCount(bg));
+  const sizes = bgs.map(bg => bgSizingUnits(bg));
   const largest = Math.max(...sizes, 0);
   if(largest === 0) return { violatingIds: new Set(), minAllowed: 0, largest: 0, largestName: "", ok: true };
   const minAllowed = Math.ceil(largest / 2);
@@ -7382,7 +7403,7 @@ function renderArmyDetail() {
   if(!bgViol.ok) {
     const offenders = (army.battleGroups||[]).slice(0,bgCount)
       .filter(bg => bgViol.violatingIds.has(bg.id))
-      .map(bg => `<strong>${esc(bg.name)}</strong> (${bgUnitCount(bg)})`);
+      .map(bg => `<strong>${esc(bg.name)}</strong> (${bgSizingUnits(bg)})`);
     const offenderList = offenders.length>1
       ? offenders.slice(0,-1).join(", ") + " and " + offenders[offenders.length-1]
       : offenders[0];
@@ -7409,6 +7430,7 @@ function renderArmyDetail() {
   function _armyBGCardBody(bg) {
       const bPts = bgPoints(bg);
       const bgSize = bgUnitCount(bg);
+      const bgRuleSize = bgSizingUnits(bg); // rules-adjusted count for size checks
       const bgUndersize = bgViol.violatingIds.has(bg.id);
       const bgMode = army.bgIconMode || "custom";
       const symDef = bgDesignation(army, bg);
@@ -7442,7 +7464,7 @@ function renderArmyDetail() {
           // Has units but not enough — red error (user has made an active mistake)
           return `<div style="margin-bottom:8px;padding:5px 8px;border-radius:4px;background:#1a0505;border:1px solid #ef535055;font-size:11px;color:#ef9a9a;display:flex;align-items:flex-start;gap:6px">
             <i class="fa-solid fa-triangle-exclamation" style="color:#ef5350;flex-shrink:0;margin-top:1px"></i>
-            <span>Has ${bgSize} unit${bgSize!==1?"s":""} — needs at least <strong style="color:#ef5350">${bgViol.minAllowed}</strong> (half of ${esc(bgViol.largestName)}'s ${bgViol.largest}, rounded up)</span>
+            <span>Has ${bgRuleSize} unit${bgRuleSize!==1?"s":""} — needs at least <strong style="color:#ef5350">${bgViol.minAllowed}</strong> (half of ${esc(bgViol.largestName)}'s ${bgViol.largest}, rounded up)</span>
           </div>`;
         }
         return "";
@@ -7518,9 +7540,9 @@ function renderArmyDetail() {
           <div style="display:flex;align-items:center;gap:5px">${nameSection}</div>
           <div style="font-size:9px;color:var(--text-muted);margin-top:2px">${bPts} pts &bull; ${(()=>{
             if(bgViol.minAllowed > 0) {
-              const met = bgSize >= bgViol.minAllowed;
+              const met = bgRuleSize >= bgViol.minAllowed;
               const col = bgSize === 0 ? "var(--accent-light)" : met ? "#66bb6a" : "#ef5350";
-              return `<span style="color:${col}">${bgSize}/${bgViol.minAllowed}</span> unit${bgSize!==1?"s":""}`;
+              return `<span style="color:${col}">${bgRuleSize}/${bgViol.minAllowed}</span> unit${bgRuleSize!==1?"s":""}`;
             }
             return `${bgSize} unit${bgSize!==1?"s":""}`;
           })()}</div>
