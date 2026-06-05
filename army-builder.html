@@ -1685,6 +1685,7 @@ const _EMPTY_STATE = JSON.stringify({customUnits:[],customFactions:[],customTrai
 
 function saveState() {
   _unitIdCache = null;
+  _calcPtsCache = null;
   const prev = localStorage.getItem("ls_army_builder") || _EMPTY_STATE;
   _undoStack.push(prev);
   if (_undoStack.length > _UNDO_LIMIT) _undoStack.shift();
@@ -1694,6 +1695,7 @@ function saveState() {
 
 function undoState() {
   _unitIdCache = null;
+  _calcPtsCache = null;
   if (!_undoStack.length) return;
   const prev = _undoStack.pop();
   localStorage.setItem("ls_army_builder", prev);
@@ -1783,6 +1785,7 @@ function _showUndoToast() {
 }
 function loadState() {
   _unitIdCache = null;
+  _calcPtsCache = null;
   const raw = localStorage.getItem("ls_army_builder");
   if (raw) {
     try {
@@ -1874,6 +1877,7 @@ function allUnits() {
   return [...BUILTIN_UNITS, ...state.customUnits];
 }
 let _unitIdCache = null;
+let _calcPtsCache = null;
 function unitById(id) {
   if (!_unitIdCache) {
     _unitIdCache = new Map();
@@ -1901,11 +1905,17 @@ function computeAllowedRoles(unit) {
 }
 
 function calcPoints(unit) {
+  if (unit.id) {
+    if (!_calcPtsCache) _calcPtsCache = new Map();
+    const hit = _calcPtsCache.get(unit.id);
+    if (hit) return hit;
+  }
+  const _cacheResult = r => { if (unit.id) _calcPtsCache.set(unit.id, r); return r; };
   if (unit.officialPts) {
     const ci = CLASS_INFO[unit.class] || CLASS_INFO.inf;
     const op = unit.officialPts;
-    return { perStand:op.perStand, unitSize:ci.size, unitPts:op.unitPts, indPts:op.indPts,
-             cmdPts:op.cmdPts, heroPts:op.heroPts, cmdHeroPts:op.cmdHeroPts, saveDice:ci.saveDice };
+    return _cacheResult({ perStand:op.perStand, unitSize:ci.size, unitPts:op.unitPts, indPts:op.indPts,
+             cmdPts:op.cmdPts, heroPts:op.heroPts, cmdHeroPts:op.cmdHeroPts, saveDice:ci.saveDice });
   }
   const ci = CLASS_INFO[unit.class] || CLASS_INFO.inf;
   const ptsSpeedBase = (unit.speed - ci.baseSpeed) * 0.25;
@@ -1992,7 +2002,7 @@ function calcPoints(unit) {
   const effectiveSize = unit.customSize ? Math.max(minSize, unit.customSize) : defaultSize;
   const belowDefault = effectiveSize < defaultSize;
   const sizeFactor = belowDefault ? 1.10 : 1.0;
-  return {
+  return _cacheResult({
     perStand: total,
     unitSize: effectiveSize,
     defaultSize,
@@ -2005,7 +2015,7 @@ function calcPoints(unit) {
     saveDice: ci.saveDice,
     allowedRoles,
     breakdown: {standPts, standComps, weaponPts, weaponComps, mult: ci.mult}
-  };
+  });
 }
 
 function rangeLabel(rv) {
