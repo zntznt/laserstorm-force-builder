@@ -1684,6 +1684,7 @@ const _undoStack = [];
 const _EMPTY_STATE = JSON.stringify({customUnits:[],customFactions:[],customTraits:[],customTFTypes:[],customTacticalAssets:[],taskForces:[],armies:[],expeditionaryForces:[],tfTemplates:[]});
 
 function saveState() {
+  _unitIdCache = null;
   const prev = localStorage.getItem("ls_army_builder") || _EMPTY_STATE;
   _undoStack.push(prev);
   if (_undoStack.length > _UNDO_LIMIT) _undoStack.shift();
@@ -1692,6 +1693,7 @@ function saveState() {
 }
 
 function undoState() {
+  _unitIdCache = null;
   if (!_undoStack.length) return;
   const prev = _undoStack.pop();
   localStorage.setItem("ls_army_builder", prev);
@@ -1780,6 +1782,7 @@ function _showUndoToast() {
   _undoToastTimer = setTimeout(() => toast.classList.remove("visible"), 2200);
 }
 function loadState() {
+  _unitIdCache = null;
   const raw = localStorage.getItem("ls_army_builder");
   if (raw) {
     try {
@@ -1870,8 +1873,14 @@ function _revertConfirmBtn(btn) {
 function allUnits() {
   return [...BUILTIN_UNITS, ...state.customUnits];
 }
+let _unitIdCache = null;
 function unitById(id) {
-  return allUnits().find(u => u.id === id);
+  if (!_unitIdCache) {
+    _unitIdCache = new Map();
+    for (const u of BUILTIN_UNITS) _unitIdCache.set(u.id, u);
+    for (const u of state.customUnits) _unitIdCache.set(u.id, u);
+  }
+  return _unitIdCache.get(id);
 }
 
 // Returns the set of role vals required by all selected traits, or null if unrestricted.
