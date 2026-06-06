@@ -4909,7 +4909,7 @@ function renderFactionList() {
             </div>
             <div class="fac-card-actions" onclick="event.stopPropagation()">
               <button class="trait-edit-btn" onclick="editCustomFaction('${f.id}');openModal('modal-faction')"><i class="fa-solid fa-pencil"></i> Edit</button>
-              <button class="trait-edit-btn" style="border-color:#8b000066;color:#ef5350;background:#2a0a0a" onclick="confirmBtn(this,()=>deleteCustomFaction('${f.id}'))"><i class="fa-solid fa-trash"></i></button>
+              <button class="trait-edit-btn" style="border-color:#8b000066;color:#ef5350;background:#2a0a0a" onclick="confirmBtn(this,()=>deleteCustomFaction('${f.id}'))"><i class="fa-solid fa-trash"></i> Delete</button>
             </div>
           </div>
           ${chips ? `<div class="fac-card-meta">${chips}</div>` : ""}
