@@ -2427,11 +2427,11 @@ const EXPORT_CATS = [
   { key:"customFactions",       label:"Factions",             icon:"flag",           name:f=>f.name, meta:()=>"" },
   { key:"customTraits",         label:"Custom Traits",        icon:"star",           name:t=>t.name, meta:t=>(t.cost>=0?"+":"")+t.cost+"p" },
   { key:"customUnits",          label:"Units",                icon:"chess-pawn",     name:u=>u.name, meta:u=>factionName(u.faction)||"" },
-  { key:"customTFTypes",        label:"TF Types",             icon:"sitemap",        name:t=>t.name, meta:()=>"" },
+  { key:"customTFTypes",        label:"TF Types",             icon:"gear",           name:t=>t.name, meta:()=>"" },
   { key:"customTacticalAssets", label:"Tactical Assets",      icon:"bolt",           name:a=>a.name, meta:()=>"" },
-  { key:"taskForces",           label:"Task Forces",          icon:"shield-halved",  name:t=>t.name, meta:t=>(t.units||[]).length+" slot"+((t.units||[]).length!==1?"s":"") },
+  { key:"taskForces",           label:"Task Forces",          icon:"users",          name:t=>t.name, meta:t=>(t.units||[]).length+" slot"+((t.units||[]).length!==1?"s":"") },
   { key:"armies",               label:"Armies",               icon:"chess-rook",     name:a=>a.name, meta:a=>isFreePick(a)?"Free Pick":"Task Force" },
-  { key:"expeditionaryForces",  label:"Expeditionary Forces", icon:"flag-checkered", name:f=>f.name, meta:f=>(f.armyGroups||[]).length+" group"+((f.armyGroups||[]).length!==1?"s":"") },
+  { key:"expeditionaryForces",  label:"Expeditionary Forces", icon:"earth-americas", name:f=>f.name, meta:f=>(f.armyGroups||[]).length+" group"+((f.armyGroups||[]).length!==1?"s":"") },
 ];
 let _exportSel = {};        // { catKey: Set(ids) } — items the user ticked
 let _exportOpenCats = {};   // { catKey: bool }     — which categories are expanded
