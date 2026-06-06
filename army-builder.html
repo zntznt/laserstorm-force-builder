@@ -818,7 +818,7 @@ label .trait-edit-btn{margin-left:6px}
 <div id="modal-import-tf" class="modal-bg">
   <div class="modal" style="max-width:640px">
     <div class="modal-header">Import Task Force <button class="modal-close" onclick="closeModal('modal-import-tf')"><i class="fa-solid fa-xmark"></i></button></div>
-    <p style="color:var(--text-muted);font-size:13px;margin:0 0 14px;line-height:1.5">Paste a previously exported task force JSON. Custom units, factions, traits, TF types and assets are merged automatically — duplicates (matched by name) are skipped.</p>
+    <p style="color:var(--text-muted);font-size:13px;margin:0 0 14px;line-height:1.5">Paste a previously exported task force JSON. Custom units, factions, traits, task force types and assets are merged automatically — duplicates (matched by name) are skipped.</p>
     <div class="form-group" style="margin-bottom:12px">
       <label>Paste Task Force JSON</label>
       <textarea id="import-tf-text" placeholder="Paste task force JSON here..." oninput="onImportTFTextChange()" style="width:100%;min-height:140px;resize:vertical;font-family:monospace;font-size:12px;line-height:1.4;background:var(--surface-page);border:1px solid var(--border-default);border-radius:6px;color:var(--text-primary);padding:10px"></textarea>
@@ -901,7 +901,7 @@ label .trait-edit-btn{margin-left:6px}
       <span class="field-error" id="tf-new-name-err"></span>
     </div>
     <div class="form-group" style="margin-bottom:12px">
-      <label>TF Type</label>
+      <label>Task Force Type</label>
       <div style="display:flex;gap:6px;align-items:center">
         <select id="tf-type" style="flex:1"></select>
         <button class="trait-edit-btn" onclick="openCustomTFTypeModal()"><i class="fa-solid fa-gear"></i> Custom Types</button>
@@ -2427,7 +2427,7 @@ const EXPORT_CATS = [
   { key:"customFactions",       label:"Factions",             icon:"flag",           name:f=>f.name, meta:()=>"" },
   { key:"customTraits",         label:"Custom Traits",        icon:"star",           name:t=>t.name, meta:t=>(t.cost>=0?"+":"")+t.cost+"p" },
   { key:"customUnits",          label:"Units",                icon:"chess-pawn",     name:u=>u.name, meta:u=>factionName(u.faction)||"" },
-  { key:"customTFTypes",        label:"TF Types",             icon:"gear",           name:t=>t.name, meta:()=>"" },
+  { key:"customTFTypes",        label:"Task Force Types",             icon:"gear",           name:t=>t.name, meta:()=>"" },
   { key:"customTacticalAssets", label:"Tactical Assets",      icon:"bolt",           name:a=>a.name, meta:()=>"" },
   { key:"taskForces",           label:"Task Forces",          icon:"users",          name:t=>t.name, meta:t=>(t.units||[]).length+" slot"+((t.units||[]).length!==1?"s":"") },
   { key:"armies",               label:"Armies",               icon:"chess-rook",     name:a=>a.name, meta:a=>isFreePick(a)?"Free Pick":"Task Force" },
@@ -2751,7 +2751,7 @@ function _parseImportDataText(){
   }
   if(payload.kind==="full"){
     html = `<strong>Full backup</strong> detected &mdash; `+
-      `${nu} unit(s), ${nf} faction(s), ${nt} trait(s), ${(d.customTFTypes||[]).length} TF type(s), ${(d.customTacticalAssets||[]).length} asset(s), `+
+      `${nu} unit(s), ${nf} faction(s), ${nt} trait(s), ${(d.customTFTypes||[]).length} task force type(s), ${(d.customTacticalAssets||[]).length} asset(s), `+
       `${(d.taskForces||[]).length} task force(s), ${(d.armies||[]).length} army(ies), ${(d.expeditionaryForces||[]).length} force(s).<br>`+
       `<span style="color:#f85149;font-weight:bold">Importing will REPLACE all of your current data.</span>`;
     if(ib) ib.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Replace all data';
@@ -2762,7 +2762,7 @@ function _parseImportDataText(){
   } else if(payload.kind==="selection"){
     const parts = [
       nu?`${nu} unit(s)`:null, nf?`${nf} faction(s)`:null, nt?`${nt} trait(s)`:null,
-      (d.customTFTypes||[]).length?`${d.customTFTypes.length} TF type(s)`:null,
+      (d.customTFTypes||[]).length?`${d.customTFTypes.length} task force type(s)`:null,
       (d.customTacticalAssets||[]).length?`${d.customTacticalAssets.length} asset(s)`:null,
       (d.taskForces||[]).length?`${d.taskForces.length} task force(s)`:null,
       (d.armies||[]).length?`${d.armies.length} army(ies)`:null,
@@ -2988,7 +2988,7 @@ function importSelection(d){
   if(counts.units) parts.push(`${counts.units} unit(s)`);
   if(counts.factions) parts.push(`${counts.factions} faction(s)`);
   if(counts.traits) parts.push(`${counts.traits} trait(s)`);
-  if(counts.tfTypes) parts.push(`${counts.tfTypes} TF type(s)`);
+  if(counts.tfTypes) parts.push(`${counts.tfTypes} task force type(s)`);
   if(counts.assets) parts.push(`${counts.assets} asset(s)`);
   if(counts.taskForces) parts.push(`${counts.taskForces} task force(s)`);
   if(counts.armies) parts.push(`${counts.armies} army(ies)`);
@@ -3136,7 +3136,7 @@ function _parseImportArmyText() {
     d.customUnits&&d.customUnits.length ? `${d.customUnits.length} custom unit${d.customUnits.length!==1?"s":""}` : null,
     d.customFactions&&d.customFactions.length ? `${d.customFactions.length} custom faction${d.customFactions.length!==1?"s":""}` : null,
     d.customTraits&&d.customTraits.length ? `${d.customTraits.length} custom trait${d.customTraits.length!==1?"s":""}` : null,
-    d.customTFTypes&&d.customTFTypes.length ? `${d.customTFTypes.length} custom TF type${d.customTFTypes.length!==1?"s":""}` : null,
+    d.customTFTypes&&d.customTFTypes.length ? `${d.customTFTypes.length} custom task force type${d.customTFTypes.length!==1?"s":""}` : null,
     d.customTacticalAssets&&d.customTacticalAssets.length ? `${d.customTacticalAssets.length} custom asset${d.customTacticalAssets.length!==1?"s":""}` : null,
   ].filter(Boolean);
   if(prev){ prev.innerHTML = parts.join(" &bull; "); prev.style.display=""; }
@@ -6252,7 +6252,7 @@ function exportTF(tfId) {
     if(bundle.customUnits.length) parts.push(`${bundle.customUnits.length} custom unit${bundle.customUnits.length!==1?"s":""}`);
     if(bundle.customFactions.length) parts.push(`${bundle.customFactions.length} custom faction${bundle.customFactions.length!==1?"s":""}`);
     if(bundle.customTraits.length) parts.push(`${bundle.customTraits.length} custom trait${bundle.customTraits.length!==1?"s":""}`);
-    if(bundle.customTFTypes.length) parts.push(`${bundle.customTFTypes.length} custom TF type`);
+    if(bundle.customTFTypes.length) parts.push(`${bundle.customTFTypes.length} custom task force type`);
     if(bundle.customTacticalAssets.length) parts.push(`${bundle.customTacticalAssets.length} custom asset${bundle.customTacticalAssets.length!==1?"s":""}`);
     sum.textContent = parts.length ? parts.join(", ") : "no custom dependencies";
   }
@@ -6308,7 +6308,7 @@ function _parseImportTFText() {
     d.customUnits&&d.customUnits.length ? `${d.customUnits.length} custom unit${d.customUnits.length!==1?"s":""}` : null,
     d.customFactions&&d.customFactions.length ? `${d.customFactions.length} custom faction${d.customFactions.length!==1?"s":""}` : null,
     d.customTraits&&d.customTraits.length ? `${d.customTraits.length} custom trait${d.customTraits.length!==1?"s":""}` : null,
-    d.customTFTypes&&d.customTFTypes.length ? `${d.customTFTypes.length} custom TF type` : null,
+    d.customTFTypes&&d.customTFTypes.length ? `${d.customTFTypes.length} custom task force type` : null,
     d.customTacticalAssets&&d.customTacticalAssets.length ? `${d.customTacticalAssets.length} custom asset${d.customTacticalAssets.length!==1?"s":""}` : null,
   ].filter(Boolean);
   if(prev){ prev.innerHTML = parts.join(" &bull; "); prev.style.display=""; }
