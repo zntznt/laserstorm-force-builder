@@ -1,0 +1,588 @@
+{
+  "app": "laserstorm-army-builder",
+  "kind": "faction",
+  "version": 1,
+  "exportedAt": "2026-06-06T00:00:00.000Z",
+  "faction": "Mechanicum",
+  "data": {
+    "customFactions": [
+      {
+        "id": "fac_mechanicum",
+        "name": "Mechanicum",
+        "icon": "gear",
+        "color": "#cd7f32",
+        "description": "The war-cohorts of the Machine God. Cybernetica battle-automata, Thallax shock-troops, god-engine Titans, and Dark Mechanicum stalker constructs. Drawn from the LI Mechanicum Combat Force (2025), Adeptus Titanicus Core Game (2020), LI Warlord Titan with Plasma Annihilator (2023), Dark Mechanicum Stalker Constructs (2024), and Serperos Heavy Stalkers (2024)."
+      }
+    ],
+    "customTraits": [
+      {
+        "id": "mech_cybernetica",
+        "name": "Cybernetica Cortex",
+        "cost": 1,
+        "description": "[Mechanicum][Unit] Governed by a machine cortex with no will of its own. This Unit automatically passes all Morale tests but can never receive a Follow Me order nor benefit from Inspiration.",
+        "type": "stand",
+        "faction": "fac_mechanicum",
+        "reqs": [{ "type": "faction", "vals": ["fac_mechanicum"] }],
+        "stackable": false,
+        "unitTrait": true
+      },
+      {
+        "id": "mech_volkite",
+        "name": "Volkite",
+        "cost": 1,
+        "description": "[Mechanicum] Deflagrate. For each hit from this weapon that destroys a stand, inflict one additional automatic hit on the same target Unit. Chained hits do not deflagrate further.",
+        "type": "weapon",
+        "faction": "fac_mechanicum",
+        "reqs": [{ "type": "faction", "vals": ["fac_mechanicum"] }],
+        "stackable": false
+      }
+    ],
+    "customUnits": [
+      {
+        "id": "mech_archmagos",
+        "name": "Archmagos Prime",
+        "description": "The force's master tech-priest, borne on a grav-abeyant. Augur-arrays and binaric cant bind the cohort to one cold purpose.",
+        "class": "inf",
+        "faction": "fac_mechanicum",
+        "role": "specialist",
+        "speed": 6,
+        "mobility": "grav",
+        "aim": 3,
+        "assault": 1,
+        "saveNumber": 4,
+        "morale": 2,
+        "customSize": 2,
+        "standTraits": [["Inspiration", 3]],
+        "weapons": [
+          { "name": "Conversion Beamer", "mode": "at", "type": "p", "range": 10, "shots": 1, "impact": 5, "traits": [["Heavy", -1]] },
+          { "name": "Volkite Serpenta", "mode": "ai", "type": "s", "range": 5, "shots": 1, "impact": 2, "traits": [["Volkite", 1]] }
+        ],
+        "allowedRoles": null,
+        "builtIn": false
+      },
+      {
+        "id": "mech_secutor",
+        "name": "Myrmidon Secutors",
+        "description": "Battle tech-priests of the Myrmidax cult seeking wisdom through slaughter, power weapons and graviton imploders at the fore.",
+        "class": "inf",
+        "faction": "fac_mechanicum",
+        "role": "specialist",
+        "speed": 5,
+        "mobility": "troop",
+        "aim": 4,
+        "assault": 3,
+        "saveNumber": 4,
+        "morale": 3,
+        "customSize": 3,
+        "standTraits": [["Melee Weapons", 0.5], ["Charge", 0.5]],
+        "weapons": [
+          { "name": "Volkite Chargers", "mode": "ai", "type": "p", "range": 2, "shots": 2, "impact": 2, "traits": [["Volkite", 1]] },
+          { "name": "Graviton Imploders", "mode": "at", "type": "s", "range": 0, "shots": 1, "impact": 5, "traits": [] }
+        ],
+        "allowedRoles": null,
+        "builtIn": false
+      },
+      {
+        "id": "mech_techpriest",
+        "name": "Tech-Priest Auxilia",
+        "description": "Cult Mechanicum officers leading lesser cohorts, mechadendrites flexing, directing fire with bionic precision.",
+        "class": "inf",
+        "faction": "fac_mechanicum",
+        "role": "support",
+        "speed": 4,
+        "mobility": "troop",
+        "aim": 4,
+        "assault": 1,
+        "saveNumber": 5,
+        "morale": 3,
+        "customSize": 2,
+        "standTraits": [["Precise Fire", 1]],
+        "weapons": [
+          { "name": "Volkite Serpenta", "mode": "ai", "type": "p", "range": 5, "shots": 1, "impact": 2, "traits": [["Volkite", 1]] }
+        ],
+        "allowedRoles": null,
+        "builtIn": false
+      },
+      {
+        "id": "mech_thralls",
+        "name": "Tech-Thrall Covenant",
+        "description": "Lobotomised servitor-conscripts driven forward by binaric command. Cheap, expendable, and utterly without fear.",
+        "class": "inf",
+        "faction": "fac_mechanicum",
+        "role": "core",
+        "speed": 4,
+        "mobility": "troop",
+        "aim": 5,
+        "assault": 0,
+        "saveNumber": 6,
+        "morale": 6,
+        "customSize": 8,
+        "standTraits": [["Cybernetica Cortex", 1]],
+        "weapons": [
+          { "name": "Galvanic Casters", "mode": "ai", "type": "p", "range": 2, "shots": 1, "impact": 0, "traits": [] }
+        ],
+        "allowedRoles": null,
+        "builtIn": false
+      },
+      {
+        "id": "mech_thallax",
+        "name": "Thallax Cohort",
+        "description": "Augmetic cyborg shock-troops of the Ordo Reductor, flesh interred in armoured Lorica, borne aloft on lightning-wreathed jet packs.",
+        "class": "inf",
+        "faction": "fac_mechanicum",
+        "role": "core",
+        "speed": 6,
+        "mobility": "troop",
+        "aim": 4,
+        "assault": 1,
+        "saveNumber": 4,
+        "morale": 4,
+        "customSize": 6,
+        "standTraits": [["Cybernetica Cortex", 1], ["Jump Troops", 0.5]],
+        "weapons": [
+          { "name": "Lightning Gun", "mode": "at", "type": "p", "range": 5, "shots": 1, "impact": 4, "traits": [] },
+          { "name": "Irad-Cleanser", "mode": "ai", "type": "s", "range": 0, "shots": 2, "impact": 2, "traits": [["Flame", 0]] }
+        ],
+        "allowedRoles": null,
+        "builtIn": false
+      },
+      {
+        "id": "mech_ursarax",
+        "name": "Ursarax Cohort",
+        "description": "Jump-pack cyborgs trading ranged precision for raw violence, falling on the foe with power fists and Volkite incinerators.",
+        "class": "inf",
+        "faction": "fac_mechanicum",
+        "role": "specialist",
+        "speed": 7,
+        "mobility": "troop",
+        "aim": 4,
+        "assault": 3,
+        "saveNumber": 4,
+        "morale": 4,
+        "customSize": 4,
+        "standTraits": [["Cybernetica Cortex", 1], ["Jump Troops", 0.5], ["Charge", 0.5]],
+        "weapons": [
+          { "name": "Volkite Incinerators", "mode": "ai", "type": "p", "range": 2, "shots": 2, "impact": 2, "traits": [["Volkite", 1]] }
+        ],
+        "allowedRoles": null,
+        "builtIn": false
+      },
+      {
+        "id": "mech_destructor",
+        "name": "Myrmidon Destructors",
+        "description": "Battle tech-priests rebuilt around the heaviest portable weapons the Forge can implant, delivering precisely aimed barrages.",
+        "class": "inf",
+        "faction": "fac_mechanicum",
+        "role": "support",
+        "speed": 4,
+        "mobility": "troop",
+        "aim": 3,
+        "assault": 1,
+        "saveNumber": 4,
+        "morale": 3,
+        "customSize": 4,
+        "standTraits": [["Precise Fire", 1]],
+        "weapons": [
+          { "name": "Volkite Culverin", "mode": "gp", "type": "p", "range": 5, "shots": 2, "impact": 2, "traits": [["Volkite", 1]] },
+          { "name": "Multi-Melta", "mode": "at", "type": "s", "range": 2, "shots": 1, "impact": 6, "traits": [] }
+        ],
+        "allowedRoles": null,
+        "builtIn": false
+      },
+      {
+        "id": "mech_vultarax",
+        "name": "Vultarax Stratos-Automata",
+        "description": "The Mechanicum's flying hunter-killer automata, screaming over the battle-line on arc-wreathed thrusters.",
+        "class": "ac",
+        "faction": "fac_mechanicum",
+        "role": "specialist",
+        "speed": 10,
+        "mobility": "air",
+        "aim": 4,
+        "assault": 1,
+        "saveNumber": 4,
+        "morale": 4,
+        "customSize": 2,
+        "standTraits": [["Cybernetica Cortex", 1]],
+        "weapons": [
+          { "name": "Vultarax Arc Blaster", "mode": "at", "type": "s", "range": 5, "shots": 2, "impact": 4, "traits": [] },
+          { "name": "Havoc Launchers", "mode": "gp", "type": "s", "range": 5, "shots": 1, "impact": 2, "traits": [["Frag", 0]] }
+        ],
+        "allowedRoles": null,
+        "builtIn": false
+      },
+      {
+        "id": "mech_arlatax",
+        "name": "Arlatax Battle-Automata",
+        "description": "Rapid shock-assault automata from Xana II, atomantic-shielded and power-clawed, built to break formation on impact.",
+        "class": "afv",
+        "faction": "fac_mechanicum",
+        "role": "specialist",
+        "speed": 9,
+        "mobility": "walk",
+        "aim": 4,
+        "assault": 3,
+        "saveNumber": 4,
+        "morale": 4,
+        "customSize": 2,
+        "standTraits": [["Cybernetica Cortex", 1], ["Active Defenses", 3], ["Charge", 0.5]],
+        "weapons": [
+          { "name": "Lightning Guns", "mode": "at", "type": "p", "range": 5, "shots": 2, "impact": 4, "traits": [] },
+          { "name": "Havoc Launcher", "mode": "gp", "type": "s", "range": 5, "shots": 1, "impact": 2, "traits": [["Frag", 0]] }
+        ],
+        "allowedRoles": null,
+        "builtIn": false
+      },
+      {
+        "id": "mech_domitar",
+        "name": "Domitar Battle-Automata",
+        "description": "A faster, heavier evolution of the Castellax, closing on tanks and crushing them under graviton hammers.",
+        "class": "afv",
+        "faction": "fac_mechanicum",
+        "role": "core",
+        "speed": 8,
+        "mobility": "walk",
+        "aim": 4,
+        "assault": 3,
+        "saveNumber": 3,
+        "morale": 3,
+        "customSize": 2,
+        "standTraits": [["Cybernetica Cortex", 1], ["Tank Hunter", 1]],
+        "weapons": [
+          { "name": "Mauler Bolt Cannons", "mode": "gp", "type": "p", "range": 5, "shots": 3, "impact": 2, "traits": [["Rapid Fire", 0]] },
+          { "name": "Graviton Hammer", "mode": "at", "type": "s", "range": 0, "shots": 1, "impact": 5, "traits": [] }
+        ],
+        "allowedRoles": null,
+        "builtIn": false
+      },
+      {
+        "id": "mech_vorax",
+        "name": "Vorax Battle-Automata",
+        "description": "Ancient Martian quadruped hunter-killers built to run down rogue machines and prey alike, rotor cannons rattling as they close.",
+        "class": "scout",
+        "faction": "fac_mechanicum",
+        "role": "specialist",
+        "speed": 9,
+        "mobility": "walk",
+        "aim": 4,
+        "assault": 1,
+        "saveNumber": 5,
+        "morale": 5,
+        "customSize": 4,
+        "standTraits": [["Cybernetica Cortex", 1], ["Tank Hunter", 1]],
+        "weapons": [
+          { "name": "Lightning Gun", "mode": "at", "type": "s", "range": 5, "shots": 1, "impact": 4, "traits": [] },
+          { "name": "Rotor Cannons", "mode": "ai", "type": "s", "range": 5, "shots": 2, "impact": 1, "traits": [["Rapid Fire", 0]] }
+        ],
+        "allowedRoles": null,
+        "builtIn": false
+      },
+      {
+        "id": "mech_castellax",
+        "name": "Castellax Battle-Automata",
+        "description": "The mainstay Castellan robot of the Legio Cybernetica — humanoid, atomantic-shielded, mauler bolt cannon thundering.",
+        "class": "afv",
+        "faction": "fac_mechanicum",
+        "role": "core",
+        "speed": 6,
+        "mobility": "walk",
+        "aim": 4,
+        "assault": 2,
+        "saveNumber": 4,
+        "morale": 4,
+        "customSize": 4,
+        "standTraits": [["Cybernetica Cortex", 1], ["Active Defenses", 3]],
+        "weapons": [
+          { "name": "Mauler Bolt Cannon", "mode": "gp", "type": "p", "range": 5, "shots": 3, "impact": 2, "traits": [["Rapid Fire", 0]] },
+          { "name": "Multi-Melta", "mode": "at", "type": "s", "range": 2, "shots": 1, "impact": 6, "traits": [] }
+        ],
+        "allowedRoles": null,
+        "builtIn": false
+      },
+      {
+        "id": "mech_thanatar",
+        "name": "Thanatar Siege-Automata",
+        "description": "A walking artillery piece mounting the Hellex plasma mortar, lobbing airburst charges far across the battlefield.",
+        "class": "afv",
+        "faction": "fac_mechanicum",
+        "role": "support",
+        "speed": 5,
+        "mobility": "walk",
+        "aim": 4,
+        "assault": 1,
+        "saveNumber": 4,
+        "morale": 4,
+        "customSize": 4,
+        "standTraits": [["Cybernetica Cortex", 1], ["Active Defenses", 3]],
+        "weapons": [
+          { "name": "Hellex Plasma Mortar", "mode": "gp", "type": "p", "range": 20, "shots": 1, "impact": 5, "traits": [["Indirect", 3], ["Frag", 0]] },
+          { "name": "Mauler Bolt Cannon", "mode": "gp", "type": "s", "range": 5, "shots": 2, "impact": 2, "traits": [] }
+        ],
+        "allowedRoles": null,
+        "builtIn": false
+      },
+      {
+        "id": "mech_thanatar_calix",
+        "name": "Thanatar-Calix Siege-Automata",
+        "description": "The Sollex pattern, twin-linked heavy lascannons reaching out at extreme range to gut armour and elite units alike.",
+        "class": "afv",
+        "faction": "fac_mechanicum",
+        "role": "support",
+        "speed": 5,
+        "mobility": "walk",
+        "aim": 3,
+        "assault": 1,
+        "saveNumber": 4,
+        "morale": 4,
+        "customSize": 4,
+        "standTraits": [["Cybernetica Cortex", 1], ["Tank Hunter", 1]],
+        "weapons": [
+          { "name": "Sollex Heavy Lascannon", "mode": "at", "type": "p", "range": 10, "shots": 2, "impact": 6, "traits": [["Heavy", -1]] },
+          { "name": "Mauler Bolt Cannon", "mode": "gp", "type": "s", "range": 5, "shots": 2, "impact": 2, "traits": [] }
+        ],
+        "allowedRoles": null,
+        "builtIn": false
+      },
+      {
+        "id": "mech_krios",
+        "name": "Krios Battle Tank",
+        "description": "Mars-pattern skimmer-tank, faster than any tracked predator, its atomantic shield shrugging off fire while the lightning cannon silences foes.",
+        "class": "afv",
+        "faction": "fac_mechanicum",
+        "role": "core",
+        "speed": 12,
+        "mobility": "grav",
+        "aim": 4,
+        "assault": 1,
+        "saveNumber": 4,
+        "morale": 4,
+        "customSize": 6,
+        "standTraits": [["Active Defenses", 3]],
+        "weapons": [
+          { "name": "Lightning Cannon", "mode": "at", "type": "p", "range": 10, "shots": 1, "impact": 5, "traits": [["Repeating Fire", 0]] },
+          { "name": "Mauler Bolt Cannon", "mode": "gp", "type": "s", "range": 5, "shots": 2, "impact": 2, "traits": [] }
+        ],
+        "allowedRoles": null,
+        "builtIn": false
+      },
+      {
+        "id": "mech_triaros",
+        "name": "Triaros Armoured Conveyor",
+        "description": "The Taghmata's primary grav-transport, driving automata into battle behind a shock prow and a storm of mauler fire.",
+        "class": "afv",
+        "faction": "fac_mechanicum",
+        "role": "support",
+        "speed": 10,
+        "mobility": "grav",
+        "aim": 5,
+        "assault": 1,
+        "saveNumber": 4,
+        "morale": 4,
+        "customSize": 3,
+        "standTraits": [["Transport", 1.5, "This unit can carry Infantry or Cavalry stands. Each stack adds 1 transport slot.", 4], ["Active Defenses", 3]],
+        "weapons": [
+          { "name": "Twin Mauler Bolt Cannons", "mode": "gp", "type": "s", "range": 5, "shots": 2, "impact": 2, "traits": [["Rapid Fire", 0]] },
+          { "name": "Volkite Sentinels", "mode": "ai", "type": "s", "range": 5, "shots": 1, "impact": 2, "traits": [["Volkite", 1]] }
+        ],
+        "allowedRoles": null,
+        "builtIn": false
+      },
+      {
+        "id": "mech_warhound",
+        "name": "Warhound Scout Titan",
+        "description": "The lightest god-engine, loping ahead of the battle-line hunting flanks and weak points. (Adeptus Titanicus Core Game.)",
+        "class": "beh",
+        "faction": "fac_mechanicum",
+        "role": "core",
+        "speed": 8,
+        "mobility": "walk",
+        "aim": 4,
+        "assault": 6,
+        "saveNumber": 4,
+        "morale": 2,
+        "customSize": 1,
+        "standTraits": [["Active Defenses", 3], ["Move Out", 1]],
+        "weapons": [
+          { "name": "Turbo-Laser Destructor", "mode": "at", "type": "p", "range": 10, "shots": 1, "impact": 6, "traits": [] },
+          { "name": "Vulcan Mega-Bolter", "mode": "gp", "type": "s", "range": 5, "shots": 3, "impact": 2, "traits": [] }
+        ],
+        "allowedRoles": null,
+        "builtIn": false
+      },
+      {
+        "id": "mech_reaver",
+        "name": "Reaver Battle Titan",
+        "description": "A mid-weight battle Titan, void shields absorbing fire as it closes for the kill. (Adeptus Titanicus Core Game.)",
+        "class": "beh",
+        "faction": "fac_mechanicum",
+        "role": "core",
+        "speed": 6,
+        "mobility": "walk",
+        "aim": 4,
+        "assault": 7,
+        "saveNumber": 3,
+        "morale": 2,
+        "customSize": 1,
+        "standTraits": [["Active Defenses", 3], ["Terror", 1, "This Unit inflicts 2 Terror dice per stack. Can be taken multiple times.", 1]],
+        "weapons": [
+          { "name": "Melta Cannon", "mode": "at", "type": "p", "range": 10, "shots": 1, "impact": 6, "traits": [] },
+          { "name": "Gatling Blaster", "mode": "gp", "type": "s", "range": 10, "shots": 2, "impact": 3, "traits": [] }
+        ],
+        "allowedRoles": null,
+        "builtIn": false
+      },
+      {
+        "id": "mech_warlord",
+        "name": "Warlord Battle Titan",
+        "description": "The centrepiece god-engine, ponderous behind layered void shields and its Sunfury Plasma Annihilator. Tread shakes the earth. (LI Warlord with Plasma Annihilator.)",
+        "class": "beh",
+        "faction": "fac_mechanicum",
+        "role": "core",
+        "speed": 4,
+        "mobility": "walk",
+        "aim": 3,
+        "assault": 8,
+        "saveNumber": 2,
+        "morale": 2,
+        "customSize": 1,
+        "standTraits": [["Active Defenses", 3], ["Terror", 1, "This Unit inflicts 2 Terror dice per stack. Can be taken multiple times.", 1], ["Stubborn", 1]],
+        "weapons": [
+          { "name": "Sunfury Plasma Annihilator", "mode": "gp", "type": "p", "range": 10, "shots": 1, "impact": 7, "traits": [] },
+          { "name": "Arioch Power Claw", "mode": "at", "type": "s", "range": 0, "shots": 2, "impact": 6, "traits": [] },
+          { "name": "Paired Laser Blasters", "mode": "at", "type": "s", "range": 20, "shots": 2, "impact": 5, "traits": [] }
+        ],
+        "allowedRoles": null,
+        "builtIn": false
+      },
+      {
+        "id": "mech_knight_lancer",
+        "name": "Cerastus Knight-Lancer",
+        "description": "Questoris Knight built for the killing charge, demi-grav locomotors carrying it far faster than its weight suggests. Ionic lance and reaper chainsword. (Adeptus Titanicus Core Game.)",
+        "class": "sh",
+        "faction": "fac_mechanicum",
+        "role": "specialist",
+        "speed": 9,
+        "mobility": "walk",
+        "aim": 4,
+        "assault": 5,
+        "saveNumber": 4,
+        "morale": 2,
+        "customSize": 1,
+        "standTraits": [["Active Defenses", 3], ["Charge", 0.5]],
+        "weapons": [
+          { "name": "Ionic Lance", "mode": "at", "type": "p", "range": 5, "shots": 1, "impact": 6, "traits": [] },
+          { "name": "Reaper Chainsword", "mode": "ai", "type": "s", "range": 0, "shots": 2, "impact": 2, "traits": [] }
+        ],
+        "allowedRoles": null,
+        "builtIn": false
+      },
+      {
+        "id": "mech_harpax",
+        "name": "Harpax Swarmer Scout Host",
+        "description": "Skittering dark-craft construct swarms flooding across the battlefield on barbed limbs, overwhelming prey with sheer numbers. (Dark Mechanicum Stalker Constructs.)",
+        "class": "inf",
+        "faction": "fac_mechanicum",
+        "role": "core",
+        "speed": 7,
+        "mobility": "troop",
+        "aim": 5,
+        "assault": 2,
+        "saveNumber": 6,
+        "morale": 6,
+        "customSize": 6,
+        "standTraits": [["Cybernetica Cortex", 1], ["Charge", 0.5]],
+        "weapons": [
+          { "name": "Darkling Blades", "mode": "ai", "type": "p", "range": 0, "shots": 2, "impact": 0, "traits": [] }
+        ],
+        "allowedRoles": null,
+        "builtIn": false
+      },
+      {
+        "id": "mech_errax",
+        "name": "Errax 'Butcher' Assault Stalker",
+        "description": "A dark-craft construct engineered purely for close destruction, rending through vehicles and infantry alike with armoured crushing limbs. (Dark Mechanicum Stalker Constructs.)",
+        "class": "afv",
+        "faction": "fac_mechanicum",
+        "role": "specialist",
+        "speed": 7,
+        "mobility": "walk",
+        "aim": 5,
+        "assault": 3,
+        "saveNumber": 4,
+        "morale": 4,
+        "customSize": 2,
+        "standTraits": [["Cybernetica Cortex", 1], ["Charge", 0.5], ["Melee Weapons", 0.5]],
+        "weapons": [
+          { "name": "Carnage Limbs", "mode": "ai", "type": "p", "range": 0, "shots": 2, "impact": 2, "traits": [] }
+        ],
+        "allowedRoles": null,
+        "builtIn": false
+      },
+      {
+        "id": "mech_tenebrax",
+        "name": "Tenebrax 'Archer' Battle Stalker",
+        "description": "A dark-craft fire support construct saturating targets with dark energy fire from range before advancing to finish the kill. (Dark Mechanicum Stalker Constructs.)",
+        "class": "afv",
+        "faction": "fac_mechanicum",
+        "role": "support",
+        "speed": 6,
+        "mobility": "walk",
+        "aim": 4,
+        "assault": 1,
+        "saveNumber": 4,
+        "morale": 4,
+        "customSize": 2,
+        "standTraits": [["Cybernetica Cortex", 1]],
+        "weapons": [
+          { "name": "Darkfire Cannon", "mode": "at", "type": "p", "range": 10, "shots": 2, "impact": 4, "traits": [] },
+          { "name": "Entropy Blasters", "mode": "gp", "type": "s", "range": 5, "shots": 2, "impact": 2, "traits": [] }
+        ],
+        "allowedRoles": null,
+        "builtIn": false
+      },
+      {
+        "id": "mech_scintillax",
+        "name": "Scintillax 'Cyclops' Noospheric Stalker",
+        "description": "A singular-eyed dark-craft construct whose noospheric warfare systems guide allied constructs and flay enemy cognition. (Dark Mechanicum Stalker Constructs.)",
+        "class": "afv",
+        "faction": "fac_mechanicum",
+        "role": "specialist",
+        "speed": 5,
+        "mobility": "walk",
+        "aim": 3,
+        "assault": 1,
+        "saveNumber": 4,
+        "morale": 4,
+        "customSize": 2,
+        "standTraits": [["Cybernetica Cortex", 1], ["Precise Fire", 1]],
+        "weapons": [
+          { "name": "Noospheric Blaster", "mode": "gp", "type": "p", "range": 10, "shots": 1, "impact": 4, "traits": [] }
+        ],
+        "allowedRoles": null,
+        "builtIn": false
+      },
+      {
+        "id": "mech_serperos",
+        "name": "Serperos 'Overlord' Heavy Stalker",
+        "description": "A massive dark-craft heavy construct midway between walker and Titan, raining bombardment from the Exo-planar bombard while the Storm Laser Array hunts armour. (Serperos Heavy Stalkers.)",
+        "class": "sh",
+        "faction": "fac_mechanicum",
+        "role": "specialist",
+        "speed": 5,
+        "mobility": "walk",
+        "aim": 4,
+        "assault": 4,
+        "saveNumber": 4,
+        "morale": 2,
+        "customSize": 1,
+        "standTraits": [["Cybernetica Cortex", 1], ["Active Defenses", 3]],
+        "weapons": [
+          { "name": "Exo-planar Bombard", "mode": "gp", "type": "s", "range": 20, "shots": 1, "impact": 5, "traits": [["Indirect", 3], ["Frag", 0]] },
+          { "name": "Storm Laser Array", "mode": "at", "type": "s", "range": 10, "shots": 2, "impact": 4, "traits": [] }
+        ],
+        "allowedRoles": null,
+        "builtIn": false
+      }
+    ]
+  }
+}
