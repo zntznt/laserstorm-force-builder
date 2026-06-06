@@ -563,7 +563,7 @@ label .trait-edit-btn{margin-left:6px}
   <div class="card-title">Unit Library
     <div style="display:flex;gap:6px">
       <button class="trait-edit-btn" onclick="showPage('factions')"><i class="fa-solid fa-flag"></i> Factions</button>
-      <button class="trait-edit-btn" onclick="resetBuilder();showPage('builder')"><i class="fa-solid fa-plus"></i> Create Unit</button>
+      <button class="trait-edit-btn" onclick="resetBuilder();showPage('builder')"><i class="fa-solid fa-plus"></i> New Unit</button>
     </div>
   </div>
   <div class="card">
@@ -1221,7 +1221,7 @@ label .trait-edit-btn{margin-left:6px}
     <div class="modal-header">Add Army to Group <button class="modal-close" onclick="closeModal('modal-add-army-ef')"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="scrolllist" id="add-army-ef-list"></div>
     <div style="margin-top:12px;display:flex;justify-content:flex-end">
-      <button class="btn btn-secondary" onclick="closeModal('modal-add-army-ef')">Close</button>
+      <button class="btn btn-primary" onclick="closeModal('modal-add-army-ef')">Done</button>
     </div>
   </div>
 </div>
@@ -4961,7 +4961,7 @@ function renderFactionDetail() {
   let unitsHTML;
   if(!units.length) {
     const createBtn = isBuiltin ? ""
-      : `<div style="margin-top:10px"><button class="trait-edit-btn" onclick="goCreateUnitForFaction('${id}')"><i class="fa-solid fa-plus"></i> Create Unit</button></div>`;
+      : `<div style="margin-top:10px"><button class="trait-edit-btn" onclick="goCreateUnitForFaction('${id}')"><i class="fa-solid fa-plus"></i> New Unit</button></div>`;
     unitsHTML = `<div style="color:var(--text-faint);font-size:12px;font-style:italic">No units for this faction yet.</div>${createBtn}`;
   } else {
     const cards = units.map(u => {
@@ -4973,7 +4973,7 @@ function renderFactionDetail() {
       return unitCardHTML(u, actions, "unit");
     }).join("");
     const createBtn = isBuiltin ? ""
-      : `<div style="margin-top:10px"><button class="trait-edit-btn" onclick="goCreateUnitForFaction('${id}')"><i class="fa-solid fa-plus"></i> Create Unit</button></div>`;
+      : `<div style="margin-top:10px"><button class="trait-edit-btn" onclick="goCreateUnitForFaction('${id}')"><i class="fa-solid fa-plus"></i> New Unit</button></div>`;
     unitsHTML = `<div class="fac-unit-grid">${cards}</div>${createBtn}`;
   }
 
