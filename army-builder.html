@@ -246,6 +246,15 @@ input.input-error,textarea.input-error{border-color:#ef535066!important;outline:
 .fac-trait-name{font-size:13px;font-weight:600;color:var(--text-primary);flex:1;min-width:0}
 .fac-trait-cost{font-size:11px;font-weight:700;color:var(--accent-light);flex-shrink:0;white-space:nowrap}
 .fac-trait-type{font-size:10px;color:var(--text-faint);flex-shrink:0;text-transform:uppercase;letter-spacing:.4px}
+.fac-trait-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px;margin-bottom:4px}
+.fac-trait-card{background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:5px}
+.fac-trait-card-header{display:flex;align-items:baseline;gap:6px}
+.fac-trait-card-name{font-size:13px;font-weight:700;color:var(--text-primary);flex:1;min-width:0}
+.fac-trait-card-meta{display:flex;align-items:center;gap:5px;flex-shrink:0}
+.fac-trait-card-cost{font-size:11px;font-weight:700;color:var(--accent-light);white-space:nowrap}
+.fac-trait-card-type{font-size:10px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.4px;background:var(--surface-raised);padding:1px 5px;border-radius:4px}
+.fac-trait-card-desc{font-size:11px;color:var(--text-muted);line-height:1.45;flex:1}
+.fac-trait-card-edit{align-self:flex-end;margin-top:2px}
 .fac-tf-row{display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:7px;margin-bottom:5px;cursor:pointer;transition:background .12s,border-color .12s}
 .fac-tf-row:hover{background:var(--surface-raised);border-color:var(--accent)}
 .fac-tf-name{font-size:13px;font-weight:600;color:var(--text-primary);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -4975,16 +4984,23 @@ function renderFactionDetail() {
     if(!traits.length) {
       traitsHTML = `<div style="color:var(--text-faint);font-size:12px;font-style:italic">No custom traits gated to this faction.</div>`;
     } else {
-      traitsHTML = traits.map(t => {
+      traitsHTML = `<div class="fac-trait-cards">${traits.map(t => {
         const cost = (t.cost >= 0 ? "+" : "") + t.cost + "p";
         const typeLabel = t.type === "weapon" ? "Weapon" : "Stand";
-        return `<div class="fac-trait-row">
-          <span class="fac-trait-name">${esc(t.name)}</span>
-          <span class="fac-trait-type">${typeLabel}</span>
-          <span class="fac-trait-cost">${cost}</span>
-          <button class="trait-edit-btn" onclick="editCustomTrait('${t.id}');openModal('modal-custom-trait')"><i class="fa-solid fa-pencil"></i></button>
+        return `<div class="fac-trait-card">
+          <div class="fac-trait-card-header">
+            <span class="fac-trait-card-name">${esc(t.name)}</span>
+            <div class="fac-trait-card-meta">
+              <span class="fac-trait-card-type">${typeLabel}</span>
+              <span class="fac-trait-card-cost">${cost}</span>
+            </div>
+          </div>
+          ${t.description ? `<div class="fac-trait-card-desc">${esc(t.description)}</div>` : ""}
+          <div class="fac-trait-card-edit">
+            <button class="trait-edit-btn" onclick="editCustomTrait('${t.id}');openModal('modal-custom-trait')"><i class="fa-solid fa-pencil"></i> Edit</button>
+          </div>
         </div>`;
-      }).join("");
+      }).join("")}</div>`;
     }
     traitsSection = `<div class="fac-section">
       <div class="fac-section-head"><i class="fa-solid fa-star" style="font-size:9px"></i> Faction Traits <span class="fac-section-count">${traits.length}</span></div>
@@ -5028,12 +5044,13 @@ function renderFactionDetail() {
       </div>
     </div>
 
+    ${traitsSection}
+
     <div class="fac-section">
       <div class="fac-section-head"><i class="fa-solid fa-chess-pawn" style="font-size:9px"></i> Units <span class="fac-section-count">${units.length}</span></div>
       ${unitsHTML}
     </div>
 
-    ${traitsSection}
     ${tfsSection}`;
 }
 
