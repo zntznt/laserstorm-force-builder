@@ -934,9 +934,9 @@ label .trait-edit-btn{margin-left:6px}
 <!-- ===== CUSTOM TF TYPES MODAL ===== -->
 <div id="modal-custom-tf-type" class="modal-bg">
   <div class="modal">
-    <div class="modal-header">Custom TF Types <button class="modal-close" onclick="closeModal('modal-custom-tf-type')"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="modal-header">Custom Task Force Types <button class="modal-close" onclick="closeModal('modal-custom-tf-type')"><i class="fa-solid fa-xmark"></i></button></div>
     <div id="custom-tf-type-list" style="margin-bottom:8px"></div>
-    <div class="modal-sub-header" id="custom-tf-type-form-title">New Custom Type</div>
+    <div class="modal-sub-header" id="custom-tf-type-form-title">New Task Force Type</div>
     <div class="form-group" style="margin-bottom:8px">
       <label>Name</label>
       <input type="text" id="custom-tf-type-name" placeholder="e.g. Rapid Strike" style="width:100%" oninput="clearFieldErr('custom-tf-type-name')">
@@ -1000,7 +1000,7 @@ label .trait-edit-btn{margin-left:6px}
   <div class="modal">
     <div class="modal-header">Custom Tactical Assets <button class="modal-close" onclick="closeModal('modal-custom-assets')"><i class="fa-solid fa-xmark"></i></button></div>
     <div id="custom-asset-list" style="margin-bottom:8px"></div>
-    <div class="modal-sub-header" id="custom-asset-form-title">New Custom Asset</div>
+    <div class="modal-sub-header" id="custom-asset-form-title">New Tactical Asset</div>
     <div class="form-group" style="margin-bottom:8px">
       <label>Asset Name</label>
       <input type="text" id="custom-asset-name" placeholder="e.g. Suppressive Fire" style="width:100%" oninput="clearFieldErr('custom-asset-name')">
@@ -1167,7 +1167,7 @@ label .trait-edit-btn{margin-left:6px}
 <!-- ===== FREE-PICK: ADD UNIT TO BG MODAL ===== -->
 <div id="modal-fp-unit" class="modal-bg">
   <div class="modal">
-    <div class="modal-header">Add Units — Free Pick <button class="modal-close" onclick="closeFPUnitModal()"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="modal-header">Add Units (Free Pick) <button class="modal-close" onclick="closeFPUnitModal()"><i class="fa-solid fa-xmark"></i></button></div>
     <div id="fp-unit-faction-note" style="display:none;font-size:11px;color:#8b949e;margin-bottom:8px;padding:5px 8px;background:var(--surface-raised);border-radius:4px"></div>
     <div class="scrolllist" id="fp-unit-list"></div>
     <div style="margin-top:12px;display:flex;justify-content:space-between;align-items:center;gap:8px">
@@ -1298,7 +1298,7 @@ label .trait-edit-btn{margin-left:6px}
 <!-- ===== MECHANIZED TRANSPORT PICKER MODAL ===== -->
 <div id="modal-transport" class="modal-bg">
   <div class="modal" style="max-width:480px">
-    <div class="modal-header"><span>Mechanized Transport</span> <button class="modal-close" onclick="closeModal('modal-transport')"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="modal-header"><span>Assign Transport</span> <button class="modal-close" onclick="closeModal('modal-transport')"><i class="fa-solid fa-xmark"></i></button></div>
     <div id="transport-intro" style="font-size:12px;color:#8b949e;line-height:1.5;margin-bottom:12px"></div>
     <div class="scrolllist" id="transport-list" style="max-height:340px"></div>
     <div style="margin-top:12px;display:flex;justify-content:space-between;gap:8px">
@@ -5958,7 +5958,7 @@ function openCustomTFTypeModal() {
   editingCustomTFTypeId = null;
   clearFieldErr("custom-tf-type-name"); clearFieldErr("custom-tf-type-slots");
   document.getElementById("custom-tf-type-name").value = "";
-  document.getElementById("custom-tf-type-form-title").textContent = "New Custom Type";
+  document.getElementById("custom-tf-type-form-title").textContent = "New Task Force Type";
   document.getElementById("custom-tf-type-submit").textContent = "Create";
   document.getElementById("custom-tf-type-cancel").style.display = "none";
   _renderCustomTFTypeSlots({});
@@ -5970,7 +5970,7 @@ function cancelEditCustomTFType() {
   editingCustomTFTypeId = null;
   clearFieldErr("custom-tf-type-name"); clearFieldErr("custom-tf-type-slots");
   document.getElementById("custom-tf-type-name").value = "";
-  document.getElementById("custom-tf-type-form-title").textContent = "New Custom Type";
+  document.getElementById("custom-tf-type-form-title").textContent = "New Task Force Type";
   document.getElementById("custom-tf-type-submit").textContent = "Create";
   document.getElementById("custom-tf-type-cancel").style.display = "none";
   _renderCustomTFTypeSlots({});
@@ -6030,7 +6030,7 @@ function editCustomTFType(id) {
   editingCustomTFTypeId = id;
   clearFieldErr("custom-tf-type-name"); clearFieldErr("custom-tf-type-slots");
   document.getElementById("custom-tf-type-name").value = t.name;
-  document.getElementById("custom-tf-type-form-title").textContent = "Edit Custom Type";
+  document.getElementById("custom-tf-type-form-title").textContent = "Edit Task Force Type";
   document.getElementById("custom-tf-type-submit").textContent = "Save Changes";
   document.getElementById("custom-tf-type-cancel").style.display = "";
   _renderCustomTFTypeSlots(t.slots||{});
@@ -6051,7 +6051,7 @@ function saveCustomTFType() {
     const t = state.customTFTypes.find(x=>x.id===editingCustomTFTypeId);
     if(t) { t.name = name; t.slots = slots; }
     editingCustomTFTypeId = null;
-    document.getElementById("custom-tf-type-form-title").textContent = "New Custom Type";
+    document.getElementById("custom-tf-type-form-title").textContent = "New Task Force Type";
     document.getElementById("custom-tf-type-submit").textContent = "Create";
     document.getElementById("custom-tf-type-cancel").style.display = "none";
   } else {
@@ -6070,7 +6070,7 @@ function deleteCustomTFType(id) {
   if(editingCustomTFTypeId===id) {
     editingCustomTFTypeId = null;
     clearFieldErr("custom-tf-type-name"); clearFieldErr("custom-tf-type-slots");
-    document.getElementById("custom-tf-type-form-title").textContent = "New Custom Type";
+    document.getElementById("custom-tf-type-form-title").textContent = "New Task Force Type";
     document.getElementById("custom-tf-type-submit").textContent = "Create";
     document.getElementById("custom-tf-type-cancel").style.display = "none";
     document.getElementById("custom-tf-type-name").value = "";
@@ -6520,7 +6520,7 @@ function _resetCustomAssetForm() {
   document.getElementById("ca-use-deployment").checked = false;
   document.getElementById("ca-use-reinforcements").checked = false;
   document.getElementById("custom-asset-fn").value = "";
-  document.getElementById("custom-asset-form-title").textContent = "New Custom Asset";
+  document.getElementById("custom-asset-form-title").textContent = "New Tactical Asset";
   document.getElementById("custom-asset-submit").textContent = "Create";
   document.getElementById("custom-asset-cancel").style.display = "none";
 }
@@ -6565,7 +6565,7 @@ function editCustomAsset(id) {
   document.getElementById("ca-use-reinforcements").checked = (a.use||[]).includes("Reinforcements");
   document.getElementById("custom-asset-fn").value = a.fn||"";
   clearFieldErr("custom-asset-name"); clearFieldErr("custom-asset-use"); clearFieldErr("custom-asset-fn");
-  document.getElementById("custom-asset-form-title").textContent = "Edit Custom Asset";
+  document.getElementById("custom-asset-form-title").textContent = "Edit Tactical Asset";
   document.getElementById("custom-asset-submit").textContent = "Save Changes";
   document.getElementById("custom-asset-cancel").style.display = "";
   document.getElementById("custom-asset-name").focus();
