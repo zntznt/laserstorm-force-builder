@@ -55,7 +55,7 @@
         "standTraits": [["Inspiration", 3]],
         "weapons": [
           { "name": "Conversion Beamer", "mode": "at", "type": "p", "range": 10, "shots": 1, "impact": 5, "traits": [["Heavy", -1]] },
-          { "name": "Volkite Serpenta", "mode": "ai", "type": "s", "range": 5, "shots": 1, "impact": 2, "traits": [["Volkite", 1]] }
+          { "name": "Volkite Serpenta", "mode": "ai", "type": "p", "range": 5, "shots": 1, "impact": 2, "traits": [["Volkite", 1]] }
         ],
         "allowedRoles": null,
         "builtIn": false
@@ -77,7 +77,7 @@
         "standTraits": [["Melee Weapons", 0.5], ["Charge", 0.5]],
         "weapons": [
           { "name": "Volkite Chargers", "mode": "ai", "type": "p", "range": 2, "shots": 2, "impact": 2, "traits": [["Volkite", 1]] },
-          { "name": "Graviton Imploders", "mode": "at", "type": "s", "range": 0, "shots": 1, "impact": 5, "traits": [] }
+          { "name": "Graviton Imploders", "mode": "at", "type": "p", "range": 0, "shots": 1, "impact": 5, "traits": [] }
         ],
         "allowedRoles": null,
         "builtIn": false
@@ -141,7 +141,7 @@
         "standTraits": [["Cybernetica Cortex", 1], ["Jump Troops", 0.5]],
         "weapons": [
           { "name": "Lightning Gun", "mode": "at", "type": "p", "range": 5, "shots": 1, "impact": 4, "traits": [] },
-          { "name": "Irad-Cleanser", "mode": "ai", "type": "s", "range": 0, "shots": 2, "impact": 2, "traits": [["Flame", 0]] }
+          { "name": "Irad-Cleanser", "mode": "ai", "type": "p", "range": 0, "shots": 2, "impact": 2, "traits": [["Flame", 0]] }
         ],
         "allowedRoles": null,
         "builtIn": false
@@ -184,7 +184,7 @@
         "standTraits": [["Precise Fire", 1]],
         "weapons": [
           { "name": "Volkite Culverin", "mode": "gp", "type": "p", "range": 5, "shots": 2, "impact": 2, "traits": [["Volkite", 1]] },
-          { "name": "Multi-Melta", "mode": "at", "type": "s", "range": 2, "shots": 1, "impact": 6, "traits": [] }
+          { "name": "Multi-Melta", "mode": "at", "type": "p", "range": 2, "shots": 1, "impact": 6, "traits": [] }
         ],
         "allowedRoles": null,
         "builtIn": false
@@ -225,10 +225,10 @@
         "saveNumber": 4,
         "morale": 4,
         "customSize": 2,
-        "standTraits": [["Cybernetica Cortex", 1], ["Active Defenses", 3], ["Charge", 0.5]],
+        "standTraits": [["Cybernetica Cortex", 1], ["Active Defenses", 3], ["Assault Vehicle", 1]],
         "weapons": [
           { "name": "Lightning Guns", "mode": "at", "type": "p", "range": 5, "shots": 2, "impact": 4, "traits": [] },
-          { "name": "Havoc Launcher", "mode": "gp", "type": "s", "range": 5, "shots": 1, "impact": 2, "traits": [["Frag", 0]] }
+          { "name": "Havoc Launcher", "mode": "gp", "type": "p", "range": 5, "shots": 1, "impact": 2, "traits": [["Frag", 0]] }
         ],
         "allowedRoles": null,
         "builtIn": false
@@ -247,10 +247,10 @@
         "saveNumber": 3,
         "morale": 3,
         "customSize": 2,
-        "standTraits": [["Cybernetica Cortex", 1], ["Tank Hunter", 1]],
+        "standTraits": [["Cybernetica Cortex", 1], ["Tank Hunter", 1], ["Assault Vehicle", 1]],
         "weapons": [
           { "name": "Mauler Bolt Cannons", "mode": "gp", "type": "p", "range": 5, "shots": 3, "impact": 2, "traits": [["Rapid Fire", 0]] },
-          { "name": "Graviton Hammer", "mode": "at", "type": "s", "range": 0, "shots": 1, "impact": 5, "traits": [] }
+          { "name": "Graviton Hammer", "mode": "at", "type": "p", "range": 0, "shots": 1, "impact": 5, "traits": [] }
         ],
         "allowedRoles": null,
         "builtIn": false
@@ -294,7 +294,7 @@
         "standTraits": [["Cybernetica Cortex", 1], ["Active Defenses", 3]],
         "weapons": [
           { "name": "Mauler Bolt Cannon", "mode": "gp", "type": "p", "range": 5, "shots": 3, "impact": 2, "traits": [["Rapid Fire", 0]] },
-          { "name": "Multi-Melta", "mode": "at", "type": "s", "range": 2, "shots": 1, "impact": 6, "traits": [] }
+          { "name": "Multi-Melta", "mode": "at", "type": "p", "range": 2, "shots": 1, "impact": 6, "traits": [] }
         ],
         "allowedRoles": null,
         "builtIn": false
@@ -316,7 +316,7 @@
         "standTraits": [["Cybernetica Cortex", 1], ["Active Defenses", 3]],
         "weapons": [
           { "name": "Hellex Plasma Mortar", "mode": "gp", "type": "p", "range": 20, "shots": 1, "impact": 5, "traits": [["Indirect", 3], ["Frag", 0]] },
-          { "name": "Mauler Bolt Cannon", "mode": "gp", "type": "s", "range": 5, "shots": 2, "impact": 2, "traits": [] }
+          { "name": "Mauler Bolt Cannon", "mode": "gp", "type": "p", "range": 5, "shots": 2, "impact": 2, "traits": [] }
         ],
         "allowedRoles": null,
         "builtIn": false
@@ -338,7 +338,7 @@
         "standTraits": [["Cybernetica Cortex", 1], ["Tank Hunter", 1]],
         "weapons": [
           { "name": "Sollex Heavy Lascannon", "mode": "at", "type": "p", "range": 10, "shots": 2, "impact": 6, "traits": [["Heavy", -1]] },
-          { "name": "Mauler Bolt Cannon", "mode": "gp", "type": "s", "range": 5, "shots": 2, "impact": 2, "traits": [] }
+          { "name": "Mauler Bolt Cannon", "mode": "gp", "type": "p", "range": 5, "shots": 2, "impact": 2, "traits": [] }
         ],
         "allowedRoles": null,
         "builtIn": false
@@ -360,7 +360,7 @@
         "standTraits": [["Active Defenses", 3]],
         "weapons": [
           { "name": "Lightning Cannon", "mode": "at", "type": "p", "range": 10, "shots": 1, "impact": 5, "traits": [["Repeating Fire", 0]] },
-          { "name": "Mauler Bolt Cannon", "mode": "gp", "type": "s", "range": 5, "shots": 2, "impact": 2, "traits": [] }
+          { "name": "Mauler Bolt Cannon", "mode": "gp", "type": "p", "range": 5, "shots": 2, "impact": 2, "traits": [] }
         ],
         "allowedRoles": null,
         "builtIn": false
@@ -404,7 +404,7 @@
         "standTraits": [["Active Defenses", 3], ["Move Out", 1]],
         "weapons": [
           { "name": "Turbo-Laser Destructor", "mode": "at", "type": "p", "range": 10, "shots": 1, "impact": 6, "traits": [] },
-          { "name": "Vulcan Mega-Bolter", "mode": "gp", "type": "s", "range": 5, "shots": 3, "impact": 2, "traits": [] }
+          { "name": "Vulcan Mega-Bolter", "mode": "gp", "type": "p", "range": 5, "shots": 3, "impact": 2, "traits": [] }
         ],
         "allowedRoles": null,
         "builtIn": false
@@ -426,7 +426,7 @@
         "standTraits": [["Active Defenses", 3], ["Terror", 1, "This Unit inflicts 2 Terror dice per stack. Can be taken multiple times.", 1]],
         "weapons": [
           { "name": "Melta Cannon", "mode": "at", "type": "p", "range": 10, "shots": 1, "impact": 6, "traits": [] },
-          { "name": "Gatling Blaster", "mode": "gp", "type": "s", "range": 10, "shots": 2, "impact": 3, "traits": [] }
+          { "name": "Gatling Blaster", "mode": "gp", "type": "p", "range": 10, "shots": 2, "impact": 3, "traits": [] }
         ],
         "allowedRoles": null,
         "builtIn": false
@@ -468,10 +468,10 @@
         "saveNumber": 4,
         "morale": 2,
         "customSize": 1,
-        "standTraits": [["Active Defenses", 3], ["Charge", 0.5]],
+        "standTraits": [["Active Defenses", 3]],
         "weapons": [
           { "name": "Ionic Lance", "mode": "at", "type": "p", "range": 5, "shots": 1, "impact": 6, "traits": [] },
-          { "name": "Reaper Chainsword", "mode": "ai", "type": "s", "range": 0, "shots": 2, "impact": 2, "traits": [] }
+          { "name": "Reaper Chainsword", "mode": "ai", "type": "p", "range": 0, "shots": 2, "impact": 2, "traits": [] }
         ],
         "allowedRoles": null,
         "builtIn": false
@@ -511,7 +511,7 @@
         "saveNumber": 4,
         "morale": 4,
         "customSize": 2,
-        "standTraits": [["Cybernetica Cortex", 1], ["Charge", 0.5], ["Melee Weapons", 0.5]],
+        "standTraits": [["Cybernetica Cortex", 1], ["Assault Vehicle", 1], ["Melee Weapons", 0.5]],
         "weapons": [
           { "name": "Carnage Limbs", "mode": "ai", "type": "p", "range": 0, "shots": 2, "impact": 2, "traits": [] }
         ],
@@ -535,7 +535,7 @@
         "standTraits": [["Cybernetica Cortex", 1]],
         "weapons": [
           { "name": "Darkfire Cannon", "mode": "at", "type": "p", "range": 10, "shots": 2, "impact": 4, "traits": [] },
-          { "name": "Entropy Blasters", "mode": "gp", "type": "s", "range": 5, "shots": 2, "impact": 2, "traits": [] }
+          { "name": "Entropy Blasters", "mode": "gp", "type": "p", "range": 5, "shots": 2, "impact": 2, "traits": [] }
         ],
         "allowedRoles": null,
         "builtIn": false
