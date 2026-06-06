@@ -19,7 +19,7 @@
         "id": "mech_cybernetica",
         "name": "Cybernetica Cortex",
         "cost": 1,
-        "description": "[Mechanicum][Unit] Governed by a machine cortex with no will of its own. This Unit automatically passes all Morale tests but can never receive a Follow Me order nor benefit from Inspiration.",
+        "description": "[Mechanicum][Unit] Directed by a Cybernetica cortex with no will of its own. This Unit ignores Push Back, but can never receive a 'Follow Me' order nor benefit from Inspiration.",
         "type": "stand",
         "faction": "fac_mechanicum",
         "reqs": [{ "type": "faction", "vals": ["fac_mechanicum"] }],
@@ -41,10 +41,10 @@
       {
         "id": "mech_archmagos",
         "name": "Archmagos Prime",
-        "description": "The force's master tech-priest, borne on a grav-abeyant. Augur-arrays and binaric cant bind the cohort to one cold purpose.",
+        "description": "The force's master tech-priest, borne on a grav-abeyant. Augur-arrays and binaric cant bind the cohort to one cold purpose — a coordinator, not a front-line killer.",
         "class": "inf",
         "faction": "fac_mechanicum",
-        "role": "specialist",
+        "role": "command",
         "speed": 6,
         "mobility": "grav",
         "aim": 3,
@@ -63,7 +63,7 @@
       {
         "id": "mech_secutor",
         "name": "Myrmidon Secutors",
-        "description": "Battle tech-priests of the Myrmidax cult seeking wisdom through slaughter, power weapons and graviton imploders at the fore.",
+        "description": "Battle tech-priests of the Myrmidax cult who seek wisdom through slaughter — dangerous in close combat, but fragile if caught in the open.",
         "class": "inf",
         "faction": "fac_mechanicum",
         "role": "specialist",
@@ -85,7 +85,7 @@
       {
         "id": "mech_techpriest",
         "name": "Tech-Priest Auxilia",
-        "description": "Cult Mechanicum officers leading lesser cohorts, mechadendrites flexing, directing fire with bionic precision.",
+        "description": "Cult Mechanicum officers leading lesser cohorts, directing fire with bionic precision while their thralls hold the line.",
         "class": "inf",
         "faction": "fac_mechanicum",
         "role": "support",
@@ -94,7 +94,7 @@
         "aim": 4,
         "assault": 1,
         "saveNumber": 5,
-        "morale": 3,
+        "morale": 4,
         "customSize": 2,
         "standTraits": [["Precise Fire", 1]],
         "weapons": [
@@ -106,7 +106,7 @@
       {
         "id": "mech_thralls",
         "name": "Tech-Thrall Covenant",
-        "description": "Lobotomised servitor-conscripts driven forward by binaric command. Cheap, expendable, and utterly without fear.",
+        "description": "Lobotomised servitor-conscripts driven forward by binaric command. Cheap, expendable, and slaved to the machine cortex.",
         "class": "inf",
         "faction": "fac_mechanicum",
         "role": "core",
@@ -115,7 +115,7 @@
         "aim": 5,
         "assault": 0,
         "saveNumber": 6,
-        "morale": 6,
+        "morale": 5,
         "customSize": 8,
         "standTraits": [["Cybernetica Cortex", 1]],
         "weapons": [
@@ -136,7 +136,7 @@
         "aim": 4,
         "assault": 1,
         "saveNumber": 4,
-        "morale": 4,
+        "morale": 3,
         "customSize": 6,
         "standTraits": [["Cybernetica Cortex", 1], ["Jump Troops", 0.5]],
         "weapons": [
@@ -158,7 +158,7 @@
         "aim": 4,
         "assault": 3,
         "saveNumber": 4,
-        "morale": 4,
+        "morale": 3,
         "customSize": 4,
         "standTraits": [["Cybernetica Cortex", 1], ["Jump Troops", 0.5], ["Charge", 0.5]],
         "weapons": [
@@ -170,13 +170,13 @@
       {
         "id": "mech_destructor",
         "name": "Myrmidon Destructors",
-        "description": "Battle tech-priests rebuilt around the heaviest portable weapons the Forge can implant, delivering precisely aimed barrages.",
+        "description": "Battle tech-priests rebuilt around heavy ranged weapons, delivering precise conversion-beamer fire — potent, but slow and exposed.",
         "class": "inf",
         "faction": "fac_mechanicum",
         "role": "support",
         "speed": 4,
         "mobility": "troop",
-        "aim": 3,
+        "aim": 4,
         "assault": 1,
         "saveNumber": 4,
         "morale": 3,
@@ -184,7 +184,7 @@
         "standTraits": [["Precise Fire", 1]],
         "weapons": [
           { "name": "Volkite Culverin", "mode": "gp", "type": "p", "range": 5, "shots": 2, "impact": 2, "traits": [["Volkite", 1]] },
-          { "name": "Multi-Melta", "mode": "at", "type": "p", "range": 2, "shots": 1, "impact": 6, "traits": [] }
+          { "name": "Conversion Beamer", "mode": "at", "type": "p", "range": 10, "shots": 1, "impact": 5, "traits": [["Heavy", -1]] }
         ],
         "allowedRoles": null,
         "builtIn": false
@@ -192,7 +192,7 @@
       {
         "id": "mech_vultarax",
         "name": "Vultarax Stratos-Automata",
-        "description": "The Mechanicum's flying hunter-killer automata, screaming over the battle-line on arc-wreathed thrusters.",
+        "description": "The Mechanicum's flying hunter-killer automata, harassing the foe from above on arc-wreathed thrusters before they can respond.",
         "class": "ac",
         "faction": "fac_mechanicum",
         "role": "specialist",
@@ -201,11 +201,11 @@
         "aim": 4,
         "assault": 1,
         "saveNumber": 4,
-        "morale": 4,
+        "morale": 3,
         "customSize": 2,
         "standTraits": [["Cybernetica Cortex", 1]],
         "weapons": [
-          { "name": "Vultarax Arc Blaster", "mode": "at", "type": "s", "range": 5, "shots": 2, "impact": 4, "traits": [] },
+          { "name": "Arc Blaster", "mode": "at", "type": "s", "range": 5, "shots": 2, "impact": 4, "traits": [] },
           { "name": "Havoc Launchers", "mode": "gp", "type": "s", "range": 5, "shots": 1, "impact": 2, "traits": [["Frag", 0]] }
         ],
         "allowedRoles": null,
@@ -214,7 +214,7 @@
       {
         "id": "mech_arlatax",
         "name": "Arlatax Battle-Automata",
-        "description": "Rapid shock-assault automata from Xana II, atomantic-shielded and power-clawed, built to break formation on impact.",
+        "description": "Rapid shock-assault automata from Xana II, atomantic-shielded and power-clawed, built to break a formation on impact.",
         "class": "afv",
         "faction": "fac_mechanicum",
         "role": "specialist",
@@ -223,7 +223,7 @@
         "aim": 4,
         "assault": 3,
         "saveNumber": 4,
-        "morale": 4,
+        "morale": 3,
         "customSize": 2,
         "standTraits": [["Cybernetica Cortex", 1], ["Active Defenses", 3], ["Assault Vehicle", 1]],
         "weapons": [
@@ -236,7 +236,7 @@
       {
         "id": "mech_domitar",
         "name": "Domitar Battle-Automata",
-        "description": "A faster, heavier evolution of the Castellax, closing on tanks and crushing them under graviton hammers.",
+        "description": "A faster evolution of the Castellax built to close on tanks and shatter them with graviton hammers — hard-hitting, but more lightly built than its parent design.",
         "class": "afv",
         "faction": "fac_mechanicum",
         "role": "core",
@@ -244,7 +244,7 @@
         "mobility": "walk",
         "aim": 4,
         "assault": 3,
-        "saveNumber": 3,
+        "saveNumber": 4,
         "morale": 3,
         "customSize": 2,
         "standTraits": [["Cybernetica Cortex", 1], ["Tank Hunter", 1], ["Assault Vehicle", 1]],
@@ -258,7 +258,7 @@
       {
         "id": "mech_vorax",
         "name": "Vorax Battle-Automata",
-        "description": "Ancient Martian quadruped hunter-killers built to run down rogue machines and prey alike, rotor cannons rattling as they close.",
+        "description": "Ancient Martian quadruped hunter-killers built to run down rogue machines and prey alike — fast and aggressive, but lightly armoured for their kind.",
         "class": "scout",
         "faction": "fac_mechanicum",
         "role": "specialist",
@@ -266,8 +266,8 @@
         "mobility": "walk",
         "aim": 4,
         "assault": 1,
-        "saveNumber": 5,
-        "morale": 5,
+        "saveNumber": 4,
+        "morale": 3,
         "customSize": 4,
         "standTraits": [["Cybernetica Cortex", 1], ["Tank Hunter", 1]],
         "weapons": [
@@ -280,7 +280,7 @@
       {
         "id": "mech_castellax",
         "name": "Castellax Battle-Automata",
-        "description": "The mainstay Castellan robot of the Legio Cybernetica — humanoid, atomantic-shielded, mauler bolt cannon thundering.",
+        "description": "The mainstay Castellan robot of the Legio Cybernetica — humanoid, atomantic-shielded, the benchmark of durable Mechanicum firepower.",
         "class": "afv",
         "faction": "fac_mechanicum",
         "role": "core",
@@ -289,7 +289,7 @@
         "aim": 4,
         "assault": 2,
         "saveNumber": 4,
-        "morale": 4,
+        "morale": 2,
         "customSize": 4,
         "standTraits": [["Cybernetica Cortex", 1], ["Active Defenses", 3]],
         "weapons": [
@@ -302,7 +302,7 @@
       {
         "id": "mech_thanatar",
         "name": "Thanatar Siege-Automata",
-        "description": "A walking artillery piece mounting the Hellex plasma mortar, lobbing airburst charges far across the battlefield.",
+        "description": "A walking artillery piece mounting the Hellex plasma mortar, lobbing airburst charges across the battlefield from behind the line.",
         "class": "afv",
         "faction": "fac_mechanicum",
         "role": "support",
@@ -311,8 +311,8 @@
         "aim": 4,
         "assault": 1,
         "saveNumber": 4,
-        "morale": 4,
-        "customSize": 4,
+        "morale": 3,
+        "customSize": 3,
         "standTraits": [["Cybernetica Cortex", 1], ["Active Defenses", 3]],
         "weapons": [
           { "name": "Hellex Plasma Mortar", "mode": "gp", "type": "p", "range": 20, "shots": 1, "impact": 5, "traits": [["Indirect", 3], ["Frag", 0]] },
@@ -333,8 +333,8 @@
         "aim": 3,
         "assault": 1,
         "saveNumber": 4,
-        "morale": 4,
-        "customSize": 4,
+        "morale": 3,
+        "customSize": 3,
         "standTraits": [["Cybernetica Cortex", 1], ["Tank Hunter", 1]],
         "weapons": [
           { "name": "Sollex Heavy Lascannon", "mode": "at", "type": "p", "range": 10, "shots": 2, "impact": 6, "traits": [["Heavy", -1]] },
@@ -356,7 +356,7 @@
         "assault": 1,
         "saveNumber": 4,
         "morale": 4,
-        "customSize": 6,
+        "customSize": 3,
         "standTraits": [["Active Defenses", 3]],
         "weapons": [
           { "name": "Lightning Cannon", "mode": "at", "type": "p", "range": 10, "shots": 1, "impact": 5, "traits": [["Repeating Fire", 0]] },
@@ -378,7 +378,7 @@
         "assault": 1,
         "saveNumber": 4,
         "morale": 4,
-        "customSize": 3,
+        "customSize": 2,
         "standTraits": [["Transport", 1.5, "This unit can carry Infantry or Cavalry stands. Each stack adds 1 transport slot.", 4], ["Active Defenses", 3]],
         "weapons": [
           { "name": "Twin Mauler Bolt Cannons", "mode": "gp", "type": "s", "range": 5, "shots": 2, "impact": 2, "traits": [["Rapid Fire", 0]] },
@@ -390,7 +390,7 @@
       {
         "id": "mech_warhound",
         "name": "Warhound Scout Titan",
-        "description": "The lightest god-engine, loping ahead of the battle-line hunting flanks and weak points. (Adeptus Titanicus Core Game.)",
+        "description": "The lightest god-engine, loping ahead of the battle-line to hunt flanks and weak points. Killable by the standards of Titans — but a Titan nonetheless. (Adeptus Titanicus Core Game.)",
         "class": "beh",
         "faction": "fac_mechanicum",
         "role": "core",
@@ -412,7 +412,7 @@
       {
         "id": "mech_reaver",
         "name": "Reaver Battle Titan",
-        "description": "A mid-weight battle Titan, void shields absorbing fire as it closes for the kill. (Adeptus Titanicus Core Game.)",
+        "description": "A mid-weight battle Titan, void shields absorbing fire as it strides into the main line and closes for the kill. (Adeptus Titanicus Core Game.)",
         "class": "beh",
         "faction": "fac_mechanicum",
         "role": "core",
@@ -434,13 +434,13 @@
       {
         "id": "mech_warlord",
         "name": "Warlord Battle Titan",
-        "description": "The centrepiece god-engine, ponderous behind layered void shields and its Sunfury Plasma Annihilator. Tread shakes the earth. (LI Warlord with Plasma Annihilator.)",
+        "description": "The centrepiece god-engine, ponderous behind layered void shields and its Sunfury Plasma Annihilator. The tread shakes the earth. (LI Warlord with Plasma Annihilator.)",
         "class": "beh",
         "faction": "fac_mechanicum",
         "role": "core",
         "speed": 4,
         "mobility": "walk",
-        "aim": 3,
+        "aim": 4,
         "assault": 8,
         "saveNumber": 2,
         "morale": 2,
@@ -457,7 +457,7 @@
       {
         "id": "mech_knight_lancer",
         "name": "Cerastus Knight-Lancer",
-        "description": "Questoris Knight built for the killing charge, demi-grav locomotors carrying it far faster than its weight suggests. Ionic lance and reaper chainsword. (Adeptus Titanicus Core Game.)",
+        "description": "A Questoris Knight built for the killing charge, demi-grav locomotors carrying it far faster than its weight suggests. A specialist Titan-hunter. (Adeptus Titanicus Core Game.)",
         "class": "sh",
         "faction": "fac_mechanicum",
         "role": "specialist",
@@ -479,7 +479,7 @@
       {
         "id": "mech_harpax",
         "name": "Harpax Swarmer Scout Host",
-        "description": "Skittering dark-craft construct swarms flooding across the battlefield on barbed limbs, overwhelming prey with sheer numbers. (Dark Mechanicum Stalker Constructs.)",
+        "description": "Skittering dark-craft construct swarms flooding across the battlefield on barbed limbs, overwhelming prey by sheer numbers. (Dark Mechanicum Stalker Constructs.)",
         "class": "inf",
         "faction": "fac_mechanicum",
         "role": "core",
@@ -488,7 +488,7 @@
         "aim": 5,
         "assault": 2,
         "saveNumber": 6,
-        "morale": 6,
+        "morale": 5,
         "customSize": 6,
         "standTraits": [["Cybernetica Cortex", 1], ["Charge", 0.5]],
         "weapons": [
@@ -500,7 +500,7 @@
       {
         "id": "mech_errax",
         "name": "Errax 'Butcher' Assault Stalker",
-        "description": "A dark-craft construct engineered purely for close destruction, rending through vehicles and infantry alike with armoured crushing limbs. (Dark Mechanicum Stalker Constructs.)",
+        "description": "A dark-craft construct engineered purely for close destruction, rending vehicles and infantry alike with armoured crushing limbs. (Dark Mechanicum Stalker Constructs.)",
         "class": "afv",
         "faction": "fac_mechanicum",
         "role": "specialist",
@@ -509,7 +509,7 @@
         "aim": 5,
         "assault": 3,
         "saveNumber": 4,
-        "morale": 4,
+        "morale": 3,
         "customSize": 2,
         "standTraits": [["Cybernetica Cortex", 1], ["Assault Vehicle", 1], ["Melee Weapons", 0.5]],
         "weapons": [
@@ -521,7 +521,7 @@
       {
         "id": "mech_tenebrax",
         "name": "Tenebrax 'Archer' Battle Stalker",
-        "description": "A dark-craft fire support construct saturating targets with dark energy fire from range before advancing to finish the kill. (Dark Mechanicum Stalker Constructs.)",
+        "description": "A dark-craft fire-support construct saturating targets with dark-energy fire from range — deadly at a distance, the most fragile of the stalkers up close. (Dark Mechanicum Stalker Constructs.)",
         "class": "afv",
         "faction": "fac_mechanicum",
         "role": "support",
@@ -530,7 +530,7 @@
         "aim": 4,
         "assault": 1,
         "saveNumber": 4,
-        "morale": 4,
+        "morale": 3,
         "customSize": 2,
         "standTraits": [["Cybernetica Cortex", 1]],
         "weapons": [
@@ -552,7 +552,7 @@
         "aim": 3,
         "assault": 1,
         "saveNumber": 4,
-        "morale": 4,
+        "morale": 2,
         "customSize": 2,
         "standTraits": [["Cybernetica Cortex", 1], ["Precise Fire", 1]],
         "weapons": [
@@ -564,7 +564,7 @@
       {
         "id": "mech_serperos",
         "name": "Serperos 'Overlord' Heavy Stalker",
-        "description": "A massive dark-craft heavy construct midway between walker and Titan, raining bombardment from the Exo-planar bombard while the Storm Laser Array hunts armour. (Serperos Heavy Stalkers.)",
+        "description": "A massive dark-craft heavy construct midway between robot and Titan, raining bombardment from the Exo-planar bombard while the Storm Laser Array hunts armour. (Serperos Heavy Stalkers.)",
         "class": "sh",
         "faction": "fac_mechanicum",
         "role": "specialist",
@@ -572,7 +572,7 @@
         "mobility": "walk",
         "aim": 4,
         "assault": 4,
-        "saveNumber": 4,
+        "saveNumber": 3,
         "morale": 2,
         "customSize": 1,
         "standTraits": [["Cybernetica Cortex", 1], ["Active Defenses", 3]],
