@@ -290,6 +290,8 @@ hr{border:none;border-top:1px solid var(--border-subtle);margin:12px 0}
 .qty-btn{background:var(--surface-raised);border:none;color:var(--text-bright);width:22px;height:22px;border-radius:50%;cursor:pointer;font-size:14px;line-height:22px;text-align:center}
 .qty-btn:hover{background:var(--accent)}
 .qty-val{width:30px;text-align:center;font-weight:bold;font-size:14px}
+input.no-spin{-moz-appearance:textfield;appearance:textfield}
+input.no-spin::-webkit-outer-spin-button,input.no-spin::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 .summary-row{display:flex;justify-content:space-between;padding:5px 0 4px;border-bottom:1px solid var(--border-subtle);font-size:13px;margin-top:2px}
 .summary-row:last-child{border-bottom:none;font-weight:bold;color:var(--gold)}
 .detail-row{display:flex;justify-content:space-between;padding:1px 0 1px 12px;font-size:11px;color:var(--text-faint)}
@@ -7776,12 +7778,14 @@ function renderArmyDetail() {
       <div class="info-strip-sep"></div>
       <div>
         <div class="info-strip-label">Target</div>
-        <div style="display:flex;align-items:center;gap:4px">
-          <input type="number" min="0" step="50" value="${army.pointsLimit||""}" placeholder="—"
+        <div style="display:flex;align-items:center;gap:6px">
+          <button class="qty-btn" title="Decrease target" onclick="stepArmyPtsLimit('${army.id}',-50)">−</button>
+          <input type="number" class="no-spin" min="0" step="50" value="${army.pointsLimit||""}" placeholder="—"
             title="Set a points target for this army"
-            style="width:64px;background:var(--surface-raised);border:1px solid var(--border-subtle);border-radius:4px;color:${overPtsLimit?"#ef5350":"var(--text-primary)"};font-size:14px;font-weight:bold;padding:1px 5px;text-align:right;font-family:inherit;-moz-appearance:textfield"
+            style="width:52px;background:var(--surface-raised);border:1px solid var(--border-subtle);border-radius:4px;color:${overPtsLimit?"#ef5350":"var(--text-primary)"};font-size:14px;font-weight:bold;padding:1px 5px;text-align:center;font-family:inherit"
             onchange="setArmyPtsLimit('${army.id}',this.value)"
             onkeydown="if(event.key==='Enter')this.blur()">
+          <button class="qty-btn" title="Increase target" onclick="stepArmyPtsLimit('${army.id}',50)">+</button>
           <span style="font-size:11px;color:var(--text-muted)">pts</span>
         </div>
       </div>
@@ -8561,6 +8565,16 @@ function setArmyPtsLimit(armyId, rawVal) {
   if (!army) return;
   const n = parseInt(rawVal, 10);
   army.pointsLimit = (!isNaN(n) && n > 0) ? n : null;
+  saveState();
+  renderArmyList();
+  renderArmyDetail();
+}
+
+function stepArmyPtsLimit(armyId, delta) {
+  const army = state.armies.find(a => a.id === armyId);
+  if (!army) return;
+  const next = Math.max(0, (army.pointsLimit || 0) + delta);
+  army.pointsLimit = next > 0 ? next : null;
   saveState();
   renderArmyList();
   renderArmyDetail();
