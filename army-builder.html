@@ -29,7 +29,7 @@
      --text-inactive  #666      nav tabs, unselected pills
      --text-mid       #aaa      secondary btn text, modal close
    Accent:
-     --accent         #007eff   primary blue — actionable items, headers, focus rings
+     --accent         #007eff   primary blue - actionable items, headers, focus rings
      --accent-hover   #0066cc   hover on accent
      --accent-tint    #0d1e36   darkened accent bg (edit buttons)
      --accent-light   #58a6ff   lighter accent for text on dark bg (edit btn text)
@@ -41,7 +41,7 @@
      --success-hover  #008833
      --warn           #7a4000   warning actions
      --warn-hover     #cc6600
-   Badge/section colors are intentionally hardcoded — each class/role has a
+   Badge/section colors are intentionally hardcoded - each class/role has a
    unique identity color and should not be tokenised.
    ────────────────────────────────────────────────────────────────────────── */
 :root{
@@ -550,9 +550,9 @@ label .trait-edit-btn{margin-left:6px}
           <table class="ref-table">
             <tr><th>Stand role</th><th>Other / FG / SH / Beh</th></tr>
             <tr><td>Independent</td><td>+30% / +30% / +0% / +0%</td></tr>
-            <tr><td>Command</td><td>+50% / &mdash; / +20% / &mdash;</td></tr>
+            <tr><td>Command</td><td>+50% / - / +20% / -</td></tr>
             <tr><td>Ind. Hero</td><td>+55% / +55% / +25% / +25%</td></tr>
-            <tr><td>Cmd Hero</td><td>+75% / &mdash; / +45% / &mdash;</td></tr>
+            <tr><td>Cmd Hero</td><td>+75% / - / +45% / -</td></tr>
           </table>
         </div>
       </div>
@@ -716,7 +716,7 @@ label .trait-edit-btn{margin-left:6px}
     <div class="card" style="margin-bottom:18px">
       <div class="card-title">Export Selection</div>
       <p style="color:#8b949e;font-size:13px;margin:0 0 14px;line-height:1.5">
-        Tick whatever you want to share &mdash; whole categories or individual items. Anything those items depend on (factions, traits, units, task forces&hellip;) is bundled in automatically, so the export always lands intact.
+        Tick whatever you want to share - whole categories or individual items. Anything those items depend on (factions, traits, units, task forces&hellip;) is bundled in automatically, so the export always lands intact.
       </p>
       <div class="exp-toolbar">
         <button class="exp-mini-btn" onclick="exportSelectAll()"><i class="fa-solid fa-check-double" style="font-size:10px"></i> Select all</button>
@@ -751,7 +751,7 @@ label .trait-edit-btn{margin-left:6px}
     <div class="card danger-zone">
       <div class="card-title">Danger Zone</div>
       <p style="color:#8b949e;font-size:13px;margin:0 0 14px;line-height:1.5">
-        Permanently delete <strong>all</strong> of your custom units, factions, traits, task forces, armies and forces. This cannot be undone &mdash; export a Full Backup first if you might want it back.
+        Permanently delete <strong>all</strong> of your custom units, factions, traits, task forces, armies and forces. This cannot be undone - export a Full Backup first if you might want it back.
       </p>
       <button class="btn btn-danger" onclick="confirmBtn(this,resetAllData)"><i class="fa-solid fa-trash"></i> Reset all data</button>
     </div>
@@ -781,7 +781,7 @@ label .trait-edit-btn{margin-left:6px}
 <div id="modal-import-army" class="modal-bg">
   <div class="modal" style="max-width:640px">
     <div class="modal-header">Import Army <button class="modal-close" onclick="closeModal('modal-import-army')"><i class="fa-solid fa-xmark"></i></button></div>
-    <p style="color:var(--text-muted);font-size:13px;margin:0 0 14px;line-height:1.5">Paste a previously exported army JSON. Custom units, factions, traits, task forces and assets are merged automatically — duplicates (matched by name) are skipped.</p>
+    <p style="color:var(--text-muted);font-size:13px;margin:0 0 14px;line-height:1.5">Paste a previously exported army JSON. Custom units, factions, traits, task forces and assets are merged automatically - duplicates (matched by name) are skipped.</p>
     <div class="form-group" style="margin-bottom:12px">
       <label>Paste Army JSON</label>
       <textarea id="import-army-text" placeholder="Paste army JSON here..." oninput="onImportArmyTextChange()" style="width:100%;min-height:140px;resize:vertical;font-family:monospace;font-size:12px;line-height:1.4;background:var(--surface-page);border:1px solid var(--border-default);border-radius:6px;color:var(--text-primary);padding:10px"></textarea>
@@ -820,7 +820,7 @@ label .trait-edit-btn{margin-left:6px}
 <div id="modal-import-tf" class="modal-bg">
   <div class="modal" style="max-width:640px">
     <div class="modal-header">Import Task Force <button class="modal-close" onclick="closeModal('modal-import-tf')"><i class="fa-solid fa-xmark"></i></button></div>
-    <p style="color:var(--text-muted);font-size:13px;margin:0 0 14px;line-height:1.5">Paste a previously exported task force JSON. Custom units, factions, traits, task force types and assets are merged automatically — duplicates (matched by name) are skipped.</p>
+    <p style="color:var(--text-muted);font-size:13px;margin:0 0 14px;line-height:1.5">Paste a previously exported task force JSON. Custom units, factions, traits, task force types and assets are merged automatically - duplicates (matched by name) are skipped.</p>
     <div class="form-group" style="margin-bottom:12px">
       <label>Paste Task Force JSON</label>
       <textarea id="import-tf-text" placeholder="Paste task force JSON here..." oninput="onImportTFTextChange()" style="width:100%;min-height:140px;resize:vertical;font-family:monospace;font-size:12px;line-height:1.4;background:var(--surface-page);border:1px solid var(--border-default);border-radius:6px;color:var(--text-primary);padding:10px"></textarea>
@@ -838,7 +838,7 @@ label .trait-edit-btn{margin-left:6px}
 <div id="modal-import-force" class="modal-bg">
   <div class="modal" style="max-width:640px">
     <div class="modal-header">Import Expeditionary Force <button class="modal-close" onclick="closeModal('modal-import-force')"><i class="fa-solid fa-xmark"></i></button></div>
-    <p style="color:var(--text-muted);font-size:13px;margin:0 0 14px;line-height:1.5">Paste a previously exported force JSON. Armies, task forces, custom units, factions, traits and assets are merged automatically — duplicates (matched by name) are skipped.</p>
+    <p style="color:var(--text-muted);font-size:13px;margin:0 0 14px;line-height:1.5">Paste a previously exported force JSON. Armies, task forces, custom units, factions, traits and assets are merged automatically - duplicates (matched by name) are skipped.</p>
     <div class="form-group" style="margin-bottom:12px">
       <label>Paste Force JSON</label>
       <textarea id="import-force-text" placeholder="Paste force JSON here..." oninput="onImportForceTextChange()" style="width:100%;min-height:140px;resize:vertical;font-family:monospace;font-size:12px;line-height:1.4;background:var(--surface-page);border:1px solid var(--border-default);border-radius:6px;color:var(--text-primary);padding:10px"></textarea>
@@ -1110,10 +1110,10 @@ label .trait-edit-btn{margin-left:6px}
       <label>Battle Group Marking</label>
       <select id="army-bg-mode" style="width:auto;margin-top:4px">
         <option value="custom">Icons</option>
-        <option value="numbers">Numbers — 1  2  3</option>
-        <option value="roman">Roman — I  II  III</option>
-        <option value="greek">Greek — α  β  γ</option>
-        <option value="letters">Letters — A  B  C</option>
+        <option value="numbers">Numbers - 1  2  3</option>
+        <option value="roman">Roman - I  II  III</option>
+        <option value="greek">Greek - α  β  γ</option>
+        <option value="letters">Letters - A  B  C</option>
       </select>
     </div>
     <div class="form-group" style="margin-bottom:16px">
@@ -1492,7 +1492,7 @@ const WEAPON_TRAITS = {
 //   type "faction"  → must belong to this faction
 //   type "class"    → must be this class key, or "troop" (inf/cav/fg)
 //   type "mobility" → must use this mobility key
-//   type "role"     → "hero", "independent", "troop"=non-vehicle (unit role removed — Unit Traits are unrestricted)
+//   type "role"     → "hero", "independent", "troop"=non-vehicle (unit role removed - Unit Traits are unrestricted)
 //   type "traitr"   → weapon must also carry this weapon-trait key
 const TRAIT_REQS = {
   // Stand traits
@@ -1540,7 +1540,7 @@ function premiumsFor(cls) {
   return                 {ind:0.30, cmd:0.50, hero:0.55, cmdHero:0.75};
 }
 
-// Tactical class profiles (Unit Classes — CLASSES table)
+// Tactical class profiles (Unit Classes - CLASSES table)
 const CLASS_PROFILE = {
   inf:  {cat:"Troops",  represents:"4-6 infantry", dtime:"Yes", assault:"Yes", vuln:"AI, GP",     snap:"Move or Fire", transport:"Fills 1 slot",  save:"1D6"},
   cav:  {cat:"Troops",  represents:"3-5 cavalry",  dtime:"Yes", assault:"Yes", vuln:"AI, GP",     snap:"Move",         transport:"No",            save:"1D6"},
@@ -1693,19 +1693,19 @@ let bgSymbolPickerBgId = null;
 let editingBGId = null;
 let armyIconPickerOpen = false;
 let activeBGTabId = null;
-let bgViewMode = "tabs";   // "tabs" | "flat" — army detail Battle Groups
+let bgViewMode = "tabs";   // "tabs" | "flat" - army detail Battle Groups
 // Transport picker state
 let _tpKind = null; let _tpTFId = null; let _tpSlotId = null;
 let _tpArmyId = null; let _tpBgId = null; let _tpEntryId = null;
 let _tpSelected = null; let _tpForUnit = null;
 let activeTFTab = "core";
-let tfViewMode = "tabs";    // "tabs" | "flat" — task force detail sections
+let tfViewMode = "tabs";    // "tabs" | "flat" - task force detail sections
 let _newTFTemplateId = null;
 let _savingTFTemplateFromId = null;
 let currentForceId = null;
 let editingForceId = null;
 let activeAGTabId = null;
-let agViewMode = "tabs";    // "tabs" | "flat" — expeditionary force army groups
+let agViewMode = "tabs";    // "tabs" | "flat" - expeditionary force army groups
 let agSymbolPickerAgId = null;
 let forceIconPickerOpen = false;
 let editingAGId = null;
@@ -1778,7 +1778,7 @@ function _updateUndoBtn() {
   if (!btn) return;
   if (_undoStack.length) {
     btn.style.display = "inline-flex";
-    btn.title = `Undo last change (${_undoStack.length} step${_undoStack.length !== 1 ? "s" : ""} available) — Ctrl+Z`;
+    btn.title = `Undo last change (${_undoStack.length} step${_undoStack.length !== 1 ? "s" : ""} available) - Ctrl+Z`;
   } else {
     btn.style.display = "none";
   }
@@ -1836,8 +1836,8 @@ function _showUndoToast() {
   const toast = document.getElementById("undo-toast");
   if (!toast) return;
   toast.textContent = _undoStack.length
-    ? `Undone — ${_undoStack.length} more step${_undoStack.length !== 1 ? "s" : ""} available`
-    : "Undone — no more history";
+    ? `Undone - ${_undoStack.length} more step${_undoStack.length !== 1 ? "s" : ""} available`
+    : "Undone - no more history";
   toast.classList.add("visible");
   clearTimeout(_undoToastTimer);
   _undoToastTimer = setTimeout(() => toast.classList.remove("visible"), 2200);
@@ -1871,7 +1871,7 @@ function loadState() {
         (state.armies||[]).forEach(a => a.battleGroups && a.battleGroups.forEach(bg => {
           if(!bg.symbol) _autoAssignBGSymbol(a, bg);
         }));
-        // Migration: BG entries pre-dated split support — give each the full
+        // Migration: BG entries pre-dated split support - give each the full
         // quantity of its slot (older data placed a whole stack in one group).
         (state.armies||[]).forEach(a => (a.battleGroups||[]).forEach(bg => (bg.entries||[]).forEach(e => {
           if(e.qty == null) {
@@ -2091,7 +2091,7 @@ function classLabel(c) { return (CLASS_INFO[c]||{}).label||c; }
 function classBadge(c, noTip) {
   const cp = CLASS_PROFILE[c], ci = CLASS_INFO[c]||{};
   if(!cp || noTip) return `<span class="badge badge-${c}">${classLabel(c)}</span>`;
-  const tip = `${ci.label} — ${cp.cat}. Save ${cp.save} | Assault ${cp.assault} | Vulnerable ${cp.vuln} | Snap ${cp.snap} | Transport ${cp.transport}.`;
+  const tip = `${ci.label} - ${cp.cat}. Save ${cp.save} | Assault ${cp.assault} | Vulnerable ${cp.vuln} | Snap ${cp.snap} | Transport ${cp.transport}.`;
   return `<span class="badge badge-${c} tip" data-tip="${esc(tip)}">${classLabel(c)}</span>`;
 }
 function roleBadge(r) { return `<span class="badge badge-${r}">${r}</span>`; }
@@ -2242,7 +2242,7 @@ function traitTipHTML(traitArr, allTraits) {
       || (() => { const base=name.replace(/\s[+]?\d+$/,""); return base!==name ? (Object.entries(allTraits).find(([,v])=>v[0]===base)||[null,null]) : [null,null]; })();
     const cleanDesc = cleanTraitDesc(entry?.[2] || "");
     const isUT = traitIsUnitTrait(entry);
-    const utRule = "Unit Trait — effect applies to the whole Unit. No effect if any stand of the same class lacks this trait. If multiple levels exist, only the least powerful applies.";
+    const utRule = "Unit Trait - effect applies to the whole Unit. No effect if any stand of the same class lacks this trait. If multiple levels exist, only the least powerful applies.";
     const fullDesc = isUT ? (cleanDesc ? cleanDesc + "\n\n" + utRule : utRule) : cleanDesc;
     const fac = traitFactionKey(entry);
     const facObj = fac ? (state.customFactions||[]).find(f=>f.id===fac) : null;
@@ -2261,7 +2261,7 @@ function unitCardHTML(unit, actions, viewType="unit", opts={}) {
   const pts = calcPoints(unit);
   const traitsHTML = traitTipHTML(unit.standTraits||[], allStandTraits());
   const weaponsHTML = (unit.weapons||[]).length===0
-    ? `<div class="weapon-row" style="color:#8b949e;font-style:italic">No ranged weapons — assault only</div>`
+    ? `<div class="weapon-row" style="color:#8b949e;font-style:italic">No ranged weapons - assault only</div>`
     : (unit.weapons||[]).map(w => {
         const wtHTML = (w.traits||[]).length
           ? " | " + traitTipHTML(w.traits, allWeaponTraits())
@@ -2273,7 +2273,7 @@ function unitCardHTML(unit, actions, viewType="unit", opts={}) {
                : unit.mobility === "air"  ? Math.ceil(unit.speed * 3 / 4)
                : null;
   const pKey = VIEW_PTS_KEY[viewType] || "unitPts";
-  const pVal = pts[pKey] != null ? pts[pKey] : "—";
+  const pVal = pts[pKey] != null ? pts[pKey] : "-";
   const pLabel = VIEW_LABELS[viewType] || "Unit";
   const standsHTML = viewType === "unit"
     ? `<span style="font-size:11px;color:var(--text-muted);flex-shrink:0;white-space:nowrap">${pts.unitSize} stand${pts.unitSize>1?"s":""}</span>`
@@ -2322,7 +2322,7 @@ function mechPairCardHTML(infUnit, tuUnit, n, actionsHTML, viewType, opts={}) {
     const pts = calcPoints(unit);
     const traitsHTML = traitTipHTML(unit.standTraits||[], allStandTraits());
     const weaponsHTML = (unit.weapons||[]).length===0
-      ? `<div class="weapon-row" style="color:#8b949e;font-style:italic">No ranged weapons — assault only</div>`
+      ? `<div class="weapon-row" style="color:#8b949e;font-style:italic">No ranged weapons - assault only</div>`
       : (unit.weapons||[]).map(w => {
           const wtHTML = (w.traits||[]).length ? " | " + traitTipHTML(w.traits, allWeaponTraits()) : "";
           const wName = w.name ? `<strong>${esc(w.name)}</strong> ` : "";
@@ -2332,7 +2332,7 @@ function mechPairCardHTML(infUnit, tuUnit, n, actionsHTML, viewType, opts={}) {
                  : unit.mobility === "air"  ? Math.ceil(unit.speed*3/4)
                  : null;
     const pKey = VIEW_PTS_KEY[vt] || "unitPts";
-    const pVal = extra.ptsVal != null ? extra.ptsVal : (pts[pKey] != null ? pts[pKey] : "—");
+    const pVal = extra.ptsVal != null ? extra.ptsVal : (pts[pKey] != null ? pts[pKey] : "-");
     const pLabel = VIEW_LABELS[vt] || "Unit";
     const topRightHTML = extra.countBadge != null
       ? `<span style="font-size:12px;font-weight:bold;color:#66bb6a;flex-shrink:0;white-space:nowrap">&times;${extra.countBadge}</span>`
@@ -2454,8 +2454,8 @@ const EXPORT_CATS = [
   { key:"armies",               label:"Armies",               icon:"chess-rook",     name:a=>a.name, meta:a=>isFreePick(a)?"Free Pick":"Task Force" },
   { key:"expeditionaryForces",  label:"Expeditionary Forces", icon:"earth-americas", name:f=>f.name, meta:f=>(f.armyGroups||[]).length+" group"+((f.armyGroups||[]).length!==1?"s":"") },
 ];
-let _exportSel = {};        // { catKey: Set(ids) } — items the user ticked
-let _exportOpenCats = {};   // { catKey: bool }     — which categories are expanded
+let _exportSel = {};        // { catKey: Set(ids) } - items the user ticked
+let _exportOpenCats = {};   // { catKey: bool }     - which categories are expanded
 
 function renderDataPage(){
   _exportSel = {}; EXPORT_CATS.forEach(c=>_exportSel[c.key]=new Set());
@@ -2493,7 +2493,7 @@ function renderExportPicker(){
   if(!el) return;
   const cats = EXPORT_CATS.filter(c=>(state[c.key]||[]).length);
   if(!cats.length){
-    el.innerHTML = `<div class="exp-empty">Nothing to export yet — create some units, factions or armies first.</div>`;
+    el.innerHTML = `<div class="exp-empty">Nothing to export yet - create some units, factions or armies first.</div>`;
     updateExportSummary();
     return;
   }
@@ -2505,7 +2505,7 @@ function renderExportPicker(){
       const meta = c.meta(it);
       return `<label class="exp-item">
         <input type="checkbox" class="exp-cb" ${sel.has(it.id)?"checked":""} onclick="toggleExportItem('${c.key}','${esc(it.id)}',event)">
-        <span class="exp-item-name">${esc(c.name(it)||"—")}</span>
+        <span class="exp-item-name">${esc(c.name(it)||"-")}</span>
         ${meta?`<span class="exp-item-meta">${esc(meta)}</span>`:""}
       </label>`;
     }).join("");
@@ -2649,7 +2649,7 @@ function doExportSelection(){
   const data={}; EXPORT_CATS.forEach(c=>{ if(bundle[c.key].length) data[c.key]=bundle[c.key]; });
   const payload = { app:"laserstorm-army-builder", kind:"selection", version:1, exportedAt:new Date().toISOString(), data };
   const summary = EXPORT_CATS.filter(c=>bundle[c.key].length).map(c=>`${bundle[c.key].length} ${c.label.toLowerCase()}`).join(", ");
-  _openExportModal(payload, "Export — Selection", summary, "laserstorm-selection");
+  _openExportModal(payload, "Export - Selection", summary, "laserstorm-selection");
 }
 
 function doExportFullBackup(){
@@ -2661,7 +2661,7 @@ function doExportFullBackup(){
   };
   const payload = { app:"laserstorm-army-builder", kind:"full", version:1, exportedAt:new Date().toISOString(), data };
   const summary = `${data.customUnits.length} unit(s), ${data.customFactions.length} faction(s), ${data.taskForces.length} task force(s), ${data.armies.length} army(ies)`;
-  _openExportModal(payload, "Export — Full Backup", summary, "laserstorm-backup");
+  _openExportModal(payload, "Export - Full Backup", summary, "laserstorm-backup");
 }
 
 function _openExportModal(payload, title, summary, fnameBase){
@@ -2759,9 +2759,9 @@ function _parseImportDataText(){
   if(!raw) return;
   let payload;
   try { payload = JSON.parse(raw); }
-  catch(err){ _dataMsg("data-import-msg","error","Not valid JSON &mdash; check for missing brackets or commas."); return; }
+  catch(err){ _dataMsg("data-import-msg","error","Not valid JSON - check for missing brackets or commas."); return; }
   if(!payload || payload.app!=="laserstorm-army-builder" || !payload.data){
-    _dataMsg("data-import-msg","error","This doesn't look like a LaserStorm export &mdash; missing required fields."); return;
+    _dataMsg("data-import-msg","error","This doesn't look like a LaserStorm export - missing required fields."); return;
   }
   _pendingImport = payload;
   const d = payload.data;
@@ -2771,13 +2771,13 @@ function _parseImportDataText(){
     _dataMsg("data-import-msg","error",`This is an army export. Use the <strong>Armies</strong> page &rarr; <em>Import</em> button to import it.`); return;
   }
   if(payload.kind==="full"){
-    html = `<strong>Full backup</strong> detected &mdash; `+
+    html = `<strong>Full backup</strong> detected - `+
       `${nu} unit(s), ${nf} faction(s), ${nt} trait(s), ${(d.customTFTypes||[]).length} task force type(s), ${(d.customTacticalAssets||[]).length} asset(s), `+
       `${(d.taskForces||[]).length} task force(s), ${(d.armies||[]).length} army(ies), ${(d.expeditionaryForces||[]).length} force(s).<br>`+
       `<span style="color:#f85149;font-weight:bold">Importing will REPLACE all of your current data.</span>`;
     if(ib) ib.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Replace all data';
   } else if(payload.kind==="faction"){
-    html = `<strong>Faction export</strong>: ${esc(payload.faction||((d.customFactions||[])[0]||{}).name||"&mdash;")} &mdash; `+
+    html = `<strong>Faction export</strong>: ${esc(payload.faction||((d.customFactions||[])[0]||{}).name||"-")} - `+
       `${nf} faction(s), ${nu} unit(s), ${nt} trait(s) will be merged (duplicates skipped).`;
     if(ib) ib.innerHTML = '<i class="fa-solid fa-upload"></i> Import faction';
   } else if(payload.kind==="selection"){
@@ -2789,7 +2789,7 @@ function _parseImportDataText(){
       (d.armies||[]).length?`${d.armies.length} army(ies)`:null,
       (d.expeditionaryForces||[]).length?`${d.expeditionaryForces.length} force(s)`:null,
     ].filter(Boolean);
-    html = `<strong>Selection export</strong> &mdash; ${parts.length?parts.join(", "):"empty"} will be merged into your data (duplicates skipped).`;
+    html = `<strong>Selection export</strong> - ${parts.length?parts.join(", "):"empty"} will be merged into your data (duplicates skipped).`;
     if(ib) ib.innerHTML = '<i class="fa-solid fa-upload"></i> Import selection';
   } else {
     _dataMsg("data-import-msg","error","Unknown export kind."); return;
@@ -2895,7 +2895,7 @@ function importFaction(d){
 // Merge a selection bundle (any mix of the eight categories) into current data.
 // Library-style items (factions, traits, units, TF types, assets) dedupe by
 // name and remap ids; container items (task forces, armies, forces) always get
-// fresh ids with their internal references remapped — same rules as the
+// fresh ids with their internal references remapped - same rules as the
 // per-army / per-task-force importers, applied across every category at once.
 function importSelection(d){
   const counts = { factions:0, traits:0, units:0, tfTypes:0, assets:0, taskForces:0, armies:0, forces:0, skipped:0 };
@@ -3094,7 +3094,7 @@ function exportArmy(armyId) {
   const ta = document.getElementById("export-json-text");
   if(ta) ta.value = json;
   const ttl = document.getElementById("export-json-title");
-  if(ttl) ttl.textContent = `Export — ${esc(bundle.army.name)}`;
+  if(ttl) ttl.textContent = `Export - ${esc(bundle.army.name)}`;
   const sum = document.getElementById("export-json-summary");
   if(sum) {
     const parts = [];
@@ -3139,9 +3139,9 @@ function _parseImportArmyText() {
   if(!raw) return;
   let payload;
   try { payload = JSON.parse(raw); }
-  catch(e){ _dataMsg("import-army-msg","error","Not valid JSON — check for missing brackets or commas."); return; }
+  catch(e){ _dataMsg("import-army-msg","error","Not valid JSON - check for missing brackets or commas."); return; }
   if(!payload||payload.app!=="laserstorm-army-builder"||!payload.data){
-    _dataMsg("import-army-msg","error","This doesn't look like a LaserStorm export — missing required fields."); return;
+    _dataMsg("import-army-msg","error","This doesn't look like a LaserStorm export - missing required fields."); return;
   }
   if(payload.kind!=="army"){
     _dataMsg("import-army-msg","error",`This is a <strong>${payload.kind}</strong> export, not an army export. Use the Data page to import it.`); return;
@@ -3264,7 +3264,7 @@ function importArmy(payload) {
     return raw;
   };
 
-  // 6. Import task forces with fresh IDs (always new — armies own their TFs)
+  // 6. Import task forces with fresh IDs (always new - armies own their TFs)
   const tfIdMap = {};
   (d.taskForces||[]).forEach(tf=>{
     const newTFId = "tf_"+uid();
@@ -3333,7 +3333,7 @@ function setEditMode(unit) {
   if(unit) {
     editingUnitId = unit.id;
     hint.style.display = "block";
-    hint.innerHTML = `<i class="fa-solid fa-pen"></i> Editing <strong>${esc(unit.name)}</strong> — saving updates it in place.`;
+    hint.innerHTML = `<i class="fa-solid fa-pen"></i> Editing <strong>${esc(unit.name)}</strong> - saving updates it in place.`;
     saveBtn.textContent = "Update Unit";
     newBtn.style.display = "inline-block";
   } else {
@@ -3405,7 +3405,7 @@ function renderWeaponRows() {
   const container = document.getElementById("b-weapons-container");
   container.innerHTML = "";
   if (!builderWeapons.length) {
-    container.innerHTML = `<div style="font-size:11px;color:var(--text-faint);font-style:italic;padding:8px 0;text-align:center"><i class="fa-solid fa-crosshairs" style="margin-right:5px;opacity:.5"></i>No ranged weapons — assault only. Use <strong style="color:var(--text-muted);font-style:normal">Add Weapon</strong> to arm this unit.</div>`;
+    container.innerHTML = `<div style="font-size:11px;color:var(--text-faint);font-style:italic;padding:8px 0;text-align:center"><i class="fa-solid fa-crosshairs" style="margin-right:5px;opacity:.5"></i>No ranged weapons - assault only. Use <strong style="color:var(--text-muted);font-style:normal">Add Weapon</strong> to arm this unit.</div>`;
     return;
   }
   builderWeapons.forEach((w,i) => {
@@ -3547,7 +3547,7 @@ function refreshTraitPickerList() {
     if(!groups[g].length) {
       const hint = document.createElement("div");
       hint.style.cssText = "color:var(--text-faint);font-size:11px;padding:4px 2px 6px";
-      hint.textContent = "No traits for this faction yet — create some in Custom Traits.";
+      hint.textContent = "No traits for this faction yet - create some in Custom Traits.";
       list.appendChild(hint);
     }
     groups[g].forEach(({key, val, reqs, locked}) => {
@@ -3813,7 +3813,7 @@ function saveAsNewUnit() {
     return;
   }
   if (nameTaken(name)) {
-    showFieldErr("b-name", `"${name}" already exists — change the name to save as a new unit.`);
+    showFieldErr("b-name", `"${name}" already exists - change the name to save as a new unit.`);
     return;
   }
   editingUnitId = null;
@@ -3825,7 +3825,7 @@ function saveToLibrary() {
   const unit = gatherBuilderUnit();
   if(!unit.name || unit.name==="Unnamed Unit") { showFieldErr("b-name","Give your unit a name first."); return; }
   const duplicate = state.customUnits.find(u => u.name === unit.name && u.id !== editingUnitId);
-  if(duplicate) { showFieldErr("b-name",`"${unit.name}" already exists — choose a different name.`); return; }
+  if(duplicate) { showFieldErr("b-name",`"${unit.name}" already exists - choose a different name.`); return; }
   calculateBuilder();
   unit.builtIn = false;
   if(editingUnitId) {
@@ -3995,7 +3995,7 @@ const BG_SYMBOL_GROUPS = [
   { label:"Greek",    keys:["ga","gb","gc","gd","ge"] },
   { label:"Letters",  keys:["la","lb","lc","ld","le"] },
 ];
-// Icon-only groups (no sequential text) — used by army designation and faction pickers
+// Icon-only groups (no sequential text) - used by army designation and faction pickers
 const ARMY_ICON_GROUPS = BG_SYMBOL_GROUPS.slice(0, 7);
 
 function _bgSymInner(sd, size) {
@@ -4006,7 +4006,7 @@ function _bgSymInner(sd, size) {
     : `<i class="${sd.icon}" style="font-size:${sz}px"></i>`;
 }
 
-// Returns a symbol-def object for a BG — uses army.bgIconMode for sequential modes.
+// Returns a symbol-def object for a BG - uses army.bgIconMode for sequential modes.
 function bgDesignation(army, bg) {
   const mode = army.bgIconMode || "custom";
   if(mode === "custom") {
@@ -4470,7 +4470,7 @@ function renderCustomTraitList() {
         <div style="flex:1;min-width:0">
           <div style="font-weight:bold;color:var(--text-primary);font-size:13px">${esc(t.name)} <span style="font-size:10px;color:var(--text-faint);font-weight:normal">(${t.cost >= 0 ? '+' : ''}${t.cost} pts)</span></div>
           <div style="margin-top:2px">${reqBadges}</div>
-          <div style="font-size:10px;color:var(--text-faint);margin-top:1px">${typeLabel[t.type]||t.type}${t.unitTrait ? " — <span style=\"color:#7986cb\">Unit Trait</span>" : ""}${t.stackable ? ` — stackable${t.stackCap ? `, max ${t.stackCap}` : ""}` : ""}${t.description ? ` — ${esc(t.description)}` : ""}</div>
+          <div style="font-size:10px;color:var(--text-faint);margin-top:1px">${typeLabel[t.type]||t.type}${t.unitTrait ? " - <span style=\"color:#7986cb\">Unit Trait</span>" : ""}${t.stackable ? ` - stackable${t.stackCap ? `, max ${t.stackCap}` : ""}` : ""}${t.description ? ` - ${esc(t.description)}` : ""}</div>
         </div>
         <button class="trait-edit-btn" onclick="editCustomTrait('${t.id}')"><i class="fa-solid fa-pencil"></i> Edit</button>
         <button class="trait-edit-btn" style="border-color:#8b000066;color:#ef5350;background:#2a0a0a" onclick="confirmBtn(this,()=>deleteCustomTrait('${t.id}'))"><i class="fa-solid fa-trash"></i> Delete</button>
@@ -4693,7 +4693,7 @@ function renderLibrary() {
       ctxEl.style.display = "";
       ctxEl.innerHTML = `<div style="display:flex;align-items:center;gap:8px;padding:7px 12px;border-radius:6px;background:var(--accent-tint);border:1px solid #007eff33;font-size:12px;color:var(--accent-light);margin-bottom:10px">
         <i class="fa-solid fa-bolt" style="font-size:10px;flex-shrink:0"></i>
-        <span>Quick-add active — click <strong><i class="fa-solid fa-square-plus"></i> Add to BG</strong> on any card to add it to <strong>${esc(_qaArmy.name)}</strong>.</span>
+        <span>Quick-add active - click <strong><i class="fa-solid fa-square-plus"></i> Add to BG</strong> on any card to add it to <strong>${esc(_qaArmy.name)}</strong>.</span>
         <button onclick="showPage('armies');selectArmy('${_qaArmy.id}')" style="background:none;border:none;color:var(--accent-light);cursor:pointer;padding:0;font-size:11px;white-space:nowrap;text-decoration:underline;margin-left:auto;flex-shrink:0">Open army →</button>
       </div>`;
     } else {
@@ -4706,7 +4706,7 @@ function renderLibrary() {
     const msg = search
       ? `No units match &ldquo;${esc(search)}&rdquo;`
       : libFilterFaction==="custom"
-        ? "No custom units yet — use Create Unit to build one"
+        ? "No custom units yet - use Create Unit to build one"
         : "No units found";
     list.innerHTML=`<div class="empty"><div class="empty-icon"><i class="fa-solid fa-magnifying-glass"></i></div>${msg}</div>`;
     return;
@@ -4719,7 +4719,7 @@ function renderLibrary() {
       } else if(!fpUnitMatchesFaction(u, _qaArmy)) {
         const uf = factionName(u.faction)||u.faction||"unaligned";
         const af = factionName(_qaArmy.faction)||_qaArmy.faction;
-        qaBtn = `<button class="trait-edit-btn" disabled title="Faction mismatch — unit is ${uf}, army requires ${af}" style="opacity:.35;cursor:not-allowed;margin-left:auto"><i class="fa-solid fa-square-plus"></i> Add to BG</button>`;
+        qaBtn = `<button class="trait-edit-btn" disabled title="Faction mismatch - unit is ${uf}, army requires ${af}" style="opacity:.35;cursor:not-allowed;margin-left:auto"><i class="fa-solid fa-square-plus"></i> Add to BG</button>`;
       } else {
         qaBtn = `<button class="trait-edit-btn" onclick="openLibQuickAddPopover('${u.id}',this);event.stopPropagation()" title="Quick-add to a battle group"><i class="fa-solid fa-square-plus"></i> Add to BG</button>`;
       }
@@ -4753,7 +4753,7 @@ function openLibQuickAddPopover(unitId, btnEl) {
 
   const bgs = army.battleGroups || [];
   const bgRows = !bgs.length
-    ? `<div style="font-size:12px;color:var(--text-faint);font-style:italic;padding:2px 0">No battle groups — open the army to add them.</div>`
+    ? `<div style="font-size:12px;color:var(--text-faint);font-style:italic;padding:2px 0">No battle groups - open the army to add them.</div>`
     : bgs.map(bg => {
         const btns = availTypes.map(t =>
           `<button onclick="libQuickAddUnit('${unitId}','${bg.id}','${t.type}',this);event.stopPropagation()" class="trait-edit-btn" style="font-size:10px;padding:3px 8px;line-height:1.4;text-align:center;white-space:nowrap"><i class="fa-solid fa-plus" style="font-size:8px"></i> ${t.label} <span style="opacity:.65;font-size:9px">${pts[t.key]}p</span></button>`
@@ -5126,7 +5126,7 @@ function renderTFList() {
   const list = document.getElementById("tf-list");
   if (!list) return;
   if (!state.taskForces.length) {
-    list.innerHTML = `<div class="empty" style="padding:48px 0"><div class="empty-icon"><i class="fa-solid fa-users"></i></div>No task forces yet — press <strong>New Task Force</strong> to create one</div>`;
+    list.innerHTML = `<div class="empty" style="padding:48px 0"><div class="empty-icon"><i class="fa-solid fa-users"></i></div>No task forces yet - press <strong>New Task Force</strong> to create one</div>`;
     _updateTFTemplatesBadge();
     return;
   }
@@ -5428,8 +5428,8 @@ function _tfRankPillsHTML(tf, slots) {
   const note = slots.scale === "normal"
     ? `<span style="font-size:9px;color:#444;font-style:italic">Need 5+ TFs for Large Battle upgrades</span>`
     : slots.scale === "large"
-    ? `<span style="font-size:9px;color:#666">Large (${slots.n} TFs) — Sr. ${slots.usedSenior}/${slots.seniorSlots}</span>`
-    : `<span style="font-size:9px;color:#666">Epic (${slots.n} TFs) — Sr. ${slots.usedSenior}/${slots.seniorSlots} · Lord ${slots.usedLord}/${slots.lordSlots}</span>`;
+    ? `<span style="font-size:9px;color:#666">Large (${slots.n} TFs) - Sr. ${slots.usedSenior}/${slots.seniorSlots}</span>`
+    : `<span style="font-size:9px;color:#666">Epic (${slots.n} TFs) - Sr. ${slots.usedSenior}/${slots.seniorSlots} · Lord ${slots.usedLord}/${slots.lordSlots}</span>`;
   return `<div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-top:7px;padding-top:7px;border-top:1px solid #1a2020">
     ${pill("regular","Regular","#8b949e","#8b949e22","#8b949e",true)}
     ${pill("senior","Senior TFC","#90caf9","#1a237e33","#1a237e",canSenior)}
@@ -5517,7 +5517,7 @@ function renderTFDetail() {
   function _sectionStatus(role) {
     if(role === "core") {
       const entries = Object.values(lim.coreLimitsByClass).filter(li=>li.max>0);
-      if(!entries.length) return {color:"#555",label:"—"};
+      if(!entries.length) return {color:"#555",label:"-"};
       const total = entries.reduce((s,li)=>s+li.count,0);
       const max   = entries.reduce((s,li)=>s+li.max,0);
       const anyUnderMin = entries.some(li=>li.min>0&&li.count<li.min);
@@ -5529,21 +5529,21 @@ function renderTFDetail() {
     if(role === "specialist") {
       const total = Object.values(lim.specLimitsByClass).reduce((s,v)=>s+v.count,0);
       const max   = Object.values(lim.specLimitsByClass).reduce((s,v)=>s+v.max,0);
-      if(!max) return {color:"#555",label:"—"};
+      if(!max) return {color:"#555",label:"-"};
       if(total >= max) return {color:"#ffa726",label:`${total}/${max} FULL`};
       return {color:"#66bb6a",label:`${total}/${max}`};
     }
     if(role === "command") {
-      if(!lim.cmdMax) return {color:"#555",label:"—"};
+      if(!lim.cmdMax) return {color:"#555",label:"-"};
       if(lim.cmdCount >= lim.cmdMax) return {color:"#ffa726",label:`${lim.cmdCount}/${lim.cmdMax} FULL`};
       return {color:"#66bb6a",label:`${lim.cmdCount}/${lim.cmdMax}`};
     }
     if(role === "support") {
-      if(!lim.suppMax) return {color:"#555",label:"—"};
+      if(!lim.suppMax) return {color:"#555",label:"-"};
       if(lim.suppCount >= lim.suppMax) return {color:"#ffa726",label:`${lim.suppCount}/${lim.suppMax} FULL`};
       return {color:"#66bb6a",label:`${lim.suppCount}/${lim.suppMax}`};
     }
-    return {color:"#555",label:"—"};
+    return {color:"#555",label:"-"};
   }
 
   // Ensure activeTFTab is valid for this TF
@@ -5578,7 +5578,7 @@ function renderTFDetail() {
   function _tfSectionBody(section) {
     const {role, label, shClass} = section;
     const slots = (tf.units||[]).filter(u=>u.role===role||(role==="core"&&u.role==="commander"));
-    // Limit badges (the detailed pills — the "screenshotted info")
+    // Limit badges (the detailed pills - the "screenshotted info")
     let limitBadges = "";
     if(role === "core") {
       limitBadges = Object.entries(lim.coreLimitsByClass)
@@ -5709,7 +5709,7 @@ function renderTFDetail() {
       <div>
         <div class="info-strip-label">Points</div>
         <div class="info-strip-pts" style="${tfOverLimitNow?"color:#ef5350":""}">${pts}${tf.pointsLimit?` <span style="font-size:14px;color:var(--text-muted);font-family:var(--font-body);letter-spacing:0">/ ${tf.pointsLimit}</span>`:""}</div>
-        ${tfOverLimitNow?`<div style="font-size:10px;color:#ef5350;font-weight:bold;margin-top:1px"><i class="fa-solid fa-triangle-exclamation"></i> Over limit — ineligible</div>`:""}
+        ${tfOverLimitNow?`<div style="font-size:10px;color:#ef5350;font-weight:bold;margin-top:1px"><i class="fa-solid fa-triangle-exclamation"></i> Over limit - ineligible</div>`:""}
       </div>
       <div class="info-strip-sep"></div>
       ${tf.tfType?`<div><div class="info-strip-label">Type</div><div class="info-strip-val" style="color:#7986cb">${esc(_tfTypeLabel(tf.tfType))}</div></div><div class="info-strip-sep"></div>`:""}
@@ -5780,7 +5780,7 @@ function showFieldErr(id, msg) {
   if(err) { err.textContent=msg; err.classList.add("visible"); }
 }
 // Inline message strip inside a modal (replaces alert popups).
-// `html` may contain markup — caller is responsible for escaping user content.
+// `html` may contain markup - caller is responsible for escaping user content.
 function modalMsg(id, html) {
   const el = document.getElementById(id);
   if(!el) return;
@@ -5887,7 +5887,7 @@ function renderAddUnitList() {
   // Filter out units that have no valid type for this section
   units = units.filter(u => availableTypesFor(u.class, addUnitTargetRole).length > 0);
   // Filter out units from other factions if TF has a faction set
-  if(tf && tf.faction === "any") { /* no filter — all factions allowed */ }
+  if(tf && tf.faction === "any") { /* no filter - all factions allowed */ }
   else if(tf && tf.faction) { units = units.filter(u => !u.faction || u.faction === tf.faction); }
   else { units = units.filter(u => u.faction === "standard" || !u.faction); }
   const list = document.getElementById("addunit-list");
@@ -6176,7 +6176,7 @@ function saveTFTemplate() {
     tfType: tf.tfType||"",
     faction: tf.faction||"",
     pointsLimit: tf.pointsLimit||null,
-    // Strip slot IDs — they'll be regenerated on use
+    // Strip slot IDs - they'll be regenerated on use
     units: (tf.units||[]).map(s=>({unitId:s.unitId, role:s.role, unitType:s.unitType, quantity:s.quantity, transport:s.transport||undefined}))
   };
   state.tfTemplates = state.tfTemplates || [];
@@ -6314,7 +6314,7 @@ function exportTF(tfId) {
   const ta = document.getElementById("export-json-text");
   if(ta) ta.value = json;
   const ttl = document.getElementById("export-json-title");
-  if(ttl) ttl.textContent = `Export — ${esc(bundle.taskForce.name)}`;
+  if(ttl) ttl.textContent = `Export - ${esc(bundle.taskForce.name)}`;
   const sum = document.getElementById("export-json-summary");
   if(sum) {
     const parts = [];
@@ -6361,9 +6361,9 @@ function _parseImportTFText() {
   if(!raw) return;
   let payload;
   try { payload = JSON.parse(raw); }
-  catch(e){ _dataMsg("import-tf-msg","error","Not valid JSON — check for missing brackets or commas."); return; }
+  catch(e){ _dataMsg("import-tf-msg","error","Not valid JSON - check for missing brackets or commas."); return; }
   if(!payload||payload.app!=="laserstorm-army-builder"||!payload.data){
-    _dataMsg("import-tf-msg","error","This doesn't look like a LaserStorm export — missing required fields."); return;
+    _dataMsg("import-tf-msg","error","This doesn't look like a LaserStorm export - missing required fields."); return;
   }
   if(payload.kind!=="taskforce"){
     _dataMsg("import-tf-msg","error",`This is a <strong>${esc(payload.kind)}</strong> export, not a task force export. Use the appropriate importer.`); return;
@@ -6696,7 +6696,7 @@ function armyPoints(a) {
   },0);
 }
 
-// Cost of only the units actually placed into battle groups — this is the
+// Cost of only the units actually placed into battle groups - this is the
 // figure that counts against the army's points limit on the tabletop.
 function armyDeployedPoints(a) {
   return (a.battleGroups||[]).reduce((sum,bg) => sum + bgPoints(bg), 0);
@@ -6828,7 +6828,7 @@ function _openTransportPicker(unit, current, faction) {
   const intro = document.getElementById("transport-intro");
   const slotsPer = unit.class === "fg" ? 2 : 1;
   const need = calcPoints(unit).unitSize * slotsPer;
-  intro.innerHTML = `<strong style="color:#e0e0e0">${esc(unit.name)}</strong> — ${calcPoints(unit).unitSize} ${unit.class==="fg"?"gun":"infantry"} stand${calcPoints(unit).unitSize!==1?"s":""} needing <strong>${need}</strong> transport slot${need!==1?"s":""}. Pick a transport AFV; the minimum number needed is added automatically.`;
+  intro.innerHTML = `<strong style="color:#e0e0e0">${esc(unit.name)}</strong> - ${calcPoints(unit).unitSize} ${unit.class==="fg"?"gun":"infantry"} stand${calcPoints(unit).unitSize!==1?"s":""} needing <strong>${need}</strong> transport slot${need!==1?"s":""}. Pick a transport AFV; the minimum number needed is added automatically.`;
   document.getElementById("transport-clear-btn").style.display = current ? "inline-flex" : "none";
   _tpSelected = current;
   _renderTransportList(faction);
@@ -6958,7 +6958,7 @@ function armyBGSizeViolations(army) {
 
 // Pooled TFs that no longer satisfy the army's faction restriction (e.g. after
 // the restriction was changed). Returns a Set of TF ids; empty if unrestricted.
-// Used to warn the user — armies are never blocked, just flagged non-deployable.
+// Used to warn the user - armies are never blocked, just flagged non-deployable.
 function armyFactionViolations(army) {
   if(!army || !army.faction) return new Set();
   return new Set((army.taskForceIds||[])
@@ -6982,7 +6982,7 @@ function fpArmyFactionViolations(army) {
   if(!army || !army.faction) return new Set();
   const violated = new Set();
   (army.battleGroups||[]).forEach(bg => (bg.entries||[]).forEach(e => {
-    if(e.slotId) return; // TF entry in wrong army type — skip
+    if(e.slotId) return; // TF entry in wrong army type - skip
     const u = unitById(e.unitId);
     if(u && !fpUnitMatchesFaction(u, army)) violated.add(e.id);
   }));
@@ -7283,7 +7283,7 @@ function renderArmyList() {
   const cmpBtn = document.getElementById("btn-compare-armies");
   if(cmpBtn) cmpBtn.style.display = state.armies.length >= 2 ? "" : "none";
   if (!state.armies.length) {
-    list.innerHTML = `<div class="empty" style="padding:48px 0"><div class="empty-icon"><i class="fa-solid fa-chess-rook"></i></div>No armies yet — press <strong>New Army</strong> to create one</div>`;
+    list.innerHTML = `<div class="empty" style="padding:48px 0"><div class="empty-icon"><i class="fa-solid fa-chess-rook"></i></div>No armies yet - press <strong>New Army</strong> to create one</div>`;
     return;
   }
   list.innerHTML = state.armies.map(a => {
@@ -7310,7 +7310,7 @@ function renderArmyList() {
       : `<span style="font-size:9px;font-weight:bold;padding:1px 6px;border-radius:8px;background:#0d1a2e;color:#4a7adc;border:1px solid #4a7adc44;letter-spacing:.5px">TASK FORCE</span>`;
 
     const violBadge = notDeployable
-      ? `<span title="Not deployable — has rule violations" style="font-size:12px;color:#ef5350;flex-shrink:0"><i class="fa-solid fa-triangle-exclamation"></i></span>`
+      ? `<span title="Not deployable - has rule violations" style="font-size:12px;color:#ef5350;flex-shrink:0"><i class="fa-solid fa-triangle-exclamation"></i></span>`
       : "";
 
     const ptsLabel = a.pointsLimit ? `${deployed} / ${a.pointsLimit} pts` : `${deployed} pts deployed`;
@@ -7456,7 +7456,7 @@ function renderArmyDetail() {
           <button onclick="tfRemoveBlockedId=null;renderArmyDetail()" style="background:none;border:none;color:#fb923c;cursor:pointer;padding:0;font-size:13px;flex-shrink:0;line-height:1"><i class="fa-solid fa-xmark"></i></button>
         </div>` : "";
         const offFactionHTML = (offFaction && !isBlocked) ? `<div style="margin-top:6px;padding:6px 8px;border-radius:4px;background:#1a0505;border:1px solid #ef535066;font-size:11px;color:#ef9a9a;line-height:1.4">
-          <i class="fa-solid fa-triangle-exclamation" style="margin-right:4px;color:#ef5350"></i>Doesn't match this army's ${factionPill(army.faction)} restriction — remove it, or change the restriction.
+          <i class="fa-solid fa-triangle-exclamation" style="margin-right:4px;color:#ef5350"></i>Doesn't match this army's ${factionPill(army.faction)} restriction - remove it, or change the restriction.
         </div>` : "";
         const tfSlots = tfRankSlots(tf.id);
         const tfAsset = tf.tacAsset ? allAssets.find(a=>a.id===tf.tacAsset) : null;
@@ -7483,7 +7483,7 @@ function renderArmyDetail() {
         </div>`;
       }).join("");
 
-  // Unified non-deployable banner (warn, never block — invalid armies are fine here).
+  // Unified non-deployable banner (warn, never block - invalid armies are fine here).
   const deployIssues = [];
   if(overPtsLimit) deployIssues.push(`Deployed cost <strong>${deployedPts} pts</strong> exceeds the army's <strong>${army.pointsLimit} pt</strong> limit by ${deployedPts-army.pointsLimit}.`);
   if(!bgViol.ok) {
@@ -7493,7 +7493,7 @@ function renderArmyDetail() {
     const offenderList = offenders.length>1
       ? offenders.slice(0,-1).join(", ") + " and " + offenders[offenders.length-1]
       : offenders[0];
-    deployIssues.push(`${offenderList} ${offenders.length>1?"are":"is"} too small — each Battle Group needs at least <strong>${bgViol.minAllowed}</strong> unit${bgViol.minAllowed!==1?"s":""}, half of the largest group <strong>${esc(bgViol.largestName)}</strong> (${bgViol.largest}) rounded up.`);
+    deployIssues.push(`${offenderList} ${offenders.length>1?"are":"is"} too small - each Battle Group needs at least <strong>${bgViol.minAllowed}</strong> unit${bgViol.minAllowed!==1?"s":""}, half of the largest group <strong>${esc(bgViol.largestName)}</strong> (${bgViol.largest}) rounded up.`);
   }
   if(facViol.size) deployIssues.push(`<strong>${facViol.size}</strong> task force${facViol.size>1?"s":""} in the pool ${facViol.size>1?"don't":"doesn't"} match the ${esc(factionName(army.faction))} faction restriction.`);
   if(fpViol.size) deployIssues.push(`<strong>${fpViol.size}</strong> unit entr${fpViol.size>1?"ies":"y"} in the battle groups ${fpViol.size>1?"don't":"doesn't"} match the ${factionPill(army.faction)} restriction.`);
@@ -7540,17 +7540,17 @@ function renderArmyDetail() {
       </div>` : "";
       const bgHintHTML = (()=>{
         if(bgSize === 0 && bgViol.minAllowed > 0) {
-          // Empty BG while other BGs have units — soft guidance, not an alarm
+          // Empty BG while other BGs have units - soft guidance, not an alarm
           return `<div style="margin-bottom:8px;padding:6px 9px;border-radius:4px;background:var(--accent-tint);border:1px solid #007eff33;font-size:11px;color:var(--accent-light);display:flex;align-items:flex-start;gap:6px">
             <i class="fa-solid fa-circle-info" style="flex-shrink:0;margin-top:1px"></i>
-            <span>Needs at least <strong>${bgViol.minAllowed}</strong> unit${bgViol.minAllowed!==1?"s":""} to deploy — half of <strong>${esc(bgViol.largestName)}</strong>'s ${bgViol.largest}, rounded up</span>
+            <span>Needs at least <strong>${bgViol.minAllowed}</strong> unit${bgViol.minAllowed!==1?"s":""} to deploy - half of <strong>${esc(bgViol.largestName)}</strong>'s ${bgViol.largest}, rounded up</span>
           </div>`;
         }
         if(bgSize > 0 && bgUndersize) {
-          // Has units but not enough — red error (user has made an active mistake)
+          // Has units but not enough - red error (user has made an active mistake)
           return `<div style="margin-bottom:8px;padding:5px 8px;border-radius:4px;background:#1a0505;border:1px solid #ef535055;font-size:11px;color:#ef9a9a;display:flex;align-items:flex-start;gap:6px">
             <i class="fa-solid fa-triangle-exclamation" style="color:#ef5350;flex-shrink:0;margin-top:1px"></i>
-            <span>Has ${bgRuleSize} unit${bgRuleSize!==1?"s":""} — needs at least <strong style="color:#ef5350">${bgViol.minAllowed}</strong> (half of ${esc(bgViol.largestName)}'s ${bgViol.largest}, rounded up)</span>
+            <span>Has ${bgRuleSize} unit${bgRuleSize!==1?"s":""} - needs at least <strong style="color:#ef5350">${bgViol.minAllowed}</strong> (half of ${esc(bgViol.largestName)}'s ${bgViol.largest}, rounded up)</span>
           </div>`;
         }
         return "";
@@ -7618,7 +7618,7 @@ function renderArmyDetail() {
       const flatSymStyle = `width:24px;height:24px;border-radius:5px;background:${symDef.color}1a;border:1.5px solid ${symDef.color}99;color:${symDef.color};display:inline-flex;align-items:center;justify-content:center;flex-shrink:0`;
       const flatSymBtn = bgViewMode !== "flat" ? ""
         : bgMode === "custom"
-          ? `<button onclick="openBGSymbolPicker('${army.id}','${bg.id}')" title="${symDef.label} — click to change" style="${flatSymStyle};cursor:pointer;padding:0;transition:background .15s" onmouseover="this.style.background='${symDef.color}33'" onmouseout="this.style.background='${symDef.color}1a'">${_bgSymInner(symDef,12)}</button>`
+          ? `<button onclick="openBGSymbolPicker('${army.id}','${bg.id}')" title="${symDef.label} - click to change" style="${flatSymStyle};cursor:pointer;padding:0;transition:background .15s" onmouseover="this.style.background='${symDef.color}33'" onmouseout="this.style.background='${symDef.color}1a'">${_bgSymInner(symDef,12)}</button>`
           : `<div style="${flatSymStyle}">${_bgSymInner(symDef,12)}</div>`;
       const toolbarHTML = `<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border-subtle)">
         ${flatSymBtn}
@@ -7665,7 +7665,7 @@ function renderArmyDetail() {
   const activeBG = bgList.find(b => b.id === activeBGTabId);
   const bgCardBodyHTML = activeBG ? _armyBGCardBody(activeBG) : "";
 
-  // Equal-width grid tabs — each 1/N of total width
+  // Equal-width grid tabs - each 1/N of total width
   const bgTabsHTML = `<div style="display:grid;grid-template-columns:repeat(${bgList.length},1fr);gap:1px;background:var(--border-subtle)">
     ${bgList.map(bg => {
       const isActive = activeBGTabId === bg.id;
@@ -7680,17 +7680,17 @@ function renderArmyDetail() {
       // Status badge: reflect build progress
       const stColor = hasWarn ? "#ef5350"
         : bgSize > 0 ? "#66bb6a"
-        : bgViol.minAllowed > 0 ? "#58a6ff"  // empty but min known — blue guidance
+        : bgViol.minAllowed > 0 ? "#58a6ff"  // empty but min known - blue guidance
         : "#555";
       const stLabel = hasWarn ? `⚠ ${bgSize}`
         : bgSize > 0 ? `${bgSize}u`
         : bgViol.minAllowed > 0 ? `min ${bgViol.minAllowed}`  // show what's needed
-        : "—";
+        : "-";
       const statusBadge = `<span style="font-size:8px;font-weight:700;color:${stColor};flex-shrink:0;letter-spacing:.3px">${stLabel}</span>`;
       if(isActive) {
         // Active: compact single-row, accent top border
         const symEl = bgMode === "custom"
-          ? `<button onclick="openBGSymbolPicker('${army.id}','${bg.id}')" title="${symDef.label} — click to change" style="${symStyle};cursor:pointer;padding:0;border:1.5px solid ${symDef.color}99;transition:background .15s" onmouseover="this.style.background='${symDef.color}33'" onmouseout="this.style.background='${symDef.color}22'">${symInner}</button>`
+          ? `<button onclick="openBGSymbolPicker('${army.id}','${bg.id}')" title="${symDef.label} - click to change" style="${symStyle};cursor:pointer;padding:0;border:1.5px solid ${symDef.color}99;transition:background .15s" onmouseover="this.style.background='${symDef.color}33'" onmouseout="this.style.background='${symDef.color}22'">${symInner}</button>`
           : `<div style="${symStyle}">${symInner}</div>`;
         return `<div style="padding:8px 9px;border:none;border-top:2px solid var(--accent);background:var(--surface-page);overflow:hidden;min-width:0">
           <div style="display:flex;align-items:center;gap:5px;min-width:0">
@@ -7732,7 +7732,7 @@ function renderArmyDetail() {
   // Army icon badge
   const armySym = army.symbol ? _bgSymLookup(army.symbol) : null;
   const armyIconBtn = armySym
-    ? `<button onclick="openArmyIconPicker()" title="Army designation icon — click to change" style="width:34px;height:34px;border-radius:8px;background:${armySym.color}1a;border:1.5px solid ${armySym.color}99;color:${armySym.color};cursor:pointer;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;padding:0;transition:background .15s" onmouseover="this.style.background='${armySym.color}33'" onmouseout="this.style.background='${armySym.color}1a'">${_bgSymInner(armySym,14)}</button>`
+    ? `<button onclick="openArmyIconPicker()" title="Army designation icon - click to change" style="width:34px;height:34px;border-radius:8px;background:${armySym.color}1a;border:1.5px solid ${armySym.color}99;color:${armySym.color};cursor:pointer;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;padding:0;transition:background .15s" onmouseover="this.style.background='${armySym.color}33'" onmouseout="this.style.background='${armySym.color}1a'">${_bgSymInner(armySym,14)}</button>`
     : `<button onclick="openArmyIconPicker()" title="Set army designation icon" style="width:34px;height:34px;border-radius:8px;background:var(--surface-raised);border:1.5px dashed var(--border-default);color:var(--text-faint);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;padding:0;font-size:16px;transition:border-color .15s,color .15s" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border-default)';this.style.color='var(--text-faint)'"><i class="fa-solid fa-plus" style="font-size:11px"></i></button>`;
   // Army icon picker (inline, free icon selection)
   const armyIconPickerHTML = armyIconPickerOpen ? `<div style="margin-bottom:14px;padding:10px 12px;border-radius:8px;background:var(--surface-raised);border:1px solid var(--border-subtle)">
@@ -7780,7 +7780,7 @@ function renderArmyDetail() {
         <div class="info-strip-label">Target</div>
         <div style="display:flex;align-items:center;gap:6px">
           <button class="qty-btn" title="Decrease target" onclick="stepArmyPtsLimit('${army.id}',-50)">−</button>
-          <input type="number" class="no-spin" min="0" step="50" value="${army.pointsLimit||""}" placeholder="—"
+          <input type="number" class="no-spin" min="0" step="50" value="${army.pointsLimit||""}" placeholder="-"
             title="Set a points target for this army"
             style="width:52px;background:var(--surface-raised);border:1px solid var(--border-subtle);border-radius:4px;color:${overPtsLimit?"#ef5350":"var(--text-primary)"};font-size:14px;font-weight:bold;padding:1px 5px;text-align:center;font-family:inherit"
             onchange="setArmyPtsLimit('${army.id}',this.value)"
@@ -7916,12 +7916,12 @@ function _pUnitCard(unit, viewType, tfBadgeHTML, opts, pal, gray) {
   opts = opts || {};
   const pts    = calcPoints(unit);
   const pKey   = VIEW_PTS_KEY[viewType] || "unitPts";
-  const pVal   = opts.ptsVal != null ? opts.ptsVal : (pts[pKey] != null ? pts[pKey] : "—");
+  const pVal   = opts.ptsVal != null ? opts.ptsVal : (pts[pKey] != null ? pts[pKey] : "-");
   const pLabel = opts.ptsLabel || VIEW_LABELS[viewType] || "Unit";
   const minSpd = unit.mobility === "grav" ? Math.ceil(unit.speed/2) : unit.mobility === "air" ? Math.ceil(unit.speed*3/4) : null;
   const traitsHTML  = _pTraitPills(unit.standTraits||[], allStandTraits(), pal, gray);
   const weaponsHTML = (unit.weapons||[]).length === 0
-    ? `<div style="padding:4px 8px;font-size:10px;color:${pal.mutedText};font-style:italic;background:${pal.wepBg};border-radius:4px;margin-top:3px">No ranged weapons — assault only</div>`
+    ? `<div style="padding:4px 8px;font-size:10px;color:${pal.mutedText};font-style:italic;background:${pal.wepBg};border-radius:4px;margin-top:3px">No ranged weapons - assault only</div>`
     : unit.weapons.map(w => {
         const wtPills = (w.traits||[]).length ? " | " + _pTraitPills(w.traits, allWeaponTraits(), pal, gray) : "";
         const wName   = w.name ? `<strong>${esc(w.name)}</strong> ` : "";
@@ -7971,13 +7971,13 @@ function _pMechPair(carrier, viewType, tu, n, badgeHTML, pal, gray) {
     extra = extra || {};
     const pts = calcPoints(unit);
     const pKey = VIEW_PTS_KEY[vt] || "unitPts";
-    const pVal = extra.ptsVal != null ? extra.ptsVal : (pts[pKey] != null ? pts[pKey] : "—");
+    const pVal = extra.ptsVal != null ? extra.ptsVal : (pts[pKey] != null ? pts[pKey] : "-");
     const pLabel = extra.ptsLabel || VIEW_LABELS[vt] || "Unit";
     const minSpd = unit.mobility === "grav" ? Math.ceil(unit.speed/2)
                  : unit.mobility === "air"  ? Math.ceil(unit.speed*3/4) : null;
     const traitsHTML = _pTraitPills(unit.standTraits||[], allStandTraits(), pal, gray);
     const weaponsHTML = (unit.weapons||[]).length === 0
-      ? `<div style="padding:4px 8px;font-size:10px;color:${pal.mutedText};font-style:italic;background:${pal.wepBg};border-radius:4px;margin-top:3px">No ranged weapons — assault only</div>`
+      ? `<div style="padding:4px 8px;font-size:10px;color:${pal.mutedText};font-style:italic;background:${pal.wepBg};border-radius:4px;margin-top:3px">No ranged weapons - assault only</div>`
       : unit.weapons.map(w => {
           const wtPills = (w.traits||[]).length ? " | " + _pTraitPills(w.traits, allWeaponTraits(), pal, gray) : "";
           const wName = w.name ? `<strong>${esc(w.name)}</strong> ` : "";
@@ -8029,7 +8029,7 @@ function _pMechPair(carrier, viewType, tu, n, badgeHTML, pal, gray) {
 
 function _pCardGrid(unitCards, pal) {
   // Chunk cards into rows: full-width mech pairs get their own row, normal cards pair up two per row.
-  // Block-flow fragmentation works in every engine — unlike flex/grid containers, which WebKit refuses to split across pages.
+  // Block-flow fragmentation works in every engine - unlike flex/grid containers, which WebKit refuses to split across pages.
   const rows = [];
   let pending = null;
   for (const c of unitCards) {
@@ -8060,7 +8060,7 @@ function _printShell(title, bodyContent, paperSize, pal) {
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>${esc(title)} — Print</title>
+<title>${esc(title)} - Print</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -8632,13 +8632,13 @@ function saveArmy() {
         const hasUnits = bgsToRemove.some(bg => (bg.entries||[]).length > 0);
         if(hasUnits) {
           const names = bgsToRemove.filter(bg=>(bg.entries||[]).length>0).map(bg=>esc(bg.name)).join(", ");
-          modalMsg("army-modal-msg", `Can't reduce to ${bgCount} battle groups — <strong>${names}</strong> still ${bgsToRemove.filter(bg=>(bg.entries||[]).length>0).length>1?"have":"has"} units. Remove those first.`);
+          modalMsg("army-modal-msg", `Can't reduce to ${bgCount} battle groups - <strong>${names}</strong> still ${bgsToRemove.filter(bg=>(bg.entries||[]).length>0).length>1?"have":"has"} units. Remove those first.`);
           return;
         }
         army.battleGroups = (army.battleGroups||[]).slice(0, bgCount);
       }
       army.name=name; army.faction=faction; army.bgCount=bgCount; army.pointsLimit=pointsLimit; army.bgIconMode=bgIconMode; army.notes=notes; _ensureBGs(army);
-      // armyType is locked on edit — do not overwrite
+      // armyType is locked on edit - do not overwrite
     }
     editingArmyId = null;
   } else {
@@ -8711,7 +8711,7 @@ function _renderAddTFList() {
     return true;
   });
   if(!available.length) {
-    list.innerHTML=`<div class="empty">${army?.faction?"No matching or unaligned task forces available — all are added, or locked to other factions.":"All task forces already added, or none exist."}</div>`;
+    list.innerHTML=`<div class="empty">${army?.faction?"No matching or unaligned task forces available - all are added, or locked to other factions.":"All task forces already added, or none exist."}</div>`;
   } else {
     list.innerHTML = available.map(tf => {
       const pts = tfPoints(tf);
@@ -8831,7 +8831,7 @@ function _renderBGUnitList() {
   }).join("");
   // Explain why nothing can be picked rather than showing a wall of dimmed rows.
   const infoHTML = (totalSlots === 0)
-    ? `<div class="empty">No units in this army's task forces yet — add some to a task force first.</div>`
+    ? `<div class="empty">No units in this army's task forces yet - add some to a task force first.</div>`
     : (selectable === 0)
       ? `<div style="padding:9px 11px;border-radius:5px;background:#0d1620;border:1px solid var(--border-subtle);color:#8b949e;font-size:11px;line-height:1.5;display:flex;align-items:flex-start;gap:7px;margin-bottom:4px"><i class="fa-solid fa-circle-info" style="margin-top:1px;flex-shrink:0;color:#58a6ff"></i><div>Every unit is already placed in a battle group or fully assigned elsewhere. Use the <strong>&minus;/+</strong> steppers on the battle group cards to move quantities between groups.</div></div>`
       : "";
@@ -9048,7 +9048,7 @@ function renderForceList() {
   const list = document.getElementById("force-list");
   if(!list) return;
   if(!(state.expeditionaryForces||[]).length) {
-    list.innerHTML = `<div class="empty" style="padding:48px 0"><div class="empty-icon"><i class="fa-solid fa-earth-americas"></i></div>No expeditionary forces yet — press <strong>New Force</strong> to create one</div>`;
+    list.innerHTML = `<div class="empty" style="padding:48px 0"><div class="empty-icon"><i class="fa-solid fa-earth-americas"></i></div>No expeditionary forces yet - press <strong>New Force</strong> to create one</div>`;
     return;
   }
   list.innerHTML = (state.expeditionaryForces||[]).map(force => {
@@ -9065,7 +9065,7 @@ function renderForceList() {
       : `<div style="width:56px;height:56px;border-radius:12px;background:var(--surface-raised);border:2px dashed var(--border-default);color:var(--text-faint);display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;font-size:22px"><i class="fa-solid fa-earth-americas"></i></div>`;
 
     const violBadge = notDeployable
-      ? `<span title="Not deployable — has army group size violations" style="font-size:12px;color:#ef5350;flex-shrink:0"><i class="fa-solid fa-triangle-exclamation"></i></span>`
+      ? `<span title="Not deployable - has army group size violations" style="font-size:12px;color:#ef5350;flex-shrink:0"><i class="fa-solid fa-triangle-exclamation"></i></span>`
       : "";
 
     const agRows = agList.length === 0
@@ -9186,7 +9186,7 @@ function renderForceDetail() {
   // Force icon button
   const forceSym = force.symbol ? _bgSymLookup(force.symbol) : null;
   const forceIconBtn = forceSym
-    ? `<button onclick="openForceIconPicker()" title="Force designation icon — click to change" style="width:34px;height:34px;border-radius:8px;background:${forceSym.color}1a;border:1.5px solid ${forceSym.color}99;color:${forceSym.color};cursor:pointer;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;padding:0;transition:background .15s" onmouseover="this.style.background='${forceSym.color}33'" onmouseout="this.style.background='${forceSym.color}1a'">${_bgSymInner(forceSym,14)}</button>`
+    ? `<button onclick="openForceIconPicker()" title="Force designation icon - click to change" style="width:34px;height:34px;border-radius:8px;background:${forceSym.color}1a;border:1.5px solid ${forceSym.color}99;color:${forceSym.color};cursor:pointer;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;padding:0;transition:background .15s" onmouseover="this.style.background='${forceSym.color}33'" onmouseout="this.style.background='${forceSym.color}1a'">${_bgSymInner(forceSym,14)}</button>`
     : `<button onclick="openForceIconPicker()" title="Set force designation icon" style="width:34px;height:34px;border-radius:8px;background:var(--surface-raised);border:1.5px dashed var(--border-default);color:var(--text-faint);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;padding:0;transition:border-color .15s,color .15s" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border-default)';this.style.color='var(--text-faint)'"><i class="fa-solid fa-plus" style="font-size:11px"></i></button>`;
 
   // Force icon picker
@@ -9209,7 +9209,7 @@ function renderForceDetail() {
   if(!viol.ok) {
     const offenders = agList.filter(ag=>viol.violatingIds.has(ag.id)).map(ag=>`<strong>${esc(ag.name)}</strong> (${(ag.armyIds||[]).length})`);
     const offenderList = offenders.length>1 ? offenders.slice(0,-1).join(", ")+" and "+offenders[offenders.length-1] : offenders[0];
-    deployIssues.push(`${offenderList} ${offenders.length>1?"are":"is"} too small — each Army Group needs at least <strong>${viol.minAllowed}</strong> arm${viol.minAllowed!==1?"ies":"y"}, half of the largest group <strong>${esc(viol.largestName)}</strong> (${viol.largest}) rounded up.`);
+    deployIssues.push(`${offenderList} ${offenders.length>1?"are":"is"} too small - each Army Group needs at least <strong>${viol.minAllowed}</strong> arm${viol.minAllowed!==1?"ies":"y"}, half of the largest group <strong>${esc(viol.largestName)}</strong> (${viol.largest}) rounded up.`);
   }
   const deployBannerHTML = deployIssues.length ? `<div style="margin-bottom:14px;padding:8px 12px;border-radius:6px;background:#1a0505;border:1px solid #ef535066;display:flex;align-items:flex-start;gap:10px">
     <i class="fa-solid fa-triangle-exclamation" style="color:#ef5350;margin-top:1px;flex-shrink:0"></i>
@@ -9228,10 +9228,10 @@ function renderForceDetail() {
       const symInner = _bgSymInner(symDef,10);
       const symStyle = `width:20px;height:20px;border-radius:4px;background:${symDef.color}${isActive?"22":"14"};border:1.5px solid ${symDef.color}${isActive?"99":"44"};color:${symDef.color};display:inline-flex;align-items:center;justify-content:center;flex-shrink:0`;
       const stColor = agUndersize?"#ef5350":agSize>0?"#66bb6a":"#555";
-      const stLabel = agUndersize?`⚠ ${agSize}`:agSize>0?`${agSize}a`:"—";
+      const stLabel = agUndersize?`⚠ ${agSize}`:agSize>0?`${agSize}a`:"-";
       const statusBadge = `<span style="font-size:8px;font-weight:700;color:${stColor};flex-shrink:0;letter-spacing:.3px">${stLabel}</span>`;
       if(isActive) {
-        const symEl = `<button onclick="openAGSymbolPicker('${force.id}','${ag.id}')" title="${symDef.label} — click to change" style="${symStyle};cursor:pointer;padding:0;border:1.5px solid ${symDef.color}99;transition:background .15s" onmouseover="this.style.background='${symDef.color}33'" onmouseout="this.style.background='${symDef.color}22'">${symInner}</button>`;
+        const symEl = `<button onclick="openAGSymbolPicker('${force.id}','${ag.id}')" title="${symDef.label} - click to change" style="${symStyle};cursor:pointer;padding:0;border:1.5px solid ${symDef.color}99;transition:background .15s" onmouseover="this.style.background='${symDef.color}33'" onmouseout="this.style.background='${symDef.color}22'">${symInner}</button>`;
         return `<div style="padding:8px 9px;border:none;border-top:2px solid var(--accent);background:var(--surface-page);overflow:hidden;min-width:0">
           <div style="display:flex;align-items:center;gap:5px;min-width:0">
             ${symEl}
@@ -9281,7 +9281,7 @@ function renderForceDetail() {
 
       const agWarnStripHTML = agUndersize ? `<div style="margin-bottom:8px;padding:5px 8px;border-radius:4px;background:#1a0505;border:1px solid #ef535055;font-size:11px;color:#ef9a9a;display:flex;align-items:flex-start;gap:6px">
         <i class="fa-solid fa-triangle-exclamation" style="color:#ef5350;flex-shrink:0;margin-top:1px"></i>
-        <span>Has ${agSize} arm${agSize!==1?"ies":"y"} — needs at least <strong style="color:#ef5350">${viol.minAllowed}</strong> (half of ${esc(viol.largestName)}'s ${viol.largest}, rounded up)</span>
+        <span>Has ${agSize} arm${agSize!==1?"ies":"y"} - needs at least <strong style="color:#ef5350">${viol.minAllowed}</strong> (half of ${esc(viol.largestName)}'s ${viol.largest}, rounded up)</span>
       </div>` : "";
 
       const descHTML = ag.description ? `<div style="font-size:12px;color:var(--text-muted);line-height:1.5;margin-bottom:10px;padding:6px 8px;background:var(--surface-raised);border-radius:4px;border:1px solid var(--border-subtle)">${esc(ag.description)}</div>` : "";
@@ -9327,7 +9327,7 @@ function renderForceDetail() {
       const symDefAG = _bgSymLookup(ag.symbol||ICON_SYMBOL_KEYS[0]);
       const flatSymStyle = `width:24px;height:24px;border-radius:5px;background:${symDefAG.color}1a;border:1.5px solid ${symDefAG.color}99;color:${symDefAG.color};display:inline-flex;align-items:center;justify-content:center;flex-shrink:0`;
       const flatSymBtn = agViewMode !== "flat" ? ""
-        : `<button onclick="openAGSymbolPicker('${force.id}','${ag.id}')" title="${symDefAG.label} — click to change" style="${flatSymStyle};cursor:pointer;padding:0;transition:background .15s" onmouseover="this.style.background='${symDefAG.color}33'" onmouseout="this.style.background='${symDefAG.color}1a'">${_bgSymInner(symDefAG,12)}</button>`;
+        : `<button onclick="openAGSymbolPicker('${force.id}','${ag.id}')" title="${symDefAG.label} - click to change" style="${flatSymStyle};cursor:pointer;padding:0;transition:background .15s" onmouseover="this.style.background='${symDefAG.color}33'" onmouseout="this.style.background='${symDefAG.color}1a'">${_bgSymInner(symDefAG,12)}</button>`;
       const toolbarHTML = `<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border-subtle)">
         ${flatSymBtn}
         <div style="flex:1;min-width:0;overflow:hidden">
@@ -9466,7 +9466,7 @@ function _renderAddArmyEFList() {
   const globalAssigned = new Set((state.expeditionaryForces||[]).flatMap(f=>(f.armyGroups||[]).flatMap(g=>g.armyIds||[])));
   const available = state.armies.filter(a=>!globalAssigned.has(a.id));
   if(!available.length) {
-    listEl.innerHTML = `<div style="font-size:12px;color:#555;font-style:italic;padding:8px 0">No available armies — all armies are already assigned to an expeditionary force.</div>`;
+    listEl.innerHTML = `<div style="font-size:12px;color:#555;font-style:italic;padding:8px 0">No available armies - all armies are already assigned to an expeditionary force.</div>`;
     return;
   }
   listEl.innerHTML = available.map(army=>{
@@ -9582,7 +9582,7 @@ function saveForce() {
         const hasArmies = agsToRemove.some(ag=>(ag.armyIds||[]).length>0);
         if(hasArmies) {
           const names = agsToRemove.filter(ag=>(ag.armyIds||[]).length>0).map(ag=>esc(ag.name)).join(", ");
-          modalMsg("force-modal-msg",`Can't reduce to ${agCount} army groups — <strong>${names}</strong> still ${agsToRemove.filter(ag=>(ag.armyIds||[]).length>0).length>1?"have":"has"} armies. Remove those first.`);
+          modalMsg("force-modal-msg",`Can't reduce to ${agCount} army groups - <strong>${names}</strong> still ${agsToRemove.filter(ag=>(ag.armyIds||[]).length>0).length>1?"have":"has"} armies. Remove those first.`);
           return;
         }
         force.armyGroups=(force.armyGroups||[]).slice(0,agCount);
@@ -9687,7 +9687,7 @@ function exportForce(forceId) {
   const ta = document.getElementById("export-json-text");
   if(ta) ta.value = json;
   const ttl = document.getElementById("export-json-title");
-  if(ttl) ttl.textContent = `Export — ${esc(bundle.force.name)}`;
+  if(ttl) ttl.textContent = `Export - ${esc(bundle.force.name)}`;
   const sum = document.getElementById("export-json-summary");
   if(sum) {
     const parts = [];
@@ -9734,9 +9734,9 @@ function _parseImportForceText() {
   if(!raw) return;
   let payload;
   try { payload = JSON.parse(raw); }
-  catch(e){ _dataMsg("import-force-msg","error","Not valid JSON — check for missing brackets or commas."); return; }
+  catch(e){ _dataMsg("import-force-msg","error","Not valid JSON - check for missing brackets or commas."); return; }
   if(!payload||payload.app!=="laserstorm-army-builder"||!payload.data){
-    _dataMsg("import-force-msg","error","This doesn't look like a LaserStorm export — missing required fields."); return;
+    _dataMsg("import-force-msg","error","This doesn't look like a LaserStorm export - missing required fields."); return;
   }
   if(payload.kind!=="force"){
     _dataMsg("import-force-msg","error",`This is a <strong>${esc(payload.kind)}</strong> export, not a force export. Use the appropriate importer.`); return;
