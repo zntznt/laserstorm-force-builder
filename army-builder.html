@@ -967,6 +967,15 @@ label .trait-edit-btn{margin-left:6px}
     <div id="addunit-type-selector" style="display:none;margin-top:10px;padding:10px;background:var(--surface-page);border-radius:6px;border:1px solid var(--border-subtle)">
       <div style="font-size:11px;color:#8b949e;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">Unit Type</div>
       <div id="addunit-type-options" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+      <div id="addunit-qty-row" style="display:flex;align-items:center;gap:10px;margin-top:12px">
+        <div style="font-size:11px;color:#8b949e;text-transform:uppercase;letter-spacing:.5px">Quantity</div>
+        <div class="qty-ctrl">
+          <button class="qty-btn" onclick="changeAddUnitQty(-1)">−</button>
+          <span class="qty-val" id="addunit-qty-val">1</span>
+          <button class="qty-btn" onclick="changeAddUnitQty(1)">+</button>
+        </div>
+        <span id="addunit-qty-max" style="font-size:11px;color:var(--text-muted)"></span>
+      </div>
       <div id="addunit-type-warning" style="font-size:11px;color:#ef5350;margin-top:6px;display:none"></div>
     </div>
     <div style="margin-top:12px;display:flex;justify-content:flex-end;gap:8px">
@@ -1169,6 +1178,14 @@ label .trait-edit-btn{margin-left:6px}
   <div class="modal">
     <div class="modal-header">Add Units (Free Pick) <button class="modal-close" onclick="closeFPUnitModal()"><i class="fa-solid fa-xmark"></i></button></div>
     <div id="fp-unit-faction-note" style="display:none;font-size:11px;color:#8b949e;margin-bottom:8px;padding:5px 8px;background:var(--surface-raised);border-radius:4px"></div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+      <div style="font-size:11px;color:#8b949e;text-transform:uppercase;letter-spacing:.5px">Quantity per add</div>
+      <div class="qty-ctrl">
+        <button class="qty-btn" onclick="changeFPAddQty(-1)">−</button>
+        <span class="qty-val" id="fp-add-qty-val">1</span>
+        <button class="qty-btn" onclick="changeFPAddQty(1)">+</button>
+      </div>
+    </div>
     <div class="scrolllist" id="fp-unit-list"></div>
     <div style="margin-top:12px;display:flex;justify-content:space-between;align-items:center;gap:8px">
       <span id="fp-unit-added" style="font-size:11px;color:#66bb6a"></span>
@@ -1657,6 +1674,7 @@ let addUnitTargetRole = "core";
 let addUnitSelectedId = null;
 let addUnitSelectedType = "unit";
 let addUnitShowUnavailable = false;
+let addUnitQty = 1;
 let currentArmyId = null;
 let editingArmyId = null;
 let tfRemoveBlockedId = null;
@@ -1694,6 +1712,7 @@ let addArmyTargetAgId = null;
 let fpUnitTargetArmyId = null;
 let fpUnitTargetBgId = null;
 let fpUnitAddedCount = 0;
+let fpAddQty = 1;
 let libFilterClass = "all";
 let libFilterFaction = "all";
 let libSort = "name-asc";
@@ -5318,6 +5337,28 @@ function maxQtyForSlot(tf, slot) {
   return Infinity;
 }
 
+// How many more stands of this class can still be added to this section
+// (Infinity when the section is uncapped). Used to bound the add-unit quantity.
+function sectionRemainingQty(tf, role, unitCls) {
+  if(!tf) return Infinity;
+  const lim = tfSectionLimits(tf);
+  if(role === "core") {
+    const typeSlots = _getTFTypeSlots(tf.tfType);
+    if(!typeSlots) return Infinity;
+    const mx = (typeSlots[unitCls] || [0,0])[1];
+    if(mx === 0) return 0;
+    return Math.max(0, mx - (lim.coreQtyByClass[unitCls]||0));
+  }
+  if(role === "specialist") {
+    const specLim = lim.specLimitsByClass[unitCls];
+    if(!specLim) return 0;
+    return Math.max(0, specLim.max - specLim.count);
+  }
+  if(role === "command") return Math.max(0, lim.cmdMax - lim.cmdCount);
+  if(role === "support") return Math.max(0, lim.suppMax - lim.suppCount);
+  return Infinity;
+}
+
 function tfOverLimit(tf) {
   return tf.pointsLimit && tfPoints(tf) > tf.pointsLimit;
 }
@@ -5807,6 +5848,7 @@ function openAddUnitModal(tfId, role) {
   addUnitTargetRole = role || "core";
   addUnitSelectedId = null;
   addUnitSelectedType = "unit";
+  addUnitQty = 1;
   const labels = {core:"Core Unit",specialist:"Specialist Stand",command:"Command Stand",support:"Support Unit"};
   document.getElementById("addunit-modal-title").textContent = "Add " + (labels[addUnitTargetRole]||"Unit");
   document.getElementById("addunit-search").value = "";
@@ -5852,7 +5894,7 @@ function renderAddUnitList() {
     const sel = addUnitSelectedId===u.id;
     const canAdd = !tf || canAddToSection(tf, addUnitTargetRole, u.class);
     if(!canAdd && !addUnitShowUnavailable) return "";
-    return `<div class="list-row" style="${sel?"border-color:#007eff;background:#1a2a4a":""};${!canAdd?"opacity:0.45":""}" onclick="addUnitSelectedId='${u.id}';addUnitSelectedType='';renderAddUnitList();renderAddUnitTypeSelector()">
+    return `<div class="list-row" style="${sel?"border-color:#007eff;background:#1a2a4a":""};${!canAdd?"opacity:0.45":""}" onclick="addUnitSelectedId='${u.id}';addUnitSelectedType='';addUnitQty=1;renderAddUnitList();renderAddUnitTypeSelector()">
       <div>
         ${classBadge(u.class)}
         <span style="font-weight:bold;margin-left:6px;color:${sel?"#007eff":"#fff"}">${esc(u.name)}</span>
@@ -5893,7 +5935,30 @@ function renderAddUnitTypeSelector() {
   warningEl.style.display = (!canAdd) ? "block" : "none";
   warningEl.textContent = (!canAdd) ? "This section is full for this unit type." : "";
   confirmBtn.disabled = !canAdd;
+  // Quantity control: bound by remaining section capacity
+  const remaining = sectionRemainingQty(tf, addUnitTargetRole, u.class);
+  const maxQty = isFinite(remaining) ? Math.max(1, remaining) : 99;
+  addUnitQty = Math.min(Math.max(1, addUnitQty), maxQty);
+  const qtyRow = document.getElementById("addunit-qty-row");
+  const qtyVal = document.getElementById("addunit-qty-val");
+  const qtyMax = document.getElementById("addunit-qty-max");
+  if(qtyRow) qtyRow.style.display = canAdd ? "flex" : "none";
+  if(qtyVal) qtyVal.textContent = addUnitQty;
+  if(qtyMax) qtyMax.textContent = isFinite(remaining) ? `max ${maxQty}` : "";
   selectorEl.style.display = "block";
+}
+
+function changeAddUnitQty(delta) {
+  const tf = state.taskForces.find(t=>t.id===addUnitTargetTFId);
+  const u = addUnitSelectedId ? unitById(addUnitSelectedId) : null;
+  let maxQty = 99;
+  if(tf && u) {
+    const r = sectionRemainingQty(tf, addUnitTargetRole, u.class);
+    maxQty = isFinite(r) ? Math.max(1, r) : 99;
+  }
+  addUnitQty = Math.min(Math.max(1, addUnitQty + delta), maxQty);
+  const qtyVal = document.getElementById("addunit-qty-val");
+  if(qtyVal) qtyVal.textContent = addUnitQty;
 }
 
 function confirmAddUnit() {
@@ -5905,11 +5970,13 @@ function confirmAddUnit() {
   if(!canAddToSection(tf, addUnitTargetRole, u.class)) { return; }
   const types = availableTypesFor(u.class, addUnitTargetRole);
   const unitType = types.includes(addUnitSelectedType) ? addUnitSelectedType : (types[0] || "unit");
+  const remaining = sectionRemainingQty(tf, addUnitTargetRole, u.class);
+  const addQty = Math.max(1, Math.min(addUnitQty, isFinite(remaining) ? remaining : addUnitQty));
   const existing = (tf.units||[]).find(s => s.unitId === addUnitSelectedId && s.role === addUnitTargetRole && s.unitType === unitType);
   if(existing) {
-    existing.quantity = (existing.quantity || 1) + 1;
+    existing.quantity = (existing.quantity || 1) + addQty;
   } else {
-    tf.units.push({id:"slot_"+uid(), unitId:addUnitSelectedId, role:addUnitTargetRole, unitType, quantity:1});
+    tf.units.push({id:"slot_"+uid(), unitId:addUnitSelectedId, role:addUnitTargetRole, unitType, quantity:addQty});
   }
   saveState();
   closeModal("modal-add-unit");
@@ -8360,6 +8427,9 @@ function openFPBGUnitModal(armyId, bgId) {
   fpUnitTargetArmyId = armyId;
   fpUnitTargetBgId = bgId;
   fpUnitAddedCount = 0;
+  fpAddQty = 1;
+  const fpQtyEl = document.getElementById("fp-add-qty-val");
+  if(fpQtyEl) fpQtyEl.textContent = "1";
   const army = state.armies.find(a=>a.id===armyId);
   const note = document.getElementById("fp-unit-faction-note");
   if(army && army.faction) {
@@ -8426,16 +8496,23 @@ function addFPUnit(unitId, unitType) {
   if(!army || !bg) return;
   bg.entries = bg.entries || [];
   const resolvedType = unitType || "unit";
+  const addQty = Math.max(1, fpAddQty|0);
   const existing = bg.entries.find(e => e.unitId === unitId && e.unitType === resolvedType);
   if(existing) {
-    existing.qty = (existing.qty || 1) + 1;
+    existing.qty = (existing.qty || 1) + addQty;
   } else {
-    bg.entries.push({id:"fpe_"+uid(), unitId, unitType: resolvedType, qty:1});
+    bg.entries.push({id:"fpe_"+uid(), unitId, unitType: resolvedType, qty:addQty});
   }
-  fpUnitAddedCount++;
+  fpUnitAddedCount += addQty;
   saveState();
   const addedEl = document.getElementById("fp-unit-added");
   if(addedEl) addedEl.textContent = `Added ${fpUnitAddedCount} unit${fpUnitAddedCount!==1?"s":""} to ${esc(bg.name)}`;
+}
+
+function changeFPAddQty(delta) {
+  fpAddQty = Math.min(Math.max(1, fpAddQty + delta), 99);
+  const el = document.getElementById("fp-add-qty-val");
+  if(el) el.textContent = fpAddQty;
 }
 
 function changeFPEntryQty(armyId, bgId, entryId, delta) {
