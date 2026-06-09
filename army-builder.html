@@ -408,6 +408,23 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px soli
 @media(prefers-reduced-motion:reduce){
   *,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important}
 }
+/* ── Backup reminder banner ───────────────────────────────────────────── */
+#backup-nudge{display:none;max-width:1200px;margin:14px auto 0;padding:0 20px}
+.backup-nudge-inner{display:flex;align-items:center;gap:12px;background:#1b1407;border:1px solid #ffb74d4d;border-radius:8px;padding:10px 14px}
+.backup-nudge-inner > .fa-solid{color:#ffb74d;font-size:15px;flex-shrink:0}
+.backup-nudge-text{flex:1;min-width:0;font-size:12.5px;color:#f0d4a8;line-height:1.45}
+.backup-nudge-text strong{color:#ffc266;font-weight:700}
+.backup-nudge-actions{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.backup-nudge-backup{display:inline-flex;align-items:center;gap:5px;background:#ffb74d;color:#1a1205;border:none;border-radius:7px;padding:6px 12px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;cursor:pointer;white-space:nowrap;font-family:var(--font-body);transition:background .15s}
+.backup-nudge-backup:hover{background:#ffc266}
+.backup-nudge-dismiss{background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:11px;font-weight:600;padding:6px 8px;white-space:nowrap;border-radius:6px;transition:color .15s}
+.backup-nudge-dismiss:hover{color:var(--text-primary)}
+@media(max-width:640px){
+  #backup-nudge{margin-top:10px;padding:0 10px}
+  .backup-nudge-inner{flex-wrap:wrap;gap:8px}
+  .backup-nudge-text{flex-basis:100%;font-size:12px}
+  .backup-nudge-actions{width:100%;justify-content:flex-end}
+}
 </style>
 </head>
 <body>
@@ -425,6 +442,18 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px soli
   <button id="nav-undo-btn" onclick="undoState()" title="Undo last change (Ctrl+Z)"><i class="fa-solid fa-rotate-left"></i> Undo</button>
   <a href="https://www.wargamevault.com/product/476399/laserstorm-2nd-edition?affiliate_id=564654" target="_blank" rel="noopener" class="nav-buy-link" style="margin-left:auto;margin-right:12px;padding:5px 13px;background:#007eff;color:#fff;border-radius:20px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;text-decoration:none;white-space:nowrap;transition:background .2s" onmouseover="this.style.background='#0066cc'" onmouseout="this.style.background='#007eff'">Buy LaserStorm</a>
 </nav>
+
+<!-- Reminds the user to export a backup, since all data lives only in localStorage -->
+<div id="backup-nudge" role="status">
+  <div class="backup-nudge-inner">
+    <i class="fa-solid fa-shield-halved"></i>
+    <span class="backup-nudge-text">Your army lists are saved <strong>only in this browser</strong>. Export a backup so clearing your cache or switching devices won't wipe them.</span>
+    <div class="backup-nudge-actions">
+      <button class="backup-nudge-backup" onclick="backupNudgeBackup()"><i class="fa-solid fa-download"></i> Back up now</button>
+      <button class="backup-nudge-dismiss" onclick="backupNudgeDismiss()">Later</button>
+    </div>
+  </div>
+</div>
 
 <!-- ===== UNIT BUILDER PAGE ===== -->
 <div id="page-builder" class="page">
@@ -1773,6 +1802,44 @@ const _undoStack = [];
 
 const _EMPTY_STATE = JSON.stringify({schemaVersion:SCHEMA_VERSION,customUnits:[],customFactions:[],customTraits:[],customTFTypes:[],customTacticalAssets:[],taskForces:[],armies:[],expeditionaryForces:[],tfTemplates:[]});
 
+// ── Backup reminder ─────────────────────────────────────────────────────────
+// Data lives only in localStorage, so nudge the user to export a Full Backup
+// once they've built up content. Tracking is kept in a SEPARATE key (device-
+// local) so it never rides along in a shared/exported state.
+const _BACKUP_KEY = "ls_army_builder_backup";
+const _BACKUP_NUDGE_AT = 6;    // first nudge after this many saves of fresh work
+const _BACKUP_SNOOZE   = 15;   // extra saves to wait after a "Later" dismissal
+function _loadBackupMeta() {
+  try { const m = JSON.parse(localStorage.getItem(_BACKUP_KEY)); if (m && typeof m.saves === "number") return m; } catch (e) {}
+  return { saves: 0, nextNudgeAt: _BACKUP_NUDGE_AT, lastBackupAt: null };
+}
+function _saveBackupMeta(m) { try { localStorage.setItem(_BACKUP_KEY, JSON.stringify(m)); } catch (e) {} }
+function _hasContent() {
+  return ["customUnits","customFactions","customTraits","customTFTypes","customTacticalAssets","taskForces","armies","expeditionaryForces"]
+    .some(k => (state[k] || []).length);
+}
+function _maybeShowBackupNudge() {
+  const el = document.getElementById("backup-nudge");
+  if (!el) return;
+  const m = _loadBackupMeta();
+  const onDataPage = document.getElementById("page-data")?.classList.contains("active");
+  el.style.display = (_hasContent() && m.saves >= m.nextNudgeAt && !onDataPage) ? "block" : "none";
+}
+function _markBackedUp() {   // user has a fresh backup -> reset the reminder baseline
+  _saveBackupMeta({ saves: 0, nextNudgeAt: _BACKUP_NUDGE_AT, lastBackupAt: Date.now() });
+  const el = document.getElementById("backup-nudge"); if (el) el.style.display = "none";
+}
+function backupNudgeBackup() {
+  const el = document.getElementById("backup-nudge"); if (el) el.style.display = "none";
+  doExportFullBackup();   // records the backup baseline itself
+}
+function backupNudgeDismiss() {
+  const m = _loadBackupMeta();
+  m.nextNudgeAt = (m.saves || 0) + _BACKUP_SNOOZE;
+  _saveBackupMeta(m);
+  const el = document.getElementById("backup-nudge"); if (el) el.style.display = "none";
+}
+
 function saveState() {
   _unitIdCache = null;
   _calcPtsCache = null;
@@ -1782,6 +1849,10 @@ function saveState() {
   if (_undoStack.length > _UNDO_LIMIT) _undoStack.shift();
   _updateUndoBtn();
   localStorage.setItem("ls_army_builder", JSON.stringify(state));
+  const _bm = _loadBackupMeta();
+  _bm.saves = (_bm.saves || 0) + 1;
+  _saveBackupMeta(_bm);
+  _maybeShowBackupNudge();
 }
 
 function undoState() {
@@ -2475,6 +2546,7 @@ function showPage(p) {
     renderForceList();
   }
   if(p==="data") renderDataPage();
+  _maybeShowBackupNudge();   // hide on the Data page, re-show elsewhere if due
 }
 
 // ============================================================
@@ -2705,6 +2777,7 @@ function doExportFullBackup(){
   };
   const payload = { app:"laserstorm-army-builder", kind:"full", version:1, exportedAt:new Date().toISOString(), data };
   const summary = `${data.customUnits.length} unit(s), ${data.customFactions.length} faction(s), ${data.taskForces.length} task force(s), ${data.armies.length} army(ies)`;
+  _markBackedUp();
   _openExportModal(payload, "Export - Full Backup", summary, "laserstorm-backup");
 }
 
@@ -2872,6 +2945,7 @@ function importFull(d){
   state.expeditionaryForces = d.expeditionaryForces||[];
   (state.customUnits||[]).forEach(u=>{ if(typeof migrateCustomUnit==="function") migrateCustomUnit(u); });
   saveState();
+  _markBackedUp();   // they restored from a file they have -> no immediate loss risk
   renderDataPage();
   _dataMsg("data-import-msg","success","Full backup imported. All data replaced.");
 }
