@@ -2020,81 +2020,92 @@ function calcPoints(unit) {
              cmdPts:op.cmdPts, heroPts:op.heroPts, cmdHeroPts:op.cmdHeroPts, saveDice:ci.saveDice });
   }
   const ci = CLASS_INFO[unit.class] || CLASS_INFO.inf;
-  const ptsSpeedBase = (unit.speed - ci.baseSpeed) * 0.25;
+  // Coerce numeric inputs defensively: a corrupt/legacy/hand-edited import with
+  // a missing or non-numeric stat/cost should degrade to a sane value rather
+  // than poison the whole calc with NaN (which then renders as "NaN" badges).
+  const num = (v, d=0) => { const n = +v; return Number.isFinite(n) ? n : d; };
+  const speed = num(unit.speed), aim = num(unit.aim), assault = num(unit.assault),
+        saveNumber = num(unit.saveNumber), morale = num(unit.morale);
+  const ptsSpeedBase = (speed - ci.baseSpeed) * 0.25;
   const ptsMobSurcharge = (unit.class==="scout"||unit.class==="afv")
     ? (unit.mobility==="walk" ? 2 : unit.mobility==="grav" ? 4 : 0) : 0;
   let ptsSpeed = ptsSpeedBase + ptsMobSurcharge;
   const aimFactor = unit.class==="inf" ? 1 : 2;
-  const wSlots = unit.weapons.length;
-  const ptsAim = Math.max(0, 5 - unit.aim) * aimFactor * wSlots;
-  const ptsAssault = unit.assault * 0.5 + Math.max(0, unit.assault - 2);
-  const ptsSave = ci.baseSave - unit.saveNumber;
-  let ptsMorale = 6 - unit.morale;
-  if (unit.morale < 4) ptsMorale += 1;
+  const wSlots = (unit.weapons||[]).length;
+  const ptsAim = Math.max(0, 5 - aim) * aimFactor * wSlots;
+  const ptsAssault = assault * 0.5 + Math.max(0, assault - 2);
+  const ptsSave = ci.baseSave - saveNumber;
+  let ptsMorale = 6 - morale;
+  if (morale < 4) ptsMorale += 1;
   let ptsTraits = 0;
   const standTraitComps = [];
   (unit.standTraits||[]).forEach(t => {
     const cnt = traitCount(t);
-    let tc = t[1]===0 ? (t[0]==="Horde" ? (unit.morale<=3?3:1) : 0) : t[1] * cnt;
+    const cost = num(t[1]);
+    let tc = cost===0 ? (t[0]==="Horde" ? (morale<=3?3:1) : 0) : cost * cnt;
     ptsTraits += tc;
     if(tc !== 0) standTraitComps.push({label: cnt > 1 ? `${t[0]} ×${cnt}` : t[0], val: tc});
   });
   let standPts = Math.max(1, Math.ceil(ptsSpeed+ptsAim+ptsAssault+ptsSave+ptsMorale+ptsTraits));
   // Build stand component list (only non-zero entries)
   const standComps = [];
-  if(ptsSpeedBase > 0) standComps.push({label:`Speed (${unit.speed}")`, val: ptsSpeedBase});
+  if(ptsSpeedBase > 0) standComps.push({label:`Speed (${speed}")`, val: ptsSpeedBase});
   if(ptsMobSurcharge > 0) standComps.push({label:`${unit.mobility==="walk"?"Walker":"Grav"} mobility`, val: ptsMobSurcharge});
-  if(ptsAim > 0) standComps.push({label:`Aim ${unit.aim}+`, val: ptsAim});
-  if(ptsAssault > 0) standComps.push({label:`Assault ${unit.assault}+`, val: ptsAssault});
-  if(ptsSave > 0) standComps.push({label:`Save ${unit.saveNumber}+`, val: ptsSave});
-  if(ptsMorale > 0) standComps.push({label:`Morale ${unit.morale}+`, val: ptsMorale});
+  if(ptsAim > 0) standComps.push({label:`Aim ${aim}+`, val: ptsAim});
+  if(ptsAssault > 0) standComps.push({label:`Assault ${assault}+`, val: ptsAssault});
+  if(ptsSave > 0) standComps.push({label:`Save ${saveNumber}+`, val: ptsSave});
+  if(ptsMorale > 0) standComps.push({label:`Morale ${morale}+`, val: ptsMorale});
   standComps.push(...standTraitComps);
   let weaponPts = 0;
   const weaponComps = [];
   (unit.weapons||[]).forEach((w,i) => {
+    const impact = num(w.impact), range = num(w.range), shots = num(w.shots, 1);
     let wCost = 0;
-    let impCost = w.impact * 2;
-    if (w.impact>6) impCost+=2;
-    if (w.impact>10) impCost+=5;
-    const rangeCost = w.range;
+    let impCost = impact * 2;
+    if (impact>6) impCost+=2;
+    if (impact>10) impCost+=5;
+    const rangeCost = range;
     wCost += rangeCost + impCost;
     let tCost=0, impTCost=0;
     const traitComps = [];
     (w.traits||[]).forEach(t => {
       const cnt = traitCount(t);
+      const cost = num(t[1]);
       let tc = 0;
-      if (t[1]===0) {
-        if(t[0]==="Burst"){tc=(impCost+w.range+7);impTCost+=tc;}
-        else if(t[0]==="Frag"&&w.impact>1){tc=-(impCost*0.25);impTCost+=tc;}
-        else if(t[0]==="A.I. Guided"){tc=(w.shots*0.5);}
-        else if(t[0]==="Repeating Fire"){tc=(w.shots*0.5);}
-        else if(t[0]==="Rapid Fire"){tc=((w.range+impCost+impTCost)/4);}
+      if (cost===0) {
+        if(t[0]==="Burst"){tc=(impCost+range+7);impTCost+=tc;}
+        else if(t[0]==="Frag"&&impact>1){tc=-(impCost*0.25);impTCost+=tc;}
+        else if(t[0]==="A.I. Guided"){tc=(shots*0.5);}
+        else if(t[0]==="Repeating Fire"){tc=(shots*0.5);}
+        else if(t[0]==="Rapid Fire"){tc=((range+impCost+impTCost)/4);}
         else if(t[0]==="Targeting"&&wSlots>1){tc=0.5;}
-        else if(t[0]==="Flame"){tc=(impCost+w.range+5);impTCost+=tc;}
+        else if(t[0]==="Flame"){tc=(impCost+range+5);impTCost+=tc;}
         tc *= cnt;
         tCost+=tc;
       } else {
-        tc=t[1]*cnt; tCost+=tc;
+        tc=cost*cnt; tCost+=tc;
       }
       if(tc!==0) traitComps.push({label: cnt>1 ? `${t[0]} ×${cnt}` : t[0], val:tc});
     });
-    const extraShotsCost = (w.shots-1)*((w.range+impCost+impTCost)/2);
+    const extraShotsCost = (shots-1)*((range+impCost+impTCost)/2);
     wCost += tCost + extraShotsCost;
     const mults = [];
     if(w.mode==="gp"){ wCost*=1.5; mults.push("GP ×1.5"); }
     if(w.type==="s"){ wCost*=0.8; mults.push("Selective ×0.8"); }
     wCost = Math.ceil(wCost);
     if(unit.class==="fg"&&wSlots===1) wCost-=1;
-    if(wCost<1) wCost=w.shots;
+    if(wCost<1) wCost=shots;
+    if(!Number.isFinite(wCost)) wCost=0;
     const wComps = [];
-    if(rangeCost>0) wComps.push({label:`Range (${w.range}")`, val:rangeCost});
-    if(impCost>0) wComps.push({label:`Impact ${w.impact}`, val:impCost});
+    if(rangeCost>0) wComps.push({label:`Range (${range}")`, val:rangeCost});
+    if(impCost>0) wComps.push({label:`Impact ${impact}`, val:impCost});
     wComps.push(...traitComps);
-    if(extraShotsCost>0) wComps.push({label:`+${w.shots-1} extra shot${w.shots-1>1?"s":""}`, val:extraShotsCost});
+    if(extraShotsCost>0) wComps.push({label:`+${shots-1} extra shot${shots-1>1?"s":""}`, val:extraShotsCost});
     weaponPts += wCost;
     weaponComps.push({label: w.name || `Weapon ${i+1}`, cost: wCost, comps: wComps, mults});
   });
   let total = Math.ceil((standPts+weaponPts)*ci.mult);
+  if(!Number.isFinite(total)) total = 1; // backstop: never let a NaN reach the UI
   const pr = premiumsFor(unit.class);
   const prem = p => p==null ? null : roundToFive(total*(1+p));
   const allowedRoles = unit.allowedRoles || null;
