@@ -1526,7 +1526,7 @@ const STAND_TRAITS = {
   spawn:    ["Spawn",2,             "[Swarm][Unit] Instead of shooting or Assaulting, roll 1D6. On 4+, add a destroyed Stand of the same Class to this Unit.",{unitTrait:true}],
   stealth:  ["Stealth",2,           "[Unit] When fired upon, roll 1D6 (−1 in Concealment) and multiply by 10. If the result is less than the range to this target, all shots from that attack are ignored.",{unitTrait:true}],
   stub:     ["Stubborn",1,          "Ignores Push Back."],
-  tDep:     ["Tactical Deployment",1,"+1 to regrouping rolls when in Reserve."],
+  tDep:     ["Tactical Deployment",1,"+1 to Regrouping rolls when in Reserve."],
   tHunt:    ["Tank Hunter",1,       "+1 to hit when firing at AFVs or Super Heavies. +1 to Assault against AFVs and Super Heavies."],
   terror:   ["Terror",1,            "[Unit] This Unit inflicts 2 Terror dice per stack. Can be taken multiple times.",{stackable:true,unitTrait:true}],
   tFate:    ["Third Fate",3,        "[Precursor][Hero][Infantry] If this Stand hits an enemy Hero, that Hero makes a Damage Save with one fewer dice. If no dice remain, roll twice and keep the lower value."],
@@ -4143,22 +4143,22 @@ function bgDesignation(army, bg) {
   return { text: texts[mode], color: colors[mode], label: texts[mode] };
 }
 const TACTICAL_ASSETS = [
-  {id:"area_denial",     name:"Area Denial",        faction:null,       use:["Activation"],                              fn:`Select an objective. All enemy stands within 8" must retreat 3" towards their own table edge.`},
-  {id:"camouflage",      name:"Camouflage",          faction:null,       use:["Deployment"],                              fn:`The unit may not be targeted by pre-game bombardment fire. It is not considered to be the nearest target for any enemy command stand during the bombardment phase.`},
-  {id:"deception",       name:"Deception",           faction:null,       use:["Deployment"],                              fn:`After all forces have been deployed, the unit may be redeployed anywhere that would be a valid deployment location.`},
-  {id:"drop_troops",     name:"Drop Troops",         faction:null,       use:["Reinforcements"],                          fn:`The unit may drop anywhere on the table that is at least 8" from enemy forces, but may not take any actions this turn.`},
-  {id:"entrenchments",   name:"Entrenchments",       faction:null,       use:["Deployment"],                              fn:`The unit may set up in Entrenchments. These do not block line of sight but provide cover from fire. Each Entrenchment is exactly the size of the stand placed in it. Entrenchments may be abandoned and occupied by other units.`},
-  {id:"fire_support",    name:"Fire Support",        faction:null,       use:["Activation"],                              fn:`One stand in the unit may target any enemy unit in sight. Roll 8 attack dice, hitting on a 4+, with a -2 saving throw modifier or 3 shots with a -6 saving throw modifier.`},
-  {id:"flank_attack",    name:"Flank Attack",        faction:null,       use:["Reinforcements"],                          fn:`The unit may arrive from either of the "neutral" table edges, from any point up to half way across the table.`},
-  {id:"follow_on_forces",name:"Follow-on Forces",    faction:null,       use:["Activation"],                              fn:`One unit that was regrouped may be placed within 4" of any objective currently controlled. No stands may be placed within 8" of enemy forces.`},
-  {id:"forward_deploy",  name:"Forward Deployment",  faction:null,       use:["Deployment"],                              fn:`The unit may be deployed up to 6" forward of the normal deployment area.`},
+  {id:"area_denial",     name:"Area Denial",        faction:null,       use:["Activation"],                              fn:`Select an objective. All enemy Stands within 8" must retreat 3" toward their own table edge.`},
+  {id:"camouflage",      name:"Camouflage",          faction:null,       use:["Deployment"],                              fn:`The Unit may not be targeted by pre-game bombardment fire. It is not considered to be the nearest target for any enemy Command Stand during the bombardment phase.`},
+  {id:"deception",       name:"Deception",           faction:null,       use:["Deployment"],                              fn:`After all forces have been deployed, the Unit may be redeployed anywhere that would be a valid deployment location.`},
+  {id:"drop_troops",     name:"Drop Troops",         faction:null,       use:["Reinforcements"],                          fn:`The Unit may drop anywhere on the table that is at least 8" from enemy forces, but may not take any actions this turn.`},
+  {id:"entrenchments",   name:"Entrenchments",       faction:null,       use:["Deployment"],                              fn:`The Unit may set up in Entrenchments. These do not block line of sight but provide Cover from fire. Each Entrenchment is exactly the size of the Stand placed in it. Entrenchments may be abandoned and occupied by other Units.`},
+  {id:"fire_support",    name:"Fire Support",        faction:null,       use:["Activation"],                              fn:`One Stand in the Unit may target any enemy Unit in sight. Roll 8 attack dice, hitting on a 4+, with a -2 saving throw modifier or 3 shots with a -6 saving throw modifier.`},
+  {id:"flank_attack",    name:"Flank Attack",        faction:null,       use:["Reinforcements"],                          fn:`The Unit may arrive from either of the "neutral" table edges, from any point up to halfway across the table.`},
+  {id:"follow_on_forces",name:"Follow-on Forces",    faction:null,       use:["Activation"],                              fn:`One Unit that was Regrouped may be placed within 4" of any objective currently controlled. No Stands may be placed within 8" of enemy forces.`},
+  {id:"forward_deploy",  name:"Forward Deployment",  faction:null,       use:["Deployment"],                              fn:`The Unit may be deployed up to 6" forward of the normal deployment area.`},
   {id:"good_day_to_die", name:"Good Day to Die",     faction:"warrior",  use:["Activation"],                              fn:`This Battle Group counts as Morale 1+ for the remainder of the round.`},
   {id:"heuristic_plan",  name:"Heuristic Planning",  faction:"soulless", use:["Activation","Deployment","Reinforcements"],fn:`When used, select any other valid Tactical Asset that Soulless can use from the list and roll 1D6. If the result is 1, this Asset is lost and there is no effect.`},
-  {id:"infiltration",    name:"Infiltration",        faction:null,       use:["Deployment"],                              fn:`The unit may set up in any terrain feature within 10" of the deployment area.`},
+  {id:"infiltration",    name:"Infiltration",        faction:null,       use:["Deployment"],                              fn:`The Unit may set up in any terrain feature within 10" of the deployment area.`},
   {id:"prophecy",        name:"Prophecy",            faction:"precursor",use:["Activation"],                              fn:`Look through the Initiative Deck and remove a card. Shuffle the remainder and then place the chosen card on the top or bottom of the Deck.`},
-  {id:"rallying_point",  name:"Rallying Point",      faction:null,       use:["Activation"],                              fn:`One unit may be regrouped automatically.`},
+  {id:"rallying_point",  name:"Rallying Point",      faction:null,       use:["Activation"],                              fn:`One Unit may be Regrouped automatically.`},
   {id:"reserves",        name:"Reserves",            faction:null,       use:["Deployment"],                              fn:`The Unit may arrive from the friendly table edge during the Battle Group's first activation or may be placed in Reserve at that time.`},
-  {id:"wave_attack",     name:"Wave Attack",         faction:null,       use:["Activation"],                              fn:`After finishing the unit movement, for every stand that reached close combat, all remaining stands may move an additional 1".`},
+  {id:"wave_attack",     name:"Wave Attack",         faction:null,       use:["Activation"],                              fn:`After finishing the Unit movement, for every Stand that reached close combat, all remaining Stands may move an additional 1".`},
 ];
 
 const TF_TYPES = {
