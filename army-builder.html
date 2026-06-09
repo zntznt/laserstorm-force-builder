@@ -4177,7 +4177,7 @@ const SECTION_TYPES = {
 };
 const TYPE_LABELS = {unit:"Unit", independent:"Independent", hero:"Hero", command:"Command Stand", cmdHero:"Cmd Hero"};
 const VIEW_PTS_KEY = {unit:"unitPts", independent:"indPts", hero:"heroPts", command:"cmdPts", cmdHero:"cmdHeroPts"};
-const VIEW_LABELS  = {unit:"Unit", independent:"Ind", hero:"I.Hero", command:"Cmd", cmdHero:"C.Hero"};
+const VIEW_LABELS  = {unit:"Unit", independent:"Ind", hero:"Hero", command:"Cmd", cmdHero:"H.Cmd"};
 
 
 function rebuildFactionSelect(selectValue) {
@@ -8468,7 +8468,7 @@ function printTF(tfId, paperSize, inkMode) {
         <td style="padding:5px 8px;font-size:11px"><span style="display:inline-block;padding:1px 7px;border-radius:8px;font-size:9px;font-weight:bold;text-transform:uppercase;background:${rc}18;color:${rc};border:1px solid ${rc}44">${role}</span></td>
         <td style="padding:5px 8px;font-size:12px;font-weight:600;color:${pal.pageText}">${name}</td>
         <td style="padding:5px 8px;font-size:11px;color:${pal.mutedText};text-align:center">${slot.quantity}</td>
-        <td style="padding:5px 8px;font-size:11px;color:${pal.mutedText};text-align:right">${slot.unitType||"unit"}</td>
+        <td style="padding:5px 8px;font-size:11px;color:${pal.mutedText};text-align:right">${VIEW_LABELS[slot.unitType]||"Unit"}</td>
       </tr>`;
     }).join("");
   }).join("");
@@ -8484,7 +8484,7 @@ function printTF(tfId, paperSize, inkMode) {
       </div>
       <div style="background:${pal.ptsBoxBg};color:${pal.ptsBoxText};border-radius:8px;padding:8px 14px;text-align:center;flex-shrink:0">
         <div style="font-size:22px;font-weight:bold;line-height:1.1">${pts}</div>
-        <div style="font-size:9px;text-transform:uppercase;letter-spacing:.05em;opacity:.75">Total Pts</div>
+        <div style="font-size:9px;text-transform:uppercase;letter-spacing:.05em;opacity:.75">Total pts</div>
       </div>
     </div>
     ${tf.notes?`<div style="padding:10px 14px;background:${pal.tfRowBg};border:1px solid ${pal.cardBorder};border-radius:6px;margin-bottom:14px;font-size:12px;color:${pal.mutedText};line-height:1.6;font-style:italic">${esc(tf.notes).replace(/\n/g,"<br>")}</div>`:""}
@@ -8519,7 +8519,7 @@ function printTF(tfId, paperSize, inkMode) {
     return `<div class="print-page page-break">
       <div class="bg-header" style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:${hdrBg};border:2px solid ${hdrBord};border-radius:10px;margin-bottom:16px">
         <span style="font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:1.2px;color:${rc};text-transform:capitalize">${role}</span>
-        <span style="font-size:11px;color:${pal.mutedText}">${slots.reduce((s,sl)=>s+sl.quantity,0)} stands</span>
+        <span style="font-size:11px;color:${pal.mutedText}">${slots.reduce((s,sl)=>s+sl.quantity,0)} units</span>
       </div>
       ${_pCardGrid(unitCards, pal)}
     </div>`;
