@@ -3094,7 +3094,7 @@ function exportArmy(armyId) {
   const ta = document.getElementById("export-json-text");
   if(ta) ta.value = json;
   const ttl = document.getElementById("export-json-title");
-  if(ttl) ttl.textContent = `Export - ${esc(bundle.army.name)}`;
+  if(ttl) ttl.textContent = `Export - ${bundle.army.name}`;
   const sum = document.getElementById("export-json-summary");
   if(sum) {
     const parts = [];
@@ -3168,6 +3168,7 @@ function _parseImportArmyText() {
 function doImportArmy() {
   if(!_pendingImport||_pendingImport.kind!=="army"){ _dataMsg("import-army-msg","error","Paste valid army JSON first."); return; }
   const newArmy = importArmy(_pendingImport);
+  if(!newArmy){ _dataMsg("import-army-msg","error","This army export is missing its army data and can't be imported."); return; }
   closeModal("modal-import-army");
   // Navigate to the new army
   const lv = document.getElementById("army-list-view");
@@ -3180,6 +3181,7 @@ function doImportArmy() {
 
 function importArmy(payload) {
   const d = payload.data;
+  if(!d || !d.army) return null;
 
   // 1. Merge factions (dedup by name)
   const facById = new Map((state.customFactions||[]).map(f=>[f.id,f]));
@@ -3210,7 +3212,7 @@ function importArmy(payload) {
   });
 
   // 3. Merge units (dedup by name+faction combo)
-  const unitById = new Map((state.customUnits||[]).map(u=>[u.id,u]));
+  const unitByIdMap = new Map((state.customUnits||[]).map(u=>[u.id,u]));
   const unitKey = u=>String(u.name||"").toLowerCase()+"||"+String(u.faction||"").toLowerCase();
   const unitKeyToId = new Map((state.customUnits||[]).map(u=>[unitKey(u),u.id]));
   const unitIdMap = {};
@@ -3218,10 +3220,10 @@ function importArmy(payload) {
     const nu = Object.assign({},u,{faction:remapFac(u.faction)});
     const k = unitKey(nu);
     if(unitKeyToId.has(k)){ unitIdMap[u.id]=unitKeyToId.get(k); return; }
-    let newId = (!nu.id||unitById.has(nu.id)) ? "custom_"+uid() : nu.id;
+    let newId = (!nu.id||unitByIdMap.has(nu.id)) ? "custom_"+uid() : nu.id;
     nu.id=newId;
     if(typeof migrateCustomUnit==="function") migrateCustomUnit(nu);
-    state.customUnits.push(nu); unitById.set(newId,nu); unitKeyToId.set(k,newId);
+    state.customUnits.push(nu); unitByIdMap.set(newId,nu); unitKeyToId.set(k,newId);
     unitIdMap[u.id]=newId;
   });
   const remapUnit = id=>(id&&unitIdMap[id])?unitIdMap[id]:id;
@@ -4017,8 +4019,8 @@ function bgDesignation(army, bg) {
   const texts  = {
     numbers: String(idx+1),
     roman:   ["I","II","III","IV","V"][idx] ?? String(idx+1),
-    greek:   ["α","β","γ","δ","ε"][idx] ?? "?",
-    letters: ["A","B","C","D","E"][idx] ?? "?",
+    greek:   ["α","β","γ","δ","ε"][idx] ?? String(idx+1),
+    letters: ["A","B","C","D","E"][idx] ?? String(idx+1),
   };
   return { text: texts[mode], color: colors[mode], label: texts[mode] };
 }
@@ -4815,6 +4817,7 @@ function libQuickAddUnit(unitId, bgId, unitType, btnEl) {
 
 function deleteCustomUnit(id) {
   state.customUnits = state.customUnits.filter(u=>u.id!==id);
+  _unitIdCache = null;   // clear before pruning so unitById() reflects the deletion
   state.taskForces.forEach(tf => { tf.units = tf.units.filter(u=>u.unitId!==id); });
   pruneOrphanedBGEntries();
   saveState();
@@ -5908,6 +5911,33 @@ function renderAddUnitList() {
   if(addUnitSelectedId) renderAddUnitTypeSelector();
 }
 
+// Human-readable reason a unit can't be added to a section right now. The
+// distinction matters most for Specialist/Command, where the block is usually
+// "you have no Core units yet" rather than "the section is full".
+function addUnitBlockReason(tf, role, unitCls) {
+  if(!tf) return "This section is full for this unit type.";
+  const lim = tfSectionLimits(tf);
+  if(role === "core") {
+    const typeSlots = _getTFTypeSlots(tf.tfType);
+    const mx = typeSlots ? (typeSlots[unitCls]||[0,0])[1] : 0;
+    if(typeSlots && mx === 0) return `${classLabel(unitCls)} units aren't allowed in this task force type.`;
+    return `The ${classLabel(unitCls)} core slots are full.`;
+  }
+  if(role === "specialist") {
+    const specLim = lim.specLimitsByClass[unitCls];
+    if(!specLim) return `Add a ${classLabel(unitCls)} core unit first - specialists are capped at your core count of that class.`;
+    return `Specialist slots for ${classLabel(unitCls)} are full (capped at your core count).`;
+  }
+  if(role === "command") {
+    if(!lim.cmdMax) return `Add more core units first - command stands are limited to half your core count.`;
+    return `Command stands are full (${lim.cmdCount}/${lim.cmdMax}).`;
+  }
+  if(role === "support") {
+    return `Support slots are full (${lim.suppCount}/${lim.suppMax}).`;
+  }
+  return "This section is full for this unit type.";
+}
+
 function renderAddUnitTypeSelector() {
   const selectorEl = document.getElementById("addunit-type-selector");
   const optionsEl = document.getElementById("addunit-type-options");
@@ -5935,7 +5965,7 @@ function renderAddUnitTypeSelector() {
     </button>`;
   }).join("");
   warningEl.style.display = (!canAdd) ? "block" : "none";
-  warningEl.textContent = (!canAdd) ? "This section is full for this unit type." : "";
+  warningEl.textContent = (!canAdd) ? addUnitBlockReason(tf, addUnitTargetRole, u.class) : "";
   confirmBtn.disabled = !canAdd;
   // Quantity control: bound by remaining section capacity
   const remaining = sectionRemainingQty(tf, addUnitTargetRole, u.class);
@@ -6314,7 +6344,7 @@ function exportTF(tfId) {
   const ta = document.getElementById("export-json-text");
   if(ta) ta.value = json;
   const ttl = document.getElementById("export-json-title");
-  if(ttl) ttl.textContent = `Export - ${esc(bundle.taskForce.name)}`;
+  if(ttl) ttl.textContent = `Export - ${bundle.taskForce.name}`;
   const sum = document.getElementById("export-json-summary");
   if(sum) {
     const parts = [];
@@ -6388,12 +6418,14 @@ function _parseImportTFText() {
 function doImportTF() {
   if(!_pendingTFImport||_pendingTFImport.kind!=="taskforce"){ _dataMsg("import-tf-msg","error","Paste valid task force JSON first."); return; }
   const newTF = importTF(_pendingTFImport);
+  if(!newTF){ _dataMsg("import-tf-msg","error","This task force export is missing its task force data and can't be imported."); return; }
   closeModal("modal-import-tf");
   selectTF(newTF.id);
 }
 
 function importTF(payload) {
   const d = payload.data;
+  if(!d || !d.taskForce) return null;
 
   // 1. Merge factions (dedup by name)
   const facById = new Map((state.customFactions||[]).map(f=>[f.id,f]));
@@ -8510,7 +8542,7 @@ function addFPUnit(unitId, unitType) {
   fpUnitAddedCount += addQty;
   saveState();
   const addedEl = document.getElementById("fp-unit-added");
-  if(addedEl) addedEl.textContent = `Added ${fpUnitAddedCount} unit${fpUnitAddedCount!==1?"s":""} to ${esc(bg.name)}`;
+  if(addedEl) addedEl.textContent = `Added ${fpUnitAddedCount} unit${fpUnitAddedCount!==1?"s":""} to ${bg.name}`;
 }
 
 function changeFPAddQty(delta) {
@@ -9687,7 +9719,7 @@ function exportForce(forceId) {
   const ta = document.getElementById("export-json-text");
   if(ta) ta.value = json;
   const ttl = document.getElementById("export-json-title");
-  if(ttl) ttl.textContent = `Export - ${esc(bundle.force.name)}`;
+  if(ttl) ttl.textContent = `Export - ${bundle.force.name}`;
   const sum = document.getElementById("export-json-summary");
   if(sum) {
     const parts = [];
@@ -9760,6 +9792,7 @@ function _parseImportForceText() {
 function doImportForce() {
   if(!_pendingForceImport||_pendingForceImport.kind!=="force"){ _dataMsg("import-force-msg","error","Paste valid force JSON first."); return; }
   const newForce = importForce(_pendingForceImport);
+  if(!newForce){ _dataMsg("import-force-msg","error","This force export is missing its force data and can't be imported."); return; }
   closeModal("modal-import-force");
   const lv = document.getElementById("force-list-view");
   const dv = document.getElementById("force-detail-view");
@@ -9772,6 +9805,7 @@ function doImportForce() {
 
 function importForce(payload) {
   const d = payload.data;
+  if(!d || !d.force) return null;
 
   // 1. Merge factions (dedup by name)
   const facById = new Map((state.customFactions||[]).map(f=>[f.id,f]));
