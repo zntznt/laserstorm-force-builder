@@ -8,6 +8,11 @@ This guide covers how to *use the app*; for the game's rules you'll need the
 > [Quick start](#2-quick-start-build-your-first-army) and build a complete army
 > in about ten minutes.
 
+> **About this guide:** The app's terminology comes from the LaserStorm rulebook.
+> This guide explains how to use the app's controls; the rulebook is your reference
+> for what those choices mean in a game. As you work, the app provides in-context
+> help alongside each decision.
+
 ## Contents
 
 1. [Key concepts](#1-key-concepts)
@@ -32,10 +37,10 @@ they nest makes everything else click:
 
 | Layer | What it is |
 |---|---|
-| **Unit** | A single entry you design - a stat line, stand traits, and weapons. A unit represents several **stands** (how many depends on its class). |
-| **Task Force** | A rules-aware grouping of units into **role slots** - core, specialist, command, and support - with a commander and a tactical asset. |
+| **Unit** | A single entry you design - a stat line, traits, and weapons. A **stand** is a single game piece; a unit represents one or more stands (how many depends on its class). |
+| **Task Force** | A rules-aware grouping of units into **role slots** - core, specialist, command, and support - with a Task Force Commander and a tactical asset. |
 | **Army** | What you field in a game. Either built from **task forces** or **free-picked** from units directly, then organised into **battle groups**. |
-| **Battle Group** | A named sub-formation inside an army, with its own symbol, holding a slice of the army's stands. |
+| **Battle Group** | A named sub-formation inside an army, with its own symbol, holding a selection of the army's units. |
 | **Expeditionary Force** | A campaign-level collection of several armies, sorted into **army groups**. |
 
 A few terms you'll meet throughout:
@@ -43,10 +48,10 @@ A few terms you'll meet throughout:
 - **Class** - a unit's type (Infantry, Cavalry, Field Gun, Scout, AFV, Aircraft,
   Super Heavy, Behemoth). Class sets the default number of stands, the save
   dice, and which deployment roles are allowed.
-- **Deployment type** - any stand can be fielded as a plain **Unit** member, or
-  upgraded to an **Independent** stand, a **Commander**, a **Hero**, or a
+- **Deployment type** - each unit in your army can be a plain **Unit**, a
+  single-stand **Independent**, a **Commander Unit**, a **Hero**, or a
   **Hero-Commander**. Each costs progressively more, and the builder shows all
-  of them side by side.
+  costs side by side.
 - **Stand traits / weapon traits** - special abilities you pick from a list.
   Each one adjusts the unit's point cost automatically.
 - **Points** - every cost is calculated for you as you build; you never add
@@ -85,7 +90,7 @@ and some support. Each one lands in your **Unit Library**.
 Open **Task Forces → New Task Force**, name it, and pick a **type**. In the task
 force you'll see four role sections - **Core**, **Specialist**, **Command**, and
 **Support**. Use **+ Add** in each section to drop your units into the right
-slots, and set how many stands of each you want.
+slots, and set how many of each unit you want.
 
 ![A task force with units in its role slots](images/taskforce.png)
 
@@ -95,7 +100,7 @@ Optionally name a **commander** and assign a **tactical asset**.
 
 Open **Armies → New Army**. Choose a **task-force army** and add your task force
 to its pool. Then create **Battle Groups**, give each a name and symbol, and add
-stands to them from your task force.
+units to them from your task force.
 
 ![An army organised into battle groups](images/army.png)
 
@@ -222,10 +227,14 @@ and **Remove** it.
 Toggle **Show All** to switch between the tabbed view (one role at a time) and a
 flat view (every section stacked).
 
-### Commander & tactical asset
+### Task Force Commander & tactical asset
 
-- Name a **commander** and set their rank (Regular, Senior, or Lord). Higher
-  ranks unlock more, and the app flags requirements you haven't met yet.
+Each task force has a **Task Force Commander** - a named officer (distinct from
+any Commander Units in your unit slots, which are a deployment type) with a rank
+of Regular, Senior, or Lord. Higher ranks unlock more, and the app flags any
+requirements you haven't met yet. The Task Force Commander is also what unlocks
+a **tactical asset** for the task force.
+
 - **Assign** a **tactical asset** - a special battlefield ability - from the
   built-in list or your own custom assets. **Change** or **Remove** it anytime.
 
@@ -265,16 +274,16 @@ buttons **Print**, **Export**, **Edit**, and **Delete** the army.
 
 **Add Task Force** drops a task force into the pool. Each pooled task force shows
 its commander and lets you set the commander rank used in this army. The pool is
-the source you draw stands from when filling battle groups.
+the source you draw units from when filling battle groups.
 
 ### Battle groups
 
 Battle groups are named sub-formations, each with a **symbol**. Switch between
 them with the tabs, and for the selected group:
 
-- **Add Unit** pulls stands in - from the pool's task forces (task-force army) or
-  directly from units (free-pick army).
-- **Add Task Force** (task-force armies) adds a whole task force's stands at once.
+- **Add Unit** adds units to the group - from the pool's task forces (task-force army) or
+  directly (free-pick army).
+- **Add Task Force** (task-force armies) adds all units from a task force at once.
 - **Description** adds notes; **Clear** empties the group.
 - Adjust each entry's **quantity**, or **Remove** it.
 
@@ -328,9 +337,10 @@ others send you. The **Data** tab is the hub.
 ### Exporting a selection
 
 Under **Export Selection**, tick whole categories or individual items, then
-**Generate JSON**. The export automatically pulls in everything those items
-depend on - tick a task force and its units, their factions, and their custom
-traits all come along - so the file is always complete.
+**Generate JSON**. A panel opens with the result - use **Copy to clipboard** or
+**Download** to save it as a `.json` file. The export automatically pulls in
+everything those items depend on - tick a task force and its units, their factions,
+and their custom traits all come along - so the file is always complete.
 
 ### Full backup
 
@@ -347,6 +357,9 @@ exports just that item, bundled with all of its dependencies.
 
 Under **Import Data**, paste a JSON export into the box or use **Upload .json**.
 The app recognises what it is:
+
+> **Warning:** Importing a full backup **replaces your entire collection**. Export
+> your own Full Backup first if you have work you want to keep.
 
 - A **full backup** replaces your whole collection.
 - A **selection**, **faction**, or single-item export **merges** into what you
