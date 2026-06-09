@@ -2,7 +2,7 @@
 
 A single-page army-list builder for the tabletop wargame **LaserStorm (2nd Edition)**.
 Design your own units, assemble them into task forces and armies, and print
-game-ready reference sheets - all in one file, in your browser, online or off.
+game-ready reference sheets. It's all in one file, in your browser, online or off.
 
 ![A task force in the builder](docs/images/taskforce.png)
 
