@@ -18,6 +18,7 @@ framework, no bundler. Open the file in a browser and it runs.
 ```
 army-builder.html        The whole app. This is what you edit.
 factions/                Shareable faction export JSONs (e.g. mechanicum-taghmata.json)
+tools/build_assets.py    Regenerates the inlined offline fonts/icons (see Running & testing)
 LICENSE
 package.json             Only dependency is Playwright (for testing the app)
 .claude/                 Worktrees / agent scratch — ignore
@@ -42,10 +43,12 @@ experience:
   the Playwright-bundled browser: `python3 -m playwright install chromium`.
 - The HTTP server can die between runs — restart it before each test and
   give it `sleep 1-2` to come up.
-- Google Fonts / Font Awesome load from CDNs. In a sandboxed headless
-  browser these fail with `ERR_CERT_AUTHORITY_INVALID`. **These errors are
-  expected and harmless** — filter them out when checking the console for
-  real errors.
+- Fonts (Bebas Neue, Barlow) and the Font Awesome **solid** icons are
+  **inlined** into the HTML as base64 inside `<style id="offline-assets">`,
+  so the app renders fully offline and from `file://` — no CDN, no network.
+  Regenerate that block with `python3 tools/build_assets.py` after adding new
+  icons or bumping versions (needs `pip install fonttools brotli` + network).
+  The print window pulls the same CSS from that style element via the DOM.
 - Seed state by writing to localStorage before reload:
   `localStorage.setItem('ls_army_builder', <json>)` then `page.reload()`.
 
