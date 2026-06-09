@@ -501,7 +501,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px soli
         </div>
         <div class="form-group" style="margin-top:10px">
           <label>Description <span style="font-size:10px;color:#8b949e;font-weight:normal">(optional)</span></label>
-          <textarea id="b-description" placeholder="e.g. Elite shock troops specialising in close-quarters breaching..." style="width:100%;min-height:56px;resize:vertical;background:var(--surface-raised);border:1px solid var(--border-subtle);border-radius:6px;color:#e0e0e0;padding:8px;font-family:var(--font-body);font-size:13px;line-height:1.5"></textarea>
+          <textarea id="b-description" placeholder="e.g. Elite shock troops specializing in close-quarters breaching..." style="width:100%;min-height:56px;resize:vertical;background:var(--surface-raised);border:1px solid var(--border-subtle);border-radius:6px;color:#e0e0e0;padding:8px;font-family:var(--font-body);font-size:13px;line-height:1.5"></textarea>
         </div>
         <div id="b-class-profile" class="class-profile"></div>
         <div class="sub-divider"><div class="sub-divider-label"><i class="fa-solid fa-gauge-high" style="color:var(--accent);font-size:9px"></i> Combat Stats</div></div>
@@ -933,7 +933,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px soli
 <div id="modal-tf-save-template" class="modal-bg">
   <div class="modal" style="max-width:420px">
     <div class="modal-header">Save as Template <button class="modal-close" aria-label="Close" onclick="closeModal('modal-tf-save-template')"><i class="fa-solid fa-xmark"></i></button></div>
-    <p style="color:var(--text-muted);font-size:13px;margin:0 0 14px;line-height:1.5">Saves this task force's unit composition, type and faction as a reusable template. You can then create new task forces pre-filled with the same units.</p>
+    <p style="color:var(--text-muted);font-size:13px;margin:0 0 14px;line-height:1.5">Saves this task force's unit composition, type, and faction as a reusable template. You can then create new task forces pre-filled with the same units.</p>
     <div class="form-group" style="margin-bottom:16px">
       <label>Template Name</label>
       <input type="text" id="tf-template-save-name" placeholder="e.g. Standard Infantry Block" style="width:100%">
@@ -1169,7 +1169,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px soli
       </div>
     </div>
     <div class="form-group" style="margin-bottom:12px">
-      <label>Battle Group Marking</label>
+      <label>Battle Group Symbol</label>
       <select id="army-bg-mode" style="width:auto;margin-top:4px">
         <option value="custom">Icons</option>
         <option value="numbers">Numbers - 1  2  3</option>
@@ -1479,7 +1479,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px soli
         <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer" onclick="document.getElementById('ct-unit-trait').click()">
           <div>
             <div style="font-size:12px;font-weight:bold;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em">Unit Trait</div>
-            <div style="font-size:11px;color:var(--text-muted);margin-top:3px">Effect applies to the whole Unit. No effect if any stand of the same class lacks this trait. If multiple levels exist, only the least powerful applies.</div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:3px">Effect applies to the whole unit. No effect if any stand of the same class lacks this trait. If multiple levels exist, only the least powerful applies.</div>
           </div>
           <input type="checkbox" id="ct-unit-trait" style="width:16px;height:16px;flex-shrink:0;margin:0;cursor:pointer" onclick="event.stopPropagation()">
         </div>
@@ -2357,7 +2357,7 @@ function traitTipHTML(traitArr, allTraits) {
       || (() => { const base=name.replace(/\s[+]?\d+$/,""); return base!==name ? (Object.entries(allTraits).find(([,v])=>v[0]===base)||[null,null]) : [null,null]; })();
     const cleanDesc = cleanTraitDesc(entry?.[2] || "");
     const isUT = traitIsUnitTrait(entry);
-    const utRule = "Unit Trait - effect applies to the whole Unit. No effect if any stand of the same class lacks this trait. If multiple levels exist, only the least powerful applies.";
+    const utRule = "Unit Trait: effect applies to the whole unit. No effect if any stand of the same class lacks this trait. If multiple levels exist, only the least powerful applies.";
     const fullDesc = isUT ? (cleanDesc ? cleanDesc + "\n\n" + utRule : utRule) : cleanDesc;
     const fac = traitFactionKey(entry);
     const facObj = fac ? (state.customFactions||[]).find(f=>f.id===fac) : null;
@@ -2609,7 +2609,7 @@ function renderExportPicker(){
   if(!el) return;
   const cats = EXPORT_CATS.filter(c=>(state[c.key]||[]).length);
   if(!cats.length){
-    el.innerHTML = `<div class="exp-empty">Nothing to export yet - create some units, factions or armies first.</div>`;
+    el.innerHTML = `<div class="exp-empty">Nothing to export yet - create some units, factions, or armies first.</div>`;
     updateExportSummary();
     return;
   }
@@ -5134,7 +5134,7 @@ function renderFactionDetail() {
   if(!isBuiltin) {
     let traitsHTML;
     if(!traits.length) {
-      traitsHTML = `<div style="color:var(--text-faint);font-size:12px;font-style:italic">No custom traits gated to this faction.</div>`;
+      traitsHTML = `<div style="color:var(--text-faint);font-size:12px;font-style:italic">No custom traits for this faction.</div>`;
     } else {
       traitsHTML = `<div class="fac-trait-cards">${traits.map(t => {
         const cost = (t.cost >= 0 ? "+" : "") + t.cost + "p";
@@ -5257,7 +5257,7 @@ function renderTFList() {
   const list = document.getElementById("tf-list");
   if (!list) return;
   if (!state.taskForces.length) {
-    list.innerHTML = `<div class="empty" style="padding:48px 0"><div class="empty-icon"><i class="fa-solid fa-users"></i></div>No task forces yet - press <strong>New Task Force</strong> to create one</div>`;
+    list.innerHTML = `<div class="empty" style="padding:48px 0"><div class="empty-icon"><i class="fa-solid fa-users"></i></div>No task forces yet - press <strong>New Task Force</strong> to create one.</div>`;
     _updateTFTemplatesBadge();
     return;
   }
@@ -5925,8 +5925,8 @@ function createTaskForce() {
   const name = document.getElementById("tf-new-name").value.trim();
   const commander = document.getElementById("tf-commander").value.trim();
   let invalid = false;
-  if(!name)      { showFieldErr("tf-new-name","Task force name is required."); invalid=true; }
-  if(!commander) { showFieldErr("tf-commander","Commander name is required."); invalid=true; }
+  if(!name)      { showFieldErr("tf-new-name","Task Force name is required."); invalid=true; }
+  if(!commander) { showFieldErr("tf-commander","Task Force Commander name is required."); invalid=true; }
   if(invalid) { if(!name) document.getElementById("tf-new-name").focus(); return; }
   const tfType = document.getElementById("tf-type").value;
   const faction = document.getElementById("tf-faction").value;
@@ -6036,7 +6036,7 @@ function renderAddUnitList() {
       </div>
     </div>`;
   }).join("");
-  list.innerHTML = rows || `<div class="empty">No units available for this section</div>`;
+  list.innerHTML = rows || `<div class="empty">No units available for this section.</div>`;
   if(addUnitSelectedId) renderAddUnitTypeSelector();
 }
 
@@ -6689,7 +6689,7 @@ function renderAssetPickerList() {
   const list = document.getElementById("asset-picker-list");
   const confBtn = document.getElementById("asset-picker-confirm-btn");
   if(!assets.length) {
-    list.innerHTML = `<div class="empty">No assets available for this faction</div>`;
+    list.innerHTML = `<div class="empty">No assets available for this faction.</div>`;
     if(confBtn) confBtn.disabled = true;
     return;
   }
@@ -7002,7 +7002,7 @@ function _renderTransportList(faction) {
   // Faction-match: transports of the same faction, or no faction.
   let opts = availableTransports().filter(t => !t.faction || !faction || t.faction === faction);
   opts.sort((a,b)=>a.name.localeCompare(b.name));
-  if(!opts.length){ list.innerHTML = `<div class="empty" style="padding:20px"><div class="empty-icon"><i class="fa-solid fa-truck"></i></div>No transport-capable AFVs available for this faction</div>`; return; }
+  if(!opts.length){ list.innerHTML = `<div class="empty" style="padding:20px"><div class="empty-icon"><i class="fa-solid fa-truck"></i></div>No transport-capable AFVs available for this faction.</div>`; return; }
   list.innerHTML = opts.map(t => {
     const n = mechanizedCount(unit, t);
     const cap = transportSlotsFor(t);
@@ -7444,7 +7444,7 @@ function renderArmyList() {
   const cmpBtn = document.getElementById("btn-compare-armies");
   if(cmpBtn) cmpBtn.style.display = state.armies.length >= 2 ? "" : "none";
   if (!state.armies.length) {
-    list.innerHTML = `<div class="empty" style="padding:48px 0"><div class="empty-icon"><i class="fa-solid fa-chess-rook"></i></div>No armies yet - press <strong>New Army</strong> to create one</div>`;
+    list.innerHTML = `<div class="empty" style="padding:48px 0"><div class="empty-icon"><i class="fa-solid fa-chess-rook"></i></div>No armies yet - press <strong>New Army</strong> to create one.</div>`;
     return;
   }
   list.innerHTML = state.armies.map(a => {
@@ -8869,7 +8869,7 @@ function _renderAddTFList() {
     return true;
   });
   if(!available.length) {
-    list.innerHTML=`<div class="empty">${army?.faction?"No matching or unaligned task forces available - all are added, or locked to other factions.":"All task forces already added, or none exist."}</div>`;
+    list.innerHTML=`<div class="empty">${army?.faction?"No matching or unaligned task forces available - all are added, or locked to other factions.":"All task forces are already added, or none exist."}</div>`;
   } else {
     list.innerHTML = available.map(tf => {
       const pts = tfPoints(tf);
@@ -9206,7 +9206,7 @@ function renderForceList() {
   const list = document.getElementById("force-list");
   if(!list) return;
   if(!(state.expeditionaryForces||[]).length) {
-    list.innerHTML = `<div class="empty" style="padding:48px 0"><div class="empty-icon"><i class="fa-solid fa-earth-americas"></i></div>No expeditionary forces yet - press <strong>New Force</strong> to create one</div>`;
+    list.innerHTML = `<div class="empty" style="padding:48px 0"><div class="empty-icon"><i class="fa-solid fa-earth-americas"></i></div>No expeditionary forces yet - press <strong>New Force</strong> to create one.</div>`;
     return;
   }
   list.innerHTML = (state.expeditionaryForces||[]).map(force => {
