@@ -259,6 +259,12 @@ input.input-error,textarea.input-error{border-color:#ef535066!important;outline:
   .tf-tab-short{display:inline}
   .lib-filter-row-bottom{flex-direction:column;align-items:stretch;gap:6px}
   .lib-filter-row-bottom > div:last-child{align-self:flex-end}
+  /* Larger tap targets on touch screens (qty steppers, modal close).
+     !important needed: .qty-btn/.qty-val base rules are declared later in
+     source order, so they'd otherwise win at equal specificity. */
+  .qty-btn{width:32px!important;height:32px!important;line-height:32px!important;font-size:16px!important}
+  .qty-val{width:34px!important;font-size:15px!important}
+  .modal-close{width:34px;height:34px;line-height:34px}
 }
 .fac-trait-row{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:7px;margin-bottom:5px}
 .fac-trait-name{font-size:13px;font-weight:600;color:var(--text-primary);flex:1;min-width:0}
@@ -394,6 +400,17 @@ label .trait-edit-btn{margin-left:6px}
 #undo-toast.visible{opacity:1;transform:translateX(-50%) translateY(0)}
 #nav-undo-btn{display:none;align-items:center;gap:4px;background:none;border:1px solid var(--border-default);color:var(--text-muted);padding:4px 10px;border-radius:6px;cursor:pointer;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;transition:all .15s;margin-left:6px;white-space:nowrap}
 #nav-undo-btn:hover{background:var(--surface-raised);color:var(--text-primary);border-color:var(--accent)}
+/* ── Accessibility: keyboard focus + reduced motion ───────────────────── */
+/* Visible focus ring for keyboard users only (mouse clicks stay clean).
+   Covers buttons, links, pills, tabs, and the many div[onclick] controls. */
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+.btn:focus-visible,.pill:focus-visible,.nav-tab:focus-visible,.trait-edit-btn:focus-visible{outline-offset:3px}
+input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+/* Respect users who ask for less motion: neutralize transitions/animations
+   while preserving end states (this app animates only via CSS transitions). */
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important}
+}
 </style>
 </head>
 <body>
@@ -589,15 +606,15 @@ label .trait-edit-btn{margin-left:6px}
   <div class="card">
     <div class="lib-search-wrap">
       <i class="fa-solid fa-magnifying-glass lib-search-icon"></i>
-      <input class="search-bar" id="lib-search" placeholder="Search units…" oninput="onLibSearchChange()">
-      <button class="lib-search-clear" id="lib-search-clear" onclick="clearLibSearch()" title="Clear search"><i class="fa-solid fa-xmark"></i></button>
+      <input class="search-bar" id="lib-search" placeholder="Search units…" aria-label="Search units" oninput="onLibSearchChange()">
+      <button class="lib-search-clear" id="lib-search-clear" onclick="clearLibSearch()" title="Clear search" aria-label="Clear search"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <div class="lib-filter-panel" id="lib-filter-panel">
       <div class="lib-filter-header" onclick="toggleLibFilterPanel()">
         <span class="lib-filter-title"><i class="fa-solid fa-sliders" style="opacity:.7;margin-right:3px"></i>Filters</span>
         <span class="lib-filter-active-badge" id="lib-active-badge"></span>
         <button class="lib-filter-clear-btn" id="lib-clear-filters" onclick="event.stopPropagation();clearLibFilters()"><i class="fa-solid fa-xmark" style="font-size:8px"></i> Clear all</button>
-        <button class="lib-filter-toggle" onclick="event.stopPropagation();toggleLibFilterPanel()" title="Show/hide filters"><span class="lib-ft-icon"><i class="fa-solid fa-chevron-down" style="font-size:9px"></i></span></button>
+        <button class="lib-filter-toggle" onclick="event.stopPropagation();toggleLibFilterPanel()" title="Show/hide filters" aria-label="Show or hide filters"><span class="lib-ft-icon"><i class="fa-solid fa-chevron-down" style="font-size:9px"></i></span></button>
       </div>
       <div class="lib-filter-row">
         <div class="pill-group" id="lib-faction-filters" style="margin-bottom:0;flex:1"></div>
@@ -783,7 +800,7 @@ label .trait-edit-btn{margin-left:6px}
   <div class="modal" style="max-width:700px">
     <div class="modal-header">
       <span id="export-json-title">Export JSON</span>
-      <button class="modal-close" onclick="closeModal('modal-export-json')"><i class="fa-solid fa-xmark"></i></button>
+      <button class="modal-close" aria-label="Close" onclick="closeModal('modal-export-json')"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <div class="export-actions-row" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:10px">
       <span id="export-json-summary" style="font-size:12px;color:var(--text-muted);flex:1;min-width:0"></span>
@@ -799,7 +816,7 @@ label .trait-edit-btn{margin-left:6px}
 <!-- ===== IMPORT ARMY MODAL ===== -->
 <div id="modal-import-army" class="modal-bg">
   <div class="modal" style="max-width:640px">
-    <div class="modal-header">Import Army <button class="modal-close" onclick="closeModal('modal-import-army')"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="modal-header">Import Army <button class="modal-close" aria-label="Close" onclick="closeModal('modal-import-army')"><i class="fa-solid fa-xmark"></i></button></div>
     <p style="color:var(--text-muted);font-size:13px;margin:0 0 14px;line-height:1.5">Paste a previously exported army JSON. Custom units, factions, traits, task forces and assets are merged automatically - duplicates (matched by name) are skipped.</p>
     <div class="form-group" style="margin-bottom:12px">
       <label>Paste Army JSON</label>
@@ -819,7 +836,7 @@ label .trait-edit-btn{margin-left:6px}
   <div class="modal" style="max-width:980px;width:95vw">
     <div class="modal-header">
       Compare Armies
-      <button class="modal-close" onclick="closeModal('modal-compare-armies')"><i class="fa-solid fa-xmark"></i></button>
+      <button class="modal-close" aria-label="Close" onclick="closeModal('modal-compare-armies')"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
       <div>
@@ -838,7 +855,7 @@ label .trait-edit-btn{margin-left:6px}
 <!-- ===== IMPORT TASK FORCE MODAL ===== -->
 <div id="modal-import-tf" class="modal-bg">
   <div class="modal" style="max-width:640px">
-    <div class="modal-header">Import Task Force <button class="modal-close" onclick="closeModal('modal-import-tf')"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="modal-header">Import Task Force <button class="modal-close" aria-label="Close" onclick="closeModal('modal-import-tf')"><i class="fa-solid fa-xmark"></i></button></div>
     <p style="color:var(--text-muted);font-size:13px;margin:0 0 14px;line-height:1.5">Paste a previously exported task force JSON. Custom units, factions, traits, task force types and assets are merged automatically - duplicates (matched by name) are skipped.</p>
     <div class="form-group" style="margin-bottom:12px">
       <label>Paste Task Force JSON</label>
@@ -856,7 +873,7 @@ label .trait-edit-btn{margin-left:6px}
 <!-- ===== IMPORT FORCE MODAL ===== -->
 <div id="modal-import-force" class="modal-bg">
   <div class="modal" style="max-width:640px">
-    <div class="modal-header">Import Expeditionary Force <button class="modal-close" onclick="closeModal('modal-import-force')"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="modal-header">Import Expeditionary Force <button class="modal-close" aria-label="Close" onclick="closeModal('modal-import-force')"><i class="fa-solid fa-xmark"></i></button></div>
     <p style="color:var(--text-muted);font-size:13px;margin:0 0 14px;line-height:1.5">Paste a previously exported force JSON. Armies, task forces, custom units, factions, traits and assets are merged automatically - duplicates (matched by name) are skipped.</p>
     <div class="form-group" style="margin-bottom:12px">
       <label>Paste Force JSON</label>
@@ -878,7 +895,7 @@ label .trait-edit-btn{margin-left:6px}
       <span id="trait-modal-title">Select Traits</span>
       <div style="display:flex;gap:8px;align-items:center">
         <button class="trait-edit-btn" onclick="openCustomTraitModal()"><i class="fa-solid fa-gear"></i> Custom Traits</button>
-        <button class="modal-close" onclick="closeTraitModal()"><i class="fa-solid fa-xmark"></i></button>
+        <button class="modal-close" aria-label="Close" onclick="closeTraitModal()"><i class="fa-solid fa-xmark"></i></button>
       </div>
     </div>
     <input class="search-bar" id="trait-picker-search" placeholder="Filter traits..." oninput="onTraitPickerSearchChange()" style="margin-bottom:4px">
@@ -889,7 +906,7 @@ label .trait-edit-btn{margin-left:6px}
 <!-- ===== SAVE TF AS TEMPLATE MODAL ===== -->
 <div id="modal-tf-save-template" class="modal-bg">
   <div class="modal" style="max-width:420px">
-    <div class="modal-header">Save as Template <button class="modal-close" onclick="closeModal('modal-tf-save-template')"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="modal-header">Save as Template <button class="modal-close" aria-label="Close" onclick="closeModal('modal-tf-save-template')"><i class="fa-solid fa-xmark"></i></button></div>
     <p style="color:var(--text-muted);font-size:13px;margin:0 0 14px;line-height:1.5">Saves this task force's unit composition, type and faction as a reusable template. You can then create new task forces pre-filled with the same units.</p>
     <div class="form-group" style="margin-bottom:16px">
       <label>Template Name</label>
@@ -906,7 +923,7 @@ label .trait-edit-btn{margin-left:6px}
 <!-- ===== TF TEMPLATES PICKER MODAL ===== -->
 <div id="modal-tf-templates" class="modal-bg">
   <div class="modal" style="max-width:580px">
-    <div class="modal-header">Task Force Templates <button class="modal-close" onclick="closeModal('modal-tf-templates')"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="modal-header">Task Force Templates <button class="modal-close" aria-label="Close" onclick="closeModal('modal-tf-templates')"><i class="fa-solid fa-xmark"></i></button></div>
     <p style="color:var(--text-muted);font-size:13px;margin:0 0 14px;line-height:1.5">Choose a template to pre-fill a new task force with its unit composition. You'll still set the name and commander.</p>
     <div id="tf-template-list"></div>
   </div>
@@ -915,7 +932,7 @@ label .trait-edit-btn{margin-left:6px}
 <!-- ===== NEW / EDIT TF MODAL ===== -->
 <div id="modal-tf" class="modal-bg">
   <div class="modal">
-    <div class="modal-header"><span id="modal-tf-title">New Task Force</span> <button class="modal-close" onclick="closeModal('modal-tf')"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="modal-header"><span id="modal-tf-title">New Task Force</span> <button class="modal-close" aria-label="Close" onclick="closeModal('modal-tf')"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="form-group" style="margin-bottom:12px">
       <label>Task Force Name</label>
       <input type="text" id="tf-new-name" placeholder="e.g. Alpha Strike Force" style="width:100%" oninput="clearFieldErr('tf-new-name')">
@@ -955,7 +972,7 @@ label .trait-edit-btn{margin-left:6px}
 <!-- ===== CUSTOM TF TYPES MODAL ===== -->
 <div id="modal-custom-tf-type" class="modal-bg">
   <div class="modal">
-    <div class="modal-header">Custom Task Force Types <button class="modal-close" onclick="closeModal('modal-custom-tf-type')"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="modal-header">Custom Task Force Types <button class="modal-close" aria-label="Close" onclick="closeModal('modal-custom-tf-type')"><i class="fa-solid fa-xmark"></i></button></div>
     <div id="custom-tf-type-list" style="margin-bottom:8px"></div>
     <div class="modal-sub-header" id="custom-tf-type-form-title">New Task Force Type</div>
     <div class="form-group" style="margin-bottom:8px">
@@ -980,7 +997,7 @@ label .trait-edit-btn{margin-left:6px}
       <span id="addunit-modal-title">Add Unit to Task Force</span>
       <div style="display:flex;gap:8px;align-items:center">
         <button id="addunit-show-unavail-btn" class="trait-edit-btn" onclick="toggleAddUnitShowUnavailable()"><i class="fa-solid fa-eye-slash"></i> Show Unavailable</button>
-        <button class="modal-close" onclick="closeModal('modal-add-unit')"><i class="fa-solid fa-xmark"></i></button>
+        <button class="modal-close" aria-label="Close" onclick="closeModal('modal-add-unit')"><i class="fa-solid fa-xmark"></i></button>
       </div>
     </div>
     <input class="search-bar" id="addunit-search" placeholder="Search..." oninput="onAddUnitSearchChange()">
@@ -1013,7 +1030,7 @@ label .trait-edit-btn{margin-left:6px}
       <span>Select Tactical Asset</span>
       <div style="display:flex;gap:8px;align-items:center">
         <button class="trait-edit-btn" onclick="openCustomAssetsModal()"><i class="fa-solid fa-gear"></i> Custom Assets</button>
-        <button class="modal-close" onclick="closeModal('modal-asset-picker')"><i class="fa-solid fa-xmark"></i></button>
+        <button class="modal-close" aria-label="Close" onclick="closeModal('modal-asset-picker')"><i class="fa-solid fa-xmark"></i></button>
       </div>
     </div>
     <input class="search-bar" id="asset-picker-search" placeholder="Search assets..." oninput="renderAssetPickerList()">
@@ -1028,7 +1045,7 @@ label .trait-edit-btn{margin-left:6px}
 <!-- ===== CUSTOM TACTICAL ASSETS MODAL ===== -->
 <div id="modal-custom-assets" class="modal-bg">
   <div class="modal">
-    <div class="modal-header">Custom Tactical Assets <button class="modal-close" onclick="closeModal('modal-custom-assets')"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="modal-header">Custom Tactical Assets <button class="modal-close" aria-label="Close" onclick="closeModal('modal-custom-assets')"><i class="fa-solid fa-xmark"></i></button></div>
     <div id="custom-asset-list" style="margin-bottom:8px"></div>
     <div class="modal-sub-header" id="custom-asset-form-title">New Tactical Asset</div>
     <div class="form-group" style="margin-bottom:8px">
@@ -1073,7 +1090,7 @@ label .trait-edit-btn{margin-left:6px}
 <!-- ===== NEW/EDIT ARMY MODAL ===== -->
 <div id="modal-army" class="modal-bg">
   <div class="modal">
-    <div class="modal-header" id="army-modal-title">New Army <button class="modal-close" onclick="closeModal('modal-army')"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="modal-header" id="army-modal-title">New Army <button class="modal-close" aria-label="Close" onclick="closeModal('modal-army')"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="form-group" style="margin-bottom:12px">
       <label>Army Name</label>
       <input type="text" id="army-new-name" placeholder="e.g. Iron Legion" style="width:100%" oninput="clearFieldErr('army-new-name')">
@@ -1150,7 +1167,7 @@ label .trait-edit-btn{margin-left:6px}
 <!-- ===== ADD TF TO ARMY MODAL ===== -->
 <div id="modal-add-tf" class="modal-bg">
   <div class="modal">
-    <div class="modal-header">Add Task Force <button class="modal-close" onclick="closeModal('modal-add-tf')"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="modal-header">Add Task Force <button class="modal-close" aria-label="Close" onclick="closeModal('modal-add-tf')"><i class="fa-solid fa-xmark"></i></button></div>
     <div id="add-tf-faction-note" style="display:none;font-size:11px;margin-bottom:8px"></div>
     <div class="scrolllist" id="add-tf-list"></div>
     <div style="margin-top:12px;display:flex;justify-content:flex-end;gap:8px">
@@ -1167,7 +1184,7 @@ label .trait-edit-btn{margin-left:6px}
       <span>Add Units to Battle Group</span>
       <div style="display:flex;gap:8px;align-items:center">
         <button id="bg-unit-show-unavail-btn" class="trait-edit-btn" onclick="toggleBGShowUnavailable()"><i class="fa-solid fa-eye-slash"></i> Show Unavailable</button>
-        <button class="modal-close" onclick="closeModal('modal-army-bg-unit')"><i class="fa-solid fa-xmark"></i></button>
+        <button class="modal-close" aria-label="Close" onclick="closeModal('modal-army-bg-unit')"><i class="fa-solid fa-xmark"></i></button>
       </div>
     </div>
     <div class="scrolllist" id="bg-unit-list"></div>
@@ -1184,7 +1201,7 @@ label .trait-edit-btn{margin-left:6px}
 <!-- ===== ARMY: ADD TF TO BG MODAL ===== -->
 <div id="modal-army-bg-tf" class="modal-bg">
   <div class="modal">
-    <div class="modal-header">Add Entire Task Force <button class="modal-close" onclick="closeModal('modal-army-bg-tf')"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="modal-header">Add Entire Task Force <button class="modal-close" aria-label="Close" onclick="closeModal('modal-army-bg-tf')"><i class="fa-solid fa-xmark"></i></button></div>
     <div style="font-size:11px;color:#8b949e;margin-bottom:8px">All units from the selected task force will be added to this battle group.</div>
     <div class="scrolllist" id="bg-tf-list"></div>
     <div style="margin-top:12px;display:flex;justify-content:flex-end;gap:8px">
@@ -1197,7 +1214,7 @@ label .trait-edit-btn{margin-left:6px}
 <!-- ===== FREE-PICK: ADD UNIT TO BG MODAL ===== -->
 <div id="modal-fp-unit" class="modal-bg">
   <div class="modal">
-    <div class="modal-header">Add Units (Free Pick) <button class="modal-close" onclick="closeFPUnitModal()"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="modal-header">Add Units (Free Pick) <button class="modal-close" aria-label="Close" onclick="closeFPUnitModal()"><i class="fa-solid fa-xmark"></i></button></div>
     <div id="fp-unit-faction-note" style="display:none;font-size:11px;color:#8b949e;margin-bottom:8px;padding:5px 8px;background:var(--surface-raised);border-radius:4px"></div>
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
       <div style="font-size:11px;color:#8b949e;text-transform:uppercase;letter-spacing:.5px">Quantity per add</div>
@@ -1220,7 +1237,7 @@ label .trait-edit-btn{margin-left:6px}
   <div class="modal">
     <div class="modal-header">
       <span id="force-modal-title">New Expeditionary Force</span>
-      <button class="modal-close" onclick="closeModal('modal-force')"><i class="fa-solid fa-xmark"></i></button>
+      <button class="modal-close" aria-label="Close" onclick="closeModal('modal-force')"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <div class="form-group" style="margin-bottom:12px">
       <label>Force Name</label>
@@ -1256,7 +1273,7 @@ label .trait-edit-btn{margin-left:6px}
 <!-- ===== ADD ARMY TO EF MODAL ===== -->
 <div id="modal-add-army-ef" class="modal-bg">
   <div class="modal">
-    <div class="modal-header">Add Army to Group <button class="modal-close" onclick="closeModal('modal-add-army-ef')"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="modal-header">Add Army to Group <button class="modal-close" aria-label="Close" onclick="closeModal('modal-add-army-ef')"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="scrolllist" id="add-army-ef-list"></div>
     <div style="margin-top:12px;display:flex;justify-content:flex-end">
       <button class="btn btn-primary" onclick="closeModal('modal-add-army-ef')">Done</button>
@@ -1269,7 +1286,7 @@ label .trait-edit-btn{margin-left:6px}
   <div class="modal">
     <div class="modal-header">
       <span>Army Group Description</span>
-      <button class="modal-close" onclick="closeModal('modal-ag-desc')"><i class="fa-solid fa-xmark"></i></button>
+      <button class="modal-close" aria-label="Close" onclick="closeModal('modal-ag-desc')"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <input type="hidden" id="ag-desc-force-id">
     <input type="hidden" id="ag-desc-ag-id">
@@ -1290,7 +1307,7 @@ label .trait-edit-btn{margin-left:6px}
   <div class="modal">
     <div class="modal-header">
       <span>Battle Group Description</span>
-      <button class="modal-close" onclick="closeModal('modal-bg-notes')"><i class="fa-solid fa-xmark"></i></button>
+      <button class="modal-close" aria-label="Close" onclick="closeModal('modal-bg-notes')"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <input type="hidden" id="bg-notes-army-id">
     <input type="hidden" id="bg-notes-bg-id">
@@ -1309,7 +1326,7 @@ label .trait-edit-btn{margin-left:6px}
 <!-- ===== PRINT MODAL ===== -->
 <div id="modal-print" class="modal-bg">
   <div class="modal" style="max-width:420px">
-    <div class="modal-header"><span id="modal-print-title">Print</span> <button class="modal-close" onclick="closeModal('modal-print')"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="modal-header"><span id="modal-print-title">Print</span> <button class="modal-close" aria-label="Close" onclick="closeModal('modal-print')"><i class="fa-solid fa-xmark"></i></button></div>
     <input type="hidden" id="print-target-type">
     <input type="hidden" id="print-target-id">
     <div class="form-group" style="margin-bottom:14px">
@@ -1336,7 +1353,7 @@ label .trait-edit-btn{margin-left:6px}
 <!-- ===== MECHANIZED TRANSPORT PICKER MODAL ===== -->
 <div id="modal-transport" class="modal-bg">
   <div class="modal" style="max-width:480px">
-    <div class="modal-header"><span>Assign Transport</span> <button class="modal-close" onclick="closeModal('modal-transport')"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="modal-header"><span>Assign Transport</span> <button class="modal-close" aria-label="Close" onclick="closeModal('modal-transport')"><i class="fa-solid fa-xmark"></i></button></div>
     <div id="transport-intro" style="font-size:12px;color:#8b949e;line-height:1.5;margin-bottom:12px"></div>
     <div class="scrolllist" id="transport-list" style="max-height:340px"></div>
     <div style="margin-top:12px;display:flex;justify-content:space-between;gap:8px">
@@ -1351,7 +1368,7 @@ label .trait-edit-btn{margin-left:6px}
 
 <div id="modal-faction" class="modal-bg">
   <div class="modal">
-    <div class="modal-header">Custom Factions <button class="modal-close" onclick="closeModal('modal-faction')"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="modal-header">Custom Factions <button class="modal-close" aria-label="Close" onclick="closeModal('modal-faction')"><i class="fa-solid fa-xmark"></i></button></div>
     <div id="faction-modal-list"></div>
     <div id="faction-modal-msg" style="display:none;margin-bottom:10px"></div>
     <div>
@@ -1384,7 +1401,7 @@ label .trait-edit-btn{margin-left:6px}
 
 <div id="modal-custom-trait" class="modal-bg">
   <div class="modal">
-    <div class="modal-header">Custom Traits <button class="modal-close" onclick="closeModal('modal-custom-trait')"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="modal-header">Custom Traits <button class="modal-close" aria-label="Close" onclick="closeModal('modal-custom-trait')"><i class="fa-solid fa-xmark"></i></button></div>
     <div id="custom-trait-list"></div>
     <div id="custom-trait-msg" style="display:none;margin-bottom:10px"></div>
     <div>
