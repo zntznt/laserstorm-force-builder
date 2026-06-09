@@ -37,7 +37,7 @@ they nest makes everything else click:
 
 | Layer | What it is |
 |---|---|
-| **Unit** | A single entry you design - a stat line, traits, and weapons. A **stand** is a single game piece; a unit represents one or more stands (how many depends on its class). |
+| **Unit** | A single entry you design - a stat line, traits, and weapons. A **Stand** is a single game piece; a **Unit** represents one or more **Stands** (how many depends on its class). |
 | **Task Force** | A rules-aware grouping of units into **role slots** - core, specialist, command, and support - with a Task Force Commander and a tactical asset. |
 | **Army** | What you field in a game. Either built from **task forces** or **free-picked** from units directly, then organized into **battle groups**. |
 | **Battle Group** | A named sub-formation inside an army, with its own symbol, holding a selection of the army's units. |
@@ -52,7 +52,7 @@ A few terms you'll meet throughout:
   single-stand **Independent**, a **Commander**, a **Hero**, or a
   **Hero Commander**. Each costs progressively more, and the builder shows all
   costs side by side.
-- **Stand traits / weapon traits** - special abilities you pick from a list.
+- **Stand Traits** / **Weapon Traits** - special abilities you pick from a list.
   Each one adjusts the unit's point cost automatically.
 - **Points** - every cost is calculated for you as you build; you never add
   anything up by hand.
@@ -127,7 +127,7 @@ shows the live cost and a preview.
 - **Unit name**, an optional **description**, and a **faction** (or *No Faction*).
 - **Class** - sets the unit's character. A short, read-only summary of the
   class's rules appears just below the selector.
-- **Size** - how many stands the unit represents. It defaults to the class's
+- **Size** - how many **Stands** the **Unit** represents. It defaults to the class's
   standard size; you can adjust it.
 
 ### Combat stats

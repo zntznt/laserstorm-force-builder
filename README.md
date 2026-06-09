@@ -21,8 +21,8 @@ expeditionary forces, then print clean reference sheets for the table.
 ## Features
 
 - **Unit builder** with live points costing - stats, stand traits, and multiple
-  weapons, with the cost for every deployment type (unit, independent,
-  commander, hero) calculated as you go.
+  weapons, with the cost for every deployment type (Unit, Independent,
+  Commander, Hero) calculated as you go.
 - **Factions** - group your units under custom factions with their own colors,
   icons, and faction traits, alongside the five built-in factions.
 - **Unit library** - browse, search, filter, and clone every built-in and
@@ -45,7 +45,7 @@ expeditionary forces, then print clean reference sheets for the table.
    below) and open it in any modern browser.
 2. **Build a unit** in the *Unit Builder*, then **Save to Library**.
 3. **Create a Task Force** and add your units to its role slots.
-4. **Create an Army**, drop the task force into its pool, and sort the stands
+4. **Create an Army**, drop the task force into its pool, and sort the units
    into **Battle Groups**.
 5. **Print** a reference sheet - and **export a backup** to keep your work safe.
 
