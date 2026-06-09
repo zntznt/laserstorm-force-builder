@@ -21,7 +21,7 @@ This guide covers how to *use the app*; for the game's rules you'll need the
 4. [Factions](#4-factions)
 5. [The Unit Library](#5-the-unit-library)
 6. [Task Forces](#6-task-forces)
-7. [Armies & Battle Groups](#7-armies--battle-groups)
+7. [Armies & battle groups](#7-armies--battle-groups)
 8. [Expeditionary Forces](#8-expeditionary-forces)
 9. [Printing](#9-printing)
 10. [Sharing & importing](#10-sharing--importing)
@@ -32,14 +32,14 @@ This guide covers how to *use the app*; for the game's rules you'll need the
 
 ## 1. Key concepts
 
-The app is organised as five layers that build on each other. Understanding how
+The app is organized as five layers that build on each other. Understanding how
 they nest makes everything else click:
 
 | Layer | What it is |
 |---|---|
 | **Unit** | A single entry you design - a stat line, traits, and weapons. A **stand** is a single game piece; a unit represents one or more stands (how many depends on its class). |
 | **Task Force** | A rules-aware grouping of units into **role slots** - core, specialist, command, and support - with a Task Force Commander and a tactical asset. |
-| **Army** | What you field in a game. Either built from **task forces** or **free-picked** from units directly, then organised into **battle groups**. |
+| **Army** | What you field in a game. Either built from **task forces** or **free-picked** from units directly, then organized into **battle groups**. |
 | **Battle Group** | A named sub-formation inside an army, with its own symbol, holding a selection of the army's units. |
 | **Expeditionary Force** | A campaign-level collection of several armies, sorted into **army groups**. |
 
@@ -49,8 +49,8 @@ A few terms you'll meet throughout:
   Super Heavy, Behemoth). Class sets the default number of stands, the save
   dice, and which deployment roles are allowed.
 - **Deployment type** - each unit in your army can be a plain **Unit**, a
-  single-stand **Independent**, a **Commander Unit**, a **Hero**, or a
-  **Hero-Commander**. Each costs progressively more, and the builder shows all
+  single-stand **Independent**, a **Commander**, a **Hero**, or a
+  **Hero Commander**. Each costs progressively more, and the builder shows all
   costs side by side.
 - **Stand traits / weapon traits** - special abilities you pick from a list.
   Each one adjusts the unit's point cost automatically.
@@ -69,8 +69,8 @@ This walkthrough takes you from an empty app to a printable army.
 ### Step 1 - (Optional) Create a faction
 
 Open the **Factions** tab and click **New Faction**. Give it a name, pick a
-colour and an icon, and save. Factions are optional, but they keep your units
-organised and colour-coded. You can also just use the five built-in factions, or
+color and an icon, and save. Factions are optional, but they keep your units
+organized and color-coded. You can also just use the five built-in factions, or
 none at all.
 
 ### Step 2 - Build a unit
@@ -82,7 +82,7 @@ watch the **Calculated Points** panel update live. When you're happy, click
 
 ![The Unit Builder with a unit loaded](images/builder.png)
 
-Repeat for a few more units - a couple of fighting units, maybe a command stand
+Repeat for a few more units: a couple of fighting units, maybe a command unit,
 and some support. Each one lands in your **Unit Library**.
 
 ### Step 3 - Create a task force
@@ -94,7 +94,7 @@ slots, and set how many of each unit you want.
 
 ![A task force with units in its role slots](images/taskforce.png)
 
-Optionally name a **commander** and assign a **tactical asset**.
+Optionally name a **Task Force Commander** and assign a **tactical asset**.
 
 ### Step 4 - Build an army
 
@@ -102,7 +102,7 @@ Open **Armies → New Army**. Choose a **task-force army** and add your task for
 to its pool. Then create **Battle Groups**, give each a name and symbol, and add
 units to them from your task force.
 
-![An army organised into battle groups](images/army.png)
+![An army organized into battle groups](images/army.png)
 
 ### Step 5 - Print and back up
 
@@ -151,10 +151,10 @@ drops one.
 ### Calculated points
 
 The **Calculated Points** panel shows the cost to field the unit in each
-deployment type - **Unit**, **Independent**, **Command**, **Hero**, and
-**Hero-Command** - with the per-stand and full-unit values. Open **Cost
+deployment type - **Unit**, **Independent**, **Commander**, **Hero**, and
+**Hero Commander** - with the per-stand and full-unit values. Open **Cost
 Breakdown** to see exactly what each stat, trait, and weapon contributes. Roles
-the class can't take are greyed out.
+the class can't take are grayed out.
 
 ### Saving
 
@@ -170,18 +170,18 @@ You can re-open any custom unit later with **Edit**, or duplicate one with
 
 ## 4. Factions
 
-Factions group your units and give them a colour and icon. Open the **Factions**
+Factions group your units and give them a color and icon. Open the **Factions**
 tab to see the five **built-in** factions and any **custom** ones you've made.
 
 ![A faction detail page](images/faction.png)
 
-- **New Faction** - set a name, colour, icon, and optional description.
+- **New Faction** - set a name, color, icon, and optional description.
 - A faction's page lists its **units** and any **faction traits**, with
   **Edit**/**Delete** for the faction itself.
 - You can add units to a faction straight from its page with **New Unit**, or by
   choosing the faction in the [Unit Builder](#3-the-unit-builder).
 
-Factions are organisational - assigning one never changes a unit's stats.
+Factions are organizational; assigning one never changes a unit's stats.
 
 ---
 
@@ -196,7 +196,7 @@ you've created.
 - **Filters** narrow by **faction** and **class**. On a phone the filter panel
   starts collapsed - tap **Filters** to open it.
 - **View as** switches the displayed points between deployment types (Unit,
-  Independent, Commander, Hero, Hero-Command), so you can compare costs.
+  Independent, Commander, Hero, Hero Commander), so you can compare costs.
 - **Sort** by name, points, class, or any stat.
 - **Clone** duplicates a unit into a new custom copy you can edit.
 - **+ New Unit** jumps to the builder.
@@ -205,7 +205,7 @@ you've created.
 
 ## 6. Task Forces
 
-A task force organises units into role slots and is the building block for
+A task force organizes units into role slots and is the building block for
 task-force armies.
 
 ![A task force](images/taskforce.png)
@@ -221,28 +221,28 @@ you start from a saved type, and **Import** brings in a shared task force.
 A task force has four sections - **Core**, **Specialist**, **Command**, and
 **Support**. Each section header shows how full it is against the type's limits.
 Use **+ Add** to put a unit into a section and set its **quantity**. For each
-slot you can also choose its **deployment type** (unit, independent, command...)
-and **Remove** it.
+slot you can also choose its **deployment type** (Unit, Independent, Commander,
+and so on) and **Remove** it.
 
 Toggle **Show All** to switch between the tabbed view (one role at a time) and a
 flat view (every section stacked).
 
 ### Task Force Commander & tactical asset
 
-Each task force has a **Task Force Commander** - a named officer (distinct from
-any Commander Units in your unit slots, which are a deployment type) with a rank
-of Regular, Senior, or Lord. Higher ranks unlock more, and the app flags any
-requirements you haven't met yet. The Task Force Commander is also what unlocks
-a **tactical asset** for the task force.
+Each task force has a **Task Force Commander**: a single named officer who leads
+it and unlocks its **tactical asset**. This is different from a unit's **Commander**
+deployment type (see [Key concepts](#1-key-concepts)). Set the commander's rank to
+Regular, Senior, or Lord; higher ranks unlock more, and the app flags any
+requirements you haven't met yet.
 
 - **Assign** a **tactical asset** - a special battlefield ability - from the
   built-in list or your own custom assets. **Change** or **Remove** it anytime.
 
-### Mechanised transports
+### Mechanized transports
 
 Infantry and field-gun slots can be carried by a transport. Use the transport
 button on the slot to assign a vehicle that has the *Transport* trait; the unit
-then deploys **mechanised** and is shown paired with its transport on cards and
+then deploys **mechanized** and is shown paired with its transport on cards and
 printed sheets.
 
 ### Task-force actions
@@ -253,13 +253,13 @@ its units bundled in), **Edit**, or **Delete** it.
 
 ---
 
-## 7. Armies & Battle Groups
+## 7. Armies & battle groups
 
 An army is what you bring to a game. Open the **Armies** tab and use **New Army**.
 There are two kinds:
 
 - **Task-force army** - built from one or more task forces in a **pool**, then
-  organised into battle groups.
+  organized into battle groups.
 - **Free-pick army** - pick units directly, without task forces.
 
 ![An army with battle groups](images/army.png)
@@ -273,7 +273,7 @@ buttons **Print**, **Export**, **Edit**, and **Delete** the army.
 ### The task-force pool (task-force armies)
 
 **Add Task Force** drops a task force into the pool. Each pooled task force shows
-its commander and lets you set the commander rank used in this army. The pool is
+its Task Force Commander and lets you set the commander rank used in this army. The pool is
 the source you draw units from when filling battle groups.
 
 ### Battle groups
@@ -317,7 +317,7 @@ Choose your options:
 
 - **Paper size** - Letter or A4.
 - **Ink mode** - **Color**, or **Grayscale** for clean black-and-white printing
-  that doesn't burn through coloured ink.
+  that doesn't burn through colored ink.
 
 Click **Print** and a formatted sheet opens in a new tab, ready for your
 browser's print dialog (or "Save as PDF"). The sheet leads with an overview and
@@ -356,7 +356,7 @@ exports just that item, bundled with all of its dependencies.
 ### Importing
 
 Under **Import Data**, paste a JSON export into the box or use **Upload .json**.
-The app recognises what it is:
+The app recognizes what it is:
 
 > **Warning:** Importing a full backup **replaces your entire collection**. Export
 > your own Full Backup first if you have work you want to keep.

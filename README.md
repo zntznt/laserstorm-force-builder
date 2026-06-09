@@ -15,7 +15,7 @@ five connected layers:
 > **Units** → **Task Forces** → **Armies** → **Expeditionary Forces** → **Print**
 
 Build custom units, group them into rules-aware task forces, field those as
-armies organised into battle groups, optionally bundle armies into larger
+armies organized into battle groups, optionally bundle armies into larger
 expeditionary forces, then print clean reference sheets for the table.
 
 ## Features
@@ -23,13 +23,13 @@ expeditionary forces, then print clean reference sheets for the table.
 - **Unit builder** with live points costing - stats, stand traits, and multiple
   weapons, with the cost for every deployment type (unit, independent,
   commander, hero) calculated as you go.
-- **Factions** - group your units under custom factions with their own colours,
+- **Factions** - group your units under custom factions with their own colors,
   icons, and faction traits, alongside the five built-in factions.
 - **Unit library** - browse, search, filter, and clone every built-in and
   custom unit.
 - **Task forces** - fill role slots (core / specialist / command / support),
-  assign a commander and a tactical asset, and mechanise infantry with transports.
-- **Armies & battle groups** - task-force armies or free-pick armies, organised
+  assign a commander and a tactical asset, and mechanize infantry with transports.
+- **Armies & battle groups** - task-force armies or free-pick armies, organized
   into named battle groups with symbols.
 - **Expeditionary forces** - collect several armies into army groups for a
   campaign.
