@@ -1759,7 +1759,7 @@ let bgViewMode = "tabs";   // "tabs" | "flat" - army detail Battle Groups
 // Transport picker state
 let _tpKind = null; let _tpTFId = null; let _tpSlotId = null;
 let _tpArmyId = null; let _tpBgId = null; let _tpEntryId = null;
-let _tpSelected = null; let _tpForUnit = null;
+let _tpSelected = null; let _tpForUnit = null; let _tpUnitType = "unit";
 let activeTFTab = "core";
 let tfViewMode = "tabs";    // "tabs" | "flat" - task force detail sections
 let _newTFTemplateId = null;
@@ -5351,9 +5351,9 @@ function slotPointValue(slot) {
   const pts = calcPoints(u);
   const typeKey = {unit:"unitPts",independent:"indPts",hero:"heroPts",command:"cmdPts",cmdHero:"cmdHeroPts"}[slot.unitType||"unit"];
   let basePts = (pts[typeKey] != null ? pts[typeKey] : pts.unitPts) || 0;
-  if ((slot.unitType||"unit") === "unit" && slot.transport) {
+  if (slot.transport) {
     const tu = unitById(slot.transport);
-    if (tu) basePts += mechanizedCount(u, tu) * calcPoints(tu).perStand;
+    if (tu) basePts += mechanizedCount(u, tu, slot.unitType) * calcPoints(tu).perStand;
   }
   // Support Units pay a 10% premium on their final cost, rounded up to the
   // nearest 5 (cross-attached from outside the task force's normal slots).
@@ -5751,10 +5751,10 @@ function renderTFDetail() {
           const u = unitById(slot.unitId);
           if(!u) return `<div class="tf-unit-row"><span style="color:#666">[Deleted Unit]</span><button class="trait-edit-btn" onclick="confirmBtn(this,()=>removeTFSlot('${tf.id}','${slot.id}'))">Remove</button></div>`;
           const typeLabel_ = TYPE_LABELS[slot.unitType||"unit"] || "Unit";
-          const canMech = (u.class==="inf"||u.class==="fg") && (slot.unitType||"unit")==="unit";
+          const canMech = (u.class==="inf"||u.class==="fg");
           const tu = slot.transport ? unitById(slot.transport) : null;
           const mechBtn = canMech
-            ? `<button class="trait-edit-btn" onclick="openTransportPickerTF('${tf.id}','${slot.id}')" title="Mechanized transport"${tu?` style="border-color:#66bb6a55;color:#66bb6a;background:#0e1a0e"`:""}><i class="fa-solid fa-truck"></i> ${tu?`${mechanizedCount(u,tu)}&times; ${esc(tu.name)}`:"Mechanize"}</button>`
+            ? `<button class="trait-edit-btn" onclick="openTransportPickerTF('${tf.id}','${slot.id}')" title="Mechanized transport"${tu?` style="border-color:#66bb6a55;color:#66bb6a;background:#0e1a0e"`:""}><i class="fa-solid fa-truck"></i> ${tu?`${mechanizedCount(u,tu,slot.unitType)}&times; ${esc(tu.name)}`:"Mechanize"}</button>`
             : "";
           const slotActions = `<div style="display:flex;align-items:center;justify-content:space-between;width:100%;gap:8px;flex-wrap:wrap">
             <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
@@ -6904,9 +6904,9 @@ function entryPointValue(e) {
     const pts = calcPoints(u);
     const typeKey = {unit:"unitPts",independent:"indPts",hero:"heroPts",command:"cmdPts",cmdHero:"cmdHeroPts"}[slot.unitType||"unit"];
     let basePts = (pts[typeKey]!=null?pts[typeKey]:pts.unitPts)||0;
-    if ((slot.unitType||"unit") === "unit" && slot.transport) {
+    if (slot.transport) {
       const tu = unitById(slot.transport);
-      if (tu) basePts += mechanizedCount(u, tu) * calcPoints(tu).perStand;
+      if (tu) basePts += mechanizedCount(u, tu, slot.unitType) * calcPoints(tu).perStand;
     }
     if (slot.role === "support") basePts = roundToFive(basePts * 1.10);
     return basePts * (e.qty||0);
@@ -6916,9 +6916,9 @@ function entryPointValue(e) {
     const pts = calcPoints(u);
     const typeKey = {unit:"unitPts",independent:"indPts",hero:"heroPts",command:"cmdPts",cmdHero:"cmdHeroPts"}[e.unitType||"unit"];
     let basePts = (pts[typeKey]!=null?pts[typeKey]:pts.unitPts)||0;
-    if ((e.unitType||"unit") === "unit" && e.transport) {
+    if (e.transport) {
       const tu = unitById(e.transport);
-      if (tu) basePts += mechanizedCount(u, tu) * calcPoints(tu).perStand;
+      if (tu) basePts += mechanizedCount(u, tu, e.unitType) * calcPoints(tu).perStand;
     }
     return basePts * (e.qty||1);
   }
@@ -6950,13 +6950,21 @@ function transportSlotsFor(unit) {
   const t = (unit.standTraits||[]).find(tr => tr[0] === "Transport");
   return t ? traitCount(t) : 0;
 }
-function mechanizedCount(infUnit, transportUnit) {
+// Transport slots a deployment needs. A single stand (any deployment that
+// isn't a full multi-stand "Unit") rides with exactly 1 slot, even a field
+// gun that would normally need 2. Once there's more than one stand, normal
+// math applies: each infantry stand fills 1 slot, each field gun fills 2.
+function transportSlotsNeeded(infUnit, unitType) {
+  if ((unitType||"unit") !== "unit") return 1;
+  return calcPoints(infUnit).unitSize * (infUnit.class === "fg" ? 2 : 1);
+}
+function mechanizedCount(infUnit, transportUnit, unitType) {
   if (!infUnit || !transportUnit) return 0;
   const cls = infUnit.class;
   if (cls !== "inf" && cls !== "fg") return 0;
   const cap = transportSlotsFor(transportUnit);
   if (!cap) return 0;
-  return Math.ceil(calcPoints(infUnit).unitSize * (cls === "fg" ? 2 : 1) / cap);
+  return Math.ceil(transportSlotsNeeded(infUnit, unitType) / cap);
 }
 function availableTransports() {
   return allUnits().filter(u => u.class === "afv" && transportSlotsFor(u) > 0);
@@ -6971,7 +6979,7 @@ function openTransportPickerTF(tfId, slotId) {
   if(!u) return;
   _tpKind="tf"; _tpTFId=tfId; _tpSlotId=slotId;
   _tpArmyId=null; _tpBgId=null; _tpEntryId=null;
-  _tpForUnit=u; _tpSelected=slot.transport||null;
+  _tpForUnit=u; _tpSelected=slot.transport||null; _tpUnitType=slot.unitType||"unit";
   _openTransportPicker(u, slot.transport||null, tf.faction);
 }
 function openTransportPickerFP(armyId, bgId, entryId) {
@@ -6982,14 +6990,18 @@ function openTransportPickerFP(armyId, bgId, entryId) {
   if(!u) return;
   _tpKind="fp"; _tpArmyId=armyId; _tpBgId=bgId; _tpEntryId=entryId;
   _tpTFId=null; _tpSlotId=null;
-  _tpForUnit=u; _tpSelected=e.transport||null;
+  _tpForUnit=u; _tpSelected=e.transport||null; _tpUnitType=e.unitType||"unit";
   _openTransportPicker(u, e.transport||null, army.faction);
 }
 function _openTransportPicker(unit, current, faction) {
   const intro = document.getElementById("transport-intro");
-  const slotsPer = unit.class === "fg" ? 2 : 1;
-  const need = calcPoints(unit).unitSize * slotsPer;
-  intro.innerHTML = `<strong style="color:#e0e0e0">${esc(unit.name)}</strong> - ${calcPoints(unit).unitSize} ${unit.class==="fg"?"gun":"infantry"} stand${calcPoints(unit).unitSize!==1?"s":""} needing <strong>${need}</strong> transport slot${need!==1?"s":""}. Pick a transport AFV; the minimum number needed is added automatically.`;
+  const single = (_tpUnitType||"unit") !== "unit";
+  const stands = single ? 1 : calcPoints(unit).unitSize;
+  const need = transportSlotsNeeded(unit, _tpUnitType);
+  const noun = unit.class==="fg" ? "gun" : "infantry";
+  const singleNote = single && unit.class==="fg"
+    ? " (a single stand mechanizes with one slot)" : "";
+  intro.innerHTML = `<strong style="color:#e0e0e0">${esc(unit.name)}</strong> - ${stands} ${noun} stand${stands!==1?"s":""} needing <strong>${need}</strong> transport slot${need!==1?"s":""}${singleNote}. Pick a transport AFV; the minimum number needed is added automatically.`;
   document.getElementById("transport-clear-btn").style.display = current ? "inline-flex" : "none";
   _tpSelected = current;
   _renderTransportList(faction);
@@ -7004,7 +7016,7 @@ function _renderTransportList(faction) {
   opts.sort((a,b)=>a.name.localeCompare(b.name));
   if(!opts.length){ list.innerHTML = `<div class="empty" style="padding:20px"><div class="empty-icon"><i class="fa-solid fa-truck"></i></div>No transport-capable AFVs available for this faction.</div>`; return; }
   list.innerHTML = opts.map(t => {
-    const n = mechanizedCount(unit, t);
+    const n = mechanizedCount(unit, t, _tpUnitType);
     const cap = transportSlotsFor(t);
     const addPts = n * calcPoints(t).perStand;
     const sel = _tpSelected === t.id;
@@ -7726,16 +7738,16 @@ function renderArmyDetail() {
             const stepBtn = (lbl, d, dis) => `<button onclick="changeFPEntryQty('${army.id}','${bg.id}','${e.id}',${d})" ${dis?"disabled":""} style="width:20px;height:20px;border-radius:50%;border:none;background:var(--surface-raised);color:var(--text-bright);font-size:13px;line-height:20px;text-align:center;cursor:${dis?"default":"pointer"};opacity:${dis?".3":"1"}">${lbl}</button>`;
             const stepper = `<span style="display:inline-flex;align-items:center;gap:4px">${stepBtn("&minus;",-1,eqty<=1)}<span style="font-weight:bold;font-size:12px;min-width:18px;text-align:center">&times;${eqty}</span>${stepBtn("+",1,false)}</span>`;
             const offFacStrip = offFac ? `<div style="padding:4px 8px;border-radius:4px;background:#1a0505;border:1px solid #ef535066;font-size:10px;color:#ef9a9a;margin-bottom:4px"><i class="fa-solid fa-triangle-exclamation" style="color:#ef5350;margin-right:3px"></i>Faction doesn't match the army restriction.</div>` : "";
-            const canMechFP = (u.class==="inf"||u.class==="fg") && (e.unitType||"unit")==="unit";
+            const canMechFP = (u.class==="inf"||u.class==="fg");
             const fpTU = e.transport ? unitById(e.transport) : null;
             const fpMechBtn = canMechFP
-              ? `<button class="trait-edit-btn" onclick="openTransportPickerFP('${army.id}','${bg.id}','${e.id}')" title="Mechanized transport"${fpTU?` style="border-color:#66bb6a55;color:#66bb6a;background:#0e1a0e"`:""}><i class="fa-solid fa-truck"></i> ${fpTU?`${mechanizedCount(u,fpTU)}&times; ${esc(fpTU.name)}`:"Mechanize"}</button>`
+              ? `<button class="trait-edit-btn" onclick="openTransportPickerFP('${army.id}','${bg.id}','${e.id}')" title="Mechanized transport"${fpTU?` style="border-color:#66bb6a55;color:#66bb6a;background:#0e1a0e"`:""}><i class="fa-solid fa-truck"></i> ${fpTU?`${mechanizedCount(u,fpTU,e.unitType)}&times; ${esc(fpTU.name)}`:"Mechanize"}</button>`
               : "";
             const actions = `${offFacStrip}<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
               <span style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">${stepper}<span style="font-size:10px;color:var(--text-muted)">${pts} pts</span>${fpMechBtn}</span>
               <button class="trait-edit-btn" style="border-color:#8b000066;color:#ef5350;background:#2a0a0a" onclick="removeFPEntry('${army.id}','${bg.id}','${e.id}')">Remove</button>
             </div>`;
-            if (fpTU) return mechPairCardHTML(u, fpTU, mechanizedCount(u, fpTU), actions, e.unitType||"unit");
+            if (fpTU) return mechPairCardHTML(u, fpTU, mechanizedCount(u, fpTU, e.unitType), actions, e.unitType||"unit");
             return unitCardHTML(u, actions, e.unitType||"unit");
           }).join("")
         : (bg.entries||[]).map(e => {
@@ -7764,7 +7776,7 @@ function renderArmyDetail() {
               <span style="font-size:10px;color:var(--text-muted);display:flex;align-items:center;gap:8px">${stepper}${entryPointValue(e)} pts</span>
               <button class="trait-edit-btn" style="border-color:#8b000066;color:#ef5350;background:#2a0a0a" onclick="removeFromBG('${army.id}','${bg.id}','${e.id}')">Remove</button>
             </div>`;
-            if (slotTU) return mechPairCardHTML(unit, slotTU, mechanizedCount(unit, slotTU), actions, slot.unitType||"unit", {tfBadge});
+            if (slotTU) return mechPairCardHTML(unit, slotTU, mechanizedCount(unit, slotTU, slot.unitType), actions, slot.unitType||"unit", {tfBadge});
             return unitCardHTML(unit, actions, slot.unitType || "unit", {tfBadge});
           }).join("");
       // Toolbar: rename inline + action buttons
@@ -8377,14 +8389,14 @@ function _buildArmyPrintContent(army, pal, gray) {
 
     const withTransport = (carrier, viewType, tu, badgeHTML) => {
       if (!tu) return [{html: _pUnitCard(carrier, viewType, badgeHTML||"", {}, pal, gray), full: false}];
-      return [{html: _pMechPair(carrier, viewType, tu, mechanizedCount(carrier, tu), badgeHTML||"", pal, gray), full: true}];
+      return [{html: _pMechPair(carrier, viewType, tu, mechanizedCount(carrier, tu, viewType), badgeHTML||"", pal, gray), full: true}];
     };
     const unitCards = (bg.entries||[]).flatMap(e => {
       if (fp) {
         const u = unitById(e.unitId);
         if (!u) return [];
         const qty = e.qty || 1;
-        const tu = ((e.unitType||"unit")==="unit" && e.transport) ? unitById(e.transport) : null;
+        const tu = e.transport ? unitById(e.transport) : null;
         return Array.from({length:qty}).flatMap(() => withTransport(u, e.unitType||"unit", tu, ""));
       } else {
         const tf   = state.taskForces.find(t=>t.id===e.tfId);
@@ -8397,7 +8409,7 @@ function _buildArmyPrintContent(army, pal, gray) {
         const tfBadge = asset
           ? `<span style="display:inline-flex;align-items:center;gap:3px;flex-wrap:wrap"><span style="display:inline-block;padding:1px 6px;border-radius:8px;font-size:9px;font-weight:bold;background:${tfColor}18;color:${tfColor};border:1px solid ${tfColor}44">${esc(tf.name)}</span><span style="display:inline-block;padding:1px 6px;border-radius:8px;font-size:9px;font-weight:bold;background:${pal.assetColor}18;color:${pal.assetColor};border:1px solid ${pal.assetColor}44"><i class="fa-solid fa-chess" style="font-size:7px;margin-right:2px"></i>${esc(asset.name)}</span></span>`
           : `<span style="display:inline-block;padding:1px 6px;border-radius:8px;font-size:9px;font-weight:bold;background:${tfColor}18;color:${tfColor};border:1px solid ${tfColor}44">${esc(tf.name)}</span>`;
-        const tu = ((slot.unitType||"unit")==="unit" && slot.transport) ? unitById(slot.transport) : null;
+        const tu = slot.transport ? unitById(slot.transport) : null;
         return Array.from({length:qty}).flatMap(() => withTransport(u, slot.unitType||"unit", tu, tfBadge));
       }
     });
@@ -8512,8 +8524,8 @@ function printTF(tfId, paperSize, inkMode) {
     const unitCards = slots.flatMap(slot => {
       const u = unitById(slot.unitId);
       if (!u) return [];
-      const tu = ((slot.unitType||"unit")==="unit" && slot.transport) ? unitById(slot.transport) : null;
-      if (tu) return [{html: _pMechPair(u, slot.unitType||"unit", tu, mechanizedCount(u, tu), "", pal, gray), full: true}];
+      const tu = slot.transport ? unitById(slot.transport) : null;
+      if (tu) return [{html: _pMechPair(u, slot.unitType||"unit", tu, mechanizedCount(u, tu, slot.unitType), "", pal, gray), full: true}];
       return [{html: _pUnitCard(u, slot.unitType||"unit", "", {}, pal, gray), full: false}];
     });
     return `<div class="print-page page-break">
