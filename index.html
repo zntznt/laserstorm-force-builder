@@ -393,7 +393,7 @@ label .trait-edit-btn{margin-left:6px}
 .builder-breakdown-toggle{display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--text-muted);font-weight:700;padding:8px 0;border-top:1px solid var(--border-subtle);transition:color .15s}
 .builder-breakdown-toggle:hover{color:var(--text-primary)}
 /* ── Undo toast ───────────────────────────────────────────────────────── */
-#undo-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(6px);background:var(--surface-raised);color:var(--text-primary);padding:7px 16px;border-radius:20px;font-size:12px;font-weight:600;letter-spacing:.3px;border:1px solid var(--border-default);opacity:0;transition:opacity .18s,transform .18s;pointer-events:none;z-index:9999;white-space:nowrap}
+#undo-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(6px);background:var(--surface-raised);color:var(--text-primary);padding:7px 16px;border-radius:20px;font-size:12px;font-weight:600;letter-spacing:.3px;border:1px solid var(--border-default);opacity:0;transition:opacity .18s,transform .18s;pointer-events:none;z-index:9999;max-width:min(92vw,560px);text-align:center}
 #undo-toast.visible{opacity:1;transform:translateX(-50%) translateY(0)}
 #nav-undo-btn{display:none;align-items:center;gap:4px;background:none;border:1px solid var(--border-default);color:var(--text-muted);padding:4px 10px;border-radius:6px;cursor:pointer;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;transition:all .15s;margin-left:6px;white-space:nowrap}
 #nav-undo-btn:hover{background:var(--surface-raised);color:var(--text-primary);border-color:var(--accent)}
@@ -1659,7 +1659,7 @@ const BUILTIN_UNITS = [
 {id:"std_assault_wlk",name:"Assault Walkers",        class:"afv",   speed:6,  mobility:"walk",  aim:5, assault:4, saveNumber:4, morale:4, standTraits:[["Assault Vehicle",1]], weapons:[{name:"Chain Gun",mode:"ai",type:"s",range:2,shots:2,impact:1,traits:[]},{name:"Light Laser",mode:"at",type:"s",range:10,shots:1,impact:4,traits:[["Targeting",0]]}], role:"core",      faction:"standard", builtIn:true, officialPts:{perStand:70,  unitPts:210, indPts:95,  cmdPts:105, heroPts:110, cmdHeroPts:125}},
 {id:"std_lt_tank",   name:"Light Tanks",             class:"afv",   speed:12, mobility:"track", aim:5, assault:0, saveNumber:4, morale:4, standTraits:[], weapons:[{name:"Tank MG",mode:"ai",type:"p",range:2,shots:1,impact:0,traits:[]},{name:"Light AT Gun",mode:"gp",type:"p",range:5,shots:1,impact:3,traits:[["Frag",0]]}], role:"core",      faction:"standard", builtIn:true, officialPts:{perStand:54,  unitPts:165, indPts:75,  cmdPts:85,  heroPts:85,  cmdHeroPts:95}},
 {id:"std_med_tank",  name:"Medium Tanks",            class:"afv",   speed:10, mobility:"track", aim:4, assault:1, saveNumber:3, morale:3, standTraits:[], weapons:[{name:"2x Tank MG",mode:"ai",type:"p",range:2,shots:2,impact:0,traits:[]},{name:"Med. AT Gun",mode:"gp",type:"p",range:10,shots:1,impact:5,traits:[["Frag",0]]}], role:"core",      faction:"standard", builtIn:true, officialPts:{perStand:94,  unitPts:285, indPts:125, cmdPts:145, heroPts:150, cmdHeroPts:165}},
-{id:"std_mbt",       name:"Main Battle Tanks",       class:"afv",   speed:8,  mobility:"track", aim:4, assault:2, saveNumber:2, morale:3, standTraits:[], weapons:[{name:"2x Tank MG",mode:"ai",type:"p",range:10,shots:2,impact:0,traits:[]},{name:"Hvy. AT Gun",mode:"gp",type:"p",range:10,shots:1,impact:6,traits:[["Frag",0]]}], role:"core",      faction:"standard", builtIn:true, officialPts:{perStand:100, unitPts:300, indPts:130, cmdPts:150, heroPts:155, cmdHeroPts:175}},
+{id:"std_mbt",       name:"Main Battle Tanks",       class:"afv",   speed:8,  mobility:"track", aim:4, assault:2, saveNumber:2, morale:3, standTraits:[], weapons:[{name:"2x Tank MG",mode:"ai",type:"p",range:2,shots:2,impact:0,traits:[]},{name:"Hvy. AT Gun",mode:"gp",type:"p",range:10,shots:1,impact:6,traits:[["Frag",0]]}], role:"core",      faction:"standard", builtIn:true, officialPts:{perStand:100, unitPts:300, indPts:130, cmdPts:150, heroPts:155, cmdHeroPts:175}},
 {id:"std_spg",       name:"Self-Propelled Guns",     class:"afv",   speed:8,  mobility:"track", aim:5, assault:0, saveNumber:6, morale:4, standTraits:[], weapons:[{name:"Howitzer",mode:"gp",type:"p",range:20,shots:2,impact:2,traits:[["Frag",0],["Indirect",3]]}], role:"support",   faction:"standard", builtIn:true, officialPts:{perStand:128, unitPts:385, indPts:170, cmdPts:195, heroPts:200, cmdHeroPts:225}},
 {id:"std_air_stk",   name:"Air Striker",             class:"ac",    speed:10, mobility:"air",   aim:4, assault:1, saveNumber:3, morale:4, standTraits:[], weapons:[{name:"AC Autocannon",mode:"gp",type:"s",range:5,shots:2,impact:2,traits:[]},{name:"AC Rockets",mode:"gp",type:"s",range:10,shots:1,impact:5,traits:[["Anti-Aircraft",1],["Burst",0],["Frag",0]]}], role:"support",   faction:"standard", builtIn:true, officialPts:{perStand:174, unitPts:350, indPts:230, cmdPts:265, heroPts:270, cmdHeroPts:305}},
 {id:"std_sh_tank",   name:"Super Heavy Tank",        class:"sh",    speed:6,  mobility:"track", aim:4, assault:2, saveNumber:3, morale:2, standTraits:[], weapons:[{name:"4x Tank MG",mode:"ai",type:"p",range:2,shots:4,impact:0,traits:[]},{name:"Siege Cannon",mode:"gp",type:"s",range:5,shots:1,impact:8,traits:[]},{name:"Pulse Laser",mode:"gp",type:"p",range:5,shots:2,impact:6,traits:[["Burst",0]]}], role:"core",      faction:"standard", builtIn:true, officialPts:{perStand:351, unitPts:355, indPts:355, cmdPts:425, heroPts:440, cmdHeroPts:510}},
@@ -1815,7 +1815,7 @@ function _loadBackupMeta() {
 }
 function _saveBackupMeta(m) { try { localStorage.setItem(_BACKUP_KEY, JSON.stringify(m)); } catch (e) {} }
 function _hasContent() {
-  return ["customUnits","customFactions","customTraits","customTFTypes","customTacticalAssets","taskForces","armies","expeditionaryForces"]
+  return ["customUnits","customFactions","customTraits","customTFTypes","customTacticalAssets","taskForces","armies","expeditionaryForces","tfTemplates"]
     .some(k => (state[k] || []).length);
 }
 function _maybeShowBackupNudge() {
@@ -1893,6 +1893,20 @@ function _rerenderCurrentPage() {
   if (!active) return;
   const id = active.id.replace("page-", "");
   if (id === "library") { renderLibrary(); return; }
+  if (id === "factions") {
+    const isBuiltin = currentFactionId && !!FACTION_COLORS[currentFactionId];
+    if (currentFactionId && (isBuiltin || (state.customFactions||[]).find(f => f.id === currentFactionId))) {
+      renderFactionDetail();
+    } else {
+      currentFactionId = null;
+      const lv = document.getElementById("fac-list-view");
+      const dv = document.getElementById("fac-detail-view");
+      if(lv) lv.style.display = "";
+      if(dv) dv.style.display = "none";
+      renderFactionList();
+    }
+    return;
+  }
   if (id === "taskforces") {
     if (currentTFId && state.taskForces.find(t => t.id === currentTFId)) {
       renderTFDetail();
@@ -1936,6 +1950,15 @@ function _rerenderCurrentPage() {
 }
 
 let _undoToastTimer = null;
+// General-purpose feedback toast (shares the undo toast element).
+function showToast(text) {
+  const toast = document.getElementById("undo-toast");
+  if (!toast) return;
+  toast.textContent = text;
+  toast.classList.add("visible");
+  clearTimeout(_undoToastTimer);
+  _undoToastTimer = setTimeout(() => toast.classList.remove("visible"), 3500);
+}
 function _showUndoToast() {
   const toast = document.getElementById("undo-toast");
   if (!toast) return;
@@ -1964,51 +1987,94 @@ function loadState() {
       state.expeditionaryForces = saved.expeditionaryForces || [];
       state.tfTemplates = saved.tfTemplates || [];
       state.schemaVersion = saved.schemaVersion || 0;
-      if (state.schemaVersion < SCHEMA_VERSION) {
-        // Migration: convert legacy faction string → reqs array
-        state.customTraits.forEach(t => { if(!t.reqs) t.reqs = t.faction ? [{type:"faction",vals:[t.faction]}] : []; });
-        // Migrate old terror/transport traits on custom units
-        (state.customUnits||[]).forEach(migrateCustomUnit);
-        // Migration: ensure every slot has a stable id (older data may lack one)
-        state.taskForces.forEach(tf => (tf.units||[]).forEach(s=>{ if(!s.id) s.id="slot_"+uid(); }));
-        // Migration: backfill activation symbols on BGs that predate this feature
-        (state.armies||[]).forEach(a => a.battleGroups && a.battleGroups.forEach(bg => {
-          if(!bg.symbol) _autoAssignBGSymbol(a, bg);
-        }));
-        // Migration: BG entries pre-dated split support - give each the full
-        // quantity of its slot (older data placed a whole stack in one group).
-        (state.armies||[]).forEach(a => (a.battleGroups||[]).forEach(bg => (bg.entries||[]).forEach(e => {
-          if(e.qty == null) {
-            const tf = state.taskForces.find(t=>t.id===e.tfId);
-            const s = tf && (tf.units||[]).find(x=>x.id===e.slotId);
-            e.qty = s ? s.quantity : 1;
-          }
-        })));
-        // Migration: emoji → FA name
-        const _ICON_MIG = {
-          "⬢":"shield","▲":"flag","◆":"gem","●":"circle","■":"square",
-          "★":"star","✦":"star","♦":"gem","⚔":"shield","⚡":"bolt",
-          "☠":"skull","⚙":"gear","✿":"leaf","☯":"infinity","☽":"moon",
-          "♣":"clover","♠":"flag","♥":"heart","⚜":"crown","☢":"radiation",
-          "⚛":"atom","⊕":"circle-plus","⬟":"shield","⬡":"shield"
-        };
-        (state.customFactions||[]).forEach(f => {
-          if(f.icon && _ICON_MIG[f.icon]) f.icon = _ICON_MIG[f.icon];
-        });
+      const needsStamp = state.schemaVersion < SCHEMA_VERSION;
+      _migrateState();
+      if (needsStamp) {
         state.schemaVersion = SCHEMA_VERSION;
-        // Persist stamp directly so the next load skips these loops entirely
+        // Persist stamp directly so old saves are upgraded on disk right away
         localStorage.setItem("ls_army_builder", JSON.stringify(state));
       }
       // Always run: drop BG entries left dangling by deletions since last save
       pruneOrphanedBGEntries();
-    } catch(e) {}
+    } catch(e) {
+      // Don't let the next saveState() overwrite a possibly hand-recoverable
+      // save - stash the corrupt payload under a side key first.
+      try { localStorage.setItem("ls_army_builder_corrupt", raw); } catch(e2) {}
+    }
   }
+}
+
+// Bring loaded or imported data up to the current shape. Every step only
+// touches data that still has the legacy shape, so it is safe to run on
+// every load and after every full import.
+function _migrateState() {
+  // Migration: convert legacy faction string → reqs array
+  (state.customTraits||[]).forEach(t => { if(!t.reqs) t.reqs = t.faction ? [{type:"faction",vals:[t.faction]}] : []; });
+  // Migrate old terror/transport traits on custom units
+  (state.customUnits||[]).forEach(migrateCustomUnit);
+  // Migration: ensure every slot has a stable, globally unique id (older data
+  // may lack one, and older imports copied slot ids verbatim - duplicate ids
+  // across TFs corrupt battle-group assignment tracking).
+  const seenSlotIds = new Set();
+  const slotRemap = {};   // "<tfId>|<oldSlotId>" → new id
+  (state.taskForces||[]).forEach(tf => (tf.units||[]).forEach(s => {
+    if(!s.id || seenSlotIds.has(s.id)) {
+      const nid = "slot_"+uid();
+      if(s.id) slotRemap[tf.id+"|"+s.id] = nid;
+      s.id = nid;
+    }
+    seenSlotIds.add(s.id);
+  }));
+  if(Object.keys(slotRemap).length) {
+    (state.armies||[]).forEach(a => (a.battleGroups||[]).forEach(bg => (bg.entries||[]).forEach(e => {
+      if(e.tfId && e.slotId && slotRemap[e.tfId+"|"+e.slotId]) e.slotId = slotRemap[e.tfId+"|"+e.slotId];
+    })));
+  }
+  // Migration: legacy "commander" slot role → "command" so section limits apply
+  (state.taskForces||[]).forEach(tf => (tf.units||[]).forEach(s => { if(s.role==="commander") s.role="command"; }));
+  // Migration: backfill activation symbols on BGs that predate this feature
+  (state.armies||[]).forEach(a => a.battleGroups && a.battleGroups.forEach(bg => {
+    if(!bg.symbol) _autoAssignBGSymbol(a, bg);
+  }));
+  // Migration: BG entries pre-dated split support - give each the full
+  // quantity of its slot (older data placed a whole stack in one group).
+  (state.armies||[]).forEach(a => (a.battleGroups||[]).forEach(bg => (bg.entries||[]).forEach(e => {
+    if(e.qty == null) {
+      const tf = state.taskForces.find(t=>t.id===e.tfId);
+      const s = tf && (tf.units||[]).find(x=>x.id===e.slotId);
+      e.qty = s ? s.quantity : 1;
+    }
+  })));
+  // Clean up the literal string "null" written by an old icon-deselect bug
+  (state.armies||[]).forEach(a => { if(a.symbol==="null") a.symbol = null; });
+  (state.expeditionaryForces||[]).forEach(f => { if(f.symbol==="null") f.symbol = null; });
+  // Migration: emoji → FA name
+  const _ICON_MIG = {
+    "⬢":"shield","▲":"flag","◆":"gem","●":"circle","■":"square",
+    "★":"star","✦":"star","♦":"gem","⚔":"shield","⚡":"bolt",
+    "☠":"skull","⚙":"gear","✿":"leaf","☯":"infinity","☽":"moon",
+    "♣":"clover","♠":"flag","♥":"heart","⚜":"crown","☢":"radiation",
+    "⚛":"atom","⊕":"circle-plus","⬟":"shield","⬡":"shield"
+  };
+  (state.customFactions||[]).forEach(f => {
+    if(f.icon && _ICON_MIG[f.icon]) f.icon = _ICON_MIG[f.icon];
+    // Icons/colors are interpolated into class/style attributes unescaped -
+    // reject anything a crafted import could have smuggled in.
+    if(f.icon && !/^[a-z0-9-]+$/.test(String(f.icon))) f.icon = "shield";
+    if(f.color && !/^#[0-9a-fA-F]{3,8}$/.test(String(f.color))) f.color = "#8b949e";
+  });
 }
 
 // ============================================================
 // UTILITY
 // ============================================================
-function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+let _uidSeq = 0;
+function uid() {
+  // Timestamp + monotonic counter + random suffix: same-millisecond calls in
+  // tight loops (imports, migrations) can never collide.
+  _uidSeq = (_uidSeq + 1) % 46656;   // 36^3
+  return Date.now().toString(36) + _uidSeq.toString(36).padStart(3,"0") + Math.random().toString(36).slice(2,8).padEnd(6,"0");
+}
 function roundToFive(v) { v = Math.ceil(v); return v + (v%5===0 ? 0 : 5-(v%5)); }
 function esc(s) {
   return String(s==null?"":s)
@@ -2064,10 +2130,13 @@ function computeAllowedRoles(unit) {
   const weaponDict = allWeaponTraits();
   const roleVals   = new Set();
   function addFrom(t, dict) {
-    const found = Object.entries(dict).find(([,v]) => v[0] === t[0]);
+    const found = findTraitEntry(dict, t[0]);
     if (!found) return;
     const [key, entry] = found;
-    allTraitReqs(key, entry).filter(r => r.type === "role").forEach(r => r.vals.forEach(v => roleVals.add(v)));
+    // "troop" in a role req is a class constraint (non-vehicle stand), not a
+    // deployment type - it must not unlock the Unit cost column (a trait
+    // requiring hero AND troop would otherwise offer full-Unit deployment).
+    allTraitReqs(key, entry).filter(r => r.type === "role").forEach(r => r.vals.forEach(v => { if(v!=="troop") roleVals.add(v); }));
   }
   (unit.standTraits || []).forEach(t => addFrom(t, standDict));
   (unit.weapons || []).flatMap(w => w.traits || []).forEach(t => addFrom(t, weaponDict));
@@ -2305,6 +2374,35 @@ function traitIsUnitTrait(entry) {
   return typeof last === 'object' && last !== null && !!last.unitTrait;
 }
 function traitCount(t) { return typeof t[3] === 'number' ? t[3] : 1; }
+// Traits are referenced by name; imports dedupe names case-insensitively, so
+// every name lookup must be case-insensitive too or imported units lose their
+// trait metadata (and the picker silently drops the trait).
+function traitNameEq(a,b){ return String(a??"").toLowerCase() === String(b??"").toLowerCase(); }
+function findTraitEntry(dict, name){ return Object.entries(dict).find(([,v])=>traitNameEq(v[0],name)) || null; }
+
+// "Troop" = non-vehicle stand classes. Appears as the class-req val "troop"
+// (custom traits) and as the role-req val "troop" (built-ins) - both mean
+// "only infantry / cavalry / field guns may take this trait".
+const TROOP_CLASSES = ["inf","cav","fg"];
+
+// Minimum movement shown on unit cards. Aircraft: 3/4 Speed, half with
+// Dogfighter, none with Hover. Grav: half Speed, but only when the unit
+// actually took the Minimum Speed drawback trait.
+function minSpeedFor(unit) {
+  const has = n => (unit.standTraits||[]).some(t=>traitNameEq(t[0],n));
+  if (unit.mobility === "air") {
+    if (has("Hover")) return null;
+    return Math.ceil(unit.speed * (has("Dogfighter") ? 1/2 : 3/4));
+  }
+  if (unit.mobility === "grav") return has("Minimum Speed") ? Math.ceil(unit.speed/2) : null;
+  return null;
+}
+function classReqOk(clsReq, cls) {
+  return clsReq.vals.includes(cls) || (clsReq.vals.includes("troop") && TROOP_CLASSES.includes(cls));
+}
+function troopRoleForbids(reqs, cls) {
+  return reqs.some(r => r.type==="role" && r.vals.includes("troop")) && !TROOP_CLASSES.includes(cls);
+}
 function traitStackMax(entry) {
   const last = entry?.[entry.length - 1];
   return (typeof last === 'object' && last?.max) || 99;
@@ -2353,8 +2451,8 @@ function traitTipHTML(traitArr, allTraits) {
   return traitArr.map(t => {
     const name = t[0];
     const cnt = traitCount(t);
-    const [key, entry] = Object.entries(allTraits).find(([,v])=>v[0]===name)
-      || (() => { const base=name.replace(/\s[+]?\d+$/,""); return base!==name ? (Object.entries(allTraits).find(([,v])=>v[0]===base)||[null,null]) : [null,null]; })();
+    const [key, entry] = findTraitEntry(allTraits, name)
+      || (() => { const base=name.replace(/\s[+]?\d+$/,""); return base!==name ? (findTraitEntry(allTraits, base)||[null,null]) : [null,null]; })();
     const cleanDesc = cleanTraitDesc(entry?.[2] || "");
     const isUT = traitIsUnitTrait(entry);
     const utRule = "Unit Trait: effect applies to the whole unit. No effect if any stand of the same class lacks this trait. If multiple levels exist, only the least powerful applies.";
@@ -2366,9 +2464,9 @@ function traitTipHTML(traitArr, allTraits) {
     const border = fac ? `${color}55` : "#30363d";
     const textColor = fac ? color : "#8b949e";
     const displayName = cnt > 1 ? `${name} ${cnt}` : name;
-    const tipAttr = fullDesc ? ` class="trait-badge tip" data-tip="${fullDesc.replace(/"/g,"&quot;")}"` : ` class="trait-badge"`;
+    const tipAttr = fullDesc ? ` class="trait-badge tip" data-tip="${esc(fullDesc)}"` : ` class="trait-badge"`;
     const utMark = isUT ? `<sup style="font-size:7px;color:#7986cb;vertical-align:super;margin-left:1px;font-style:italic">U</sup>` : "";
-    return `<span${tipAttr} style="background:${bg};color:${textColor};border-color:${border}">${displayName}${utMark}</span>`;
+    return `<span${tipAttr} style="background:${bg};color:${textColor};border-color:${border}">${esc(displayName)}${utMark}</span>`;
   }).join("");
 }
 
@@ -2384,9 +2482,7 @@ function unitCardHTML(unit, actions, viewType="unit", opts={}) {
         const wName = w.name ? `<strong>${esc(w.name)}</strong> ` : "";
         return `<div class="weapon-row">${wName}<span class="wtype">${(w.mode||'').toUpperCase()}/${(w.type||'').toUpperCase()}</span> | Range <span>${rangeLabel(w.range)}</span> | Shots <span>${w.shots}</span> | Impact <span>+${w.impact}</span>${wtHTML}</div>`;
       }).join("");
-  const minSpd = unit.mobility === "grav" ? Math.ceil(unit.speed / 2)
-               : unit.mobility === "air"  ? Math.ceil(unit.speed * 3 / 4)
-               : null;
+  const minSpd = minSpeedFor(unit);
   const pKey = VIEW_PTS_KEY[viewType] || "unitPts";
   const pVal = pts[pKey] != null ? pts[pKey] : "-";
   const pLabel = VIEW_LABELS[viewType] || "Unit";
@@ -2443,9 +2539,7 @@ function mechPairCardHTML(infUnit, tuUnit, n, actionsHTML, viewType, opts={}) {
           const wName = w.name ? `<strong>${esc(w.name)}</strong> ` : "";
           return `<div class="weapon-row">${wName}<span class="wtype">${(w.mode||'').toUpperCase()}/${(w.type||'').toUpperCase()}</span> | Range <span>${rangeLabel(w.range)}</span> | Shots <span>${w.shots}</span> | Impact <span>+${w.impact}</span>${wtHTML}</div>`;
         }).join("");
-    const minSpd = unit.mobility === "grav" ? Math.ceil(unit.speed/2)
-                 : unit.mobility === "air"  ? Math.ceil(unit.speed*3/4)
-                 : null;
+    const minSpd = minSpeedFor(unit);
     const pKey = VIEW_PTS_KEY[vt] || "unitPts";
     const pVal = extra.ptsVal != null ? extra.ptsVal : (pts[pKey] != null ? pts[pKey] : "-");
     const pLabel = VIEW_LABELS[vt] || "Unit";
@@ -2724,9 +2818,11 @@ function collectSelectionBundle(){
   const addTFDeps = tf => {
     if(tf.tfType && tfTypeMap.has(tf.tfType)) out.customTFTypes.add(tf.tfType);
     if(tf.tacAsset && tf.tacAsset.startsWith("custom_")){ const b=tf.tacAsset.slice(7); if(assetMap.has(b)) out.customTacticalAssets.add(b); }
+    if(tf.faction && facMap.has(tf.faction)) out.customFactions.add(tf.faction);
     (tf.units||[]).forEach(s=>[s.unitId,s.transport].forEach(id=>{ if(id&&unitMap.has(id)) out.customUnits.add(id); }));
   };
   const addArmyDeps = a => {
+    if(a.faction && facMap.has(a.faction)) out.customFactions.add(a.faction);
     (a.taskForceIds||[]).forEach(id=>{ if(tfMap.has(id)) out.taskForces.add(id); });
     (a.battleGroups||[]).forEach(bg=>(bg.entries||[]).forEach(e=>{
       [e.unitId,e.transport].forEach(id=>{ if(id&&unitMap.has(id)) out.customUnits.add(id); });
@@ -2748,7 +2844,10 @@ function collectSelectionBundle(){
     out.armies.forEach(id=>{ const a=armyMap.get(id); if(a) addArmyDeps(a); });
     out.taskForces.forEach(id=>{ const tf=tfMap.get(id); if(tf) addTFDeps(tf); });
     out.customUnits.forEach(id=>{ const u=unitMap.get(id); if(u) addUnitDeps(u); });
-    out.customTraits.forEach(id=>{ const t=traitMap.get(id); if(t&&t.faction&&facMap.has(t.faction)) out.customFactions.add(t.faction); });
+    out.customTraits.forEach(id=>{ const t=traitMap.get(id); if(!t) return;
+      if(t.faction&&facMap.has(t.faction)) out.customFactions.add(t.faction);
+      (t.reqs||[]).forEach(r=>{ if(r&&r.type==="faction") (r.vals||[]).forEach(v=>{ if(facMap.has(v)) out.customFactions.add(v); }); });
+    });
     out.customTacticalAssets.forEach(id=>{ const a=assetMap.get(id); if(a&&a.faction&&facMap.has(a.faction)) out.customFactions.add(a.faction); });
     const after = EXPORT_CATS.reduce((s,c)=>s+out[c.key].size,0);
     changed = after!==before;
@@ -2773,7 +2872,8 @@ function doExportFullBackup(){
     customUnits:state.customUnits||[], customFactions:state.customFactions||[],
     customTraits:state.customTraits||[], customTFTypes:state.customTFTypes||[],
     customTacticalAssets:state.customTacticalAssets||[], taskForces:state.taskForces||[],
-    armies:state.armies||[], expeditionaryForces:state.expeditionaryForces||[]
+    armies:state.armies||[], expeditionaryForces:state.expeditionaryForces||[],
+    tfTemplates:state.tfTemplates||[]
   };
   const payload = { app:"laserstorm-army-builder", kind:"full", version:1, exportedAt:new Date().toISOString(), data };
   const summary = `${data.customUnits.length} unit(s), ${data.customFactions.length} faction(s), ${data.taskForces.length} task force(s), ${data.armies.length} army(ies)`;
@@ -2808,6 +2908,7 @@ function downloadExportJSON(){
       p.kind==="taskforce" ? "laserstorm-tf-"+(p.taskForceName||(p.data&&p.data.taskForce&&p.data.taskForce.name)||"") :
       p.kind==="full"      ? "laserstorm-backup" :
       p.kind==="faction"   ? "laserstorm-faction-"+(p.faction||"") :
+      p.kind==="force"     ? "laserstorm-force-"+((p.data&&p.data.force&&p.data.force.name)||"") :
                              "laserstorm-selection";
     fname = (base.replace(/[^a-z0-9\-]+/gi,"_").replace(/_+/g,"_").replace(/^_|_$/g,"")||"laserstorm-export")+"-"+stamp+".json";
   } catch(e){}
@@ -2837,6 +2938,7 @@ function resetAllData(){
   state.customUnits=[]; state.customFactions=[]; state.customTraits=[];
   state.customTFTypes=[]; state.customTacticalAssets=[];
   state.taskForces=[]; state.armies=[]; state.expeditionaryForces=[];
+  state.tfTemplates=[];
   saveState();
   renderDataPage();
   _dataMsg("data-import-msg","success","All data has been reset to empty.");
@@ -2908,6 +3010,10 @@ function _parseImportDataText(){
     ].filter(Boolean);
     html = `<strong>Selection export</strong> - ${parts.length?parts.join(", "):"empty"} will be merged into your data (duplicates skipped).`;
     if(ib) ib.innerHTML = '<i class="fa-solid fa-upload"></i> Import selection';
+  } else if(payload.kind==="taskforce"){
+    _dataMsg("data-import-msg","error",`This is a task force export. Use the <strong>Task Forces</strong> page &rarr; <em>Import</em> button to import it.`); return;
+  } else if(payload.kind==="force"){
+    _dataMsg("data-import-msg","error",`This is an expeditionary force export. Use the <strong>Forces</strong> page &rarr; <em>Import</em> button to import it.`); return;
   } else {
     _dataMsg("data-import-msg","error","Unknown export kind."); return;
   }
@@ -2935,15 +3041,19 @@ function doImport(){
 }
 
 function importFull(d){
-  state.customUnits = d.customUnits||[];
-  state.customFactions = d.customFactions||[];
-  state.customTraits = d.customTraits||[];
-  state.customTFTypes = d.customTFTypes||[];
-  state.customTacticalAssets = d.customTacticalAssets||[];
-  state.taskForces = d.taskForces||[];
-  state.armies = d.armies||[];
-  state.expeditionaryForces = d.expeditionaryForces||[];
-  (state.customUnits||[]).forEach(u=>{ if(typeof migrateCustomUnit==="function") migrateCustomUnit(u); });
+  const arr = v => Array.isArray(v) ? v : [];
+  state.customUnits = arr(d.customUnits);
+  state.customFactions = arr(d.customFactions);
+  state.customTraits = arr(d.customTraits);
+  state.customTFTypes = arr(d.customTFTypes);
+  state.customTacticalAssets = arr(d.customTacticalAssets);
+  state.taskForces = arr(d.taskForces);
+  state.armies = arr(d.armies);
+  state.expeditionaryForces = arr(d.expeditionaryForces);
+  state.tfTemplates = arr(d.tfTemplates);
+  // A backup may come from an older app version - run the same migrations a
+  // legacy localStorage save would get, so the shape is current before saving.
+  _migrateState();
   saveState();
   _markBackedUp();   // they restored from a file they have -> no immediate loss risk
   renderDataPage();
@@ -2951,6 +3061,7 @@ function importFull(d){
 }
 
 function importFaction(d){
+  _normalizeBundle(d);
   let addedF=0,skipF=0,addedT=0,skipT=0,addedU=0,skipU=0;
   // Factions: dedupe by name. Units reference a faction by id, so track how
   // each imported faction id resolves to an id that exists in the current data.
@@ -3010,12 +3121,28 @@ function importFaction(d){
     (skipped?` Skipped ${skipped} item(s) already present.`:""));
 }
 
+// Imported ids get interpolated into inline event handlers, so only plain
+// token ids may be kept verbatim - anything else is treated like a collision
+// and the importer generates a fresh id for it.
+function safeImportId(id){ return typeof id==="string" && /^[A-Za-z0-9_.:-]{1,64}$/.test(id); }
+
+// Coerce a bundle's category fields to arrays so a malformed file fails the
+// preview counts instead of throwing halfway through a state mutation.
+function _normalizeBundle(d){
+  ["customUnits","customFactions","customTraits","customTFTypes","customTacticalAssets",
+   "taskForces","armies","expeditionaryForces","tfTemplates"].forEach(k=>{
+    if(d[k]!==undefined && !Array.isArray(d[k])) d[k]=[];
+  });
+  return d;
+}
+
 // Merge a selection bundle (any mix of the eight categories) into current data.
 // Library-style items (factions, traits, units, TF types, assets) dedupe by
 // name and remap ids; container items (task forces, armies, forces) always get
 // fresh ids with their internal references remapped - same rules as the
 // per-army / per-task-force importers, applied across every category at once.
 function importSelection(d){
+  _normalizeBundle(d);
   const counts = { factions:0, traits:0, units:0, tfTypes:0, assets:0, taskForces:0, armies:0, forces:0, skipped:0 };
 
   // 1. Factions (dedupe by name)
@@ -3025,7 +3152,7 @@ function importSelection(d){
   (d.customFactions||[]).forEach(f=>{
     const k=String(f.name||"").toLowerCase(); const ex=facByName.get(k);
     if(ex){ facIdMap[f.id]=ex.id; counts.skipped++; return; }
-    let id=(!f.id||facById.has(f.id))?"fac_"+uid():f.id;
+    let id=(!safeImportId(f.id)||facById.has(f.id))?"fac_"+uid():f.id;
     const nf=Object.assign({},f,{id}); state.customFactions.push(nf); facById.set(id,nf); facByName.set(k,nf); facIdMap[f.id]=id; counts.factions++;
   });
   const remapFac=id=>(id&&facIdMap[id])?facIdMap[id]:id;
@@ -3035,7 +3162,7 @@ function importSelection(d){
   const traitById=new Set((state.customTraits||[]).map(t=>t.id));
   (d.customTraits||[]).forEach(t=>{
     const k=String(t.name||"").toLowerCase(); if(traitByName.has(k)){ counts.skipped++; return; }
-    let id=(!t.id||traitById.has(t.id))?uid():t.id;
+    let id=(!safeImportId(t.id)||traitById.has(t.id))?uid():t.id;
     const nt=Object.assign({},t,{id});
     if(nt.faction) nt.faction=remapFac(nt.faction);
     if(Array.isArray(nt.reqs)) nt.reqs=nt.reqs.map(r=>(r&&r.type==="faction"&&Array.isArray(r.vals))?Object.assign({},r,{vals:r.vals.map(remapFac)}):r);
@@ -3050,7 +3177,7 @@ function importSelection(d){
   (d.customUnits||[]).forEach(u=>{
     const nu=Object.assign({},u,{faction:remapFac(u.faction)}); const k=unitKey(nu);
     if(unitKeyToId.has(k)){ unitIdMap[u.id]=unitKeyToId.get(k); counts.skipped++; return; }
-    let id=(!nu.id||unitById.has(nu.id))?"custom_"+uid():nu.id; nu.id=id;
+    let id=(!safeImportId(nu.id)||unitById.has(nu.id))?"custom_"+uid():nu.id; nu.id=id;
     if(typeof migrateCustomUnit==="function") migrateCustomUnit(nu);
     state.customUnits.push(nu); unitById.set(id,nu); unitKeyToId.set(k,id); unitIdMap[u.id]=id; counts.units++;
   });
@@ -3063,7 +3190,7 @@ function importSelection(d){
   (d.customTFTypes||[]).forEach(t=>{
     const k=String(t.name||"").toLowerCase(); const ex=tfTypeByName.get(k);
     if(ex){ tfTypeIdMap[t.id]=ex.id; counts.skipped++; return; }
-    let id=(!t.id||tfTypeById.has(t.id))?"ctft_"+uid():t.id;
+    let id=(!safeImportId(t.id)||tfTypeById.has(t.id))?"ctft_"+uid():t.id;
     const nt=Object.assign({},t,{id}); state.customTFTypes.push(nt); tfTypeByName.set(k,nt); tfTypeById.set(id,nt); tfTypeIdMap[t.id]=id; counts.tfTypes++;
   });
   const remapTFType=id=>(id&&tfTypeIdMap[id])?tfTypeIdMap[id]:id;
@@ -3075,18 +3202,23 @@ function importSelection(d){
   (d.customTacticalAssets||[]).forEach(a=>{
     const k=String(a.name||"").toLowerCase(); const ex=assetByName.get(k);
     if(ex){ assetIdMap[a.id]=ex.id; counts.skipped++; return; }
-    let id=(!a.id||assetById.has(a.id))?uid():a.id;
+    let id=(!safeImportId(a.id)||assetById.has(a.id))?uid():a.id;
     const na=Object.assign({},a,{id}); state.customTacticalAssets.push(na); assetByName.set(k,na); assetById.set(id,na); assetIdMap[a.id]=id; counts.assets++;
   });
   const remapTacAsset=raw=>{ if(!raw) return raw; if(raw.startsWith("custom_")){ const b=raw.slice(7); return "custom_"+(assetIdMap[b]||b);} return raw; };
 
   // 6. Task forces (fresh ids, references remapped)
   const tfIdMap={};
+  const slotIdMap={};   // keyed "<oldTfId>|<oldSlotId>" - slot ids repeat across bundles
   (d.taskForces||[]).forEach(tf=>{
     const id="tf_"+uid(); tfIdMap[tf.id]=id;
     state.taskForces.push(Object.assign({},tf,{
       id, tfType:remapTFType(tf.tfType), tacAsset:remapTacAsset(tf.tacAsset),
-      units:(tf.units||[]).map(s=>Object.assign({},s,{unitId:remapUnit(s.unitId),transport:s.transport?remapUnit(s.transport):s.transport}))
+      faction:remapFac(tf.faction),
+      units:(tf.units||[]).map(s=>{
+        const sid="slot_"+uid(); slotIdMap[tf.id+"|"+s.id]=sid;
+        return Object.assign({},s,{id:sid,unitId:remapUnit(s.unitId),transport:s.transport?remapUnit(s.transport):s.transport});
+      })
     }));
     counts.taskForces++;
   });
@@ -3098,11 +3230,12 @@ function importSelection(d){
     const id="army_"+uid(); armyIdMap[a.id]=id;
     state.armies.push(Object.assign({},a,{
       id,
+      faction:remapFac(a.faction),
       taskForceIds:(a.taskForceIds||[]).map(remapTF),
       battleGroups:(a.battleGroups||[]).map(bg=>Object.assign({},bg,{
         id:"bg_"+uid(),
         entries:(bg.entries||[]).map(e=>{ const ne=Object.assign({},e,{id:"e_"+uid()});
-          if(ne.tfId) ne.tfId=remapTF(ne.tfId);
+          if(ne.tfId){ if(ne.slotId) ne.slotId=slotIdMap[ne.tfId+"|"+ne.slotId]||ne.slotId; ne.tfId=remapTF(ne.tfId); }
           if(ne.unitId) ne.unitId=remapUnit(ne.unitId);
           if(ne.transport) ne.transport=remapUnit(ne.transport);
           return ne; })
@@ -3175,10 +3308,6 @@ function collectArmyBundle(armyId) {
   // Custom units only (built-in units are always present, don't need bundling)
   const customUnits = (state.customUnits||[]).filter(u=>unitIdSet.has(u.id));
 
-  // Factions those units belong to
-  const facIdSet = new Set(customUnits.map(u=>u.faction).filter(Boolean));
-  const customFactions = (state.customFactions||[]).filter(f=>facIdSet.has(f.id));
-
   // Custom traits referenced by those units (matched by name)
   const traitNames = new Set();
   customUnits.forEach(u=>{
@@ -3186,6 +3315,17 @@ function collectArmyBundle(armyId) {
     (u.weapons||[]).forEach(w=>(w.traits||[]).forEach(t=>{ if(t&&t[0]!=null) traitNames.add(String(t[0]).toLowerCase()); }));
   });
   const customTraits = (state.customTraits||[]).filter(t=>traitNames.has(String(t.name).toLowerCase()));
+
+  // Factions those units belong to, plus factions referenced by the army/TF
+  // restriction fields and by the bundled traits' faction requirements
+  const facIdSet = new Set(customUnits.map(u=>u.faction).filter(Boolean));
+  if(army.faction) facIdSet.add(army.faction);
+  tfs.forEach(tf=>{ if(tf.faction) facIdSet.add(tf.faction); });
+  customTraits.forEach(t=>{
+    if(t.faction) facIdSet.add(t.faction);
+    (t.reqs||[]).forEach(r=>{ if(r&&r.type==="faction") (r.vals||[]).forEach(v=>facIdSet.add(v)); });
+  });
+  const customFactions = (state.customFactions||[]).filter(f=>facIdSet.has(f.id));
 
   // Custom TF types used by the army's task forces
   const tfTypeIds = new Set();
@@ -3262,7 +3402,7 @@ function _parseImportArmyText() {
     _dataMsg("import-army-msg","error","This doesn't look like a LaserStorm export - missing required fields."); return;
   }
   if(payload.kind!=="army"){
-    _dataMsg("import-army-msg","error",`This is a <strong>${payload.kind}</strong> export, not an army export. Use the Data page to import it.`); return;
+    _dataMsg("import-army-msg","error",`This is a <strong>${esc(String(payload.kind))}</strong> export, not an army export. Use the Data page to import it.`); return;
   }
   const d = payload.data;
   const a = d.army||{};
@@ -3300,6 +3440,7 @@ function doImportArmy() {
 function importArmy(payload) {
   const d = payload.data;
   if(!d || !d.army) return null;
+  _normalizeBundle(d);
 
   // 1. Merge factions (dedup by name)
   const facById = new Map((state.customFactions||[]).map(f=>[f.id,f]));
@@ -3309,7 +3450,7 @@ function importArmy(payload) {
     const k = String(f.name||"").toLowerCase();
     const ex = facByName.get(k);
     if(ex){ facIdMap[f.id]=ex.id; return; }
-    let newId = (!f.id||facById.has(f.id)) ? "fac_"+uid() : f.id;
+    let newId = (!safeImportId(f.id)||facById.has(f.id)) ? "fac_"+uid() : f.id;
     const nf = Object.assign({},f,{id:newId});
     state.customFactions.push(nf); facById.set(newId,nf); facByName.set(k,nf);
     facIdMap[f.id]=newId;
@@ -3322,7 +3463,7 @@ function importArmy(payload) {
   (d.customTraits||[]).forEach(t=>{
     const k = String(t.name||"").toLowerCase();
     if(traitByName.has(k)) return;
-    let newId = (!t.id||traitById.has(t.id)) ? uid() : t.id;
+    let newId = (!safeImportId(t.id)||traitById.has(t.id)) ? uid() : t.id;
     const nt = Object.assign({},t,{id:newId});
     if(nt.faction) nt.faction=remapFac(nt.faction);
     if(Array.isArray(nt.reqs)) nt.reqs=nt.reqs.map(r=>(r&&r.type==="faction"&&Array.isArray(r.vals))?Object.assign({},r,{vals:r.vals.map(remapFac)}):r);
@@ -3338,7 +3479,7 @@ function importArmy(payload) {
     const nu = Object.assign({},u,{faction:remapFac(u.faction)});
     const k = unitKey(nu);
     if(unitKeyToId.has(k)){ unitIdMap[u.id]=unitKeyToId.get(k); return; }
-    let newId = (!nu.id||unitByIdMap.has(nu.id)) ? "custom_"+uid() : nu.id;
+    let newId = (!safeImportId(nu.id)||unitByIdMap.has(nu.id)) ? "custom_"+uid() : nu.id;
     nu.id=newId;
     if(typeof migrateCustomUnit==="function") migrateCustomUnit(nu);
     state.customUnits.push(nu); unitByIdMap.set(newId,nu); unitKeyToId.set(k,newId);
@@ -3354,7 +3495,7 @@ function importArmy(payload) {
     const k = String(t.name||"").toLowerCase();
     const ex = tfTypeByName.get(k);
     if(ex){ tfTypeIdMap[t.id]=ex.id; return; }
-    let newId = (!t.id||tfTypeById.has(t.id)) ? "ctft_"+uid() : t.id;
+    let newId = (!safeImportId(t.id)||tfTypeById.has(t.id)) ? "ctft_"+uid() : t.id;
     const nt = Object.assign({},t,{id:newId});
     state.customTFTypes.push(nt); tfTypeByName.set(k,nt); tfTypeById.set(newId,nt);
     tfTypeIdMap[t.id]=newId;
@@ -3369,7 +3510,7 @@ function importArmy(payload) {
     const k = String(a.name||"").toLowerCase();
     const ex = assetByName.get(k);
     if(ex){ assetIdMap[a.id]=ex.id; return; }
-    let newId = (!a.id||assetById.has(a.id)) ? uid() : a.id;
+    let newId = (!safeImportId(a.id)||assetById.has(a.id)) ? uid() : a.id;
     const na = Object.assign({},a,{id:newId});
     state.customTacticalAssets.push(na); assetByName.set(k,na); assetById.set(newId,na);
     assetIdMap[a.id]=newId;
@@ -3386,6 +3527,7 @@ function importArmy(payload) {
 
   // 6. Import task forces with fresh IDs (always new - armies own their TFs)
   const tfIdMap = {};
+  const slotIdMap = {};   // keyed "<oldTfId>|<oldSlotId>" - slot ids repeat across exports
   (d.taskForces||[]).forEach(tf=>{
     const newTFId = "tf_"+uid();
     tfIdMap[tf.id]=newTFId;
@@ -3393,10 +3535,15 @@ function importArmy(payload) {
       id:newTFId,
       tfType:remapTFType(tf.tfType),
       tacAsset:remapTacAsset(tf.tacAsset),
-      units:(tf.units||[]).map(slot=>Object.assign({},slot,{
-        unitId:remapUnit(slot.unitId),
-        transport:slot.transport?remapUnit(slot.transport):slot.transport
-      }))
+      faction:remapFac(tf.faction),
+      units:(tf.units||[]).map(slot=>{
+        const sid = "slot_"+uid(); slotIdMap[tf.id+"|"+slot.id]=sid;
+        return Object.assign({},slot,{
+          id:sid,
+          unitId:remapUnit(slot.unitId),
+          transport:slot.transport?remapUnit(slot.transport):slot.transport
+        });
+      })
     });
     state.taskForces.push(newTF);
   });
@@ -3406,12 +3553,13 @@ function importArmy(payload) {
   const orig = d.army;
   const newArmy = Object.assign({},orig,{
     id:"army_"+uid(),
+    faction:remapFac(orig.faction),
     taskForceIds:(orig.taskForceIds||[]).map(remapTF),
     battleGroups:(orig.battleGroups||[]).map(bg=>Object.assign({},bg,{
       id:"bg_"+uid(),
       entries:(bg.entries||[]).map(e=>{
         const ne = Object.assign({},e,{id:"e_"+uid()});
-        if(ne.tfId)  ne.tfId  = remapTF(ne.tfId);
+        if(ne.tfId){ if(ne.slotId) ne.slotId = slotIdMap[ne.tfId+"|"+ne.slotId]||ne.slotId; ne.tfId = remapTF(ne.tfId); }
         if(ne.unitId) ne.unitId = remapUnit(ne.unitId);
         if(ne.transport) ne.transport = remapUnit(ne.transport);
         return ne;
@@ -3602,8 +3750,8 @@ function refreshTraitPickerList() {
   const curTraits = traitPickerTarget==="stand"
     ? currentBuilderTraits
     : (builderWeapons[traitPickerWeaponIdx]?.traits||[]);
-  const selected = curTraits.map(t=>t[0]);
-  const selectedTraitKeys = new Set(curTraits.map(t=>Object.entries(traits).find(([,v])=>v[0]===t[0])?.[0]).filter(Boolean));
+  const selected = curTraits.map(t=>String(t[0]).toLowerCase());
+  const selectedTraitKeys = new Set(curTraits.map(t=>findTraitEntry(traits,t[0])?.[0]).filter(Boolean));
   const currentFaction  = document.getElementById("b-faction")?.value  || "";
   const currentClass    = document.getElementById("b-class")?.value    || "";
   const currentMobility = document.getElementById("b-mobility")?.value || "";
@@ -3616,7 +3764,8 @@ function refreshTraitPickerList() {
     const mobReq    = reqs.find(r=>r.type==="mobility");
     const traitrReq = reqs.find(r=>r.type==="traitr");
     const locked = (facReq    && !facReq.vals.includes(currentFaction))
-                || (clsReq    && !clsReq.vals.includes(currentClass))
+                || (clsReq    && !classReqOk(clsReq, currentClass))
+                || troopRoleForbids(reqs, currentClass)
                 || (mobReq    && !mobReq.vals.includes(currentMobility))
                 || (traitrReq && !selectedTraitKeys.has(traitrReq.vals[0]));
     const group  = facReq ? "faction:"+facReq.vals[0]
@@ -3712,7 +3861,7 @@ function refreshTraitPickerList() {
         const cb = document.createElement("input");
         cb.type = "checkbox";
         cb.value = key;
-        cb.checked = selected.includes(val[0]);
+        cb.checked = selected.includes(String(val[0]).toLowerCase());
         cb.disabled = locked;
         cb.id = "trait_cb_"+key;
         cb.addEventListener("change", applyTraitsLive);
@@ -3754,7 +3903,7 @@ function openTraitPicker(target, wIdx) {
   const curT = target==="stand" ? currentBuilderTraits : (builderWeapons[wIdx]?.traits||[]);
   curT.forEach(t => {
     if(typeof t[3]==="number" && t[3]>0) {
-      const k = Object.entries(allT).find(([,v])=>v[0]===t[0])?.[0];
+      const k = findTraitEntry(allT, t[0])?.[0];
       if(k) traitPickerStepperCounts[k] = t[3];
     }
   });
@@ -4183,6 +4332,9 @@ const VIEW_LABELS  = {unit:"Unit", independent:"Ind", hero:"Hero", command:"Cmd"
 function rebuildFactionSelect(selectValue) {
   const sel = document.getElementById("b-faction");
   if(!sel) return;
+  // Default to keeping the current selection - rebuilding while a unit is on
+  // the builder must not silently reset its faction to "No Faction".
+  if(selectValue === undefined) selectValue = sel.value;
   const builtins = [
     {v:"standard",l:"Standard"},{v:"precursor",l:"Precursor"},
     {v:"soulless",l:"Soulless"},{v:"swarm",l:"Swarm"},{v:"warrior",l:"Warrior"}
@@ -4191,13 +4343,15 @@ function rebuildFactionSelect(selectValue) {
     + builtins.map(b=>`<option value="${b.v}">${b.l}</option>`).join("")
     + (state.customFactions||[]).map(f=>`<option value="${f.id}">${esc(f.name)}</option>`).join("")
     + `<option value="__new__">+ New Faction&hellip;</option>`;
-  if(selectValue !== undefined) sel.value = selectValue;
+  sel.value = selectValue;
+  if(sel.value !== selectValue) sel.value = "";   // selected faction was deleted
+  builderFactionPrev = sel.value;
 }
 
 // Removes traits from traitArr that fail faction/class/mobility/traitr requirements.
 // traitPool is allStandTraits() or allWeaponTraits().
 function pruneTraits(traitArr, traitPool, faction, cls, mobility) {
-  const keyOf = t => Object.entries(traitPool).find(([,v])=>v[0]===t[0])?.[0];
+  const keyOf = t => findTraitEntry(traitPool, t[0])?.[0];
   const activeKeys = new Set(traitArr.map(keyOf).filter(Boolean));
   const drop = new Set();
   traitArr.forEach(t => {
@@ -4209,7 +4363,8 @@ function pruneTraits(traitArr, traitPool, faction, cls, mobility) {
     const mobReq    = reqs.find(r=>r.type==="mobility");
     const traitrReq = reqs.find(r=>r.type==="traitr");
     if(facReq    && faction  !== undefined && !facReq.vals.includes(faction))     drop.add(t[0]);
-    if(clsReq    && cls      !== undefined && !clsReq.vals.includes(cls))         drop.add(t[0]);
+    if(clsReq    && cls      !== undefined && !classReqOk(clsReq, cls))           drop.add(t[0]);
+    if(cls !== undefined && troopRoleForbids(reqs, cls))                          drop.add(t[0]);
     if(mobReq    && mobility !== undefined && !mobReq.vals.includes(mobility))    drop.add(t[0]);
     if(traitrReq && !activeKeys.has(traitrReq.vals[0]))                          drop.add(t[0]);
   });
@@ -4385,11 +4540,21 @@ function deleteCustomFaction(id) {
     const uses = (t.reqs||[]).some(r=>r.type==="faction"&&r.vals.includes(id)) || t.faction===id;
     if(uses) usedBy.push(`Trait: ${t.name}`);
   });
+  // Task forces / armies restricted to this faction
+  (state.taskForces||[]).forEach(tf=>{ if(tf.faction===id) usedBy.push(`Task Force: ${tf.name}`); });
+  (state.armies||[]).forEach(a=>{ if(a.faction===id) usedBy.push(`Army: ${a.name}`); });
+  // Custom tactical assets locked to this faction
+  (state.customTacticalAssets||[]).forEach(a=>{ if(a.faction===id) usedBy.push(`Tactical Asset: ${a.name}`); });
   // Current builder session
   const builderFaction = document.getElementById("b-faction")?.value;
   if(builderFaction===id) usedBy.unshift("(current unit in builder)");
   if(usedBy.length) {
-    modalMsg("faction-modal-msg", `<strong>${esc(faction.name)}</strong> is in use and can't be deleted:<ul style="margin:4px 0 0 16px;padding:0">${usedBy.map(n=>`<li>${esc(n)}</li>`).join("")}</ul><div style="margin-top:4px">Remove it from those first.</div>`);
+    const modalOpen = document.getElementById("modal-faction")?.classList.contains("open");
+    if(modalOpen) {
+      modalMsg("faction-modal-msg", `<strong>${esc(faction.name)}</strong> is in use and can't be deleted:<ul style="margin:4px 0 0 16px;padding:0">${usedBy.map(n=>`<li>${esc(n)}</li>`).join("")}</ul><div style="margin-top:4px">Remove it from those first.</div>`);
+    } else {
+      showToast(`"${faction.name}" is in use by ${usedBy.length} item${usedBy.length!==1?"s":""} (${usedBy[0]}${usedBy.length>1?", …":""}) and can't be deleted.`);
+    }
     return;
   }
   state.customFactions = state.customFactions.filter(f=>f.id!==id);
@@ -4602,6 +4767,12 @@ function renderCustomTraitList() {
 function saveCustomTrait() {
   const name = document.getElementById("ct-name").value.trim();
   if(!name) { showFieldErr("ct-name","Enter a trait name."); return; }
+  // Traits are referenced by name everywhere, so a duplicate name would make
+  // the picker check (and cost) both traits at once.
+  const clash =
+    findTraitEntry(STAND_TRAITS, name) || findTraitEntry(WEAPON_TRAITS, name) ||
+    (state.customTraits||[]).some(t => t.id!==editingCustomTraitId && traitNameEq(t.name, name));
+  if(clash) { showFieldErr("ct-name","A trait with this name already exists."); return; }
   const cost = parseFloat(document.getElementById("ct-cost").value)||0;
   const type = document.getElementById("ct-type").value;
   const description = document.getElementById("ct-description").value.trim();
@@ -4617,12 +4788,16 @@ function saveCustomTrait() {
     if(idx !== -1) {
       const oldName = state.customTraits[idx].name;
       state.customTraits[idx] = {id:editingCustomTraitId, name, cost, description, faction, type, reqs, stackable, stackCap, unitTrait};
-      if(oldName !== name) {
-        state.customUnits.forEach(u => {
-          (u.standTraits||[]).forEach(t => { if(t[0]===oldName) t[0]=name; });
-          (u.weapons||[]).forEach(w => { (w.traits||[]).forEach(t => { if(t[0]===oldName) t[0]=name; }); });
-        });
-      }
+      // Propagate the rename AND the new cost/description into the trait
+      // tuples embedded in saved units, then refresh each affected unit's
+      // allowedRoles snapshot (requirements may have changed too).
+      const touch = t => { if(t[0]===oldName || t[0]===name) { t[0]=name; t[1]=cost; t[2]=description; return true; } return false; };
+      state.customUnits.forEach(u => {
+        let hit = false;
+        (u.standTraits||[]).forEach(t => { if(touch(t)) hit = true; });
+        (u.weapons||[]).forEach(w => { (w.traits||[]).forEach(t => { if(touch(t)) hit = true; }); });
+        if(hit) u.allowedRoles = computeAllowedRoles(u);
+      });
     }
     editingCustomTraitId = null;
     document.getElementById("ct-save-btn").textContent = "Create";
@@ -4654,12 +4829,12 @@ function deleteCustomTrait(id) {
   if(!trait) return;
   // Check library units
   const usedBy = state.customUnits.filter(u =>
-    (u.standTraits||[]).some(t=>t[0]===trait.name) ||
-    (u.weapons||[]).some(w=>(w.traits||[]).some(t=>t[0]===trait.name))
+    (u.standTraits||[]).some(t=>traitNameEq(t[0],trait.name)) ||
+    (u.weapons||[]).some(w=>(w.traits||[]).some(t=>traitNameEq(t[0],trait.name)))
   ).map(u=>u.name);
   // Check current builder session
-  const inBuilder = currentBuilderTraits.some(t=>t[0]===trait.name) ||
-    builderWeapons.some(w=>(w.traits||[]).some(t=>t[0]===trait.name));
+  const inBuilder = currentBuilderTraits.some(t=>traitNameEq(t[0],trait.name)) ||
+    builderWeapons.some(w=>(w.traits||[]).some(t=>traitNameEq(t[0],trait.name)));
   if(inBuilder) usedBy.unshift("(current unit in builder)");
   if(usedBy.length) {
     modalMsg("custom-trait-msg", `<strong>${esc(trait.name)}</strong> is in use and can't be deleted:<ul style="margin:4px 0 0 16px;padding:0">${usedBy.map(n=>`<li>${esc(n)}</li>`).join("")}</ul><div style="margin-top:4px">Remove it from those units first.</div>`);
@@ -4847,8 +5022,8 @@ function renderLibrary() {
       if(!_qaFP) {
         qaBtn = `<button class="trait-edit-btn" disabled title="Quick-add is only available for Free Pick armies" style="opacity:.35;cursor:not-allowed;margin-left:auto"><i class="fa-solid fa-square-plus"></i> Add to BG</button>`;
       } else if(!fpUnitMatchesFaction(u, _qaArmy)) {
-        const uf = factionName(u.faction)||u.faction||"unaligned";
-        const af = factionName(_qaArmy.faction)||_qaArmy.faction;
+        const uf = esc(factionName(u.faction)||u.faction||"unaligned");
+        const af = esc(factionName(_qaArmy.faction)||_qaArmy.faction);
         qaBtn = `<button class="trait-edit-btn" disabled title="Faction mismatch - unit is ${uf}, army requires ${af}" style="opacity:.35;cursor:not-allowed;margin-left:auto"><i class="fa-solid fa-square-plus"></i> Add to BG</button>`;
       } else {
         qaBtn = `<button class="trait-edit-btn" onclick="openLibQuickAddPopover('${u.id}',this);event.stopPropagation()" title="Quick-add to a battle group"><i class="fa-solid fa-square-plus"></i> Add to BG</button>`;
@@ -4946,7 +5121,16 @@ function libQuickAddUnit(unitId, bgId, unitType, btnEl) {
 function deleteCustomUnit(id) {
   state.customUnits = state.customUnits.filter(u=>u.id!==id);
   _unitIdCache = null;   // clear before pruning so unitById() reflects the deletion
-  state.taskForces.forEach(tf => { tf.units = tf.units.filter(u=>u.unitId!==id); });
+  state.taskForces.forEach(tf => {
+    tf.units = tf.units.filter(u=>u.unitId!==id);
+    tf.units.forEach(s=>{ if(s.transport===id) delete s.transport; });
+  });
+  (state.armies||[]).forEach(a=>(a.battleGroups||[]).forEach(bg=>(bg.entries||[]).forEach(e=>{
+    if(e.transport===id) delete e.transport;
+  })));
+  // The unit on the builder no longer exists - drop edit mode (keeps the
+  // form contents so a mistaken delete can be re-saved as a new unit).
+  if(editingUnitId===id) setEditMode(null);
   pruneOrphanedBGEntries();
   saveState();
   renderLibrary();
@@ -4962,6 +5146,9 @@ function cloneUnit(id) {
   const clone = JSON.parse(JSON.stringify(src));
   clone.id = "custom_" + uid();
   clone.builtIn = false;
+  // Clones are priced by the calculator - keeping a built-in's hand-tuned
+  // officialPts would silently change the price on the first re-save.
+  delete clone.officialPts;
   const baseName = "Copy of " + src.name;
   let name = baseName, n = 2;
   while (state.customUnits.some(u => u.name === name)) name = baseName + " (" + n++ + ")";
@@ -5210,7 +5397,7 @@ function goCreateUnitForFaction(factionId) {
   resetBuilder();
   showPage("builder");
   const el = document.getElementById("b-faction");
-  if(el) { el.value = factionId; calculateBuilder(); }
+  if(el) { el.value = factionId; builderFactionPrev = factionId; calculateBuilder(); }
 }
 
 function _refreshFactionPage() {
@@ -5854,8 +6041,11 @@ function renderTFDetail() {
   </div>`;
 }
 
-function openNewTFModal() {
+function openNewTFModal(fromTemplate) {
   editingTFId = null;
+  // A plain "New Task Force" must not inherit the template of an earlier,
+  // cancelled from-template flow.
+  if(!fromTemplate) _newTFTemplateId = null;
   const tmpl = _newTFTemplateId ? (state.tfTemplates||[]).find(t=>t.id===_newTFTemplateId) : null;
   document.getElementById("tf-new-name").value = "";
   document.getElementById("tf-commander").value = "";
@@ -6085,8 +6275,10 @@ function renderAddUnitTypeSelector() {
   const canAdd = !tf || canAddToSection(tf, addUnitTargetRole, u.class);
   const pts = calcPoints(u);
   const typePtsMap = {unit:pts.unitPts, independent:pts.indPts, hero:pts.heroPts, command:pts.cmdPts, cmdHero:pts.cmdHeroPts};
+  // Support slots cost +10% - show the price the slot will actually add
+  const adj = v => (v != null && addUnitTargetRole === "support") ? roundToFive(v * 1.10) : v;
   optionsEl.innerHTML = types.map(t => {
-    const ptsVal = typePtsMap[t];
+    const ptsVal = adj(typePtsMap[t]);
     const sel = addUnitSelectedType === t;
     return `<button onclick="addUnitSelectedType='${t}';renderAddUnitTypeSelector()"
       style="font-family:var(--font-body);font-size:12px;padding:4px 10px;border-radius:12px;border:1px solid ${sel?"#007eff":"#333"};background:${sel?"#1a2a4a":"#111"};color:${sel?"#7eb3ff":"#aaa"};cursor:pointer">
@@ -6162,7 +6354,7 @@ function changeTFSlotQty(tfId, slotId, delta) {
   const slot = tf.units.find(u=>u.id===slotId);
   if(!slot) return;
   const maxQty = maxQtyForSlot(tf, slot);
-  slot.quantity = Math.min(Math.max(1, slot.quantity+delta), maxQty);
+  slot.quantity = Math.max(1, Math.min(slot.quantity+delta, maxQty));
   clampArmyAssignments(slot.id, slot.quantity);
   saveState();
   renderTFList();
@@ -6294,6 +6486,13 @@ function saveCustomTFType() {
 }
 
 function deleteCustomTFType(id) {
+  // Block deletion while task forces still use the type - a dangling tfType
+  // would silently void every section limit on those TFs.
+  const users = (state.taskForces||[]).filter(tf=>tf.tfType===id);
+  if(users.length) {
+    showToast(`This type is used by ${users.length} task force${users.length!==1?"s":""} (${users[0].name}${users.length>1?", …":""}). Change their type first.`);
+    return;
+  }
   state.customTFTypes = state.customTFTypes.filter(t=>t.id!==id);
   if(editingCustomTFTypeId===id) {
     editingCustomTFTypeId = null;
@@ -6419,7 +6618,7 @@ function _renderTFTemplateList() {
 function useTFTemplate(templateId) {
   _newTFTemplateId = templateId;
   closeModal("modal-tf-templates");
-  openNewTFModal();
+  openNewTFModal(true);
 }
 
 function deleteTFTemplate(id) {
@@ -6439,14 +6638,19 @@ function collectTFBundle(tfId) {
     if(slot.transport) unitIdSet.add(slot.transport);
   });
   const customUnits = (state.customUnits||[]).filter(u=>unitIdSet.has(u.id));
-  const facIdSet = new Set(customUnits.map(u=>u.faction).filter(Boolean));
-  const customFactions = (state.customFactions||[]).filter(f=>facIdSet.has(f.id));
   const traitNames = new Set();
   customUnits.forEach(u=>{
     (u.standTraits||[]).forEach(t=>{ if(t&&t[0]!=null) traitNames.add(String(t[0]).toLowerCase()); });
     (u.weapons||[]).forEach(w=>(w.traits||[]).forEach(t=>{ if(t&&t[0]!=null) traitNames.add(String(t[0]).toLowerCase()); }));
   });
   const customTraits = (state.customTraits||[]).filter(t=>traitNames.has(String(t.name).toLowerCase()));
+  const facIdSet = new Set(customUnits.map(u=>u.faction).filter(Boolean));
+  if(tf.faction) facIdSet.add(tf.faction);
+  customTraits.forEach(t=>{
+    if(t.faction) facIdSet.add(t.faction);
+    (t.reqs||[]).forEach(r=>{ if(r&&r.type==="faction") (r.vals||[]).forEach(v=>facIdSet.add(v)); });
+  });
+  const customFactions = (state.customFactions||[]).filter(f=>facIdSet.has(f.id));
   const customTFTypes = [];
   if(tf.tfType && (state.customTFTypes||[]).some(ct=>ct.id===tf.tfType)) {
     const ct = state.customTFTypes.find(t=>t.id===tf.tfType);
@@ -6555,6 +6759,7 @@ function doImportTF() {
 function importTF(payload) {
   const d = payload.data;
   if(!d || !d.taskForce) return null;
+  _normalizeBundle(d);
 
   // 1. Merge factions (dedup by name)
   const facById = new Map((state.customFactions||[]).map(f=>[f.id,f]));
@@ -6564,7 +6769,7 @@ function importTF(payload) {
     const k = String(f.name||"").toLowerCase();
     const ex = facByName.get(k);
     if(ex){ facIdMap[f.id]=ex.id; return; }
-    let newId = (!f.id||facById.has(f.id)) ? "fac_"+uid() : f.id;
+    let newId = (!safeImportId(f.id)||facById.has(f.id)) ? "fac_"+uid() : f.id;
     const nf = Object.assign({},f,{id:newId});
     state.customFactions.push(nf); facById.set(newId,nf); facByName.set(k,nf);
     facIdMap[f.id]=newId;
@@ -6577,7 +6782,7 @@ function importTF(payload) {
   (d.customTraits||[]).forEach(t=>{
     const k = String(t.name||"").toLowerCase();
     if(traitByName.has(k)) return;
-    let newId = (!t.id||traitById.has(t.id)) ? uid() : t.id;
+    let newId = (!safeImportId(t.id)||traitById.has(t.id)) ? uid() : t.id;
     const nt = Object.assign({},t,{id:newId});
     if(nt.faction) nt.faction=remapFac(nt.faction);
     if(Array.isArray(nt.reqs)) nt.reqs=nt.reqs.map(r=>(r&&r.type==="faction"&&Array.isArray(r.vals))?Object.assign({},r,{vals:r.vals.map(remapFac)}):r);
@@ -6593,7 +6798,7 @@ function importTF(payload) {
     const nu = Object.assign({},u,{faction:remapFac(u.faction)});
     const k = unitKey(nu);
     if(unitKeyToId.has(k)){ unitIdMap[u.id]=unitKeyToId.get(k); return; }
-    let newId = (!nu.id||unitByIdMap.has(nu.id)) ? "custom_"+uid() : nu.id;
+    let newId = (!safeImportId(nu.id)||unitByIdMap.has(nu.id)) ? "custom_"+uid() : nu.id;
     nu.id=newId;
     if(typeof migrateCustomUnit==="function") migrateCustomUnit(nu);
     state.customUnits.push(nu); unitByIdMap.set(newId,nu); unitKeyToId.set(k,newId);
@@ -6609,7 +6814,7 @@ function importTF(payload) {
     const k = String(t.name||"").toLowerCase();
     const ex = tfTypeByName.get(k);
     if(ex){ tfTypeIdMap[t.id]=ex.id; return; }
-    let newId = (!t.id||tfTypeById.has(t.id)) ? "ctft_"+uid() : t.id;
+    let newId = (!safeImportId(t.id)||tfTypeById.has(t.id)) ? "ctft_"+uid() : t.id;
     const nt = Object.assign({},t,{id:newId});
     state.customTFTypes.push(nt); tfTypeByName.set(k,nt); tfTypeById.set(newId,nt);
     tfTypeIdMap[t.id]=newId;
@@ -6624,7 +6829,7 @@ function importTF(payload) {
     const k = String(a.name||"").toLowerCase();
     const ex = assetByName.get(k);
     if(ex){ assetIdMap[a.id]=ex.id; return; }
-    let newId = (!a.id||assetById.has(a.id)) ? uid() : a.id;
+    let newId = (!safeImportId(a.id)||assetById.has(a.id)) ? uid() : a.id;
     const na = Object.assign({},a,{id:newId});
     state.customTacticalAssets.push(na); assetByName.set(k,na); assetById.set(newId,na);
     assetIdMap[a.id]=newId;
@@ -6641,7 +6846,9 @@ function importTF(payload) {
     id:"tf_"+uid(),
     tfType:remapTFType(orig.tfType),
     tacAsset:remapTacAsset(orig.tacAsset),
+    faction:remapFac(orig.faction),
     units:(orig.units||[]).map(slot=>Object.assign({},slot,{
+      id:"slot_"+uid(),
       unitId:remapUnit(slot.unitId),
       transport:slot.transport?remapUnit(slot.transport):slot.transport
     }))
@@ -6679,10 +6886,11 @@ function openAssetPickerModal(tfId) {
 function renderAssetPickerList() {
   const search = (document.getElementById("asset-picker-search")?.value||"").toLowerCase();
   const tf = state.taskForces.find(t=>t.id===assetPickerTFId);
-  const tfFaction = (tf?.faction && tf.faction !== "any") ? tf.faction : null;
+  const tfFaction = tf?.faction || null;
   let assets = allTacticalAssets().filter(a => {
-    // Filter by faction: faction-locked assets only available when TF faction matches
-    if(a.faction && a.faction !== tfFaction) return false;
+    // Filter by faction: faction-locked assets only available when the TF
+    // faction matches; a TF open to "any" faction may take all of them
+    if(a.faction && tfFaction !== "any" && a.faction !== tfFaction) return false;
     if(search && !a.name.toLowerCase().includes(search) && !a.fn.toLowerCase().includes(search)) return false;
     return true;
   });
@@ -7917,7 +8125,7 @@ function renderArmyDetail() {
           ${grp.keys.map(s => {
             const sd = _bgSymLookup(s);
             const isCurrent = army.symbol === s;
-            return `<button onclick="setArmyIcon('${army.id}','${isCurrent?null:s}')" title="${sd.label}" style="width:32px;height:32px;border-radius:6px;padding:0;border:${isCurrent?"2px solid "+sd.color:"1px solid "+sd.color+"44"};background:${isCurrent?sd.color+"2a":"transparent"};color:${sd.color};cursor:pointer;display:inline-flex;align-items:center;justify-content:center">${_bgSymInner(sd)}</button>`;
+            return `<button onclick="setArmyIcon('${army.id}','${isCurrent?"":s}')" title="${sd.label}" style="width:32px;height:32px;border-radius:6px;padding:0;border:${isCurrent?"2px solid "+sd.color:"1px solid "+sd.color+"44"};background:${isCurrent?sd.color+"2a":"transparent"};color:${sd.color};cursor:pointer;display:inline-flex;align-items:center;justify-content:center">${_bgSymInner(sd)}</button>`;
           }).join("")}
         </div>
       </div>`).join("")}
@@ -8074,7 +8282,7 @@ function _pTraitPills(traitArr, allTraits, pal, gray) {
     const name = t[0];
     const cnt  = traitCount(t);
     const disp = cnt > 1 ? `${name} ${cnt}` : name;
-    const [, entry] = Object.entries(allTraits).find(([,v])=>v[0]===name) || [];
+    const [, entry] = findTraitEntry(allTraits, name) || [];
     const fac = entry ? traitFactionKey(entry) : null;
     if (gray) return `<span style="display:inline-block;padding:2px 7px;border-radius:8px;font-size:10px;font-weight:500;background:#e0e0e0;color:#333;border:1px solid #bbb;margin:1px 2px 1px 0">${esc(disp)}</span>`;
     const color = fac ? (FACTION_COLORS[fac] || (state.customFactions||[]).find(f=>f.id===fac)?.color || "#888") : null;
@@ -8091,7 +8299,7 @@ function _pUnitCard(unit, viewType, tfBadgeHTML, opts, pal, gray) {
   const pKey   = VIEW_PTS_KEY[viewType] || "unitPts";
   const pVal   = opts.ptsVal != null ? opts.ptsVal : (pts[pKey] != null ? pts[pKey] : "-");
   const pLabel = opts.ptsLabel || VIEW_LABELS[viewType] || "Unit";
-  const minSpd = unit.mobility === "grav" ? Math.ceil(unit.speed/2) : unit.mobility === "air" ? Math.ceil(unit.speed*3/4) : null;
+  const minSpd = minSpeedFor(unit);
   const traitsHTML  = _pTraitPills(unit.standTraits||[], allStandTraits(), pal, gray);
   const weaponsHTML = (unit.weapons||[]).length === 0
     ? `<div style="padding:4px 8px;font-size:10px;color:${pal.mutedText};font-style:italic;background:${pal.wepBg};border-radius:4px;margin-top:3px">No ranged weapons - assault only</div>`
@@ -8136,7 +8344,21 @@ function _pUnitCard(unit, viewType, tfBadgeHTML, opts, pal, gray) {
   </div>`;
 }
 
-function _pMechPair(carrier, viewType, tu, n, badgeHTML, pal, gray) {
+// Printed per-unit cost for a support-role slot: deployment cost + transport,
+// then the +10% support premium - the same math the battle-group and TF
+// totals use (slotPointValue/entryPointValue), so cards match their headers.
+function _pSupportAdjusted(u, unitType, tu) {
+  const pts = calcPoints(u);
+  const key = VIEW_PTS_KEY[unitType||"unit"] || "unitPts";
+  let base = pts[key] != null ? pts[key] : pts.unitPts;
+  const tPts = tu ? mechanizedCount(u, tu, unitType) * calcPoints(tu).perStand : 0;
+  const total = roundToFive((base + tPts) * 1.10);
+  // For mech pairs the transport half shows its own cost - return the
+  // remainder so the two point boxes still sum to the charged total.
+  return total - tPts;
+}
+
+function _pMechPair(carrier, viewType, tu, n, badgeHTML, pal, gray, carrierPtsVal) {
   const connBg   = gray ? "#e8e8e8" : "#e8f5e9";
   const connFg   = gray ? "#555"    : "#2e7d32";
   const connBord = gray ? "#ccc"    : "#a5d6a7";
@@ -8146,8 +8368,7 @@ function _pMechPair(carrier, viewType, tu, n, badgeHTML, pal, gray) {
     const pKey = VIEW_PTS_KEY[vt] || "unitPts";
     const pVal = extra.ptsVal != null ? extra.ptsVal : (pts[pKey] != null ? pts[pKey] : "-");
     const pLabel = extra.ptsLabel || VIEW_LABELS[vt] || "Unit";
-    const minSpd = unit.mobility === "grav" ? Math.ceil(unit.speed/2)
-                 : unit.mobility === "air"  ? Math.ceil(unit.speed*3/4) : null;
+    const minSpd = minSpeedFor(unit);
     const traitsHTML = _pTraitPills(unit.standTraits||[], allStandTraits(), pal, gray);
     const weaponsHTML = (unit.weapons||[]).length === 0
       ? `<div style="padding:4px 8px;font-size:10px;color:${pal.mutedText};font-style:italic;background:${pal.wepBg};border-radius:4px;margin-top:3px">No ranged weapons - assault only</div>`
@@ -8191,7 +8412,7 @@ function _pMechPair(carrier, viewType, tu, n, badgeHTML, pal, gray) {
   }
   const tuPtsPerStand = calcPoints(tu).perStand;
   return `<div class="mech-pair-print" style="display:flex;background:${pal.cardBg};border:1.5px solid ${pal.cardBorder};border-radius:8px;overflow:hidden;break-inside:avoid;page-break-inside:avoid">
-    ${halfContent(carrier, viewType, {badge: badgeHTML||""})}
+    ${halfContent(carrier, viewType, {badge: badgeHTML||"", ptsVal: carrierPtsVal != null ? carrierPtsVal : undefined})}
     <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px 4px;background:${connBg};border-left:1px solid ${connBord};border-right:1px solid ${connBord};gap:4px;min-width:26px;flex-shrink:0">
       <i class="fa-solid fa-truck" style="color:${connFg};font-size:12px"></i>
       <span style="font-size:7px;font-weight:bold;text-transform:uppercase;letter-spacing:.5px;color:${connFg};writing-mode:vertical-rl;transform:rotate(180deg)">Mechanized</span>
@@ -8387,9 +8608,10 @@ function _buildArmyPrintContent(army, pal, gray) {
     const hdrBg   = gray ? "#e0e0e0" : (sd?.color ? sd.color + "0e" : "#edf2fb");
     const hdrBord = gray ? "#bbb"    : (sd?.color ? sd.color + "55" : "#c0cce8");
 
-    const withTransport = (carrier, viewType, tu, badgeHTML) => {
-      if (!tu) return [{html: _pUnitCard(carrier, viewType, badgeHTML||"", {}, pal, gray), full: false}];
-      return [{html: _pMechPair(carrier, viewType, tu, mechanizedCount(carrier, tu, viewType), badgeHTML||"", pal, gray), full: true}];
+    const withTransport = (carrier, viewType, tu, badgeHTML, role) => {
+      const sup = role === "support" ? _pSupportAdjusted(carrier, viewType, tu) : null;
+      if (!tu) return [{html: _pUnitCard(carrier, viewType, badgeHTML||"", sup != null ? {ptsVal: sup} : {}, pal, gray), full: false}];
+      return [{html: _pMechPair(carrier, viewType, tu, mechanizedCount(carrier, tu, viewType), badgeHTML||"", pal, gray, sup != null ? sup : undefined), full: true}];
     };
     const unitCards = (bg.entries||[]).flatMap(e => {
       if (fp) {
@@ -8410,7 +8632,7 @@ function _buildArmyPrintContent(army, pal, gray) {
           ? `<span style="display:inline-flex;align-items:center;gap:3px;flex-wrap:wrap"><span style="display:inline-block;padding:1px 6px;border-radius:8px;font-size:9px;font-weight:bold;background:${tfColor}18;color:${tfColor};border:1px solid ${tfColor}44">${esc(tf.name)}</span><span style="display:inline-block;padding:1px 6px;border-radius:8px;font-size:9px;font-weight:bold;background:${pal.assetColor}18;color:${pal.assetColor};border:1px solid ${pal.assetColor}44"><i class="fa-solid fa-chess" style="font-size:7px;margin-right:2px"></i>${esc(asset.name)}</span></span>`
           : `<span style="display:inline-block;padding:1px 6px;border-radius:8px;font-size:9px;font-weight:bold;background:${tfColor}18;color:${tfColor};border:1px solid ${tfColor}44">${esc(tf.name)}</span>`;
         const tu = slot.transport ? unitById(slot.transport) : null;
-        return Array.from({length:qty}).flatMap(() => withTransport(u, slot.unitType||"unit", tu, tfBadge));
+        return Array.from({length:qty}).flatMap(() => withTransport(u, slot.unitType||"unit", tu, tfBadge, slot.role));
       }
     });
 
@@ -8439,6 +8661,7 @@ function printArmy(armyId, paperSize, inkMode) {
   const content = _buildArmyPrintContent(army, pal, gray);
   const w = window.open("", "_blank");
   if (w) { w.document.write(_printShell(army.name, content, paperSize, pal)); w.document.close(); }
+  else showToast("Couldn't open the print window - allow pop-ups for this site and try again.");
 }
 
 // ── Task Force print ──────────────────────────────────────
@@ -8525,8 +8748,9 @@ function printTF(tfId, paperSize, inkMode) {
       const u = unitById(slot.unitId);
       if (!u) return [];
       const tu = slot.transport ? unitById(slot.transport) : null;
-      if (tu) return [{html: _pMechPair(u, slot.unitType||"unit", tu, mechanizedCount(u, tu, slot.unitType), "", pal, gray), full: true}];
-      return [{html: _pUnitCard(u, slot.unitType||"unit", "", {}, pal, gray), full: false}];
+      const sup = slot.role === "support" ? _pSupportAdjusted(u, slot.unitType, tu) : null;
+      if (tu) return [{html: _pMechPair(u, slot.unitType||"unit", tu, mechanizedCount(u, tu, slot.unitType), "", pal, gray, sup != null ? sup : undefined), full: true}];
+      return [{html: _pUnitCard(u, slot.unitType||"unit", "", sup != null ? {ptsVal: sup} : {}, pal, gray), full: false}];
     });
     return `<div class="print-page page-break">
       <div class="bg-header" style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:${hdrBg};border:2px solid ${hdrBord};border-radius:10px;margin-bottom:16px">
@@ -8539,6 +8763,7 @@ function printTF(tfId, paperSize, inkMode) {
 
   const w = window.open("", "_blank");
   if (w) { w.document.write(_printShell(tf.name, overviewPage + unitPages, paperSize, pal)); w.document.close(); }
+  else showToast("Couldn't open the print window - allow pop-ups for this site and try again.");
 }
 
 // ── Expeditionary Force print ─────────────────────────────
@@ -8552,7 +8777,7 @@ function printForce(forceId, paperSize, inkMode) {
 
   const agSummaryRows = agList.map(ag => {
     const armyList = (ag.armyIds||[]).map(id=>state.armies.find(a=>a.id===id)).filter(Boolean);
-    const agPts = armyList.reduce((s,a)=>s+armyDeployedPoints(a),0);
+    const agPts = armyList.reduce((s,a)=>s+armyPoints(a),0);   // pool points - matches the on-screen Forces page
     return `<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:${pal.tfRowBg};border:1px solid ${pal.cardBorder};border-radius:6px;margin-bottom:4px">
       <span style="font-weight:700;font-size:13px;color:${pal.pageText}">${esc(ag.name||"Army Group")}</span>
       <span style="font-size:10px;color:${pal.mutedText};margin-left:auto">${armyList.length} arm${armyList.length!==1?"ies":"y"} · ${agPts} pts</span>
@@ -8584,8 +8809,8 @@ function printForce(forceId, paperSize, inkMode) {
         // inject AG banner at start of first army's overview page
         content = content.replace('<div class="print-page">', `<div class="print-page">${agBanner}`);
       }
-      if (agIdx > 0 && armyIdx === 0) {
-        // page break between army groups
+      if (agIdx > 0 || armyIdx > 0) {
+        // every army after the very first starts on a fresh sheet
         content = content.replace('<div class="print-page">', '<div class="print-page page-break">');
       }
       return content;
@@ -8594,6 +8819,7 @@ function printForce(forceId, paperSize, inkMode) {
 
   const w = window.open("", "_blank");
   if (w) { w.document.write(_printShell(force.name, overviewPage + agPages, paperSize, pal)); w.document.close(); }
+  else showToast("Couldn't open the print window - allow pop-ups for this site and try again.");
 }
 
 // ===== FREE-PICK UNIT MODAL =====
@@ -8671,7 +8897,9 @@ function addFPUnit(unitId, unitType) {
   bg.entries = bg.entries || [];
   const resolvedType = unitType || "unit";
   const addQty = Math.max(1, fpAddQty|0);
-  const existing = bg.entries.find(e => e.unitId === unitId && e.unitType === resolvedType);
+  // Never merge into a mechanized entry - the new copies have no transport
+  // and would otherwise be silently charged for one.
+  const existing = bg.entries.find(e => e.unitId === unitId && e.unitType === resolvedType && !e.transport);
   if(existing) {
     existing.qty = (existing.qty || 1) + addQty;
   } else {
@@ -8757,6 +8985,7 @@ function openEditArmyModal(id) {
   document.getElementById("army-modal-title").childNodes[0].textContent = "Edit Army ";
   document.getElementById("army-modal-save-btn").textContent = "Save Changes";
   document.getElementById("army-new-name").value = army.name;
+  _refreshArmyFactionSelect();
   document.getElementById("army-faction").value = army.faction || "";
   document.getElementById("army-bg-count").value = String(army.bgCount || 3);
   document.getElementById("army-points-limit").value = army.pointsLimit || "";
@@ -8768,7 +8997,6 @@ function openEditArmyModal(id) {
   document.getElementById("army-notes").value = army.notes || "";
   clearFieldErr("army-new-name");
   modalMsg("army-modal-msg", "");
-  _refreshArmyFactionSelect();
   openModal("modal-army");
 }
 
@@ -9368,7 +9596,7 @@ function renderForceDetail() {
         <div style="display:flex;gap:4px;flex-wrap:wrap">
           ${grp.keys.map(s=>{
             const sd=_bgSymLookup(s); const ic=force.symbol===s;
-            return `<button onclick="setForceIcon('${force.id}','${ic?null:s}')" title="${sd.label}" style="width:32px;height:32px;border-radius:6px;padding:0;border:${ic?"2px solid "+sd.color:"1px solid "+sd.color+"44"};background:${ic?sd.color+"2a":"transparent"};color:${sd.color};cursor:pointer;display:inline-flex;align-items:center;justify-content:center">${_bgSymInner(sd)}</button>`;
+            return `<button onclick="setForceIcon('${force.id}','${ic?"":s}')" title="${sd.label}" style="width:32px;height:32px;border-radius:6px;padding:0;border:${ic?"2px solid "+sd.color:"1px solid "+sd.color+"44"};background:${ic?sd.color+"2a":"transparent"};color:${sd.color};cursor:pointer;display:inline-flex;align-items:center;justify-content:center">${_bgSymInner(sd)}</button>`;
           }).join("")}
         </div>
       </div>`).join("")}
@@ -9641,7 +9869,7 @@ function _renderAddArmyEFList() {
   }
   listEl.innerHTML = available.map(army=>{
     const fp = isFreePick(army);
-    const deployedPts = armyDeployedPoints(army);
+    const deployedPts = armyPoints(army);   // pool points - matches the AG rows on this page
     const tfCount = (army.taskForceIds||[]).length;
     const armySym = army.symbol ? _bgSymLookup(army.symbol) : null;
     const armyIconEl = armySym
@@ -9824,8 +10052,6 @@ function collectForceBundle(forceId) {
   }));
 
   const customUnits = (state.customUnits||[]).filter(u=>unitIdSet.has(u.id));
-  const facIdSet = new Set(customUnits.map(u=>u.faction).filter(Boolean));
-  const customFactions = (state.customFactions||[]).filter(f=>facIdSet.has(f.id));
 
   const traitNames = new Set();
   customUnits.forEach(u=>{
@@ -9833,6 +10059,15 @@ function collectForceBundle(forceId) {
     (u.weapons||[]).forEach(w=>(w.traits||[]).forEach(t=>{ if(t&&t[0]!=null) traitNames.add(String(t[0]).toLowerCase()); }));
   });
   const customTraits = (state.customTraits||[]).filter(t=>traitNames.has(String(t.name).toLowerCase()));
+
+  const facIdSet = new Set(customUnits.map(u=>u.faction).filter(Boolean));
+  armies.forEach(a=>{ if(a.faction) facIdSet.add(a.faction); });
+  taskForces.forEach(tf=>{ if(tf.faction) facIdSet.add(tf.faction); });
+  customTraits.forEach(t=>{
+    if(t.faction) facIdSet.add(t.faction);
+    (t.reqs||[]).forEach(r=>{ if(r&&r.type==="faction") (r.vals||[]).forEach(v=>facIdSet.add(v)); });
+  });
+  const customFactions = (state.customFactions||[]).filter(f=>facIdSet.has(f.id));
 
   const tfTypeIds = new Set();
   taskForces.forEach(tf=>{ if(tf.tfType&&(state.customTFTypes||[]).some(ct=>ct.id===tf.tfType)) tfTypeIds.add(tf.tfType); });
@@ -9944,6 +10179,7 @@ function doImportForce() {
 function importForce(payload) {
   const d = payload.data;
   if(!d || !d.force) return null;
+  _normalizeBundle(d);
 
   // 1. Merge factions (dedup by name)
   const facById = new Map((state.customFactions||[]).map(f=>[f.id,f]));
@@ -9953,7 +10189,7 @@ function importForce(payload) {
     const k = String(f.name||"").toLowerCase();
     const ex = facByName.get(k);
     if(ex){ facIdMap[f.id]=ex.id; return; }
-    let newId = (!f.id||facById.has(f.id)) ? "fac_"+uid() : f.id;
+    let newId = (!safeImportId(f.id)||facById.has(f.id)) ? "fac_"+uid() : f.id;
     const nf = Object.assign({},f,{id:newId});
     state.customFactions.push(nf); facById.set(newId,nf); facByName.set(k,nf);
     facIdMap[f.id]=newId;
@@ -9966,7 +10202,7 @@ function importForce(payload) {
   (d.customTraits||[]).forEach(t=>{
     const k = String(t.name||"").toLowerCase();
     if(traitByName.has(k)) return;
-    let newId = (!t.id||traitById.has(t.id)) ? uid() : t.id;
+    let newId = (!safeImportId(t.id)||traitById.has(t.id)) ? uid() : t.id;
     const nt = Object.assign({},t,{id:newId});
     if(nt.faction) nt.faction=remapFac(nt.faction);
     if(Array.isArray(nt.reqs)) nt.reqs=nt.reqs.map(r=>(r&&r.type==="faction"&&Array.isArray(r.vals))?Object.assign({},r,{vals:r.vals.map(remapFac)}):r);
@@ -9998,7 +10234,7 @@ function importForce(payload) {
     const k = String(t.name||"").toLowerCase();
     const ex = tfTypeByName.get(k);
     if(ex){ tfTypeIdMap[t.id]=ex.id; return; }
-    let newId = (!t.id||tfTypeById.has(t.id)) ? "ctft_"+uid() : t.id;
+    let newId = (!safeImportId(t.id)||tfTypeById.has(t.id)) ? "ctft_"+uid() : t.id;
     const nt = Object.assign({},t,{id:newId});
     state.customTFTypes.push(nt); tfTypeByName.set(k,nt); tfTypeById.set(newId,nt);
     tfTypeIdMap[t.id]=newId;
@@ -10013,7 +10249,7 @@ function importForce(payload) {
     const k = String(a.name||"").toLowerCase();
     const ex = assetByName.get(k);
     if(ex){ assetIdMap[a.id]=ex.id; return; }
-    let newId = (!a.id||assetById.has(a.id)) ? uid() : a.id;
+    let newId = (!safeImportId(a.id)||assetById.has(a.id)) ? uid() : a.id;
     const na = Object.assign({},a,{id:newId});
     state.customTacticalAssets.push(na); assetByName.set(k,na); assetById.set(newId,na);
     assetIdMap[a.id]=newId;
@@ -10026,6 +10262,7 @@ function importForce(payload) {
 
   // 6. Import task forces with fresh IDs (always new)
   const tfIdMap = {};
+  const slotIdMap = {};   // keyed "<oldTfId>|<oldSlotId>" - slot ids repeat across exports
   (d.taskForces||[]).forEach(tf=>{
     const newTFId = "tf_"+uid();
     tfIdMap[tf.id]=newTFId;
@@ -10033,10 +10270,15 @@ function importForce(payload) {
       id:newTFId,
       tfType:remapTFType(tf.tfType),
       tacAsset:remapTacAsset(tf.tacAsset),
-      units:(tf.units||[]).map(slot=>Object.assign({},slot,{
-        unitId:remapUnit(slot.unitId),
-        transport:slot.transport?remapUnit(slot.transport):slot.transport
-      }))
+      faction:remapFac(tf.faction),
+      units:(tf.units||[]).map(slot=>{
+        const sid = "slot_"+uid(); slotIdMap[tf.id+"|"+slot.id]=sid;
+        return Object.assign({},slot,{
+          id:sid,
+          unitId:remapUnit(slot.unitId),
+          transport:slot.transport?remapUnit(slot.transport):slot.transport
+        });
+      })
     });
     state.taskForces.push(newTF);
   });
@@ -10049,12 +10291,13 @@ function importForce(payload) {
     armyIdMap[orig.id]=newArmyId;
     const newArmy = Object.assign({},orig,{
       id:newArmyId,
+      faction:remapFac(orig.faction),
       taskForceIds:(orig.taskForceIds||[]).map(remapTF),
       battleGroups:(orig.battleGroups||[]).map(bg=>Object.assign({},bg,{
         id:"bg_"+uid(),
         entries:(bg.entries||[]).map(e=>{
           const ne = Object.assign({},e,{id:"e_"+uid()});
-          if(ne.tfId) ne.tfId=remapTF(ne.tfId);
+          if(ne.tfId){ if(ne.slotId) ne.slotId=slotIdMap[ne.tfId+"|"+ne.slotId]||ne.slotId; ne.tfId=remapTF(ne.tfId); }
           if(ne.unitId) ne.unitId=remapUnit(ne.unitId);
           if(ne.transport) ne.transport=remapUnit(ne.transport);
           return ne;
@@ -10102,9 +10345,15 @@ _libFilterCollapsed = window.innerWidth <= 640;
 
 showPage("builder");
 
-// Close modals on background click
+// Close modals on background click. The free-pick add-units modal has its
+// own close path that re-renders the army detail behind it - route through
+// it so background-dismissal doesn't leave a stale view.
 document.querySelectorAll(".modal-bg").forEach(mb=>{
-  mb.addEventListener("click",function(e){ if(e.target===mb) mb.classList.remove("open"); });
+  mb.addEventListener("click",function(e){
+    if(e.target!==mb) return;
+    if(mb.id==="modal-fp-unit") { closeFPUnitModal(); return; }
+    mb.classList.remove("open");
+  });
 });
 
 // Close library quick-add popover on outside click
