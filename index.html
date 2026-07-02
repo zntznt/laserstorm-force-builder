@@ -393,7 +393,7 @@ label .trait-edit-btn{margin-left:6px}
 .builder-breakdown-toggle{display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--text-muted);font-weight:700;padding:8px 0;border-top:1px solid var(--border-subtle);transition:color .15s}
 .builder-breakdown-toggle:hover{color:var(--text-primary)}
 /* ── Undo toast ───────────────────────────────────────────────────────── */
-#undo-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(6px);background:var(--surface-raised);color:var(--text-primary);padding:7px 16px;border-radius:20px;font-size:12px;font-weight:600;letter-spacing:.3px;border:1px solid var(--border-default);opacity:0;transition:opacity .18s,transform .18s;pointer-events:none;z-index:9999;white-space:nowrap}
+#undo-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(6px);background:var(--surface-raised);color:var(--text-primary);padding:7px 16px;border-radius:20px;font-size:12px;font-weight:600;letter-spacing:.3px;border:1px solid var(--border-default);opacity:0;transition:opacity .18s,transform .18s;pointer-events:none;z-index:9999;max-width:min(92vw,560px);text-align:center}
 #undo-toast.visible{opacity:1;transform:translateX(-50%) translateY(0)}
 #nav-undo-btn{display:none;align-items:center;gap:4px;background:none;border:1px solid var(--border-default);color:var(--text-muted);padding:4px 10px;border-radius:6px;cursor:pointer;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;transition:all .15s;margin-left:6px;white-space:nowrap}
 #nav-undo-btn:hover{background:var(--surface-raised);color:var(--text-primary);border-color:var(--accent)}
@@ -1950,6 +1950,15 @@ function _rerenderCurrentPage() {
 }
 
 let _undoToastTimer = null;
+// General-purpose feedback toast (shares the undo toast element).
+function showToast(text) {
+  const toast = document.getElementById("undo-toast");
+  if (!toast) return;
+  toast.textContent = text;
+  toast.classList.add("visible");
+  clearTimeout(_undoToastTimer);
+  _undoToastTimer = setTimeout(() => toast.classList.remove("visible"), 3500);
+}
 function _showUndoToast() {
   const toast = document.getElementById("undo-toast");
   if (!toast) return;
@@ -2115,10 +2124,13 @@ function computeAllowedRoles(unit) {
   const weaponDict = allWeaponTraits();
   const roleVals   = new Set();
   function addFrom(t, dict) {
-    const found = Object.entries(dict).find(([,v]) => v[0] === t[0]);
+    const found = findTraitEntry(dict, t[0]);
     if (!found) return;
     const [key, entry] = found;
-    allTraitReqs(key, entry).filter(r => r.type === "role").forEach(r => r.vals.forEach(v => roleVals.add(v)));
+    // "troop" in a role req is a class constraint (non-vehicle stand), not a
+    // deployment type - it must not unlock the Unit cost column (a trait
+    // requiring hero AND troop would otherwise offer full-Unit deployment).
+    allTraitReqs(key, entry).filter(r => r.type === "role").forEach(r => r.vals.forEach(v => { if(v!=="troop") roleVals.add(v); }));
   }
   (unit.standTraits || []).forEach(t => addFrom(t, standDict));
   (unit.weapons || []).flatMap(w => w.traits || []).forEach(t => addFrom(t, weaponDict));
@@ -2356,6 +2368,22 @@ function traitIsUnitTrait(entry) {
   return typeof last === 'object' && last !== null && !!last.unitTrait;
 }
 function traitCount(t) { return typeof t[3] === 'number' ? t[3] : 1; }
+// Traits are referenced by name; imports dedupe names case-insensitively, so
+// every name lookup must be case-insensitive too or imported units lose their
+// trait metadata (and the picker silently drops the trait).
+function traitNameEq(a,b){ return String(a??"").toLowerCase() === String(b??"").toLowerCase(); }
+function findTraitEntry(dict, name){ return Object.entries(dict).find(([,v])=>traitNameEq(v[0],name)) || null; }
+
+// "Troop" = non-vehicle stand classes. Appears as the class-req val "troop"
+// (custom traits) and as the role-req val "troop" (built-ins) - both mean
+// "only infantry / cavalry / field guns may take this trait".
+const TROOP_CLASSES = ["inf","cav","fg"];
+function classReqOk(clsReq, cls) {
+  return clsReq.vals.includes(cls) || (clsReq.vals.includes("troop") && TROOP_CLASSES.includes(cls));
+}
+function troopRoleForbids(reqs, cls) {
+  return reqs.some(r => r.type==="role" && r.vals.includes("troop")) && !TROOP_CLASSES.includes(cls);
+}
 function traitStackMax(entry) {
   const last = entry?.[entry.length - 1];
   return (typeof last === 'object' && last?.max) || 99;
@@ -2404,8 +2432,8 @@ function traitTipHTML(traitArr, allTraits) {
   return traitArr.map(t => {
     const name = t[0];
     const cnt = traitCount(t);
-    const [key, entry] = Object.entries(allTraits).find(([,v])=>v[0]===name)
-      || (() => { const base=name.replace(/\s[+]?\d+$/,""); return base!==name ? (Object.entries(allTraits).find(([,v])=>v[0]===base)||[null,null]) : [null,null]; })();
+    const [key, entry] = findTraitEntry(allTraits, name)
+      || (() => { const base=name.replace(/\s[+]?\d+$/,""); return base!==name ? (findTraitEntry(allTraits, base)||[null,null]) : [null,null]; })();
     const cleanDesc = cleanTraitDesc(entry?.[2] || "");
     const isUT = traitIsUnitTrait(entry);
     const utRule = "Unit Trait: effect applies to the whole unit. No effect if any stand of the same class lacks this trait. If multiple levels exist, only the least powerful applies.";
@@ -3707,8 +3735,8 @@ function refreshTraitPickerList() {
   const curTraits = traitPickerTarget==="stand"
     ? currentBuilderTraits
     : (builderWeapons[traitPickerWeaponIdx]?.traits||[]);
-  const selected = curTraits.map(t=>t[0]);
-  const selectedTraitKeys = new Set(curTraits.map(t=>Object.entries(traits).find(([,v])=>v[0]===t[0])?.[0]).filter(Boolean));
+  const selected = curTraits.map(t=>String(t[0]).toLowerCase());
+  const selectedTraitKeys = new Set(curTraits.map(t=>findTraitEntry(traits,t[0])?.[0]).filter(Boolean));
   const currentFaction  = document.getElementById("b-faction")?.value  || "";
   const currentClass    = document.getElementById("b-class")?.value    || "";
   const currentMobility = document.getElementById("b-mobility")?.value || "";
@@ -3721,7 +3749,8 @@ function refreshTraitPickerList() {
     const mobReq    = reqs.find(r=>r.type==="mobility");
     const traitrReq = reqs.find(r=>r.type==="traitr");
     const locked = (facReq    && !facReq.vals.includes(currentFaction))
-                || (clsReq    && !clsReq.vals.includes(currentClass))
+                || (clsReq    && !classReqOk(clsReq, currentClass))
+                || troopRoleForbids(reqs, currentClass)
                 || (mobReq    && !mobReq.vals.includes(currentMobility))
                 || (traitrReq && !selectedTraitKeys.has(traitrReq.vals[0]));
     const group  = facReq ? "faction:"+facReq.vals[0]
@@ -3817,7 +3846,7 @@ function refreshTraitPickerList() {
         const cb = document.createElement("input");
         cb.type = "checkbox";
         cb.value = key;
-        cb.checked = selected.includes(val[0]);
+        cb.checked = selected.includes(String(val[0]).toLowerCase());
         cb.disabled = locked;
         cb.id = "trait_cb_"+key;
         cb.addEventListener("change", applyTraitsLive);
@@ -3859,7 +3888,7 @@ function openTraitPicker(target, wIdx) {
   const curT = target==="stand" ? currentBuilderTraits : (builderWeapons[wIdx]?.traits||[]);
   curT.forEach(t => {
     if(typeof t[3]==="number" && t[3]>0) {
-      const k = Object.entries(allT).find(([,v])=>v[0]===t[0])?.[0];
+      const k = findTraitEntry(allT, t[0])?.[0];
       if(k) traitPickerStepperCounts[k] = t[3];
     }
   });
@@ -4288,6 +4317,9 @@ const VIEW_LABELS  = {unit:"Unit", independent:"Ind", hero:"Hero", command:"Cmd"
 function rebuildFactionSelect(selectValue) {
   const sel = document.getElementById("b-faction");
   if(!sel) return;
+  // Default to keeping the current selection - rebuilding while a unit is on
+  // the builder must not silently reset its faction to "No Faction".
+  if(selectValue === undefined) selectValue = sel.value;
   const builtins = [
     {v:"standard",l:"Standard"},{v:"precursor",l:"Precursor"},
     {v:"soulless",l:"Soulless"},{v:"swarm",l:"Swarm"},{v:"warrior",l:"Warrior"}
@@ -4296,13 +4328,15 @@ function rebuildFactionSelect(selectValue) {
     + builtins.map(b=>`<option value="${b.v}">${b.l}</option>`).join("")
     + (state.customFactions||[]).map(f=>`<option value="${f.id}">${esc(f.name)}</option>`).join("")
     + `<option value="__new__">+ New Faction&hellip;</option>`;
-  if(selectValue !== undefined) sel.value = selectValue;
+  sel.value = selectValue;
+  if(sel.value !== selectValue) sel.value = "";   // selected faction was deleted
+  builderFactionPrev = sel.value;
 }
 
 // Removes traits from traitArr that fail faction/class/mobility/traitr requirements.
 // traitPool is allStandTraits() or allWeaponTraits().
 function pruneTraits(traitArr, traitPool, faction, cls, mobility) {
-  const keyOf = t => Object.entries(traitPool).find(([,v])=>v[0]===t[0])?.[0];
+  const keyOf = t => findTraitEntry(traitPool, t[0])?.[0];
   const activeKeys = new Set(traitArr.map(keyOf).filter(Boolean));
   const drop = new Set();
   traitArr.forEach(t => {
@@ -4314,7 +4348,8 @@ function pruneTraits(traitArr, traitPool, faction, cls, mobility) {
     const mobReq    = reqs.find(r=>r.type==="mobility");
     const traitrReq = reqs.find(r=>r.type==="traitr");
     if(facReq    && faction  !== undefined && !facReq.vals.includes(faction))     drop.add(t[0]);
-    if(clsReq    && cls      !== undefined && !clsReq.vals.includes(cls))         drop.add(t[0]);
+    if(clsReq    && cls      !== undefined && !classReqOk(clsReq, cls))           drop.add(t[0]);
+    if(cls !== undefined && troopRoleForbids(reqs, cls))                          drop.add(t[0]);
     if(mobReq    && mobility !== undefined && !mobReq.vals.includes(mobility))    drop.add(t[0]);
     if(traitrReq && !activeKeys.has(traitrReq.vals[0]))                          drop.add(t[0]);
   });
@@ -4490,11 +4525,21 @@ function deleteCustomFaction(id) {
     const uses = (t.reqs||[]).some(r=>r.type==="faction"&&r.vals.includes(id)) || t.faction===id;
     if(uses) usedBy.push(`Trait: ${t.name}`);
   });
+  // Task forces / armies restricted to this faction
+  (state.taskForces||[]).forEach(tf=>{ if(tf.faction===id) usedBy.push(`Task Force: ${tf.name}`); });
+  (state.armies||[]).forEach(a=>{ if(a.faction===id) usedBy.push(`Army: ${a.name}`); });
+  // Custom tactical assets locked to this faction
+  (state.customTacticalAssets||[]).forEach(a=>{ if(a.faction===id) usedBy.push(`Tactical Asset: ${a.name}`); });
   // Current builder session
   const builderFaction = document.getElementById("b-faction")?.value;
   if(builderFaction===id) usedBy.unshift("(current unit in builder)");
   if(usedBy.length) {
-    modalMsg("faction-modal-msg", `<strong>${esc(faction.name)}</strong> is in use and can't be deleted:<ul style="margin:4px 0 0 16px;padding:0">${usedBy.map(n=>`<li>${esc(n)}</li>`).join("")}</ul><div style="margin-top:4px">Remove it from those first.</div>`);
+    const modalOpen = document.getElementById("modal-faction")?.classList.contains("open");
+    if(modalOpen) {
+      modalMsg("faction-modal-msg", `<strong>${esc(faction.name)}</strong> is in use and can't be deleted:<ul style="margin:4px 0 0 16px;padding:0">${usedBy.map(n=>`<li>${esc(n)}</li>`).join("")}</ul><div style="margin-top:4px">Remove it from those first.</div>`);
+    } else {
+      showToast(`"${faction.name}" is in use by ${usedBy.length} item${usedBy.length!==1?"s":""} (${usedBy[0]}${usedBy.length>1?", …":""}) and can't be deleted.`);
+    }
     return;
   }
   state.customFactions = state.customFactions.filter(f=>f.id!==id);
@@ -4707,6 +4752,12 @@ function renderCustomTraitList() {
 function saveCustomTrait() {
   const name = document.getElementById("ct-name").value.trim();
   if(!name) { showFieldErr("ct-name","Enter a trait name."); return; }
+  // Traits are referenced by name everywhere, so a duplicate name would make
+  // the picker check (and cost) both traits at once.
+  const clash =
+    findTraitEntry(STAND_TRAITS, name) || findTraitEntry(WEAPON_TRAITS, name) ||
+    (state.customTraits||[]).some(t => t.id!==editingCustomTraitId && traitNameEq(t.name, name));
+  if(clash) { showFieldErr("ct-name","A trait with this name already exists."); return; }
   const cost = parseFloat(document.getElementById("ct-cost").value)||0;
   const type = document.getElementById("ct-type").value;
   const description = document.getElementById("ct-description").value.trim();
@@ -4722,12 +4773,16 @@ function saveCustomTrait() {
     if(idx !== -1) {
       const oldName = state.customTraits[idx].name;
       state.customTraits[idx] = {id:editingCustomTraitId, name, cost, description, faction, type, reqs, stackable, stackCap, unitTrait};
-      if(oldName !== name) {
-        state.customUnits.forEach(u => {
-          (u.standTraits||[]).forEach(t => { if(t[0]===oldName) t[0]=name; });
-          (u.weapons||[]).forEach(w => { (w.traits||[]).forEach(t => { if(t[0]===oldName) t[0]=name; }); });
-        });
-      }
+      // Propagate the rename AND the new cost/description into the trait
+      // tuples embedded in saved units, then refresh each affected unit's
+      // allowedRoles snapshot (requirements may have changed too).
+      const touch = t => { if(t[0]===oldName || t[0]===name) { t[0]=name; t[1]=cost; t[2]=description; return true; } return false; };
+      state.customUnits.forEach(u => {
+        let hit = false;
+        (u.standTraits||[]).forEach(t => { if(touch(t)) hit = true; });
+        (u.weapons||[]).forEach(w => { (w.traits||[]).forEach(t => { if(touch(t)) hit = true; }); });
+        if(hit) u.allowedRoles = computeAllowedRoles(u);
+      });
     }
     editingCustomTraitId = null;
     document.getElementById("ct-save-btn").textContent = "Create";
@@ -4759,12 +4814,12 @@ function deleteCustomTrait(id) {
   if(!trait) return;
   // Check library units
   const usedBy = state.customUnits.filter(u =>
-    (u.standTraits||[]).some(t=>t[0]===trait.name) ||
-    (u.weapons||[]).some(w=>(w.traits||[]).some(t=>t[0]===trait.name))
+    (u.standTraits||[]).some(t=>traitNameEq(t[0],trait.name)) ||
+    (u.weapons||[]).some(w=>(w.traits||[]).some(t=>traitNameEq(t[0],trait.name)))
   ).map(u=>u.name);
   // Check current builder session
-  const inBuilder = currentBuilderTraits.some(t=>t[0]===trait.name) ||
-    builderWeapons.some(w=>(w.traits||[]).some(t=>t[0]===trait.name));
+  const inBuilder = currentBuilderTraits.some(t=>traitNameEq(t[0],trait.name)) ||
+    builderWeapons.some(w=>(w.traits||[]).some(t=>traitNameEq(t[0],trait.name)));
   if(inBuilder) usedBy.unshift("(current unit in builder)");
   if(usedBy.length) {
     modalMsg("custom-trait-msg", `<strong>${esc(trait.name)}</strong> is in use and can't be deleted:<ul style="margin:4px 0 0 16px;padding:0">${usedBy.map(n=>`<li>${esc(n)}</li>`).join("")}</ul><div style="margin-top:4px">Remove it from those units first.</div>`);
@@ -5051,7 +5106,16 @@ function libQuickAddUnit(unitId, bgId, unitType, btnEl) {
 function deleteCustomUnit(id) {
   state.customUnits = state.customUnits.filter(u=>u.id!==id);
   _unitIdCache = null;   // clear before pruning so unitById() reflects the deletion
-  state.taskForces.forEach(tf => { tf.units = tf.units.filter(u=>u.unitId!==id); });
+  state.taskForces.forEach(tf => {
+    tf.units = tf.units.filter(u=>u.unitId!==id);
+    tf.units.forEach(s=>{ if(s.transport===id) delete s.transport; });
+  });
+  (state.armies||[]).forEach(a=>(a.battleGroups||[]).forEach(bg=>(bg.entries||[]).forEach(e=>{
+    if(e.transport===id) delete e.transport;
+  })));
+  // The unit on the builder no longer exists - drop edit mode (keeps the
+  // form contents so a mistaken delete can be re-saved as a new unit).
+  if(editingUnitId===id) setEditMode(null);
   pruneOrphanedBGEntries();
   saveState();
   renderLibrary();
@@ -5067,6 +5131,9 @@ function cloneUnit(id) {
   const clone = JSON.parse(JSON.stringify(src));
   clone.id = "custom_" + uid();
   clone.builtIn = false;
+  // Clones are priced by the calculator - keeping a built-in's hand-tuned
+  // officialPts would silently change the price on the first re-save.
+  delete clone.officialPts;
   const baseName = "Copy of " + src.name;
   let name = baseName, n = 2;
   while (state.customUnits.some(u => u.name === name)) name = baseName + " (" + n++ + ")";
@@ -5315,7 +5382,7 @@ function goCreateUnitForFaction(factionId) {
   resetBuilder();
   showPage("builder");
   const el = document.getElementById("b-faction");
-  if(el) { el.value = factionId; calculateBuilder(); }
+  if(el) { el.value = factionId; builderFactionPrev = factionId; calculateBuilder(); }
 }
 
 function _refreshFactionPage() {
@@ -6399,6 +6466,13 @@ function saveCustomTFType() {
 }
 
 function deleteCustomTFType(id) {
+  // Block deletion while task forces still use the type - a dangling tfType
+  // would silently void every section limit on those TFs.
+  const users = (state.taskForces||[]).filter(tf=>tf.tfType===id);
+  if(users.length) {
+    showToast(`This type is used by ${users.length} task force${users.length!==1?"s":""} (${users[0].name}${users.length>1?", …":""}). Change their type first.`);
+    return;
+  }
   state.customTFTypes = state.customTFTypes.filter(t=>t.id!==id);
   if(editingCustomTFTypeId===id) {
     editingCustomTFTypeId = null;
@@ -8187,7 +8261,7 @@ function _pTraitPills(traitArr, allTraits, pal, gray) {
     const name = t[0];
     const cnt  = traitCount(t);
     const disp = cnt > 1 ? `${name} ${cnt}` : name;
-    const [, entry] = Object.entries(allTraits).find(([,v])=>v[0]===name) || [];
+    const [, entry] = findTraitEntry(allTraits, name) || [];
     const fac = entry ? traitFactionKey(entry) : null;
     if (gray) return `<span style="display:inline-block;padding:2px 7px;border-radius:8px;font-size:10px;font-weight:500;background:#e0e0e0;color:#333;border:1px solid #bbb;margin:1px 2px 1px 0">${esc(disp)}</span>`;
     const color = fac ? (FACTION_COLORS[fac] || (state.customFactions||[]).find(f=>f.id===fac)?.color || "#888") : null;
