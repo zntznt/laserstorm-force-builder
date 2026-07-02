@@ -1659,7 +1659,7 @@ const BUILTIN_UNITS = [
 {id:"std_assault_wlk",name:"Assault Walkers",        class:"afv",   speed:6,  mobility:"walk",  aim:5, assault:4, saveNumber:4, morale:4, standTraits:[["Assault Vehicle",1]], weapons:[{name:"Chain Gun",mode:"ai",type:"s",range:2,shots:2,impact:1,traits:[]},{name:"Light Laser",mode:"at",type:"s",range:10,shots:1,impact:4,traits:[["Targeting",0]]}], role:"core",      faction:"standard", builtIn:true, officialPts:{perStand:70,  unitPts:210, indPts:95,  cmdPts:105, heroPts:110, cmdHeroPts:125}},
 {id:"std_lt_tank",   name:"Light Tanks",             class:"afv",   speed:12, mobility:"track", aim:5, assault:0, saveNumber:4, morale:4, standTraits:[], weapons:[{name:"Tank MG",mode:"ai",type:"p",range:2,shots:1,impact:0,traits:[]},{name:"Light AT Gun",mode:"gp",type:"p",range:5,shots:1,impact:3,traits:[["Frag",0]]}], role:"core",      faction:"standard", builtIn:true, officialPts:{perStand:54,  unitPts:165, indPts:75,  cmdPts:85,  heroPts:85,  cmdHeroPts:95}},
 {id:"std_med_tank",  name:"Medium Tanks",            class:"afv",   speed:10, mobility:"track", aim:4, assault:1, saveNumber:3, morale:3, standTraits:[], weapons:[{name:"2x Tank MG",mode:"ai",type:"p",range:2,shots:2,impact:0,traits:[]},{name:"Med. AT Gun",mode:"gp",type:"p",range:10,shots:1,impact:5,traits:[["Frag",0]]}], role:"core",      faction:"standard", builtIn:true, officialPts:{perStand:94,  unitPts:285, indPts:125, cmdPts:145, heroPts:150, cmdHeroPts:165}},
-{id:"std_mbt",       name:"Main Battle Tanks",       class:"afv",   speed:8,  mobility:"track", aim:4, assault:2, saveNumber:2, morale:3, standTraits:[], weapons:[{name:"2x Tank MG",mode:"ai",type:"p",range:10,shots:2,impact:0,traits:[]},{name:"Hvy. AT Gun",mode:"gp",type:"p",range:10,shots:1,impact:6,traits:[["Frag",0]]}], role:"core",      faction:"standard", builtIn:true, officialPts:{perStand:100, unitPts:300, indPts:130, cmdPts:150, heroPts:155, cmdHeroPts:175}},
+{id:"std_mbt",       name:"Main Battle Tanks",       class:"afv",   speed:8,  mobility:"track", aim:4, assault:2, saveNumber:2, morale:3, standTraits:[], weapons:[{name:"2x Tank MG",mode:"ai",type:"p",range:2,shots:2,impact:0,traits:[]},{name:"Hvy. AT Gun",mode:"gp",type:"p",range:10,shots:1,impact:6,traits:[["Frag",0]]}], role:"core",      faction:"standard", builtIn:true, officialPts:{perStand:100, unitPts:300, indPts:130, cmdPts:150, heroPts:155, cmdHeroPts:175}},
 {id:"std_spg",       name:"Self-Propelled Guns",     class:"afv",   speed:8,  mobility:"track", aim:5, assault:0, saveNumber:6, morale:4, standTraits:[], weapons:[{name:"Howitzer",mode:"gp",type:"p",range:20,shots:2,impact:2,traits:[["Frag",0],["Indirect",3]]}], role:"support",   faction:"standard", builtIn:true, officialPts:{perStand:128, unitPts:385, indPts:170, cmdPts:195, heroPts:200, cmdHeroPts:225}},
 {id:"std_air_stk",   name:"Air Striker",             class:"ac",    speed:10, mobility:"air",   aim:4, assault:1, saveNumber:3, morale:4, standTraits:[], weapons:[{name:"AC Autocannon",mode:"gp",type:"s",range:5,shots:2,impact:2,traits:[]},{name:"AC Rockets",mode:"gp",type:"s",range:10,shots:1,impact:5,traits:[["Anti-Aircraft",1],["Burst",0],["Frag",0]]}], role:"support",   faction:"standard", builtIn:true, officialPts:{perStand:174, unitPts:350, indPts:230, cmdPts:265, heroPts:270, cmdHeroPts:305}},
 {id:"std_sh_tank",   name:"Super Heavy Tank",        class:"sh",    speed:6,  mobility:"track", aim:4, assault:2, saveNumber:3, morale:2, standTraits:[], weapons:[{name:"4x Tank MG",mode:"ai",type:"p",range:2,shots:4,impact:0,traits:[]},{name:"Siege Cannon",mode:"gp",type:"s",range:5,shots:1,impact:8,traits:[]},{name:"Pulse Laser",mode:"gp",type:"p",range:5,shots:2,impact:6,traits:[["Burst",0]]}], role:"core",      faction:"standard", builtIn:true, officialPts:{perStand:351, unitPts:355, indPts:355, cmdPts:425, heroPts:440, cmdHeroPts:510}},
@@ -2068,7 +2068,13 @@ function _migrateState() {
 // ============================================================
 // UTILITY
 // ============================================================
-function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+let _uidSeq = 0;
+function uid() {
+  // Timestamp + monotonic counter + random suffix: same-millisecond calls in
+  // tight loops (imports, migrations) can never collide.
+  _uidSeq = (_uidSeq + 1) % 46656;   // 36^3
+  return Date.now().toString(36) + _uidSeq.toString(36).padStart(3,"0") + Math.random().toString(36).slice(2,8).padEnd(6,"0");
+}
 function roundToFive(v) { v = Math.ceil(v); return v + (v%5===0 ? 0 : 5-(v%5)); }
 function esc(s) {
   return String(s==null?"":s)
@@ -2378,6 +2384,19 @@ function findTraitEntry(dict, name){ return Object.entries(dict).find(([,v])=>tr
 // (custom traits) and as the role-req val "troop" (built-ins) - both mean
 // "only infantry / cavalry / field guns may take this trait".
 const TROOP_CLASSES = ["inf","cav","fg"];
+
+// Minimum movement shown on unit cards. Aircraft: 3/4 Speed, half with
+// Dogfighter, none with Hover. Grav: half Speed, but only when the unit
+// actually took the Minimum Speed drawback trait.
+function minSpeedFor(unit) {
+  const has = n => (unit.standTraits||[]).some(t=>traitNameEq(t[0],n));
+  if (unit.mobility === "air") {
+    if (has("Hover")) return null;
+    return Math.ceil(unit.speed * (has("Dogfighter") ? 1/2 : 3/4));
+  }
+  if (unit.mobility === "grav") return has("Minimum Speed") ? Math.ceil(unit.speed/2) : null;
+  return null;
+}
 function classReqOk(clsReq, cls) {
   return clsReq.vals.includes(cls) || (clsReq.vals.includes("troop") && TROOP_CLASSES.includes(cls));
 }
@@ -2463,9 +2482,7 @@ function unitCardHTML(unit, actions, viewType="unit", opts={}) {
         const wName = w.name ? `<strong>${esc(w.name)}</strong> ` : "";
         return `<div class="weapon-row">${wName}<span class="wtype">${(w.mode||'').toUpperCase()}/${(w.type||'').toUpperCase()}</span> | Range <span>${rangeLabel(w.range)}</span> | Shots <span>${w.shots}</span> | Impact <span>+${w.impact}</span>${wtHTML}</div>`;
       }).join("");
-  const minSpd = unit.mobility === "grav" ? Math.ceil(unit.speed / 2)
-               : unit.mobility === "air"  ? Math.ceil(unit.speed * 3 / 4)
-               : null;
+  const minSpd = minSpeedFor(unit);
   const pKey = VIEW_PTS_KEY[viewType] || "unitPts";
   const pVal = pts[pKey] != null ? pts[pKey] : "-";
   const pLabel = VIEW_LABELS[viewType] || "Unit";
@@ -2522,9 +2539,7 @@ function mechPairCardHTML(infUnit, tuUnit, n, actionsHTML, viewType, opts={}) {
           const wName = w.name ? `<strong>${esc(w.name)}</strong> ` : "";
           return `<div class="weapon-row">${wName}<span class="wtype">${(w.mode||'').toUpperCase()}/${(w.type||'').toUpperCase()}</span> | Range <span>${rangeLabel(w.range)}</span> | Shots <span>${w.shots}</span> | Impact <span>+${w.impact}</span>${wtHTML}</div>`;
         }).join("");
-    const minSpd = unit.mobility === "grav" ? Math.ceil(unit.speed/2)
-                 : unit.mobility === "air"  ? Math.ceil(unit.speed*3/4)
-                 : null;
+    const minSpd = minSpeedFor(unit);
     const pKey = VIEW_PTS_KEY[vt] || "unitPts";
     const pVal = extra.ptsVal != null ? extra.ptsVal : (pts[pKey] != null ? pts[pKey] : "-");
     const pLabel = VIEW_LABELS[vt] || "Unit";
@@ -6026,8 +6041,11 @@ function renderTFDetail() {
   </div>`;
 }
 
-function openNewTFModal() {
+function openNewTFModal(fromTemplate) {
   editingTFId = null;
+  // A plain "New Task Force" must not inherit the template of an earlier,
+  // cancelled from-template flow.
+  if(!fromTemplate) _newTFTemplateId = null;
   const tmpl = _newTFTemplateId ? (state.tfTemplates||[]).find(t=>t.id===_newTFTemplateId) : null;
   document.getElementById("tf-new-name").value = "";
   document.getElementById("tf-commander").value = "";
@@ -6257,8 +6275,10 @@ function renderAddUnitTypeSelector() {
   const canAdd = !tf || canAddToSection(tf, addUnitTargetRole, u.class);
   const pts = calcPoints(u);
   const typePtsMap = {unit:pts.unitPts, independent:pts.indPts, hero:pts.heroPts, command:pts.cmdPts, cmdHero:pts.cmdHeroPts};
+  // Support slots cost +10% - show the price the slot will actually add
+  const adj = v => (v != null && addUnitTargetRole === "support") ? roundToFive(v * 1.10) : v;
   optionsEl.innerHTML = types.map(t => {
-    const ptsVal = typePtsMap[t];
+    const ptsVal = adj(typePtsMap[t]);
     const sel = addUnitSelectedType === t;
     return `<button onclick="addUnitSelectedType='${t}';renderAddUnitTypeSelector()"
       style="font-family:var(--font-body);font-size:12px;padding:4px 10px;border-radius:12px;border:1px solid ${sel?"#007eff":"#333"};background:${sel?"#1a2a4a":"#111"};color:${sel?"#7eb3ff":"#aaa"};cursor:pointer">
@@ -6598,7 +6618,7 @@ function _renderTFTemplateList() {
 function useTFTemplate(templateId) {
   _newTFTemplateId = templateId;
   closeModal("modal-tf-templates");
-  openNewTFModal();
+  openNewTFModal(true);
 }
 
 function deleteTFTemplate(id) {
@@ -6866,10 +6886,11 @@ function openAssetPickerModal(tfId) {
 function renderAssetPickerList() {
   const search = (document.getElementById("asset-picker-search")?.value||"").toLowerCase();
   const tf = state.taskForces.find(t=>t.id===assetPickerTFId);
-  const tfFaction = (tf?.faction && tf.faction !== "any") ? tf.faction : null;
+  const tfFaction = tf?.faction || null;
   let assets = allTacticalAssets().filter(a => {
-    // Filter by faction: faction-locked assets only available when TF faction matches
-    if(a.faction && a.faction !== tfFaction) return false;
+    // Filter by faction: faction-locked assets only available when the TF
+    // faction matches; a TF open to "any" faction may take all of them
+    if(a.faction && tfFaction !== "any" && a.faction !== tfFaction) return false;
     if(search && !a.name.toLowerCase().includes(search) && !a.fn.toLowerCase().includes(search)) return false;
     return true;
   });
@@ -8104,7 +8125,7 @@ function renderArmyDetail() {
           ${grp.keys.map(s => {
             const sd = _bgSymLookup(s);
             const isCurrent = army.symbol === s;
-            return `<button onclick="setArmyIcon('${army.id}','${isCurrent?null:s}')" title="${sd.label}" style="width:32px;height:32px;border-radius:6px;padding:0;border:${isCurrent?"2px solid "+sd.color:"1px solid "+sd.color+"44"};background:${isCurrent?sd.color+"2a":"transparent"};color:${sd.color};cursor:pointer;display:inline-flex;align-items:center;justify-content:center">${_bgSymInner(sd)}</button>`;
+            return `<button onclick="setArmyIcon('${army.id}','${isCurrent?"":s}')" title="${sd.label}" style="width:32px;height:32px;border-radius:6px;padding:0;border:${isCurrent?"2px solid "+sd.color:"1px solid "+sd.color+"44"};background:${isCurrent?sd.color+"2a":"transparent"};color:${sd.color};cursor:pointer;display:inline-flex;align-items:center;justify-content:center">${_bgSymInner(sd)}</button>`;
           }).join("")}
         </div>
       </div>`).join("")}
@@ -8278,7 +8299,7 @@ function _pUnitCard(unit, viewType, tfBadgeHTML, opts, pal, gray) {
   const pKey   = VIEW_PTS_KEY[viewType] || "unitPts";
   const pVal   = opts.ptsVal != null ? opts.ptsVal : (pts[pKey] != null ? pts[pKey] : "-");
   const pLabel = opts.ptsLabel || VIEW_LABELS[viewType] || "Unit";
-  const minSpd = unit.mobility === "grav" ? Math.ceil(unit.speed/2) : unit.mobility === "air" ? Math.ceil(unit.speed*3/4) : null;
+  const minSpd = minSpeedFor(unit);
   const traitsHTML  = _pTraitPills(unit.standTraits||[], allStandTraits(), pal, gray);
   const weaponsHTML = (unit.weapons||[]).length === 0
     ? `<div style="padding:4px 8px;font-size:10px;color:${pal.mutedText};font-style:italic;background:${pal.wepBg};border-radius:4px;margin-top:3px">No ranged weapons - assault only</div>`
@@ -8323,7 +8344,21 @@ function _pUnitCard(unit, viewType, tfBadgeHTML, opts, pal, gray) {
   </div>`;
 }
 
-function _pMechPair(carrier, viewType, tu, n, badgeHTML, pal, gray) {
+// Printed per-unit cost for a support-role slot: deployment cost + transport,
+// then the +10% support premium - the same math the battle-group and TF
+// totals use (slotPointValue/entryPointValue), so cards match their headers.
+function _pSupportAdjusted(u, unitType, tu) {
+  const pts = calcPoints(u);
+  const key = VIEW_PTS_KEY[unitType||"unit"] || "unitPts";
+  let base = pts[key] != null ? pts[key] : pts.unitPts;
+  const tPts = tu ? mechanizedCount(u, tu, unitType) * calcPoints(tu).perStand : 0;
+  const total = roundToFive((base + tPts) * 1.10);
+  // For mech pairs the transport half shows its own cost - return the
+  // remainder so the two point boxes still sum to the charged total.
+  return total - tPts;
+}
+
+function _pMechPair(carrier, viewType, tu, n, badgeHTML, pal, gray, carrierPtsVal) {
   const connBg   = gray ? "#e8e8e8" : "#e8f5e9";
   const connFg   = gray ? "#555"    : "#2e7d32";
   const connBord = gray ? "#ccc"    : "#a5d6a7";
@@ -8333,8 +8368,7 @@ function _pMechPair(carrier, viewType, tu, n, badgeHTML, pal, gray) {
     const pKey = VIEW_PTS_KEY[vt] || "unitPts";
     const pVal = extra.ptsVal != null ? extra.ptsVal : (pts[pKey] != null ? pts[pKey] : "-");
     const pLabel = extra.ptsLabel || VIEW_LABELS[vt] || "Unit";
-    const minSpd = unit.mobility === "grav" ? Math.ceil(unit.speed/2)
-                 : unit.mobility === "air"  ? Math.ceil(unit.speed*3/4) : null;
+    const minSpd = minSpeedFor(unit);
     const traitsHTML = _pTraitPills(unit.standTraits||[], allStandTraits(), pal, gray);
     const weaponsHTML = (unit.weapons||[]).length === 0
       ? `<div style="padding:4px 8px;font-size:10px;color:${pal.mutedText};font-style:italic;background:${pal.wepBg};border-radius:4px;margin-top:3px">No ranged weapons - assault only</div>`
@@ -8378,7 +8412,7 @@ function _pMechPair(carrier, viewType, tu, n, badgeHTML, pal, gray) {
   }
   const tuPtsPerStand = calcPoints(tu).perStand;
   return `<div class="mech-pair-print" style="display:flex;background:${pal.cardBg};border:1.5px solid ${pal.cardBorder};border-radius:8px;overflow:hidden;break-inside:avoid;page-break-inside:avoid">
-    ${halfContent(carrier, viewType, {badge: badgeHTML||""})}
+    ${halfContent(carrier, viewType, {badge: badgeHTML||"", ptsVal: carrierPtsVal != null ? carrierPtsVal : undefined})}
     <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px 4px;background:${connBg};border-left:1px solid ${connBord};border-right:1px solid ${connBord};gap:4px;min-width:26px;flex-shrink:0">
       <i class="fa-solid fa-truck" style="color:${connFg};font-size:12px"></i>
       <span style="font-size:7px;font-weight:bold;text-transform:uppercase;letter-spacing:.5px;color:${connFg};writing-mode:vertical-rl;transform:rotate(180deg)">Mechanized</span>
@@ -8574,9 +8608,10 @@ function _buildArmyPrintContent(army, pal, gray) {
     const hdrBg   = gray ? "#e0e0e0" : (sd?.color ? sd.color + "0e" : "#edf2fb");
     const hdrBord = gray ? "#bbb"    : (sd?.color ? sd.color + "55" : "#c0cce8");
 
-    const withTransport = (carrier, viewType, tu, badgeHTML) => {
-      if (!tu) return [{html: _pUnitCard(carrier, viewType, badgeHTML||"", {}, pal, gray), full: false}];
-      return [{html: _pMechPair(carrier, viewType, tu, mechanizedCount(carrier, tu, viewType), badgeHTML||"", pal, gray), full: true}];
+    const withTransport = (carrier, viewType, tu, badgeHTML, role) => {
+      const sup = role === "support" ? _pSupportAdjusted(carrier, viewType, tu) : null;
+      if (!tu) return [{html: _pUnitCard(carrier, viewType, badgeHTML||"", sup != null ? {ptsVal: sup} : {}, pal, gray), full: false}];
+      return [{html: _pMechPair(carrier, viewType, tu, mechanizedCount(carrier, tu, viewType), badgeHTML||"", pal, gray, sup != null ? sup : undefined), full: true}];
     };
     const unitCards = (bg.entries||[]).flatMap(e => {
       if (fp) {
@@ -8597,7 +8632,7 @@ function _buildArmyPrintContent(army, pal, gray) {
           ? `<span style="display:inline-flex;align-items:center;gap:3px;flex-wrap:wrap"><span style="display:inline-block;padding:1px 6px;border-radius:8px;font-size:9px;font-weight:bold;background:${tfColor}18;color:${tfColor};border:1px solid ${tfColor}44">${esc(tf.name)}</span><span style="display:inline-block;padding:1px 6px;border-radius:8px;font-size:9px;font-weight:bold;background:${pal.assetColor}18;color:${pal.assetColor};border:1px solid ${pal.assetColor}44"><i class="fa-solid fa-chess" style="font-size:7px;margin-right:2px"></i>${esc(asset.name)}</span></span>`
           : `<span style="display:inline-block;padding:1px 6px;border-radius:8px;font-size:9px;font-weight:bold;background:${tfColor}18;color:${tfColor};border:1px solid ${tfColor}44">${esc(tf.name)}</span>`;
         const tu = slot.transport ? unitById(slot.transport) : null;
-        return Array.from({length:qty}).flatMap(() => withTransport(u, slot.unitType||"unit", tu, tfBadge));
+        return Array.from({length:qty}).flatMap(() => withTransport(u, slot.unitType||"unit", tu, tfBadge, slot.role));
       }
     });
 
@@ -8626,6 +8661,7 @@ function printArmy(armyId, paperSize, inkMode) {
   const content = _buildArmyPrintContent(army, pal, gray);
   const w = window.open("", "_blank");
   if (w) { w.document.write(_printShell(army.name, content, paperSize, pal)); w.document.close(); }
+  else showToast("Couldn't open the print window - allow pop-ups for this site and try again.");
 }
 
 // ── Task Force print ──────────────────────────────────────
@@ -8712,8 +8748,9 @@ function printTF(tfId, paperSize, inkMode) {
       const u = unitById(slot.unitId);
       if (!u) return [];
       const tu = slot.transport ? unitById(slot.transport) : null;
-      if (tu) return [{html: _pMechPair(u, slot.unitType||"unit", tu, mechanizedCount(u, tu, slot.unitType), "", pal, gray), full: true}];
-      return [{html: _pUnitCard(u, slot.unitType||"unit", "", {}, pal, gray), full: false}];
+      const sup = slot.role === "support" ? _pSupportAdjusted(u, slot.unitType, tu) : null;
+      if (tu) return [{html: _pMechPair(u, slot.unitType||"unit", tu, mechanizedCount(u, tu, slot.unitType), "", pal, gray, sup != null ? sup : undefined), full: true}];
+      return [{html: _pUnitCard(u, slot.unitType||"unit", "", sup != null ? {ptsVal: sup} : {}, pal, gray), full: false}];
     });
     return `<div class="print-page page-break">
       <div class="bg-header" style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:${hdrBg};border:2px solid ${hdrBord};border-radius:10px;margin-bottom:16px">
@@ -8726,6 +8763,7 @@ function printTF(tfId, paperSize, inkMode) {
 
   const w = window.open("", "_blank");
   if (w) { w.document.write(_printShell(tf.name, overviewPage + unitPages, paperSize, pal)); w.document.close(); }
+  else showToast("Couldn't open the print window - allow pop-ups for this site and try again.");
 }
 
 // ── Expeditionary Force print ─────────────────────────────
@@ -8739,7 +8777,7 @@ function printForce(forceId, paperSize, inkMode) {
 
   const agSummaryRows = agList.map(ag => {
     const armyList = (ag.armyIds||[]).map(id=>state.armies.find(a=>a.id===id)).filter(Boolean);
-    const agPts = armyList.reduce((s,a)=>s+armyDeployedPoints(a),0);
+    const agPts = armyList.reduce((s,a)=>s+armyPoints(a),0);   // pool points - matches the on-screen Forces page
     return `<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:${pal.tfRowBg};border:1px solid ${pal.cardBorder};border-radius:6px;margin-bottom:4px">
       <span style="font-weight:700;font-size:13px;color:${pal.pageText}">${esc(ag.name||"Army Group")}</span>
       <span style="font-size:10px;color:${pal.mutedText};margin-left:auto">${armyList.length} arm${armyList.length!==1?"ies":"y"} · ${agPts} pts</span>
@@ -8771,8 +8809,8 @@ function printForce(forceId, paperSize, inkMode) {
         // inject AG banner at start of first army's overview page
         content = content.replace('<div class="print-page">', `<div class="print-page">${agBanner}`);
       }
-      if (agIdx > 0 && armyIdx === 0) {
-        // page break between army groups
+      if (agIdx > 0 || armyIdx > 0) {
+        // every army after the very first starts on a fresh sheet
         content = content.replace('<div class="print-page">', '<div class="print-page page-break">');
       }
       return content;
@@ -8781,6 +8819,7 @@ function printForce(forceId, paperSize, inkMode) {
 
   const w = window.open("", "_blank");
   if (w) { w.document.write(_printShell(force.name, overviewPage + agPages, paperSize, pal)); w.document.close(); }
+  else showToast("Couldn't open the print window - allow pop-ups for this site and try again.");
 }
 
 // ===== FREE-PICK UNIT MODAL =====
@@ -8858,7 +8897,9 @@ function addFPUnit(unitId, unitType) {
   bg.entries = bg.entries || [];
   const resolvedType = unitType || "unit";
   const addQty = Math.max(1, fpAddQty|0);
-  const existing = bg.entries.find(e => e.unitId === unitId && e.unitType === resolvedType);
+  // Never merge into a mechanized entry - the new copies have no transport
+  // and would otherwise be silently charged for one.
+  const existing = bg.entries.find(e => e.unitId === unitId && e.unitType === resolvedType && !e.transport);
   if(existing) {
     existing.qty = (existing.qty || 1) + addQty;
   } else {
@@ -9555,7 +9596,7 @@ function renderForceDetail() {
         <div style="display:flex;gap:4px;flex-wrap:wrap">
           ${grp.keys.map(s=>{
             const sd=_bgSymLookup(s); const ic=force.symbol===s;
-            return `<button onclick="setForceIcon('${force.id}','${ic?null:s}')" title="${sd.label}" style="width:32px;height:32px;border-radius:6px;padding:0;border:${ic?"2px solid "+sd.color:"1px solid "+sd.color+"44"};background:${ic?sd.color+"2a":"transparent"};color:${sd.color};cursor:pointer;display:inline-flex;align-items:center;justify-content:center">${_bgSymInner(sd)}</button>`;
+            return `<button onclick="setForceIcon('${force.id}','${ic?"":s}')" title="${sd.label}" style="width:32px;height:32px;border-radius:6px;padding:0;border:${ic?"2px solid "+sd.color:"1px solid "+sd.color+"44"};background:${ic?sd.color+"2a":"transparent"};color:${sd.color};cursor:pointer;display:inline-flex;align-items:center;justify-content:center">${_bgSymInner(sd)}</button>`;
           }).join("")}
         </div>
       </div>`).join("")}
@@ -9828,7 +9869,7 @@ function _renderAddArmyEFList() {
   }
   listEl.innerHTML = available.map(army=>{
     const fp = isFreePick(army);
-    const deployedPts = armyDeployedPoints(army);
+    const deployedPts = armyPoints(army);   // pool points - matches the AG rows on this page
     const tfCount = (army.taskForceIds||[]).length;
     const armySym = army.symbol ? _bgSymLookup(army.symbol) : null;
     const armyIconEl = armySym
@@ -10304,9 +10345,15 @@ _libFilterCollapsed = window.innerWidth <= 640;
 
 showPage("builder");
 
-// Close modals on background click
+// Close modals on background click. The free-pick add-units modal has its
+// own close path that re-renders the army detail behind it - route through
+// it so background-dismissal doesn't leave a stale view.
 document.querySelectorAll(".modal-bg").forEach(mb=>{
-  mb.addEventListener("click",function(e){ if(e.target===mb) mb.classList.remove("open"); });
+  mb.addEventListener("click",function(e){
+    if(e.target!==mb) return;
+    if(mb.id==="modal-fp-unit") { closeFPUnitModal(); return; }
+    mb.classList.remove("open");
+  });
 });
 
 // Close library quick-add popover on outside click
