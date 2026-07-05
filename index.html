@@ -1494,9 +1494,35 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px soli
 
 <script>
 // ============================================================
+// GAME PACK: LASERSTORM (2nd Edition)
+// ============================================================
+// Everything game-specific is registered under this one namespace: the
+// data (traits, units, classes, factions, assets, org charts), the cost
+// engine, the transport rules, and the force-organization constants.
+// The rest of the file - persistence, containers, import/export, print,
+// UI - is game-agnostic shell that reaches game rules through GAME
+// (today via the compat aliases declared next to each member; the alias
+// names are the legacy identifiers). This boundary is the seed of a
+// multi-game engine: a different game would ship a different GAME object.
+const GAME = {
+  meta: { id: "laserstorm", name: "LaserStorm", edition: "2nd Edition" },
+  traits: {},       // stand/weapon trait pools + structured requirements
+  classes: null,    // stand-class costing profiles (size, mult, saves...)
+  classProfiles: null, // tactical reference table shown on the cost card
+  factions: {},     // built-in faction identities (colors, icons, labels)
+  units: null,      // representative stock units
+  tacticalAssets: null,
+  orgCharts: null,  // built-in task-force compositions (slot min/max per class)
+  deployment: {},   // deployment types: labels + cost-column mapping
+  org: {},          // force-organization ratios & taxonomy constants
+  cost: {},         // points engine
+  transport: {},    // mechanized transport rules
+};
+
+// ============================================================
 // DATA: TRAITS
 // ============================================================
-const STAND_TRAITS = {
+GAME.traits.stand = {
   ad:       ["Active Defenses",3,    "Always counts as in Cover when fired upon. Does not apply to Assault combat."],
   aggLoop:  ["Aggression Loop",1,   "[Soulless][Unit] When subject to Push Back, may choose to advance 3\" toward the attacker instead.",{unitTrait:true}],
   av:       ["Assault Vehicle",1,   "This AFV may initiate Assaults. No Damage Save dice penalty in Assaults."],
@@ -1534,8 +1560,9 @@ const STAND_TRAITS = {
   vSworn:   ["Vowsworn",1,          "[Warrior][Unit] The Stand & Die Morale option automatically succeeds without a die roll.",{unitTrait:true}],
   vtol:     ["VTOL",1,              "[Aircraft] Can land in open terrain. Can be targeted with AT and GP weapons while Landed."]
 };
+const STAND_TRAITS = GAME.traits.stand;
 
-const WEAPON_TRAITS = {
+GAME.traits.weapon = {
   aiGuide:  ["A.I. Guided",0,  "[Soulless][Indirect] Reroll 1s on to hit rolls."],
   aa:       ["Anti-Aircraft",1,"This weapon may attack Aircraft."],
   burst:    ["Burst",0,        "A successful attack inflicts 3 hits instead of one. No single Stand can take more than one hit from one Burst."],
@@ -1547,6 +1574,7 @@ const WEAPON_TRAITS = {
   repFire:  ["Repeating Fire",0,"Every 6 rolled to hit allows an additional Shot to be fired."],
   tgt:      ["Targeting",0,    "+1 to hit rolls."]
 };
+const WEAPON_TRAITS = GAME.traits.weapon;
 
 // Structured requirements for built-in traits.
 // Each entry is an array of requirement objects (all ANDed together).
@@ -1556,7 +1584,7 @@ const WEAPON_TRAITS = {
 //   type "mobility" → must use this mobility key
 //   type "role"     → "hero", "independent", "troop"=non-vehicle (unit role removed - Unit Traits are unrestricted)
 //   type "traitr"   → weapon must also carry this weapon-trait key
-const TRAIT_REQS = {
+GAME.traits.reqs = {
   // Stand traits
   aggLoop:  [{type:"faction",vals:["soulless"]}],
   av:       [{type:"class",vals:["afv"]}],
@@ -1581,8 +1609,9 @@ const TRAIT_REQS = {
   // Weapon traits
   aiGuide:  [{type:"faction",vals:["soulless"]}, {type:"traitr",vals:["indir"]}],
 };
+const TRAIT_REQS = GAME.traits.reqs;
 
-const CLASS_INFO = {
+GAME.classes = {
   inf:  {label:"Infantry",    size:6, mult:1, baseSave:6,  saveDice:1, baseSpeed:4, minSave:3},
   cav:  {label:"Cavalry",     size:4, mult:1, baseSave:6,  saveDice:1, baseSpeed:8, minSave:3},
   fg:   {label:"Field Gun",   size:3, mult:1, baseSave:6,  saveDice:1, baseSpeed:4, minSave:3},
@@ -1592,18 +1621,20 @@ const CLASS_INFO = {
   sh:   {label:"Super Heavy", size:1, mult:3, baseSave:18, saveDice:3, baseSpeed:4, minSave:1},
   beh:  {label:"Behemoth",    size:1, mult:4, baseSave:24, saveDice:4, baseSpeed:4, minSave:0}
 };
+const CLASS_INFO = GAME.classes;
 
 // Independent / Command / Hero premiums by Stand Class (Workshop ch.)
 // null = not allowed (e.g. Field Gun & Behemoth cannot be Command Stands)
-function premiumsFor(cls) {
+GAME.cost.premiumsFor = function(cls) {
   if(cls==="beh") return {ind:0.00, cmd:null, hero:0.25, cmdHero:null};
   if(cls==="sh")  return {ind:0.00, cmd:0.20, hero:0.25, cmdHero:0.45};
   if(cls==="fg")  return {ind:0.30, cmd:null, hero:0.55, cmdHero:null};
   return                 {ind:0.30, cmd:0.50, hero:0.55, cmdHero:0.75};
-}
+};
+const premiumsFor = GAME.cost.premiumsFor;
 
 // Tactical class profiles (Unit Classes - CLASSES table)
-const CLASS_PROFILE = {
+GAME.classProfiles = {
   inf:  {cat:"Troops",  represents:"4-6 infantry", dtime:"Yes", assault:"Yes", vuln:"AI, GP",     snap:"Move or Fire", transport:"Fills 1 slot",  save:"1D6"},
   cav:  {cat:"Troops",  represents:"3-5 cavalry",  dtime:"Yes", assault:"Yes", vuln:"AI, GP",     snap:"Move",         transport:"No",            save:"1D6"},
   scout:{cat:"Troops",  represents:"2-3 scouts",   dtime:"Yes", assault:"No",  vuln:"AI, AT, GP", snap:"Move",         transport:"No",            save:"1D6"},
@@ -1613,6 +1644,7 @@ const CLASS_PROFILE = {
   sh:   {cat:"Vehicle", represents:"single Super Heavy", dtime:"No", assault:"Crush", vuln:"AT, GP", snap:"Move or Fire (1 Stand)", transport:"No", save:"3D6"},
   beh:  {cat:"Vehicle", represents:"single Behemoth", dtime:"No", assault:"Crush / Titanic Brawl", vuln:"AT, GP", snap:"No", transport:"No",       save:"4D6"}
 };
+const CLASS_PROFILE = GAME.classProfiles;
 
 function renderClassProfile() {
   const cls = document.getElementById("b-class").value;
@@ -1631,15 +1663,17 @@ function renderClassProfile() {
     </div>`;
 }
 
-const RANGE_OPTS = [
+GAME.weapons = {};
+GAME.weapons.rangeOpts = [
   {label:"10\"", val:0}, {label:"20\"", val:2}, {label:"30\"", val:5},
   {label:"40\"", val:10}, {label:"50\"", val:20}
 ];
+const RANGE_OPTS = GAME.weapons.rangeOpts;
 
 // ============================================================
 // DATA: BUILT-IN UNITS (representative Laserstorm units)
 // ============================================================
-const BUILTIN_UNITS = [
+GAME.units = [
 // ── STANDARD (HUMAN) ─────────────────────────────────────────
 {id:"std_reg_inf",   name:"Regular Infantry",       class:"inf",   speed:4,  mobility:"troop", aim:5, assault:0, saveNumber:5, morale:4, standTraits:[], weapons:[{name:"Small Arms",mode:"ai",type:"s",range:2,shots:1,impact:0,traits:[]},{name:"Buzzbomb",mode:"at",type:"s",range:0,shots:1,impact:3,traits:[]}], role:"core",      faction:"standard", builtIn:true, officialPts:{perStand:10,  unitPts:60,  indPts:15,  cmdPts:15,  heroPts:20,  cmdHeroPts:20}},
 {id:"std_sup_sec",   name:"Support Section",        class:"inf",   speed:4,  mobility:"troop", aim:5, assault:0, saveNumber:5, morale:4, standTraits:[], weapons:[{name:"MG",mode:"ai",type:"p",range:2,shots:2,impact:0,traits:[]},{name:"Heavy Laser",mode:"at",type:"p",range:10,shots:1,impact:3,traits:[["Heavy",-1],["Targeting",0]]}], role:"support",   faction:"standard", builtIn:true, officialPts:{perStand:22,  unitPts:135, indPts:30,  cmdPts:35,  heroPts:35,  cmdHeroPts:40}},
@@ -1697,6 +1731,7 @@ const BUILTIN_UNITS = [
 {id:"war_paragon",   name:"Paragon Super Heavy Tank", class:"sh",    speed:6,  mobility:"track", aim:5, assault:6, saveNumber:3, morale:2, standTraits:[], weapons:[{name:"4x Vehicle MG",mode:"ai",type:"p",range:2,shots:4,impact:0,traits:[]},{name:"Dual BC",mode:"at",type:"p",range:5,shots:2,impact:7,traits:[]},{name:"Dual BC",mode:"at",type:"p",range:5,shots:2,impact:7,traits:[]}], role:"core",      faction:"warrior",  builtIn:true, officialPts:{perStand:282, unitPts:285, indPts:285, cmdPts:340, heroPts:355, cmdHeroPts:410}},
 {id:"war_predator",  name:"Predator War God",         class:"beh",   speed:4,  mobility:"walk",  aim:5, assault:7, saveNumber:8, morale:2, standTraits:[], weapons:[{name:"Dual BC",mode:"at",type:"p",range:5,shots:2,impact:7,traits:[]},{name:"Missile Pod",mode:"gp",type:"p",range:2,shots:3,impact:5,traits:[]},{name:"Gauss Cannon",mode:"at",type:"p",range:10,shots:1,impact:10,traits:[["Indirect",3],["Targeting",0]]}], role:"core",      faction:"warrior",  builtIn:true, officialPts:{perStand:528, unitPts:530, indPts:530, cmdPts:null,heroPts:660, cmdHeroPts:null}},
 ];
+const BUILTIN_UNITS = GAME.units;
 
 // ============================================================
 // STATE
@@ -2143,18 +2178,27 @@ function computeAllowedRoles(unit) {
   return roleVals.size > 0 ? [...roleVals] : null;
 }
 
+// Game-agnostic shell: memoizes the game pack's cost function per unit id.
+// The cache is invalidated by saveState/loadState/undoState.
 function calcPoints(unit) {
   if (unit.id) {
     if (!_calcPtsCache) _calcPtsCache = new Map();
     const hit = _calcPtsCache.get(unit.id);
     if (hit) return hit;
   }
-  const _cacheResult = r => { if (unit.id) _calcPtsCache.set(unit.id, r); return r; };
+  const r = GAME.cost.unitCost(unit);
+  if (unit.id) _calcPtsCache.set(unit.id, r);
+  return r;
+}
+
+// ── GAME PACK: points engine (LaserStorm Workshop chapter) ──
+// Returns per-deployment costs for a unit; null = deployment not allowed.
+GAME.cost.unitCost = function(unit) {
   if (unit.officialPts) {
     const ci = CLASS_INFO[unit.class] || CLASS_INFO.inf;
     const op = unit.officialPts;
-    return _cacheResult({ perStand:op.perStand, unitSize:ci.size, unitPts:op.unitPts, indPts:op.indPts,
-             cmdPts:op.cmdPts, heroPts:op.heroPts, cmdHeroPts:op.cmdHeroPts, saveDice:ci.saveDice });
+    return { perStand:op.perStand, unitSize:ci.size, unitPts:op.unitPts, indPts:op.indPts,
+             cmdPts:op.cmdPts, heroPts:op.heroPts, cmdHeroPts:op.cmdHeroPts, saveDice:ci.saveDice };
   }
   const ci = CLASS_INFO[unit.class] || CLASS_INFO.inf;
   // Coerce numeric inputs defensively: a corrupt/legacy/hand-edited import with
@@ -2252,7 +2296,7 @@ function calcPoints(unit) {
   const effectiveSize = unit.customSize ? Math.max(minSize, unit.customSize) : defaultSize;
   const belowDefault = effectiveSize < defaultSize;
   const sizeFactor = belowDefault ? 1.10 : 1.0;
-  return _cacheResult({
+  return {
     perStand: total,
     unitSize: effectiveSize,
     defaultSize,
@@ -2265,8 +2309,8 @@ function calcPoints(unit) {
     saveDice: ci.saveDice,
     allowedRoles,
     breakdown: {standPts, standComps, weaponPts, weaponComps, mult: ci.mult}
-  });
-}
+  };
+};
 
 function rangeLabel(rv) {
   return {0:"10\"",2:"20\"",5:"30\"",10:"40\"",20:"50\""}[rv] || rv+"\"";
@@ -2280,8 +2324,10 @@ function classBadge(c, noTip) {
 }
 function roleBadge(r) { return `<span class="badge badge-${r}">${r}</span>`; }
 
-const BUILTIN_FACTION_ICONS = {standard:"shield",precursor:"gem",soulless:"robot",swarm:"virus",warrior:"hand-fist"};
-const BUILTIN_FACTION_LABELS = {standard:"Standard",precursor:"Precursor",soulless:"Soulless",swarm:"Swarm",warrior:"Warrior"};
+GAME.factions.icons = {standard:"shield",precursor:"gem",soulless:"robot",swarm:"virus",warrior:"hand-fist"};
+const BUILTIN_FACTION_ICONS = GAME.factions.icons;
+GAME.factions.labels = {standard:"Standard",precursor:"Precursor",soulless:"Soulless",swarm:"Swarm",warrior:"Warrior"};
+const BUILTIN_FACTION_LABELS = GAME.factions.labels;
 
 function factionPill(factionId, opts={}) {
   if(!factionId) return "";
@@ -2313,7 +2359,8 @@ function factionBadge(unit) {
   return "";
 }
 
-const TRAIT_FACTION_NAMES = new Set(["soulless","precursor","swarm","warrior","standard"]);
+GAME.factions.keySet = new Set(["soulless","precursor","swarm","warrior","standard"]);
+const TRAIT_FACTION_NAMES = GAME.factions.keySet;
 function traitFactionKey(traitEntry) {
   if(traitEntry && traitEntry.length >= 4 && typeof traitEntry[3] === 'string') return traitEntry[3] || null;
   const m = (traitEntry?.[2]||"").match(/^\[(\w+)\]/);
@@ -2383,7 +2430,8 @@ function findTraitEntry(dict, name){ return Object.entries(dict).find(([,v])=>tr
 // "Troop" = non-vehicle stand classes. Appears as the class-req val "troop"
 // (custom traits) and as the role-req val "troop" (built-ins) - both mean
 // "only infantry / cavalry / field guns may take this trait".
-const TROOP_CLASSES = ["inf","cav","fg"];
+GAME.org.troopClasses = ["inf","cav","fg"];
+const TROOP_CLASSES = GAME.org.troopClasses;
 
 // Minimum movement shown on unit cards. Aircraft: 3/4 Speed, half with
 // Dogfighter, none with Hover. Grav: half Speed, but only when the unit
@@ -2416,9 +2464,10 @@ const TRAIT_REQ_COLORS = {faction:"", class:"#f57c00", mobility:"#0097a7", role:
 const TRAIT_CLASS_LABELS = {inf:"Infantry",cav:"Cavalry",fg:"Field Gun",scout:"Scout",afv:"AFV",ac:"Aircraft",sh:"SH",beh:"Behemoth",troop:"Troop"};
 const TRAIT_ROLE_LABELS  = {unit:"Unit",hero:"Hero",independent:"Independent",command:"Command",cmdHero:"Cmd Hero",troop:"Troop"};
 const TRAIT_MOB_LABELS   = {troop:"Troop",grav:"Grav",walk:"Walker",wheel:"Wheeled",track:"Tracked",air:"Air"};
-const FACTION_LABEL_MAP  = {standard:"Standard",precursor:"Precursor",soulless:"Soulless",swarm:"Swarm",warrior:"Warrior"};
+const FACTION_LABEL_MAP  = GAME.factions.labels;
 // Maps role requirement vals to the cost-column key they gate
-const ROLE_COST_MAP = {unit:"unit", troop:"unit", independent:"ind", command:"cmd", hero:"hero", cmdHero:"cmdHero"};
+GAME.deployment.roleCostMap = {unit:"unit", troop:"unit", independent:"ind", command:"cmd", hero:"hero", cmdHero:"cmdHero"};
+const ROLE_COST_MAP = GAME.deployment.roleCostMap;
 
 function traitReqColor(type, val) {
   if(type === "faction") {
@@ -4118,7 +4167,8 @@ function saveToLibrary() {
 // ============================================================
 // FACTIONS
 // ============================================================
-const FACTION_COLORS = {standard:"#007eff",precursor:"#9c27b0",soulless:"#607d8b",swarm:"#4caf50",warrior:"#f44336"};
+GAME.factions.colors = {standard:"#007eff",precursor:"#9c27b0",soulless:"#607d8b",swarm:"#4caf50",warrior:"#f44336"};
+const FACTION_COLORS = GAME.factions.colors;
 
 // Symbols for the Initiative Deck activation mechanic.
 // Each battle group carries one; when that symbol card is drawn the group activates.
@@ -4291,7 +4341,7 @@ function bgDesignation(army, bg) {
   };
   return { text: texts[mode], color: colors[mode], label: texts[mode] };
 }
-const TACTICAL_ASSETS = [
+GAME.tacticalAssets = [
   {id:"area_denial",     name:"Area Denial",        faction:null,       use:["Activation"],                              fn:`Select an objective. All enemy Stands within 8" must retreat 3" toward their own table edge.`},
   {id:"camouflage",      name:"Camouflage",          faction:null,       use:["Deployment"],                              fn:`The Unit may not be targeted by pre-game bombardment fire. It is not considered to be the nearest target for any enemy Command Stand during the bombardment phase.`},
   {id:"deception",       name:"Deception",           faction:null,       use:["Deployment"],                              fn:`After all forces have been deployed, the Unit may be redeployed anywhere that would be a valid deployment location.`},
@@ -4309,8 +4359,9 @@ const TACTICAL_ASSETS = [
   {id:"reserves",        name:"Reserves",            faction:null,       use:["Deployment"],                              fn:`The Unit may arrive from the friendly table edge during the Battle Group's first activation or may be placed in Reserve at that time.`},
   {id:"wave_attack",     name:"Wave Attack",         faction:null,       use:["Activation"],                              fn:`After finishing the Unit movement, for every Stand that reached close combat, all remaining Stands may move an additional 1".`},
 ];
+const TACTICAL_ASSETS = GAME.tacticalAssets;
 
-const TF_TYPES = {
+GAME.orgCharts = {
   infantry:     {label:"Infantry",      slots:{inf:[3,5],scout:[0,1],cav:[0,1],fg:[0,1],afv:[0,1],sh:[0,0],beh:[0,0],ac:[0,0]}},
   armour:       {label:"Armour",        slots:{inf:[0,1],scout:[0,2],cav:[0,0],fg:[0,0],afv:[3,5],sh:[0,1],beh:[0,0],ac:[0,0]}},
   combined_arms:{label:"Combined Arms", slots:{inf:[1,3],scout:[0,1],cav:[0,0],fg:[0,0],afv:[1,3],sh:[0,1],beh:[0,0],ac:[0,0]}},
@@ -4318,15 +4369,20 @@ const TF_TYPES = {
   recon:        {label:"Recon",         slots:{inf:[0,1],scout:[2,3],cav:[0,3],fg:[0,0],afv:[0,0],sh:[0,0],beh:[0,0],ac:[0,2]}},
   heavy:        {label:"Heavy",         slots:{inf:[0,1],scout:[0,0],cav:[0,0],fg:[1,3],afv:[0,0],sh:[0,3],beh:[0,3],ac:[0,0]}},
 };
-const SECTION_TYPES = {
+const TF_TYPES = GAME.orgCharts;
+GAME.org.sectionTypes = {
   core:       ["unit","independent","hero"],
   specialist: ["independent","hero"],
   command:    ["command","cmdHero"],
   support:    ["unit","independent","hero"],
 };
-const TYPE_LABELS = {unit:"Unit", independent:"Independent", hero:"Hero", command:"Command Stand", cmdHero:"Cmd Hero"};
-const VIEW_PTS_KEY = {unit:"unitPts", independent:"indPts", hero:"heroPts", command:"cmdPts", cmdHero:"cmdHeroPts"};
-const VIEW_LABELS  = {unit:"Unit", independent:"Ind", hero:"Hero", command:"Cmd", cmdHero:"H.Cmd"};
+const SECTION_TYPES = GAME.org.sectionTypes;
+GAME.deployment.typeLabels  = {unit:"Unit", independent:"Independent", hero:"Hero", command:"Command Stand", cmdHero:"Cmd Hero"};
+GAME.deployment.ptsKey      = {unit:"unitPts", independent:"indPts", hero:"heroPts", command:"cmdPts", cmdHero:"cmdHeroPts"};
+GAME.deployment.shortLabels = {unit:"Unit", independent:"Ind", hero:"Hero", command:"Cmd", cmdHero:"H.Cmd"};
+const TYPE_LABELS = GAME.deployment.typeLabels;
+const VIEW_PTS_KEY = GAME.deployment.ptsKey;
+const VIEW_LABELS  = GAME.deployment.shortLabels;
 
 
 function rebuildFactionSelect(selectValue) {
@@ -5542,9 +5598,9 @@ function slotPointValue(slot) {
     const tu = unitById(slot.transport);
     if (tu) basePts += mechanizedCount(u, tu, slot.unitType) * calcPoints(tu).perStand;
   }
-  // Support Units pay a 10% premium on their final cost, rounded up to the
-  // nearest 5 (cross-attached from outside the task force's normal slots).
-  if (slot.role === "support") basePts = roundToFive(basePts * 1.10);
+  // Support Units pay a premium on their final cost (cross-attached from
+  // outside the task force's normal slots).
+  if (slot.role === "support") basePts = GAME.cost.applySupportPremium(basePts);
   return basePts * slot.quantity;
 }
 
@@ -5590,11 +5646,11 @@ function tfSectionLimits(tf) {
   // Specialist: max per class = core quantity of same class
   const specLimitsByClass = {};
   Object.keys(coreQtyByClass).forEach(cls => {
-    specLimitsByClass[cls] = {count: specQtyByClass[cls]||0, max: coreQtyByClass[cls]};
+    specLimitsByClass[cls] = {count: specQtyByClass[cls]||0, max: GAME.org.specialistMax(coreQtyByClass[cls])};
   });
 
-  const cmdMax  = Math.floor(coreTotalQty / 2);
-  const suppMax = 3;
+  const cmdMax  = GAME.org.commandRatio(coreTotalQty);
+  const suppMax = GAME.org.supportMax;
 
   return {coreLimitsByClass, specLimitsByClass, coreQtyByClass, cmdCount: cmdQty, cmdMax, suppCount: suppQty, suppMax};
 }
@@ -5700,9 +5756,9 @@ function tfRankSlots(tfId) {
   return {
     n,
     army,
-    scale: n >= 10 ? "epic" : n >= 5 ? "large" : "normal",
-    seniorSlots: Math.floor(n / 4),
-    lordSlots:   Math.floor(n / 8),
+    scale: GAME.org.armyScale(n),
+    seniorSlots: GAME.org.rankSlots.senior(n),
+    lordSlots:   GAME.org.rankSlots.lord(n),
     usedSenior:  tfs.filter(t => t.commanderRank === "senior").length,
     usedLord:    tfs.filter(t => t.commanderRank === "lord").length,
   };
@@ -6276,7 +6332,7 @@ function renderAddUnitTypeSelector() {
   const pts = calcPoints(u);
   const typePtsMap = {unit:pts.unitPts, independent:pts.indPts, hero:pts.heroPts, command:pts.cmdPts, cmdHero:pts.cmdHeroPts};
   // Support slots cost +10% - show the price the slot will actually add
-  const adj = v => (v != null && addUnitTargetRole === "support") ? roundToFive(v * 1.10) : v;
+  const adj = v => (v != null && addUnitTargetRole === "support") ? GAME.cost.applySupportPremium(v) : v;
   optionsEl.innerHTML = types.map(t => {
     const ptsVal = adj(typePtsMap[t]);
     const sel = addUnitSelectedType === t;
@@ -6396,8 +6452,20 @@ function cancelEditCustomTFType() {
   _renderCustomTFTypeSlots({});
 }
 
-const _TF_CLASS_KEYS = ["inf","scout","cav","fg","afv","sh","beh","ac"];
-const _TF_CLASS_NAMES = {inf:"Infantry",scout:"Scout",cav:"Cavalry",fg:"Field Gun",afv:"AFV",sh:"Super Heavy",beh:"Behemoth",ac:"Aircraft"};
+GAME.org.classKeys  = ["inf","scout","cav","fg","afv","sh","beh","ac"];
+GAME.org.classNames = {inf:"Infantry",scout:"Scout",cav:"Cavalry",fg:"Field Gun",afv:"AFV",sh:"Super Heavy",beh:"Behemoth",ac:"Aircraft"};
+const _TF_CLASS_KEYS = GAME.org.classKeys;
+const _TF_CLASS_NAMES = GAME.org.classNames;
+
+// Force-organization ratios (LaserStorm Task Force rules).
+GAME.org.supportPremium = 0.10;          // support-role stands cost +10%
+GAME.org.supportMax     = 3;             // max support stands per task force
+GAME.org.commandRatio   = core => Math.floor(core / 2);   // command stands allowed
+GAME.org.specialistMax  = coreOfClass => coreOfClass;     // specialists per class capped by core of same class
+GAME.org.rankSlots = { senior: n => Math.floor(n/4), lord: n => Math.floor(n/8) };
+GAME.org.armyScale = n => n >= 10 ? "epic" : n >= 5 ? "large" : "normal";
+// Applies the support premium to a base cost (rounded to 5).
+GAME.cost.applySupportPremium = base => roundToFive(base * (1 + GAME.org.supportPremium));
 
 function _renderCustomTFTypeSlots(slots) {
   const el = document.getElementById("custom-tf-type-slots");
@@ -7116,7 +7184,7 @@ function entryPointValue(e) {
       const tu = unitById(slot.transport);
       if (tu) basePts += mechanizedCount(u, tu, slot.unitType) * calcPoints(tu).perStand;
     }
-    if (slot.role === "support") basePts = roundToFive(basePts * 1.10);
+    if (slot.role === "support") basePts = GAME.cost.applySupportPremium(basePts);
     return basePts * (e.qty||0);
   } else {
     const u = unitById(e.unitId);
@@ -7153,29 +7221,33 @@ function slotRemainingQty(army, slot) {
   return Math.max(0, (slot.quantity||0) - slotAssignedQty(army, slot.id));
 }
 
-// ── Mechanized transport helpers ──────────────────────────
-function transportSlotsFor(unit) {
+// ── Mechanized transport helpers (GAME PACK rules) ────────
+// Capacity a carrier offers: one slot per stack of its Transport trait.
+GAME.transport.slotsFor = function(unit) {
   const t = (unit.standTraits||[]).find(tr => tr[0] === "Transport");
   return t ? traitCount(t) : 0;
-}
+};
 // Transport slots a deployment needs. A single stand (any deployment that
 // isn't a full multi-stand "Unit") rides with exactly 1 slot, even a field
 // gun that would normally need 2. Once there's more than one stand, normal
 // math applies: each infantry stand fills 1 slot, each field gun fills 2.
-function transportSlotsNeeded(infUnit, unitType) {
+GAME.transport.slotsNeeded = function(infUnit, unitType) {
   if ((unitType||"unit") !== "unit") return 1;
   return calcPoints(infUnit).unitSize * (infUnit.class === "fg" ? 2 : 1);
-}
+};
+GAME.transport.canRide  = cls => cls === "inf" || cls === "fg";
+GAME.transport.canCarry = cls => cls === "afv";
+const transportSlotsFor = GAME.transport.slotsFor;
+const transportSlotsNeeded = GAME.transport.slotsNeeded;
 function mechanizedCount(infUnit, transportUnit, unitType) {
   if (!infUnit || !transportUnit) return 0;
-  const cls = infUnit.class;
-  if (cls !== "inf" && cls !== "fg") return 0;
+  if (!GAME.transport.canRide(infUnit.class)) return 0;
   const cap = transportSlotsFor(transportUnit);
   if (!cap) return 0;
   return Math.ceil(transportSlotsNeeded(infUnit, unitType) / cap);
 }
 function availableTransports() {
-  return allUnits().filter(u => u.class === "afv" && transportSlotsFor(u) > 0);
+  return allUnits().filter(u => GAME.transport.canCarry(u.class) && transportSlotsFor(u) > 0);
 }
 // ── Transport picker (per-deployment) ─────────────────────
 // TF slot:  openTransportPickerTF(tfId, slotId)
@@ -8352,7 +8424,7 @@ function _pSupportAdjusted(u, unitType, tu) {
   const key = VIEW_PTS_KEY[unitType||"unit"] || "unitPts";
   let base = pts[key] != null ? pts[key] : pts.unitPts;
   const tPts = tu ? mechanizedCount(u, tu, unitType) * calcPoints(tu).perStand : 0;
-  const total = roundToFive((base + tPts) * 1.10);
+  const total = GAME.cost.applySupportPremium(base + tPts);
   // For mech pairs the transport half shows its own cost - return the
   // remainder so the two point boxes still sum to the charged total.
   return total - tPts;
