@@ -2445,6 +2445,44 @@ function minSpeedFor(unit) {
   if (unit.mobility === "grav") return has("Minimum Speed") ? Math.ceil(unit.speed/2) : null;
   return null;
 }
+
+// ── GAME PACK: unit stat schema ───────────────────────────
+// Declares the stat line shown on every unit card, as an ordered list of
+// fields. Each field knows how to format its own value (and optional
+// sub-value) from a unit + its calcPoints() result. The card renderers
+// (on-screen and print) iterate this list rather than hardcoding the six
+// LaserStorm stats - a different game ships a different GAME.schema.stats
+// and the same renderers draw it. `format`/`sub` return display strings
+// only; the renderer owns the surrounding markup.
+GAME.schema = {
+  stats: [
+    { key:"speed",      label:"Spd",     format:u=>`${u.speed}"`,
+      sub:u=>{ const m=minSpeedFor(u); return m!==null?`min ${m}"`:null; } },
+    { key:"mobility",   label:"Mob",     format:u=>`${u.mobility}` },
+    { key:"aim",        label:"Aim",     format:u=>`${u.aim}+` },
+    { key:"assault",    label:"Assault", format:u=>`+${u.assault}` },
+    { key:"saveNumber", label:"Save",    format:(u,pts)=>`${pts.saveDice}D6/${u.saveNumber}+` },
+    { key:"morale",     label:"Morale",  format:u=>`${u.morale}+` },
+  ],
+};
+
+// Shell renderers that draw GAME.schema.stats in each card layout.
+// On-screen: the .stat / .stat-name / .stat-val / .stat-sub structure.
+function statRowCells(unit, pts) {
+  return GAME.schema.stats.map(f => {
+    const sub = f.sub ? f.sub(unit, pts) : null;
+    return `<div class="stat"><span class="stat-name">${f.label}</span><span class="stat-val">${f.format(unit,pts)}</span>${sub!=null?`<span class="stat-sub">${sub}</span>`:""}</div>`;
+  }).join("");
+}
+// Print: returns [label, valueHTML] tuples; the sub-value is appended to the
+// value as a muted <small> (each print card wraps these in its own grid cell).
+function statPrintCells(unit, pts, pal) {
+  return GAME.schema.stats.map(f => {
+    const sub = f.sub ? f.sub(unit, pts) : null;
+    const val = `${f.format(unit,pts)}${sub!=null?` <small style="font-size:9px;color:${pal.mutedText}">${sub}</small>`:""}`;
+    return [f.label, val];
+  });
+}
 function classReqOk(clsReq, cls) {
   return clsReq.vals.includes(cls) || (clsReq.vals.includes("troop") && TROOP_CLASSES.includes(cls));
 }
@@ -2531,7 +2569,6 @@ function unitCardHTML(unit, actions, viewType="unit", opts={}) {
         const wName = w.name ? `<strong>${esc(w.name)}</strong> ` : "";
         return `<div class="weapon-row">${wName}<span class="wtype">${(w.mode||'').toUpperCase()}/${(w.type||'').toUpperCase()}</span> | Range <span>${rangeLabel(w.range)}</span> | Shots <span>${w.shots}</span> | Impact <span>+${w.impact}</span>${wtHTML}</div>`;
       }).join("");
-  const minSpd = minSpeedFor(unit);
   const pKey = VIEW_PTS_KEY[viewType] || "unitPts";
   const pVal = pts[pKey] != null ? pts[pKey] : "-";
   const pLabel = VIEW_LABELS[viewType] || "Unit";
@@ -2563,14 +2600,7 @@ function unitCardHTML(unit, actions, viewType="unit", opts={}) {
           <div class="pts-box-label">${pLabel}</div>
         </div>
       </div>
-      <div class="stat-row">
-        <div class="stat"><span class="stat-name">Spd</span><span class="stat-val">${unit.speed}"</span>${minSpd!==null?`<span class="stat-sub">min ${minSpd}"</span>`:""}</div>
-        <div class="stat"><span class="stat-name">Mob</span><span class="stat-val">${unit.mobility}</span></div>
-        <div class="stat"><span class="stat-name">Aim</span><span class="stat-val">${unit.aim}+</span></div>
-        <div class="stat"><span class="stat-name">Assault</span><span class="stat-val">+${unit.assault}</span></div>
-        <div class="stat"><span class="stat-name">Save</span><span class="stat-val">${pts.saveDice}D6/${unit.saveNumber}+</span></div>
-        <div class="stat"><span class="stat-name">Morale</span><span class="stat-val">${unit.morale}+</span></div>
-      </div>
+      <div class="stat-row">${statRowCells(unit, pts)}</div>
       <div class="unit-card-traits"><span class="unit-card-section-label">Stand Traits</span>${traitsHTML}</div>
       ${weaponsHTML}
       ${actions ? `<div class="unit-card-actions">${actions}</div>` : ""}
@@ -2588,7 +2618,6 @@ function mechPairCardHTML(infUnit, tuUnit, n, actionsHTML, viewType, opts={}) {
           const wName = w.name ? `<strong>${esc(w.name)}</strong> ` : "";
           return `<div class="weapon-row">${wName}<span class="wtype">${(w.mode||'').toUpperCase()}/${(w.type||'').toUpperCase()}</span> | Range <span>${rangeLabel(w.range)}</span> | Shots <span>${w.shots}</span> | Impact <span>+${w.impact}</span>${wtHTML}</div>`;
         }).join("");
-    const minSpd = minSpeedFor(unit);
     const pKey = VIEW_PTS_KEY[vt] || "unitPts";
     const pVal = extra.ptsVal != null ? extra.ptsVal : (pts[pKey] != null ? pts[pKey] : "-");
     const pLabel = VIEW_LABELS[vt] || "Unit";
@@ -2620,14 +2649,7 @@ function mechPairCardHTML(infUnit, tuUnit, n, actionsHTML, viewType, opts={}) {
             <div class="pts-box-label">${pLabel}</div>
           </div>
         </div>
-        <div class="stat-row">
-          <div class="stat"><span class="stat-name">Spd</span><span class="stat-val">${unit.speed}"</span>${minSpd!==null?`<span class="stat-sub">min ${minSpd}"</span>`:""}</div>
-          <div class="stat"><span class="stat-name">Mob</span><span class="stat-val">${unit.mobility}</span></div>
-          <div class="stat"><span class="stat-name">Aim</span><span class="stat-val">${unit.aim}+</span></div>
-          <div class="stat"><span class="stat-name">Assault</span><span class="stat-val">+${unit.assault}</span></div>
-          <div class="stat"><span class="stat-name">Save</span><span class="stat-val">${pts.saveDice}D6/${unit.saveNumber}+</span></div>
-          <div class="stat"><span class="stat-name">Morale</span><span class="stat-val">${unit.morale}+</span></div>
-        </div>
+        <div class="stat-row">${statRowCells(unit, pts)}</div>
         <div class="unit-card-traits"><span class="unit-card-section-label">Stand Traits</span>${traitsHTML}</div>
         ${weaponsHTML}
       </div>`;
@@ -8371,7 +8393,6 @@ function _pUnitCard(unit, viewType, tfBadgeHTML, opts, pal, gray) {
   const pKey   = VIEW_PTS_KEY[viewType] || "unitPts";
   const pVal   = opts.ptsVal != null ? opts.ptsVal : (pts[pKey] != null ? pts[pKey] : "-");
   const pLabel = opts.ptsLabel || VIEW_LABELS[viewType] || "Unit";
-  const minSpd = minSpeedFor(unit);
   const traitsHTML  = _pTraitPills(unit.standTraits||[], allStandTraits(), pal, gray);
   const weaponsHTML = (unit.weapons||[]).length === 0
     ? `<div style="padding:4px 8px;font-size:10px;color:${pal.mutedText};font-style:italic;background:${pal.wepBg};border-radius:4px;margin-top:3px">No ranged weapons - assault only</div>`
@@ -8396,14 +8417,7 @@ function _pUnitCard(unit, viewType, tfBadgeHTML, opts, pal, gray) {
       </div>
     </div>
     <div style="display:flex;flex-wrap:wrap;background:${pal.statBg};border:1px solid ${pal.statBorder};border-radius:6px;padding:5px 6px;margin-bottom:6px;gap:2px">
-      ${[
-        ["Spd", `${unit.speed}"${minSpd!==null?` <small style="font-size:9px;color:${pal.mutedText}">min ${minSpd}"</small>`:"" }`],
-        ["Mob", unit.mobility],
-        ["Aim", `${unit.aim}+`],
-        ["Assault", `+${unit.assault}`],
-        ["Save", `${pts.saveDice}D6/${unit.saveNumber}+`],
-        ["Morale", `${unit.morale}+`],
-      ].map(([label,val])=>`<div style="text-align:center;flex:1;min-width:34px;padding:1px 2px"><div style="font-size:7.5px;text-transform:uppercase;color:${pal.mutedText};letter-spacing:.05em;font-weight:700">${label}</div><div style="font-size:12px;font-weight:bold;color:${pal.pageText};line-height:1.15">${val}</div></div>`).join("")}
+      ${statPrintCells(unit, pts, pal).map(([label,val])=>`<div style="text-align:center;flex:1;min-width:34px;padding:1px 2px"><div style="font-size:7.5px;text-transform:uppercase;color:${pal.mutedText};letter-spacing:.05em;font-weight:700">${label}</div><div style="font-size:12px;font-weight:bold;color:${pal.pageText};line-height:1.15">${val}</div></div>`).join("")}
     </div>
     <div style="margin-bottom:5px">
       <div style="font-size:8px;text-transform:uppercase;letter-spacing:.05em;color:${pal.mutedText};font-weight:700;margin-bottom:3px">Stand Traits</div>
@@ -8440,7 +8454,6 @@ function _pMechPair(carrier, viewType, tu, n, badgeHTML, pal, gray, carrierPtsVa
     const pKey = VIEW_PTS_KEY[vt] || "unitPts";
     const pVal = extra.ptsVal != null ? extra.ptsVal : (pts[pKey] != null ? pts[pKey] : "-");
     const pLabel = extra.ptsLabel || VIEW_LABELS[vt] || "Unit";
-    const minSpd = minSpeedFor(unit);
     const traitsHTML = _pTraitPills(unit.standTraits||[], allStandTraits(), pal, gray);
     const weaponsHTML = (unit.weapons||[]).length === 0
       ? `<div style="padding:4px 8px;font-size:10px;color:${pal.mutedText};font-style:italic;background:${pal.wepBg};border-radius:4px;margin-top:3px">No ranged weapons - assault only</div>`
@@ -8470,7 +8483,7 @@ function _pMechPair(carrier, viewType, tu, n, badgeHTML, pal, gray, carrierPtsVa
         </div>
       </div>
       <div style="display:flex;flex-wrap:wrap;background:${pal.statBg};border:1px solid ${pal.statBorder};border-radius:6px;padding:5px 6px;margin-bottom:6px;gap:2px">
-        ${[["Spd",`${unit.speed}"${minSpd!==null?` <small style="font-size:9px;color:${pal.mutedText}">min ${minSpd}"</small>`:""}`],["Mob",unit.mobility],["Aim",`${unit.aim}+`],["Assault",`+${unit.assault}`],["Save",`${pts.saveDice}D6/${unit.saveNumber}+`],["Morale",`${unit.morale}+`]].map(([l,v])=>`<div style="text-align:center;flex:1;min-width:34px;padding:1px 2px"><div style="font-size:7.5px;text-transform:uppercase;color:${pal.mutedText};letter-spacing:.05em;font-weight:700">${l}</div><div style="font-size:12px;font-weight:bold;color:${pal.pageText};line-height:1.15">${v}</div></div>`).join("")}
+        ${statPrintCells(unit, pts, pal).map(([l,v])=>`<div style="text-align:center;flex:1;min-width:34px;padding:1px 2px"><div style="font-size:7.5px;text-transform:uppercase;color:${pal.mutedText};letter-spacing:.05em;font-weight:700">${l}</div><div style="font-size:12px;font-weight:bold;color:${pal.pageText};line-height:1.15">${v}</div></div>`).join("")}
       </div>
       <div style="margin-bottom:5px">
         <div style="font-size:8px;text-transform:uppercase;letter-spacing:.05em;color:${pal.mutedText};font-weight:700;margin-bottom:3px">Stand Traits</div>
