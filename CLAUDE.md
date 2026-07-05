@@ -87,7 +87,54 @@ state = {
 }
 ```
 
-## File map (`army-builder.html`)
+## The `GAME` pack (game-specific rules boundary)
+
+Everything specific to *LaserStorm the game* — as opposed to *army-builder
+the tool* — is registered under a single top-of-script `GAME` object
+(banner `GAME PACK: LASERSTORM`). This is the seed of turning the app into
+a multi-game engine: a different wargame would ship a different `GAME`.
+
+What lives in `GAME`:
+
+| Member | Contents |
+|---|---|
+| `GAME.meta` | id / name / edition |
+| `GAME.traits.stand` / `.weapon` / `.reqs` | trait pools + structured requirements |
+| `GAME.classes` | stand-class cost profiles (size, mult, saves, base speed) |
+| `GAME.classProfiles` | read-only tactical reference table on the cost card |
+| `GAME.units` | representative built-in units |
+| `GAME.factions.colors` / `.icons` / `.labels` / `.keySet` | built-in faction identities |
+| `GAME.tacticalAssets` | built-in tactical assets |
+| `GAME.orgCharts` | built-in task-force compositions (slot min/max per class) |
+| `GAME.deployment.typeLabels` / `.ptsKey` / `.shortLabels` / `.roleCostMap` | deployment types + cost-column mapping |
+| `GAME.org.*` | force-org ratios & taxonomy: `troopClasses`, `classKeys`/`classNames`, `sectionTypes`, `supportPremium`, `supportMax`, `commandRatio`, `specialistMax`, `rankSlots`, `armyScale` |
+| `GAME.cost.unitCost` / `.premiumsFor` / `.applySupportPremium` | the points engine |
+| `GAME.transport.slotsFor` / `.slotsNeeded` / `.canRide` / `.canCarry` | mechanized transport rules |
+| `GAME.weapons.rangeOpts` | weapon range picker options |
+
+**Legacy aliases:** right after each `GAME` member, a `const` with the old
+identifier is assigned to it (`const STAND_TRAITS = GAME.traits.stand;`,
+`const calcPoints`-wraps-`GAME.cost.unitCost`, etc.). The rest of the file
+still uses those names, so the boundary is *declarative* today — the shell
+reaches game rules through aliases, not through a formal engine API. When
+building the actual engine, the move is: replace `GAME` with a loaded game
+pack and swap the alias `const`s for reads off the active pack.
+
+**Behavior is locked by a golden-master test** (`tools/golden_master.js`).
+It dumps `calcPoints` for every built-in unit, synthetic per-class custom
+units, the transport matrix, slot/entry point values, section limits, and
+premiums. Re-run it before/after any touch to `GAME.cost`/`GAME.org`/
+`GAME.transport` and diff — it must not change unless you *intend* a rules
+change:
+
+```bash
+python3 -m http.server 3000 &
+node tools/golden_master.js /tmp/before.json     # before your change
+node tools/golden_master.js /tmp/after.json      # after
+diff <(jq -S . /tmp/before.json) <(jq -S . /tmp/after.json)
+```
+
+## File map (`index.html`)
 
 Everything is in one `<script>`. Major sections, marked by
 `// ===...` banner comments:
