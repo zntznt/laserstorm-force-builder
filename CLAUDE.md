@@ -112,19 +112,23 @@ What lives in `GAME`:
 | `GAME.transport.slotsFor` / `.slotsNeeded` / `.canRide` / `.canCarry` | mechanized transport rules |
 | `GAME.weapons.rangeOpts` | weapon range picker options |
 | `GAME.schema.stats` | the unit stat line: ordered field descriptors that drive every card renderer |
+| `GAME.schema.weapon` | the weapon line: mode `tag(w)`, ordered `fields`, `emptyText` |
 
-**Schema-driven stat rendering.** `GAME.schema.stats` is an ordered list of
-stat-field descriptors (`{key, label, format(unit,pts), sub?(unit,pts)}`).
-The four card renderers — `unitCardHTML`, `mechPairCardHTML` (on-screen) and
-`_pUnitCard`, `_pMechPair` (print) — no longer hardcode LaserStorm's six
-stats; they iterate the schema through two shell helpers: `statRowCells`
-(on-screen `.stat` cells) and `statPrintCells` (print `[label, valueHTML]`
-tuples). A different game ships a different `GAME.schema.stats` and the same
-renderers draw it — proven: pushing a field onto the list adds a stat cell to
-both layouts with zero renderer changes. `format`/`sub` return display
-strings only; the renderer owns the surrounding markup. *Not yet
-schema-driven:* the weapon line (`Rng/Shots/Impact`, still hardcoded in the
-same four renderers) and the builder input form — the natural next steps.
+**Schema-driven stat & weapon rendering.** `GAME.schema.stats` is an ordered
+list of stat-field descriptors (`{key, label, format(unit,pts),
+sub?(unit,pts)}`); `GAME.schema.weapon` declares the weapon line (`tag(w)`
+mode label, ordered `fields` of `{key, label, printLabel?, format(w)}`, and
+the `emptyText` shown for weaponless units). The four card renderers —
+`unitCardHTML`, `mechPairCardHTML` (on-screen) and `_pUnitCard`, `_pMechPair`
+(print) — no longer hardcode LaserStorm's six stats or its
+Range/Shots/Impact weapon line; they iterate the schema through shell
+helpers: `statRowCells` / `statPrintCells` for stats, `weaponRowHTML` /
+`weaponPrintLine` for weapons. A different game ships a different
+`GAME.schema` and the same renderers draw it — proven both ways: pushing a
+field onto either list adds a cell to both layouts with zero renderer
+changes. `format`/`sub`/`tag` return display strings only; the renderer owns
+the surrounding markup. *Not yet schema-driven:* the builder input form
+(stat inputs and the weapon editor) — the natural next step.
 
 **Legacy aliases:** right after each `GAME` member, a `const` with the old
 identifier is assigned to it (`const STAND_TRAITS = GAME.traits.stand;`,

@@ -2464,6 +2464,18 @@ GAME.schema = {
     { key:"saveNumber", label:"Save",    format:(u,pts)=>`${pts.saveDice}D6/${u.saveNumber}+` },
     { key:"morale",     label:"Morale",  format:u=>`${u.morale}+` },
   ],
+  // The weapon line shown under each unit: a mode tag (e.g. "AI/P")
+  // followed by the ordered fields. printLabel (optional) is the shorter
+  // label used on print cards.
+  weapon: {
+    tag: w => `${(w.mode||'').toUpperCase()}/${(w.type||'').toUpperCase()}`,
+    fields: [
+      { key:"range",  label:"Range", printLabel:"Rng", format:w=>`${rangeLabel(w.range)}` },
+      { key:"shots",  label:"Shots",                   format:w=>`${w.shots}` },
+      { key:"impact", label:"Impact",                  format:w=>`+${w.impact}` },
+    ],
+    emptyText: "No ranged weapons - assault only",
+  },
 };
 
 // Shell renderers that draw GAME.schema.stats in each card layout.
@@ -2482,6 +2494,17 @@ function statPrintCells(unit, pts, pal) {
     const val = `${f.format(unit,pts)}${sub!=null?` <small style="font-size:9px;color:${pal.mutedText}">${sub}</small>`:""}`;
     return [f.label, val];
   });
+}
+// One weapon line for on-screen cards; traitsSuffix is pre-rendered trait HTML.
+function weaponRowHTML(w, traitsSuffix) {
+  const wName = w.name ? `<strong>${esc(w.name)}</strong> ` : "";
+  const cells = GAME.schema.weapon.fields.map(f=>`${f.label} <span>${f.format(w)}</span>`).join(" | ");
+  return `<div class="weapon-row">${wName}<span class="wtype">${GAME.schema.weapon.tag(w)}</span> | ${cells}${traitsSuffix}</div>`;
+}
+// The "Rng X | Shots Y | Impact +Z" fragment for print cards (the print
+// renderer supplies the surrounding name/tag markup and palette).
+function weaponPrintLine(w) {
+  return GAME.schema.weapon.fields.map(f=>`${f.printLabel||f.label} <strong>${f.format(w)}</strong>`).join(" | ");
 }
 function classReqOk(clsReq, cls) {
   return clsReq.vals.includes(cls) || (clsReq.vals.includes("troop") && TROOP_CLASSES.includes(cls));
@@ -2561,13 +2584,12 @@ function unitCardHTML(unit, actions, viewType="unit", opts={}) {
   const pts = calcPoints(unit);
   const traitsHTML = traitTipHTML(unit.standTraits||[], allStandTraits());
   const weaponsHTML = (unit.weapons||[]).length===0
-    ? `<div class="weapon-row" style="color:#8b949e;font-style:italic">No ranged weapons - assault only</div>`
+    ? `<div class="weapon-row" style="color:#8b949e;font-style:italic">${GAME.schema.weapon.emptyText}</div>`
     : (unit.weapons||[]).map(w => {
         const wtHTML = (w.traits||[]).length
           ? " | " + traitTipHTML(w.traits, allWeaponTraits())
           : "";
-        const wName = w.name ? `<strong>${esc(w.name)}</strong> ` : "";
-        return `<div class="weapon-row">${wName}<span class="wtype">${(w.mode||'').toUpperCase()}/${(w.type||'').toUpperCase()}</span> | Range <span>${rangeLabel(w.range)}</span> | Shots <span>${w.shots}</span> | Impact <span>+${w.impact}</span>${wtHTML}</div>`;
+        return weaponRowHTML(w, wtHTML);
       }).join("");
   const pKey = VIEW_PTS_KEY[viewType] || "unitPts";
   const pVal = pts[pKey] != null ? pts[pKey] : "-";
@@ -2612,11 +2634,10 @@ function mechPairCardHTML(infUnit, tuUnit, n, actionsHTML, viewType, opts={}) {
     const pts = calcPoints(unit);
     const traitsHTML = traitTipHTML(unit.standTraits||[], allStandTraits());
     const weaponsHTML = (unit.weapons||[]).length===0
-      ? `<div class="weapon-row" style="color:#8b949e;font-style:italic">No ranged weapons - assault only</div>`
+      ? `<div class="weapon-row" style="color:#8b949e;font-style:italic">${GAME.schema.weapon.emptyText}</div>`
       : (unit.weapons||[]).map(w => {
           const wtHTML = (w.traits||[]).length ? " | " + traitTipHTML(w.traits, allWeaponTraits()) : "";
-          const wName = w.name ? `<strong>${esc(w.name)}</strong> ` : "";
-          return `<div class="weapon-row">${wName}<span class="wtype">${(w.mode||'').toUpperCase()}/${(w.type||'').toUpperCase()}</span> | Range <span>${rangeLabel(w.range)}</span> | Shots <span>${w.shots}</span> | Impact <span>+${w.impact}</span>${wtHTML}</div>`;
+          return weaponRowHTML(w, wtHTML);
         }).join("");
     const pKey = VIEW_PTS_KEY[vt] || "unitPts";
     const pVal = extra.ptsVal != null ? extra.ptsVal : (pts[pKey] != null ? pts[pKey] : "-");
@@ -8395,11 +8416,11 @@ function _pUnitCard(unit, viewType, tfBadgeHTML, opts, pal, gray) {
   const pLabel = opts.ptsLabel || VIEW_LABELS[viewType] || "Unit";
   const traitsHTML  = _pTraitPills(unit.standTraits||[], allStandTraits(), pal, gray);
   const weaponsHTML = (unit.weapons||[]).length === 0
-    ? `<div style="padding:4px 8px;font-size:10px;color:${pal.mutedText};font-style:italic;background:${pal.wepBg};border-radius:4px;margin-top:3px">No ranged weapons - assault only</div>`
+    ? `<div style="padding:4px 8px;font-size:10px;color:${pal.mutedText};font-style:italic;background:${pal.wepBg};border-radius:4px;margin-top:3px">${GAME.schema.weapon.emptyText}</div>`
     : unit.weapons.map(w => {
         const wtPills = (w.traits||[]).length ? " | " + _pTraitPills(w.traits, allWeaponTraits(), pal, gray) : "";
         const wName   = w.name ? `<strong>${esc(w.name)}</strong> ` : "";
-        return `<div style="padding:4px 8px;font-size:10px;background:${pal.wepBg};border:1px solid ${pal.wepBorder};border-radius:4px;margin-top:3px;line-height:1.5"><span style="color:${pal.pageText}">${wName}<span style="color:${pal.mutedText};font-weight:normal">${w.mode.toUpperCase()}/${w.type.toUpperCase()}</span> | Rng <strong>${rangeLabel(w.range)}</strong> | Shots <strong>${w.shots}</strong> | Impact <strong>+${w.impact}</strong>${wtPills}</span></div>`;
+        return `<div style="padding:4px 8px;font-size:10px;background:${pal.wepBg};border:1px solid ${pal.wepBorder};border-radius:4px;margin-top:3px;line-height:1.5"><span style="color:${pal.pageText}">${wName}<span style="color:${pal.mutedText};font-weight:normal">${GAME.schema.weapon.tag(w)}</span> | ${weaponPrintLine(w)}${wtPills}</span></div>`;
       }).join("");
   const descHTML    = unit.description ? `<div style="font-size:10px;color:${pal.mutedText};font-style:italic;line-height:1.4;padding:3px 0 4px">${esc(unit.description)}</div>` : "";
   const unitSizeStr = opts.tag ? "" : (viewType === "unit" ? ` <span style="font-size:10px;color:${pal.mutedText};font-weight:normal">${pts.unitSize} stand${pts.unitSize>1?"s":""}</span>` : "");
@@ -8456,11 +8477,11 @@ function _pMechPair(carrier, viewType, tu, n, badgeHTML, pal, gray, carrierPtsVa
     const pLabel = extra.ptsLabel || VIEW_LABELS[vt] || "Unit";
     const traitsHTML = _pTraitPills(unit.standTraits||[], allStandTraits(), pal, gray);
     const weaponsHTML = (unit.weapons||[]).length === 0
-      ? `<div style="padding:4px 8px;font-size:10px;color:${pal.mutedText};font-style:italic;background:${pal.wepBg};border-radius:4px;margin-top:3px">No ranged weapons - assault only</div>`
+      ? `<div style="padding:4px 8px;font-size:10px;color:${pal.mutedText};font-style:italic;background:${pal.wepBg};border-radius:4px;margin-top:3px">${GAME.schema.weapon.emptyText}</div>`
       : unit.weapons.map(w => {
           const wtPills = (w.traits||[]).length ? " | " + _pTraitPills(w.traits, allWeaponTraits(), pal, gray) : "";
           const wName = w.name ? `<strong>${esc(w.name)}</strong> ` : "";
-          return `<div style="padding:4px 8px;font-size:10px;background:${pal.wepBg};border:1px solid ${pal.wepBorder};border-radius:4px;margin-top:3px;line-height:1.5"><span style="color:${pal.pageText}">${wName}<span style="color:${pal.mutedText};font-weight:normal">${w.mode.toUpperCase()}/${w.type.toUpperCase()}</span> | Rng <strong>${rangeLabel(w.range)}</strong> | Shots <strong>${w.shots}</strong> | Impact <strong>+${w.impact}</strong>${wtPills}</span></div>`;
+          return `<div style="padding:4px 8px;font-size:10px;background:${pal.wepBg};border:1px solid ${pal.wepBorder};border-radius:4px;margin-top:3px;line-height:1.5"><span style="color:${pal.pageText}">${wName}<span style="color:${pal.mutedText};font-weight:normal">${GAME.schema.weapon.tag(w)}</span> | ${weaponPrintLine(w)}${wtPills}</span></div>`;
         }).join("");
     const descHTML = unit.description ? `<div style="font-size:10px;color:${pal.mutedText};font-style:italic;line-height:1.4;padding:3px 0 4px">${esc(unit.description)}</div>` : "";
     const tagHTML = extra.tag ? `<span style="display:inline-block;padding:1px 6px;border-radius:8px;font-size:8px;font-weight:bold;letter-spacing:.5px;text-transform:uppercase;background:${connBg};color:${connFg};border:1px solid ${connBord}">${esc(extra.tag)}</span>` : "";
