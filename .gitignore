@@ -4,3 +4,8 @@ package-lock.json
 package.json
 *.mjs
 tools/.fa-*.woff2
+
+# The rally/ engine has its own build tooling and manifest that must be tracked
+# (it is destined for its own repo); exempt it from the app-level ignores above.
+!rally/package.json
+!rally/**/*.mjs
