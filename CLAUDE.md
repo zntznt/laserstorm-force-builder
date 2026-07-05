@@ -111,24 +111,41 @@ What lives in `GAME`:
 | `GAME.cost.unitCost` / `.premiumsFor` / `.applySupportPremium` | the points engine |
 | `GAME.transport.slotsFor` / `.slotsNeeded` / `.canRide` / `.canCarry` | mechanized transport rules |
 | `GAME.weapons.rangeOpts` | weapon range picker options |
-| `GAME.schema.stats` | the unit stat line: ordered field descriptors that drive every card renderer |
-| `GAME.schema.weapon` | the weapon line: mode `tag(w)`, ordered `fields`, `emptyText` |
+| `GAME.schema.stats` | the unit stat line: display (`format`/`sub`) **and** builder input (`edit`) descriptors |
+| `GAME.schema.weapon` | the weapon line: `tag(w)`, display `fields`, `emptyText`, editor `edit` controls, `initialWeapon`/`newWeapon` factories |
 
-**Schema-driven stat & weapon rendering.** `GAME.schema.stats` is an ordered
-list of stat-field descriptors (`{key, label, format(unit,pts),
-sub?(unit,pts)}`); `GAME.schema.weapon` declares the weapon line (`tag(w)`
-mode label, ordered `fields` of `{key, label, printLabel?, format(w)}`, and
-the `emptyText` shown for weaponless units). The four card renderers —
-`unitCardHTML`, `mechPairCardHTML` (on-screen) and `_pUnitCard`, `_pMechPair`
-(print) — no longer hardcode LaserStorm's six stats or its
-Range/Shots/Impact weapon line; they iterate the schema through shell
-helpers: `statRowCells` / `statPrintCells` for stats, `weaponRowHTML` /
-`weaponPrintLine` for weapons. A different game ships a different
-`GAME.schema` and the same renderers draw it — proven both ways: pushing a
-field onto either list adds a cell to both layouts with zero renderer
-changes. `format`/`sub`/`tag` return display strings only; the renderer owns
-the surrounding markup. *Not yet schema-driven:* the builder input form
-(stat inputs and the weapon editor) — the natural next step.
+**Schema-driven stats & weapons — display *and* editing.**
+`GAME.schema.stats` is an ordered list of stat-field descriptors. Each field
+carries its card display (`label`, `format(unit,pts)`, optional
+`sub(unit,pts)`) and its builder input descriptor
+(`edit: {id, kind:"number"|"select", value/min/max, fallback, before?/after?
+(HTML fragments around the input), applyClass(el,ci,cls) (class-change
+reset), changeExpr?}`). `GAME.schema.weapon` likewise declares both the
+weapon display line (`tag(w)`, `fields`, `emptyText`) and the weapon editor
+(`edit` control list, `initialWeapon()`/`newWeapon()` factories).
+
+The shell consumes the schema everywhere the unit is drawn or edited:
+
+- Cards: `statRowCells`/`statPrintCells` (stats), `weaponRowHTML`/
+  `weaponPrintLine` (weapons) — used by `unitCardHTML`, `mechPairCardHTML`,
+  `_pUnitCard`, `_pMechPair`.
+- Builder: `renderBuilderStatInputs()` generates the stat-input grid at boot
+  (the `.stand-stats-grid` div in the HTML is empty); `weaponEditCellsHTML`
+  generates each weapon row's controls; `onClassChange`, `gatherBuilderUnit`,
+  and `editUnit` iterate the schema instead of naming fields.
+
+Proven end-to-end: pushing one new field onto `GAME.schema.stats` creates its
+form input, grows the grid, gathers the typed value into the unit, applies
+its class default on class change, and renders on both card layouts — with
+zero shell edits. What remains game-specific *outside* the schema: the
+class/faction/name/size header controls and the traits system (they're
+structural, not stat fields).
+
+**Rendering/form behavior is locked by a second golden master**
+(`tools/render_master.js`, same workflow as `tools/golden_master.js`): 52
+card snapshots + per-class builder form DOM, gathered-unit JSON, weapon
+editor DOM, and an editUnit round-trip. Compare structurally (gathered-unit
+key order is not significant).
 
 **Legacy aliases:** right after each `GAME` member, a `const` with the old
 identifier is assigned to it (`const STAND_TRAITS = GAME.traits.stand;`,
